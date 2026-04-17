@@ -7,6 +7,8 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 ## 文档
 
 - [需求文档](./docs/requirements.md)
+- [插件需求：基于链群NFT持有者指定群管理下的黑名单管理 beforePost](./docs/plugins/group-managed-blacklist-whitelist-before-post.md)
+- [插件需求：基于 LOVE20 治理的去中心化黑名单管理 beforePost](./docs/plugins/governance-blacklist-before-post.md)
 
 ## 当前状态
 
