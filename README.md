@@ -8,14 +8,14 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 
 - [需求文档](./docs/requirements.md)
 - [实现说明](./docs/implementation-notes.md)
-- [插件需求：基于链群NFT持有者指定群管理下的黑名单管理 beforePost](./docs/plugins/group-managed-blacklist-whitelist-before-post.md)
-- [插件需求：基于 LOVE20 治理的去中心化黑名单管理 beforePost](./docs/plugins/governance-blacklist-before-post.md)
+- [去中心化群聊架构设计](./docs/decentralized-group-chat-architecture.md)
+- [插件需求：Admin 黑白名单 beforePost 插件](./docs/plugins/admin-blacklist-whitelist-before-post-plugin.md)
 
 ## 当前状态
 
 - 主接口与主合约已落地
 - Foundry 测试已拆分为多文件主题结构
-- 当前测试结果：`28 passed`
+- 当前测试结果：`30 passed`
 
 ## 目录
 

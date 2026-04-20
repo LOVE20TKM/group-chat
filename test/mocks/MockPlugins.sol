@@ -14,7 +14,7 @@ interface IGroupChatPluginView {
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
 
-    function delegateOf(uint256 groupId) external view returns (address);
+    function delegateGroupIdOf(uint256 groupId) external view returns (uint256);
 
     function post(
         uint256 chatGroupId,
@@ -110,8 +110,12 @@ contract MockManagedPlugin {
     function configure(uint256 chatGroupId, bytes calldata value) external {
         IGroupChatPluginView.ChatInfo memory info =
             IGroupChatPluginView(CHAT).chatInfo(chatGroupId);
-        address delegate_ = IGroupChatPluginView(CHAT).delegateOf(chatGroupId);
-        if (msg.sender != info.owner && msg.sender != delegate_) {
+        uint256 delegateGroupId_ =
+            IGroupChatPluginView(CHAT).delegateGroupIdOf(chatGroupId);
+        address delegateGroupOwner = delegateGroupId_ == 0
+            ? address(0)
+            : IGroupChatPluginView(CHAT).chatInfo(delegateGroupId_).owner;
+        if (msg.sender != info.owner && msg.sender != delegateGroupOwner) {
             revert UnauthorizedPluginManager();
         }
         configValue[chatGroupId] = value;

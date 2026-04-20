@@ -42,7 +42,7 @@ interface IGroupChatErrors {
     error ChatAlreadyInactive();
     error ChatNotActive();
     error NotChatOwner();
-    error NotChatOwnerOrDelegate();
+    error NotChatOwnerOrDelegateGroupOwner();
     error SenderNotGroupOwner();
     error RoundNotStarted();
     error MetaKeyEmpty();
@@ -50,8 +50,8 @@ interface IGroupChatErrors {
     error DuplicateMetaKey();
     error MetaValueUnchanged();
     error MetaKeyNotFound();
-    error DelegateCannotBeOwner();
-    error DelegateUnchanged();
+    error DelegateGroupIdCannotBeChatGroupId();
+    error DelegateGroupIdUnchanged();
     error PluginAddressHasNoCode();
     error PluginAddressUnchanged();
     error ContentEmpty();
@@ -80,12 +80,12 @@ interface IGroupChatEvents {
         bytes prevValue
     );
 
-    event DelegateSet(
+    event DelegateGroupIdSet(
         uint256 indexed groupId,
         address indexed owner,
-        address indexed delegate,
+        uint256 indexed delegateGroupId,
         uint256 configVersion,
-        address prevDelegate
+        uint256 prevDelegateGroupId
     );
 
     event BeforePostPluginSet(
@@ -142,7 +142,7 @@ interface IGroupChat is
         bytes[] calldata metaValues,
         address beforePostPlugin_,
         address afterPostPlugin_,
-        address delegate_
+        uint256 delegateGroupId_
     ) external;
 
     function deactivateChat(uint256 groupId) external;
@@ -159,7 +159,10 @@ interface IGroupChat is
         bytes[] calldata values
     ) external;
 
-    function setDelegate(uint256 groupId, address delegate_) external;
+    function setDelegateGroupId(
+        uint256 groupId,
+        uint256 delegateGroupId_
+    ) external;
 
     function setBeforePostPlugin(
         uint256 groupId,
@@ -191,7 +194,7 @@ interface IGroupChat is
         bool reverse
     ) external view returns (MetaEntry[] memory);
 
-    function delegateOf(uint256 groupId) external view returns (address);
+    function delegateGroupIdOf(uint256 groupId) external view returns (uint256);
 
     function beforePostPlugin(uint256 groupId) external view returns (address);
 

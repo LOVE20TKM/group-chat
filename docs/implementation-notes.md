@@ -12,7 +12,7 @@
 - `chatInfo`
 - `metaValue` / `metaEntries`
 - `setMeta` / `setMetaBatch`
-- `setDelegate` / `delegateOf`
+- `setDelegateGroupId` / `delegateGroupIdOf`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
 - `post`
 - `messages` / `messagesByRound`
@@ -38,7 +38,7 @@
 - `GroupChatMeta.t.sol`
   - `meta`、`configVersion`、`ChatActivate` 差异事件
 - `GroupChatDelegate.t.sol`
-  - `delegate` 与 NFT 转让恢复
+  - `delegateGroupId` 与 NFT 转让恢复
 - `GroupChatMessages.t.sol`
   - 发消息、分页、round、sender 维度读取
 - `GroupChatPlugins.t.sol`

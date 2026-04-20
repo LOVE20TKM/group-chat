@@ -58,10 +58,10 @@ contract GroupChatMessagesTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), delegate);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), delegateGroupId);
 
         vm.roll(originBlocks);
-        vm.prank(delegate);
+        vm.prank(delegateGroupOwner);
         vm.expectRevert(IGroupChatErrors.SenderNotGroupOwner.selector);
         chat.post(chatGroupId, senderGroupId, "delegate-send");
 
@@ -73,7 +73,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         chat.post(chatGroupId, senderGroupId, "closed");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), delegate);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), delegateGroupId);
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.ContentEmpty.selector);
@@ -94,7 +94,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         GroupChat futureChat =
             new GroupChat(address(groupNft), block.number + 1000, phaseBlocks);
         vm.prank(chatOwner);
-        futureChat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0));
+        futureChat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.RoundNotStarted.selector);

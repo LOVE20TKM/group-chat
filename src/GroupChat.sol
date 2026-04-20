@@ -19,7 +19,7 @@ contract GroupChat is IGroupChat {
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
         uint256 firstActivatedTimestamp;
-        address delegate;
+        uint256 delegateGroupId;
         address delegateOwnerSnapshot;
         address beforePostPlugin;
         address afterPostPlugin;
@@ -74,7 +74,7 @@ contract GroupChat is IGroupChat {
         bytes[] calldata metaValues_,
         address beforePostPlugin_,
         address afterPostPlugin_,
-        address delegate_
+        uint256 delegateGroupId_
     ) external nonReentrant {
         address owner = _ownerOfOrRevert(groupId);
         if (msg.sender != owner) revert NotChatOwner();
@@ -85,10 +85,10 @@ contract GroupChat is IGroupChat {
         bytes32[] memory metaHashes = _validateMetaInput(metaKeys_, metaValues_);
         _validatePluginAddress(beforePostPlugin_);
         _validatePluginAddress(afterPostPlugin_);
-        if (delegate_ == owner) revert DelegateCannotBeOwner();
+        _validateDelegateGroupId(groupId, delegateGroupId_);
 
         uint256 newVersion = config.configVersion + 1;
-        address prevDelegate = _delegateOf(config, owner);
+        uint256 prevDelegateGroupId = _delegateGroupIdOf(config, owner);
 
         if (config.firstActivatedOwner == address(0)) {
             config.firstActivatedOwner = owner;
@@ -100,7 +100,14 @@ contract GroupChat is IGroupChat {
         config.configVersion = newVersion;
 
         _applyActivateMeta(groupId, metaKeys_, metaValues_, metaHashes, newVersion);
-        _applyActivateDelegate(groupId, config, owner, delegate_, newVersion, prevDelegate);
+        _applyActivateDelegateGroupId(
+            groupId,
+            config,
+            owner,
+            delegateGroupId_,
+            newVersion,
+            prevDelegateGroupId
+        );
         _applyActivatePlugin(
             groupId,
             config.beforePostPlugin,
@@ -215,27 +222,36 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function setDelegate(uint256 groupId, address delegate_) external nonReentrant {
+    function setDelegateGroupId(
+        uint256 groupId,
+        uint256 delegateGroupId_
+    ) external nonReentrant {
         address owner = _ownerOfOrRevert(groupId);
         if (msg.sender != owner) revert NotChatOwner();
 
         ChatConfig storage config = _chatConfigs[groupId];
         if (!config.active) revert ChatNotActive();
-        if (delegate_ == owner) revert DelegateCannotBeOwner();
+        _validateDelegateGroupId(groupId, delegateGroupId_);
 
-        address targetSnapshot = delegate_ == address(0) ? address(0) : owner;
+        address targetSnapshot = delegateGroupId_ == 0 ? address(0) : owner;
         if (
-            config.delegate == delegate_ &&
+            config.delegateGroupId == delegateGroupId_ &&
             config.delegateOwnerSnapshot == targetSnapshot
-        ) revert DelegateUnchanged();
+        ) revert DelegateGroupIdUnchanged();
 
-        address prevDelegate = _delegateOf(config, owner);
-        config.delegate = delegate_;
+        uint256 prevDelegateGroupId = _delegateGroupIdOf(config, owner);
+        config.delegateGroupId = delegateGroupId_;
         config.delegateOwnerSnapshot = targetSnapshot;
 
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit DelegateSet(groupId, owner, delegate_, newVersion, prevDelegate);
+        emit DelegateGroupIdSet(
+            groupId,
+            owner,
+            delegateGroupId_,
+            newVersion,
+            prevDelegateGroupId
+        );
     }
 
     function setBeforePostPlugin(
@@ -411,9 +427,9 @@ contract GroupChat is IGroupChat {
         return result;
     }
 
-    function delegateOf(uint256 groupId) external view returns (address) {
+    function delegateGroupIdOf(uint256 groupId) external view returns (uint256) {
         address owner = _ownerOfOrRevert(groupId);
-        return _delegateOf(_chatConfigs[groupId], owner);
+        return _delegateGroupIdOf(_chatConfigs[groupId], owner);
     }
 
     function beforePostPlugin(uint256 groupId) external view returns (address) {
@@ -650,25 +666,31 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _applyActivateDelegate(
+    function _applyActivateDelegateGroupId(
         uint256 groupId,
         ChatConfig storage config,
         address owner,
-        address delegate_,
+        uint256 delegateGroupId_,
         uint256 newVersion,
-        address prevDelegate
+        uint256 prevDelegateGroupId
     ) internal {
-        address targetSnapshot = delegate_ == address(0) ? address(0) : owner;
+        address targetSnapshot = delegateGroupId_ == 0 ? address(0) : owner;
         if (
-            config.delegate == delegate_ &&
+            config.delegateGroupId == delegateGroupId_ &&
             config.delegateOwnerSnapshot == targetSnapshot
         ) {
             return;
         }
 
-        config.delegate = delegate_;
+        config.delegateGroupId = delegateGroupId_;
         config.delegateOwnerSnapshot = targetSnapshot;
-        emit DelegateSet(groupId, owner, delegate_, newVersion, prevDelegate);
+        emit DelegateGroupIdSet(
+            groupId,
+            owner,
+            delegateGroupId_,
+            newVersion,
+            prevDelegateGroupId
+        );
     }
 
     function _applyActivatePlugin(
@@ -753,9 +775,18 @@ contract GroupChat is IGroupChat {
         ChatConfig storage config = _chatConfigs[groupId];
         if (!config.active) revert ChatNotActive();
 
-        address delegate_ = _delegateOf(config, owner);
-        if (msg.sender != owner && msg.sender != delegate_) {
-            revert NotChatOwnerOrDelegate();
+        if (msg.sender == owner) {
+            return;
+        }
+
+        uint256 delegateGroupId_ = _delegateGroupIdOf(config, owner);
+        if (delegateGroupId_ == 0) {
+            revert NotChatOwnerOrDelegateGroupOwner();
+        }
+
+        address delegateGroupOwner = _ownerOfOrRevert(delegateGroupId_);
+        if (msg.sender != delegateGroupOwner) {
+            revert NotChatOwnerOrDelegateGroupOwner();
         }
     }
 
@@ -771,14 +802,27 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _delegateOf(
+    function _delegateGroupIdOf(
         ChatConfig storage config,
         address owner
-    ) internal view returns (address) {
+    ) internal view returns (uint256) {
         if (config.delegateOwnerSnapshot != owner) {
-            return address(0);
+            return 0;
         }
-        return config.delegate;
+        return config.delegateGroupId;
+    }
+
+    function _validateDelegateGroupId(
+        uint256 groupId,
+        uint256 delegateGroupId_
+    ) internal view {
+        if (delegateGroupId_ == 0) {
+            return;
+        }
+        if (delegateGroupId_ == groupId) {
+            revert DelegateGroupIdCannotBeChatGroupId();
+        }
+        _ownerOfOrRevert(delegateGroupId_);
     }
 
     function _validatePluginAddress(address pluginAddress) internal view {

@@ -22,7 +22,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
 
         vm.prank(other);
         vm.expectRevert(IGroupChatErrors.NotChatOwner.selector);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0));
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
     }
 
     function testT011_activateChat_setsLiveStateAndFirstActivationSnapshot() public {
@@ -42,11 +42,11 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0));
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.ChatAlreadyActive.selector);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0));
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
@@ -63,7 +63,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         values1[0] = bytes("v1");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), address(0));
+        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), 0);
 
         IGroupChatStructs.ChatInfo memory firstInfo = chat.chatInfo(chatGroupId);
 
@@ -80,7 +80,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         values2[0] = bytes("v2");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), delegate);
+        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), delegateGroupId);
 
         IGroupChatStructs.ChatInfo memory secondInfo = chat.chatInfo(chatGroupId);
         assertEq(secondInfo.firstActivatedOwner, firstInfo.firstActivatedOwner);
@@ -92,6 +92,6 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         IGroupChatStructs.Message[] memory fetched = chat.messages(chatGroupId, 0, 1, false);
         assertEq(fetched.length, 1);
         assertEq(fetched[0].content, "old-message");
-        assertEq(chat.delegateOf(chatGroupId), delegate);
+        assertEq(chat.delegateGroupIdOf(chatGroupId), delegateGroupId);
     }
 }

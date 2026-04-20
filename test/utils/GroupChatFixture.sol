@@ -16,17 +16,18 @@ abstract contract GroupChatFixture is TestBase {
     address internal chatOwner = address(0xA11CE);
     address internal senderOwner = address(0xB0B);
     address internal other = address(0xCAFE);
-    address internal delegate = address(0xD36E6A7E);
+    address internal delegateGroupOwner = address(0xD36E6A7E);
 
     uint256 internal chatGroupId;
     uint256 internal senderGroupId;
     uint256 internal otherGroupId;
+    uint256 internal delegateGroupId;
     uint256 internal originBlocks;
     uint256 internal phaseBlocks = 100;
     bytes32 internal constant META_SET_SIG =
         keccak256("MetaSet(uint256,address,uint256,string,bytes,bytes)");
-    bytes32 internal constant DELEGATE_SET_SIG =
-        keccak256("DelegateSet(uint256,address,address,uint256,address)");
+    bytes32 internal constant DELEGATE_GROUP_ID_SET_SIG =
+        keccak256("DelegateGroupIdSet(uint256,address,uint256,uint256,uint256)");
     bytes32 internal constant BEFORE_POST_PLUGIN_SET_SIG =
         keccak256(
             "BeforePostPluginSet(uint256,address,address,uint256,address)"
@@ -51,6 +52,7 @@ abstract contract GroupChatFixture is TestBase {
         chatGroupId = groupNft.mint(chatOwner);
         senderGroupId = groupNft.mint(senderOwner);
         otherGroupId = groupNft.mint(other);
+        delegateGroupId = groupNft.mint(delegateGroupOwner);
 
         originBlocks = block.number + 50;
         chat = new GroupChat(address(groupNft), originBlocks, phaseBlocks);
@@ -68,7 +70,7 @@ abstract contract GroupChatFixture is TestBase {
     function _activateEmpty() internal {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0));
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
     }
 
     function _decodeMetaConfigVersion(bytes memory data) internal pure returns (uint256 version) {
@@ -89,6 +91,10 @@ abstract contract GroupChatFixture is TestBase {
 
     function _decodeVersionAndAddress(bytes memory data) internal pure returns (uint256 version) {
         (version, ) = abi.decode(data, (uint256, address));
+    }
+
+    function _decodeVersionAndUint256(bytes memory data) internal pure returns (uint256 version) {
+        (version, ) = abi.decode(data, (uint256, uint256));
     }
 
     function _decodeChatActivateVersion(bytes memory data) internal pure returns (uint256 version) {

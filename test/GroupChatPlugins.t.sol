@@ -24,7 +24,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
             values,
             address(managedPlugin),
             address(0),
-            delegate
+            delegateGroupId
         );
 
         vm.prank(chatOwner);
@@ -42,7 +42,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         managedPlugin.configure(chatGroupId, bytes("owner-ok"));
         assertEq(managedPlugin.configValue(chatGroupId), bytes("owner-ok"));
 
-        vm.prank(delegate);
+        vm.prank(delegateGroupOwner);
         managedPlugin.configure(chatGroupId, bytes("delegate-ok"));
         assertEq(managedPlugin.configValue(chatGroupId), bytes("delegate-ok"));
     }
@@ -68,7 +68,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
             values,
             address(beforePlugin),
             address(0),
-            address(0)
+            0
         );
 
         vm.roll(originBlocks);
@@ -90,7 +90,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
             values,
             address(0),
             address(afterPlugin),
-            address(0)
+            0
         );
 
         vm.roll(originBlocks);
@@ -112,10 +112,10 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.PluginAddressHasNoCode.selector);
-        chat.activateChat(chatGroupId, keys, values, other, address(0), address(0));
+        chat.activateChat(chatGroupId, keys, values, other, address(0), 0);
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0));
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.PluginAddressHasNoCode.selector);
@@ -138,7 +138,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
             values,
             address(0),
             address(afterPlugin),
-            address(0)
+            0
         );
 
         vm.roll(originBlocks);
@@ -159,7 +159,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
             values,
             address(0),
             address(afterPlugin),
-            address(afterPlugin)
+            0
         );
 
         vm.roll(originBlocks);
