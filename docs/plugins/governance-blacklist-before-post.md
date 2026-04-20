@@ -1,9 +1,8 @@
-# 治理黑名单 `beforePost` 插件需求文档
+# 治理者群聊插件需求文档
 
-- 项目：LOVE20 Group Chat Plugin
+- 项目：治理者群聊插件
 - 状态：草案
 - 类型：`beforePost`
-- 版本：v0.1
 - 目标：让 LOVE20 治理者基于治理票，对地址或 `GroupNFT` 身份进行黑名单治理，结果直接作用于消息发送前拦截。
 
 ## 1. 背景
@@ -45,18 +44,18 @@
 
 ## 3. 术语
 
-| 术语 | 含义 |
-| --- | --- |
-| targetGroupId | 被本插件保护的目标群 `groupId` |
-| senderGroupId | 发消息时使用的身份 `groupId` |
-| governanceCommunity | 作为治理来源的代币社群 |
-| actionVoteFilter | 可选过滤条件，指某轮某行动的投票者集合 |
-| governor | 在指定代币社群中持有有效治理票的地址 |
-| eligibleGovernor | 应用可选过滤条件后，本次提案有资格参与的治理者 |
-| governanceVotes | LOVE20 治理票权重 |
-| blacklistTarget | 黑名单目标，类型为地址或 `GroupNFT groupId` |
-| blacklistProposal | “这些目标是否应处于黑名单状态”的治理提案 |
-| snapshot | 提案创建时对治理者集合与票权的快照 |
+| 术语                | 含义                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| chatGroupId         | 被本插件保护的目标群 `groupId`，等于主协议里的 `chatGroupId`                       |
+| senderGroupId       | 发消息时使用的身份 `groupId`                                                       |
+| governanceCommunity | 作为治理来源的代币社群                                                             |
+| actionVoteFilter    | 可选过滤条件，由 `filterVoteRound + filterActionId` 组成，指某轮某行动的投票者集合 |
+| governor            | 在指定代币社群中持有有效治理票的地址                                               |
+| eligibleGovernor    | 应用可选过滤条件后，本次提案有资格参与的治理者                                     |
+| governanceVotes     | LOVE20 治理票权重                                                                  |
+| blacklistTarget     | 黑名单目标，类型为地址或 `GroupNFT groupId`                                        |
+| blacklistProposal   | “这些目标是否应处于黑名单状态”的治理提案                                           |
+| snapshot            | 提案创建时对治理者集合与票权的快照                                                 |
 
 ## 4. 核心规则
 
@@ -65,7 +64,7 @@
 - 本插件只负责 `beforePost` 拦截
 - 本插件不修改消息内容
 - 本插件不修改群聊 owner、delegate、meta、active 等核心状态
-- 本插件实例只对挂载它的 `targetGroupId` 生效，不自动扩散到其他群
+- 本插件实例只对挂载它的 `chatGroupId` 生效，不自动扩散到其他群
 
 ### 4.2 黑名单目标
 
@@ -78,10 +77,16 @@
 
 插件在 `beforePost` 中至少按以下顺序判断：
 
-1. 检查 `msg.sender` 是否在地址黑名单
+1. 检查 `senderAddress` 是否在地址黑名单
 2. 检查 `senderGroupId` 是否在 NFT 黑名单
 3. 任一命中即拒绝发送
 4. 两者都未命中则放行
+
+补充语义：
+
+- 插件内 `msg.sender` 是群聊主协议合约，不是真实发言地址
+- 地址黑名单判断必须使用 hook 输入中的 `senderAddress`
+- 插件必须仅依赖 hook 入参中的 `senderAddress` 与 `senderGroupId`
 
 ### 4.4 治理资格来源
 
@@ -108,7 +113,7 @@
 
 ### 5.1 PluginConfig
 
-每个 `targetGroupId` 至少维护：
+每个 `chatGroupId` 至少维护：
 
 - `governanceCommunity`
 - `voteDurationBlocks`
@@ -140,7 +145,7 @@
 每个提案至少包含：
 
 - `proposalId`
-- `targetGroupId`
+- `chatGroupId`
 - `proposer`
 - `targets`
 - `reason`
@@ -265,7 +270,7 @@
 
 ### 6.6 地址黑名单拦截
 
-若 `msg.sender` 在地址黑名单中：
+若 `senderAddress` 在地址黑名单中：
 
 - `beforePost` 必须拒绝消息发送
 - 该地址不能借由自己持有的任意 `groupId` 发言
@@ -325,7 +330,7 @@
 
 `InitParams` 至少应包含：
 
-- `targetGroupId`
+- `chatGroupId`
 - `governanceCommunity`
 - `voteDurationBlocks`
 - `filterVoteRound`
@@ -333,7 +338,7 @@
 
 ### 7.2 发消息前检查
 
-- `beforePost(operator, targetGroupId, senderGroupId, content, data)`
+- `beforePost(chatGroupId, senderGroupId, senderAddress, content)`
 
 返回语义至少应覆盖：
 
@@ -372,7 +377,7 @@
 
 `GovernanceBlacklistInitialized` 至少应包含：
 
-- `targetGroupId`
+- `chatGroupId`
 - `governanceCommunity`
 - `voteDurationBlocks`
 - `filterVoteRound`
@@ -461,7 +466,7 @@
 插件可视为完成，需同时满足：
 
 - 群聊主协议能在 `beforePost` 正常接入该插件
-- 地址黑名单能拦截 `msg.sender`
+- 地址黑名单能拦截 `senderAddress`
 - NFT 黑名单能拦截 `senderGroupId`
 - 初始化时必须填写治理来源代币社群
 - 可选行动过滤生效后，只有指定行动投票者可参与

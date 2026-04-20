@@ -1,0 +1,7 @@
+# GroupChat Contract Configuration
+
+# Origin block number for phase calculation
+ORIGIN_BLOCKS=27
+
+# Number of blocks per phase
+PHASE_BLOCKS=10

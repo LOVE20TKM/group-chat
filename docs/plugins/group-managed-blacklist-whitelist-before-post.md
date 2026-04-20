@@ -1,9 +1,8 @@
-# 指定群管理黑名单 + 目标群白名单 `beforePost` 插件需求文档
+# 链群群聊插件需求文档
 
-- 项目：LOVE20 Group Chat Plugin
+- 项目：链群群聊插件
 - 状态：草案
 - 类型：`beforePost`
-- 版本：v0.1
 - 目标：让指定管理群负责黑名单，目标链群 `GroupNFT` 持有者或代理者负责白名单，形成链上可审计的双层发言控制。
 
 ## 1. 背景
@@ -39,16 +38,16 @@
 
 ## 3. 术语
 
-| 术语 | 含义 |
-| --- | --- |
-| targetGroupId | 被本插件保护的目标群 `groupId` |
-| managerGroupId | 被目标群指定、负责黑名单维护的管理群 `groupId` |
-| target owner | `ownerOf(targetGroupId)` |
-| target delegate | 目标群当前代理 |
-| manager owner | `ownerOf(managerGroupId)` |
-| manager delegate | 管理群当前代理 |
-| blacklist | 对目标群生效的拒绝发言地址集合 |
-| whitelist | 对目标群生效的放行地址集合 |
+| 术语             | 含义                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| chatGroupId      | 被本插件保护的目标群 `groupId`，等于主协议里的 `chatGroupId` |
+| managerGroupId   | 被目标群指定、负责黑名单维护的管理群 `groupId`               |
+| chat owner       | `ownerOf(chatGroupId)`                                       |
+| chat delegate    | 目标群当前代理                                               |
+| manager owner    | `ownerOf(managerGroupId)`                                    |
+| manager delegate | 管理群当前代理                                               |
+| blacklist        | 对目标群生效的拒绝发言地址集合                               |
+| whitelist        | 对目标群生效的放行地址集合                                   |
 
 ## 4. 核心规则
 
@@ -80,12 +79,12 @@
 ### 4.4 组身份优先于个人身份
 
 - 黑名单权力属于 `managerGroupId` 这个群身份，不属于某个固定地址
-- 白名单权力属于 `targetGroupId` 这个群身份，不属于某个固定地址
+- 白名单权力属于 `chatGroupId` 这个群身份，不属于某个固定地址
 - 只要 NFT 控制权变化，对应管理权就必须同步变化
 
 ## 5. 对象模型
 
-每个 `targetGroupId` 至少维护：
+每个 `chatGroupId` 至少维护：
 
 - `managerGroupId`
 - `configVersion`
@@ -96,7 +95,7 @@
 
 设计要求：
 
-- 黑名单、白名单都按 `targetGroupId` 隔离
+- 黑名单、白名单都按 `chatGroupId` 隔离
 - 不允许一个地址的状态污染其他群
 - 插件不保存 owner / delegate 快照
 
@@ -104,14 +103,14 @@
 
 ### 6.1 配置管理群
 
-- 目标群 `owner` 或 `delegate` 可为 `targetGroupId` 设置 `managerGroupId`
+- 目标群 `owner` 或 `delegate` 可为 `chatGroupId` 设置 `managerGroupId`
 - `managerGroupId` 必须是有效的 `GroupNFT groupId`
 - 未配置 `managerGroupId` 时，不应允许该插件进入可用状态
 - 变更 `managerGroupId` 后，旧管理群应立即失去黑名单写权限
 
 建议语义：
 
-- `managerGroupId` 可等于 `targetGroupId`
+- `managerGroupId` 可等于 `chatGroupId`
 - 若 `managerGroupId` 变更，旧黑名单状态应逻辑失效，避免旧管理群遗留决策延续到新管理群
 - 逻辑失效应优先通过版本号或 epoch 处理，而不是依赖高成本逐项清空
 
@@ -159,12 +158,17 @@
 
 ### 6.4 `beforePost` 判定
 
-插件在 `beforePost(targetGroupId, sender, content, ...)` 中至少要完成：
+插件在 `beforePost(chatGroupId, senderGroupId, senderAddress, content)` 中至少要完成：
 
 - 检查插件配置是否完整
-- 检查 `sender` 是否命中白名单
-- 检查 `sender` 是否命中黑名单
+- 检查 `senderAddress` 是否命中白名单
+- 检查 `senderAddress` 是否命中黑名单
 - 返回明确 allow / reject 结果
+
+补充语义：
+
+- 插件内 `msg.sender` 是群聊主协议合约，不是真实发言地址
+- 地址类白名单 / 黑名单判断必须使用 `senderAddress`
 
 建议错误语义：
 
@@ -184,12 +188,12 @@
 - 管理群代理变化后，黑名单管理权立即切换
 - 目标群 NFT 转移后，新 `owner` 自动继承白名单管理权
 - 管理群 NFT 转移后，新 `owner` 自动继承黑名单管理权
-- 旧权限不得在 NFT 转回后自动复活
+- 若主协议因 NFT 转回同一 owner 而恢复有效 `delegate`，插件管理权限也必须同步恢复
 
 建议实现：
 
-- 权限校验统一走“当前 owner 或当前 delegate”
-- 若主协议已有 delegate epoch 机制，插件应复用该语义
+- 权限校验统一走“当前 owner 或主协议当前有效 `delegate`”
+- 当前有效 `delegate` 必须以主协议 `delegateOf(groupId)` 为准
 - 插件不得自行缓存旧 delegate
 
 验收条件：
@@ -217,15 +221,15 @@
 
 以下接口为建议，不要求 ABI 完全一致，但实现应覆盖等价能力：
 
-- `setManagerGroup(uint256 targetGroupId, uint256 managerGroupId)`
-- `setBlacklist(uint256 targetGroupId, address[] accounts, bool listed)`
-- `setWhitelist(uint256 targetGroupId, address[] accounts, bool listed)`
-- `managerGroupOf(uint256 targetGroupId)`
-- `isBlacklisted(uint256 targetGroupId, address account)`
-- `isWhitelisted(uint256 targetGroupId, address account)`
-- `getBlacklist(uint256 targetGroupId, uint256 offset, uint256 limit)`
-- `getWhitelist(uint256 targetGroupId, uint256 offset, uint256 limit)`
-- `beforePost(uint256 targetGroupId, address sender, string content, bytes ctx)`
+- `setManagerGroup(uint256 chatGroupId, uint256 managerGroupId)`
+- `setBlacklist(uint256 chatGroupId, address[] accounts, bool listed)`
+- `setWhitelist(uint256 chatGroupId, address[] accounts, bool listed)`
+- `managerGroupOf(uint256 chatGroupId)`
+- `isBlacklisted(uint256 chatGroupId, address account)`
+- `isWhitelisted(uint256 chatGroupId, address account)`
+- `getBlacklist(uint256 chatGroupId, uint256 offset, uint256 limit)`
+- `getWhitelist(uint256 chatGroupId, uint256 offset, uint256 limit)`
+- `beforePost(uint256 chatGroupId, uint256 senderGroupId, address senderAddress, string content)`
 
 命名说明：
 
@@ -242,7 +246,7 @@
 
 事件字段至少包含：
 
-- `targetGroupId`
+- `chatGroupId`
 - `managerGroupId`（如适用）
 - `operator`
 - `account`
