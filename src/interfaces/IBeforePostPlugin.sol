@@ -6,6 +6,8 @@ interface IBeforePostPlugin {
         uint256 chatGroupId,
         uint256 senderGroupId,
         address senderAddress,
-        string calldata content
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll
     ) external;
 }

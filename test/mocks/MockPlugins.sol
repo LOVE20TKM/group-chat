@@ -19,7 +19,9 @@ interface IGroupChatPluginView {
     function post(
         uint256 chatGroupId,
         uint256 senderGroupId,
-        string calldata content
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll
     ) external;
 
     function setMeta(
@@ -36,9 +38,60 @@ contract MockBeforePostRejectPlugin {
         uint256,
         uint256,
         address,
-        string calldata
+        string calldata,
+        uint256[] calldata,
+        bool
     ) external pure {
         revert BeforePostRejected();
+    }
+}
+
+contract MockBeforePostCapturePlugin {
+    uint256 public lastChatGroupId;
+    uint256 public lastSenderGroupId;
+    address public lastSenderAddress;
+    string public lastContent;
+    bool public lastMentionAll;
+    uint256[] internal _lastMentions;
+
+    function beforePost(
+        uint256 chatGroupId,
+        uint256 senderGroupId,
+        address senderAddress,
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll
+    ) external {
+        lastChatGroupId = chatGroupId;
+        lastSenderGroupId = senderGroupId;
+        lastSenderAddress = senderAddress;
+        lastContent = content;
+        lastMentionAll = mentionAll;
+        delete _lastMentions;
+        for (uint256 i = 0; i < mentions.length; i++) {
+            _lastMentions.push(mentions[i]);
+        }
+    }
+
+    function lastMentions() external view returns (uint256[] memory) {
+        return _lastMentions;
+    }
+}
+
+contract MockBeforePostRejectMentionAllPlugin {
+    error MentionAllRejected();
+
+    function beforePost(
+        uint256,
+        uint256,
+        address,
+        string calldata,
+        uint256[] calldata,
+        bool mentionAll
+    ) external pure {
+        if (mentionAll) {
+            revert MentionAllRejected();
+        }
     }
 }
 
@@ -49,7 +102,9 @@ contract MockAfterPostFailPlugin {
         uint256,
         uint256,
         address,
-        string calldata
+        string calldata,
+        uint256[] calldata,
+        bool
     ) external pure {
         revert AfterPostFailed();
     }
@@ -74,9 +129,18 @@ contract MockAfterPostReenterPlugin {
         uint256,
         uint256,
         address,
-        string calldata
+        string calldata,
+        uint256[] calldata,
+        bool
     ) external {
-        _chat.post(_reenterChatGroupId, _reenterSenderGroupId, "reenter");
+        uint256[] memory mentions = new uint256[](0);
+        _chat.post(
+            _reenterChatGroupId,
+            _reenterSenderGroupId,
+            "reenter",
+            mentions,
+            false
+        );
     }
 }
 
@@ -91,7 +155,9 @@ contract MockAfterPostSetMetaPlugin {
         uint256 chatGroupId,
         uint256,
         address,
-        string calldata
+        string calldata,
+        uint256[] calldata,
+        bool
     ) external {
         _chat.setMeta(chatGroupId, "hook-write", bytes("1"));
     }

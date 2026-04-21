@@ -67,6 +67,28 @@ abstract contract GroupChatFixture is TestBase {
         values = new bytes[](0);
     }
 
+    function _emptyMentions() internal pure returns (uint256[] memory mentions) {
+        mentions = new uint256[](0);
+    }
+
+    function _post(
+        uint256 chatGroupId_,
+        uint256 senderGroupId_,
+        string memory content
+    ) internal {
+        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false);
+    }
+
+    function _postWithMentions(
+        uint256 chatGroupId_,
+        uint256 senderGroupId_,
+        string memory content,
+        uint256[] memory mentions,
+        bool mentionAll
+    ) internal {
+        chat.post(chatGroupId_, senderGroupId_, content, mentions, mentionAll);
+    }
+
     function _activateEmpty() internal {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);

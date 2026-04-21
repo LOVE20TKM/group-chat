@@ -21,6 +21,8 @@ interface IGroupChatStructs {
         string content;
         uint256 blockNumber;
         uint256 timestamp;
+        uint256[] mentions;
+        bool mentionAll;
     }
 
     struct RoundSpan {
@@ -56,6 +58,7 @@ interface IGroupChatErrors {
     error PluginAddressUnchanged();
     error ContentEmpty();
     error ContentTooLong(uint256 length, uint256 maxLength);
+    error DuplicateMentionGroupId();
 }
 
 interface IGroupChatEvents {
@@ -177,7 +180,9 @@ interface IGroupChat is
     function post(
         uint256 chatGroupId,
         uint256 senderGroupId,
-        string calldata content
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll
     ) external;
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
@@ -244,6 +249,45 @@ interface IGroupChat is
     function messageIndexesBySender(
         uint256 chatGroupId,
         uint256 senderGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (uint256[] memory);
+
+    function messagesByMentionCount(
+        uint256 chatGroupId,
+        uint256 mentionedGroupId
+    ) external view returns (uint256);
+
+    function messagesByMention(
+        uint256 chatGroupId,
+        uint256 mentionedGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (Message[] memory);
+
+    function messageIndexesByMention(
+        uint256 chatGroupId,
+        uint256 mentionedGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (uint256[] memory);
+
+    function messagesByMentionAllCount(
+        uint256 chatGroupId
+    ) external view returns (uint256);
+
+    function messagesByMentionAll(
+        uint256 chatGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (Message[] memory);
+
+    function messageIndexesByMentionAll(
+        uint256 chatGroupId,
         uint256 offset,
         uint256 limit,
         bool reverse

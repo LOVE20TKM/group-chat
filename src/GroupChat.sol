@@ -44,6 +44,8 @@ contract GroupChat is IGroupChat {
     mapping(uint256 => string[]) internal _metaKeys;
     mapping(uint256 => Message[]) internal _messagesByChat;
     mapping(uint256 => mapping(uint256 => uint256[])) internal _senderMessageIndexes;
+    mapping(uint256 => mapping(uint256 => uint256[])) internal _mentionMessageIndexes;
+    mapping(uint256 => uint256[]) internal _mentionAllMessageIndexes;
     mapping(uint256 => uint256[]) internal _senderGroupIdsByChat;
     mapping(uint256 => mapping(uint256 => bool)) internal _senderTracked;
     mapping(uint256 => mapping(uint256 => RoundState)) internal _roundStates;
@@ -305,7 +307,9 @@ contract GroupChat is IGroupChat {
     function post(
         uint256 chatGroupId,
         uint256 senderGroupId,
-        string calldata content
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll
     ) external nonReentrant {
         _requireExistingGroup(chatGroupId);
         ChatConfig storage config = _chatConfigs[chatGroupId];
@@ -319,6 +323,7 @@ contract GroupChat is IGroupChat {
 
         address senderOwner = _ownerOfOrRevert(senderGroupId);
         if (msg.sender != senderOwner) revert SenderNotGroupOwner();
+        _validateMentions(mentions);
 
         uint256 round = currentRound();
         if (config.beforePostPlugin != address(0)) {
@@ -326,22 +331,19 @@ contract GroupChat is IGroupChat {
                 chatGroupId,
                 senderGroupId,
                 msg.sender,
-                content
+                content,
+                mentions,
+                mentionAll
             );
         }
 
-        uint256 messageIndex = _messagesByChat[chatGroupId].length;
-        _messagesByChat[chatGroupId].push(
-            Message({
-                chatGroupId: chatGroupId,
-                senderGroupId: senderGroupId,
-                senderAddress: msg.sender,
-                round: round,
-                messageIndex: messageIndex,
-                content: content,
-                blockNumber: block.number,
-                timestamp: block.timestamp
-            })
+        uint256 messageIndex = _storeMessage(
+            chatGroupId,
+            senderGroupId,
+            round,
+            content,
+            mentions,
+            mentionAll
         );
 
         _senderMessageIndexes[chatGroupId][senderGroupId].push(messageIndex);
@@ -367,7 +369,9 @@ contract GroupChat is IGroupChat {
                     chatGroupId,
                     senderGroupId,
                     msg.sender,
-                    content
+                    content,
+                    mentions,
+                    mentionAll
                 )
             {} catch (bytes memory err) {
                 emit AfterPostPluginFailed(
@@ -491,7 +495,9 @@ contract GroupChat is IGroupChat {
         Message[] memory result = new Message[](count);
 
         for (uint256 i = 0; i < count; i++) {
-            result[i] = source[_pageIndex(source.length, offset, i, reverse)];
+            result[i] = _copyMessage(
+                source[_pageIndex(source.length, offset, i, reverse)]
+            );
         }
 
         return result;
@@ -516,7 +522,9 @@ contract GroupChat is IGroupChat {
 
         for (uint256 i = 0; i < count; i++) {
             uint256 localIndex = _pageIndex(total, offset, i, reverse);
-            result[i] = _messagesByChat[chatGroupId][state.startIndex + localIndex];
+            result[i] = _copyMessage(
+                _messagesByChat[chatGroupId][state.startIndex + localIndex]
+            );
         }
 
         return result;
@@ -536,7 +544,7 @@ contract GroupChat is IGroupChat {
 
         for (uint256 i = 0; i < count; i++) {
             uint256 pageIdx = _pageIndex(indexes.length, offset, i, reverse);
-            result[i] = _messagesByChat[chatGroupId][indexes[pageIdx]];
+            result[i] = _copyMessage(_messagesByChat[chatGroupId][indexes[pageIdx]]);
         }
 
         return result;
@@ -551,6 +559,97 @@ contract GroupChat is IGroupChat {
     ) external view returns (uint256[] memory) {
         _requireExistingGroup(chatGroupId);
         uint256[] storage indexes = _senderMessageIndexes[chatGroupId][senderGroupId];
+        uint256 count = _pageCount(indexes.length, offset, limit);
+        uint256[] memory result = new uint256[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = indexes[_pageIndex(indexes.length, offset, i, reverse)];
+        }
+
+        return result;
+    }
+
+    function messagesByMentionCount(
+        uint256 chatGroupId,
+        uint256 mentionedGroupId
+    ) external view returns (uint256) {
+        _requireExistingGroup(chatGroupId);
+        return _mentionMessageIndexes[chatGroupId][mentionedGroupId].length;
+    }
+
+    function messagesByMention(
+        uint256 chatGroupId,
+        uint256 mentionedGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (Message[] memory) {
+        _requireExistingGroup(chatGroupId);
+        uint256[] storage indexes = _mentionMessageIndexes[chatGroupId][mentionedGroupId];
+        uint256 count = _pageCount(indexes.length, offset, limit);
+        Message[] memory result = new Message[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            uint256 pageIdx = _pageIndex(indexes.length, offset, i, reverse);
+            result[i] = _copyMessage(_messagesByChat[chatGroupId][indexes[pageIdx]]);
+        }
+
+        return result;
+    }
+
+    function messageIndexesByMention(
+        uint256 chatGroupId,
+        uint256 mentionedGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (uint256[] memory) {
+        _requireExistingGroup(chatGroupId);
+        uint256[] storage indexes = _mentionMessageIndexes[chatGroupId][mentionedGroupId];
+        uint256 count = _pageCount(indexes.length, offset, limit);
+        uint256[] memory result = new uint256[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = indexes[_pageIndex(indexes.length, offset, i, reverse)];
+        }
+
+        return result;
+    }
+
+    function messagesByMentionAllCount(
+        uint256 chatGroupId
+    ) external view returns (uint256) {
+        _requireExistingGroup(chatGroupId);
+        return _mentionAllMessageIndexes[chatGroupId].length;
+    }
+
+    function messagesByMentionAll(
+        uint256 chatGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (Message[] memory) {
+        _requireExistingGroup(chatGroupId);
+        uint256[] storage indexes = _mentionAllMessageIndexes[chatGroupId];
+        uint256 count = _pageCount(indexes.length, offset, limit);
+        Message[] memory result = new Message[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            uint256 pageIdx = _pageIndex(indexes.length, offset, i, reverse);
+            result[i] = _copyMessage(_messagesByChat[chatGroupId][indexes[pageIdx]]);
+        }
+
+        return result;
+    }
+
+    function messageIndexesByMentionAll(
+        uint256 chatGroupId,
+        uint256 offset,
+        uint256 limit,
+        bool reverse
+    ) external view returns (uint256[] memory) {
+        _requireExistingGroup(chatGroupId);
+        uint256[] storage indexes = _mentionAllMessageIndexes[chatGroupId];
         uint256 count = _pageCount(indexes.length, offset, limit);
         uint256[] memory result = new uint256[](count);
 
@@ -771,21 +870,9 @@ contract GroupChat is IGroupChat {
     }
 
     function _requireOwnerOrDelegateAndActive(uint256 groupId) internal view {
-        address owner = _ownerOfOrRevert(groupId);
         ChatConfig storage config = _chatConfigs[groupId];
         if (!config.active) revert ChatNotActive();
-
-        if (msg.sender == owner) {
-            return;
-        }
-
-        uint256 delegateGroupId_ = _delegateGroupIdOf(config, owner);
-        if (delegateGroupId_ == 0) {
-            revert NotChatOwnerOrDelegateGroupOwner();
-        }
-
-        address delegateGroupOwner = _ownerOfOrRevert(delegateGroupId_);
-        if (msg.sender != delegateGroupOwner) {
+        if (!_isOwnerOrDelegateGroupOwner(groupId, config, msg.sender)) {
             revert NotChatOwnerOrDelegateGroupOwner();
         }
     }
@@ -831,6 +918,24 @@ contract GroupChat is IGroupChat {
         }
     }
 
+    function _isOwnerOrDelegateGroupOwner(
+        uint256 groupId,
+        ChatConfig storage config,
+        address operator
+    ) internal view returns (bool) {
+        address owner = _ownerOfOrRevert(groupId);
+        if (operator == owner) {
+            return true;
+        }
+
+        uint256 delegateGroupId_ = _delegateGroupIdOf(config, owner);
+        if (delegateGroupId_ == 0) {
+            return false;
+        }
+
+        return operator == _ownerOfOrRevert(delegateGroupId_);
+    }
+
     function _validateMetaInput(
         string[] calldata keys,
         bytes[] calldata values
@@ -844,6 +949,49 @@ contract GroupChat is IGroupChat {
             for (uint256 j = 0; j < i; j++) {
                 if (hashes[j] == hashes[i]) revert DuplicateMetaKey();
             }
+        }
+    }
+
+    function _validateMentions(uint256[] calldata mentions) internal view {
+        for (uint256 i = 0; i < mentions.length; i++) {
+            _ownerOfOrRevert(mentions[i]);
+            for (uint256 j = 0; j < i; j++) {
+                if (mentions[j] == mentions[i]) {
+                    revert DuplicateMentionGroupId();
+                }
+            }
+        }
+    }
+
+    function _storeMessage(
+        uint256 chatGroupId,
+        uint256 senderGroupId,
+        uint256 round,
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll
+    ) internal returns (uint256 messageIndex) {
+        messageIndex = _messagesByChat[chatGroupId].length;
+        _messagesByChat[chatGroupId].push();
+
+        Message storage message_ = _messagesByChat[chatGroupId][messageIndex];
+        message_.chatGroupId = chatGroupId;
+        message_.senderGroupId = senderGroupId;
+        message_.senderAddress = msg.sender;
+        message_.round = round;
+        message_.messageIndex = messageIndex;
+        message_.content = content;
+        message_.blockNumber = block.number;
+        message_.timestamp = block.timestamp;
+        message_.mentionAll = mentionAll;
+
+        for (uint256 i = 0; i < mentions.length; i++) {
+            uint256 mentionedGroupId = mentions[i];
+            message_.mentions.push(mentionedGroupId);
+            _mentionMessageIndexes[chatGroupId][mentionedGroupId].push(messageIndex);
+        }
+        if (mentionAll) {
+            _mentionAllMessageIndexes[chatGroupId].push(messageIndex);
         }
     }
 
@@ -887,6 +1035,25 @@ contract GroupChat is IGroupChat {
             endIndex: state.endIndex,
             messageCount: state.endIndex - state.startIndex
         });
+    }
+
+    function _copyMessage(
+        Message storage source
+    ) internal view returns (Message memory result) {
+        result.chatGroupId = source.chatGroupId;
+        result.senderGroupId = source.senderGroupId;
+        result.senderAddress = source.senderAddress;
+        result.round = source.round;
+        result.messageIndex = source.messageIndex;
+        result.content = source.content;
+        result.blockNumber = source.blockNumber;
+        result.timestamp = source.timestamp;
+        result.mentionAll = source.mentionAll;
+        result.mentions = new uint256[](source.mentions.length);
+
+        for (uint256 i = 0; i < source.mentions.length; i++) {
+            result.mentions[i] = source.mentions[i];
+        }
     }
 
     function _containsHash(

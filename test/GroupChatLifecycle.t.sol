@@ -69,7 +69,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        chat.post(chatGroupId, senderGroupId, "old-message");
+        _post(chatGroupId, senderGroupId, "old-message");
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
@@ -92,6 +92,8 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         IGroupChatStructs.Message[] memory fetched = chat.messages(chatGroupId, 0, 1, false);
         assertEq(fetched.length, 1);
         assertEq(fetched[0].content, "old-message");
+        assertEq(fetched[0].mentions.length, 0);
+        assertTrue(!fetched[0].mentionAll);
         assertEq(chat.delegateGroupIdOf(chatGroupId), delegateGroupId);
     }
 }

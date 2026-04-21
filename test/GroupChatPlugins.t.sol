@@ -6,6 +6,8 @@ import {
     MockAfterPostFailPlugin,
     MockAfterPostReenterPlugin,
     MockAfterPostSetMetaPlugin,
+    MockBeforePostCapturePlugin,
+    MockBeforePostRejectMentionAllPlugin,
     MockBeforePostRejectPlugin,
     MockManagedPlugin
 } from "./mocks/MockPlugins.sol";
@@ -52,7 +54,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        chat.post(chatGroupId, senderGroupId, "default-open");
+        _post(chatGroupId, senderGroupId, "default-open");
 
         assertEq(chat.messagesCount(chatGroupId), 1);
     }
@@ -74,7 +76,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.roll(originBlocks);
         vm.prank(senderOwner);
         vm.expectRevert(MockBeforePostRejectPlugin.BeforePostRejected.selector);
-        chat.post(chatGroupId, senderGroupId, "blocked");
+        _post(chatGroupId, senderGroupId, "blocked");
 
         assertEq(chat.messagesCount(chatGroupId), 0);
     }
@@ -96,7 +98,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.roll(originBlocks);
         vm.recordLogs();
         vm.prank(senderOwner);
-        chat.post(chatGroupId, senderGroupId, "ok");
+        _post(chatGroupId, senderGroupId, "ok");
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(chat.messagesCount(chatGroupId), 1);
@@ -143,7 +145,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        chat.post(chatGroupId, senderGroupId, "outer");
+        _post(chatGroupId, senderGroupId, "outer");
 
         assertEq(chat.messagesCount(chatGroupId), 1);
     }
@@ -165,7 +167,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.roll(originBlocks);
         vm.recordLogs();
         vm.prank(senderOwner);
-        chat.post(chatGroupId, senderGroupId, "outer");
+        _post(chatGroupId, senderGroupId, "outer");
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(chat.messagesCount(chatGroupId), 1);
@@ -174,5 +176,69 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(logs.length, 2);
         assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
         assertEq(logs[1].topics[0], AFTER_POST_PLUGIN_FAILED_SIG);
+    }
+
+    function testT077_beforePostPluginReceivesMentionArgs() public {
+        MockBeforePostCapturePlugin beforePlugin = new MockBeforePostCapturePlugin();
+        (string[] memory keys, bytes[] memory values) = _emptyMeta();
+
+        vm.prank(chatOwner);
+        chat.activateChat(
+            chatGroupId,
+            keys,
+            values,
+            address(beforePlugin),
+            address(0),
+            0
+        );
+
+        uint256[] memory mentions = new uint256[](2);
+        mentions[0] = otherGroupId;
+        mentions[1] = delegateGroupId;
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        _postWithMentions(chatGroupId, senderGroupId, "@all hi", mentions, true);
+
+        assertEq(beforePlugin.lastChatGroupId(), chatGroupId);
+        assertEq(beforePlugin.lastSenderGroupId(), senderGroupId);
+        assertEq(beforePlugin.lastSenderAddress(), senderOwner);
+        assertEq(beforePlugin.lastContent(), "@all hi");
+        assertTrue(beforePlugin.lastMentionAll());
+
+        uint256[] memory captured = beforePlugin.lastMentions();
+        assertEq(captured.length, 2);
+        assertEq(captured[0], otherGroupId);
+        assertEq(captured[1], delegateGroupId);
+
+        assertEq(chat.messagesCount(chatGroupId), 1);
+        assertTrue(chat.messages(chatGroupId, 0, 1, false)[0].mentionAll);
+    }
+
+    function testT078_beforePostPluginCanJudgeMentionAll() public {
+        MockBeforePostRejectMentionAllPlugin beforePlugin =
+            new MockBeforePostRejectMentionAllPlugin();
+        (string[] memory keys, bytes[] memory values) = _emptyMeta();
+
+        vm.prank(chatOwner);
+        chat.activateChat(
+            chatGroupId,
+            keys,
+            values,
+            address(beforePlugin),
+            address(0),
+            0
+        );
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        _post(chatGroupId, senderGroupId, "plain");
+
+        vm.prank(senderOwner);
+        vm.expectRevert(MockBeforePostRejectMentionAllPlugin.MentionAllRejected.selector);
+        _postWithMentions(chatGroupId, senderGroupId, "@all", _emptyMentions(), true);
+
+        assertEq(chat.messagesCount(chatGroupId), 1);
+        assertTrue(!chat.messages(chatGroupId, 0, 1, false)[0].mentionAll);
     }
 }
