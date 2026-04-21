@@ -337,7 +337,7 @@
 - `senderGroupId` 是主身份主体
 - `senderAddress` 是辅助风控主体
 - 主协议仍应先保证 `msg.sender` 是 `senderGroupId` 当前 owner
-- 若插件关心 `mentions` / `mentionAll`，也应在 `beforePost(...)` 中自行判定；主协议只透传，不额外决策
+- 若插件关心 `mentions` / `mentionAll` / `quotedMessageIndex`，也应在 `beforePost(...)` 中自行判定；主协议只透传，不额外决策
 
 ### 8.3 黑名单投票
 
@@ -460,7 +460,8 @@ interface IGovVotedBlacklistBeforePostPlugin {
         address senderAddress,
         string calldata content,
         uint256[] calldata mentions,
-        bool mentionAll
+        bool mentionAll,
+        uint256 quotedMessageIndex
     ) external;
 
     function voteAddress(
@@ -575,9 +576,9 @@ interface IGovVotedBlacklistBeforePostPlugin {
 
 ### 11.2 发送消息
 
-1. 用户调用 `GroupChat.post(chatGroupId, senderGroupId, content, mentions, mentionAll)`
+1. 用户调用 `GroupChat.post(chatGroupId, senderGroupId, content, mentions, mentionAll, quotedMessageIndex)`，或先设置默认身份后调用 `postByDefaultSender(...)`
 2. 主协议先校验 `msg.sender` 是否为 `senderGroupId` 当前 owner
-3. 主协议将 `content`、`mentions`、`mentionAll` 原样传给 `beforePost` 插件
+3. 主协议先校验 `quotedMessageIndex`，再将 `content`、`mentions`、`mentionAll`、`quotedMessageIndex` 原样传给 `beforePost` 插件
 4. 插件通过 `GroupNFT.ownerOf(chatGroupId)` 识别当前 owner manager
 5. 插件将该 owner 视为 `IGovBlacklistSource`
 6. 先调用 `canPost(chatGroupId, senderGroupId)`

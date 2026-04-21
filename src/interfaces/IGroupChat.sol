@@ -23,6 +23,7 @@ interface IGroupChatStructs {
         uint256 timestamp;
         uint256[] mentions;
         bool mentionAll;
+        uint256 quotedMessageIndex;
     }
 
     struct RoundSpan {
@@ -58,7 +59,13 @@ interface IGroupChatErrors {
     error PluginAddressUnchanged();
     error ContentEmpty();
     error ContentTooLong(uint256 length, uint256 maxLength);
+    error TooManyMentions(uint256 length, uint256 maxLength);
     error DuplicateMentionGroupId();
+    error InvalidQuotedMessageIndex();
+    error InvalidMessageIndex();
+    error DefaultSenderGroupIdNotSet();
+    error DefaultSenderGroupIdAlreadySet(uint256 senderGroupId);
+    error DefaultSenderGroupIdNotStored();
 }
 
 interface IGroupChatEvents {
@@ -111,7 +118,6 @@ interface IGroupChatEvents {
         uint256 indexed chatGroupId,
         uint256 indexed senderGroupId,
         address indexed senderAddress,
-        uint256 configVersion,
         uint256 round,
         uint256 messageIndex
     );
@@ -120,9 +126,18 @@ interface IGroupChatEvents {
         uint256 indexed chatGroupId,
         uint256 indexed messageIndex,
         address indexed pluginAddress,
-        uint256 configVersion,
         uint256 round,
         bytes errorData
+    );
+
+    event DefaultSenderGroupIdSet(
+        address indexed account,
+        uint256 indexed senderGroupId
+    );
+
+    event DefaultSenderGroupIdCleared(
+        address indexed account,
+        uint256 indexed prevSenderGroupId
     );
 }
 
@@ -138,6 +153,8 @@ interface IGroupChat is
     function phaseBlocks() external view returns (uint256);
 
     function MAX_CONTENT_LENGTH() external view returns (uint256);
+
+    function MAX_MENTIONS() external view returns (uint256);
 
     function activateChat(
         uint256 groupId,
@@ -182,8 +199,21 @@ interface IGroupChat is
         uint256 senderGroupId,
         string calldata content,
         uint256[] calldata mentions,
-        bool mentionAll
+        bool mentionAll,
+        uint256 quotedMessageIndex
     ) external;
+
+    function postByDefaultSender(
+        uint256 chatGroupId,
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll,
+        uint256 quotedMessageIndex
+    ) external;
+
+    function setDefaultSenderGroupId(uint256 senderGroupId) external;
+
+    function clearDefaultSenderGroupId() external;
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
 
@@ -205,9 +235,18 @@ interface IGroupChat is
 
     function afterPostPlugin(uint256 groupId) external view returns (address);
 
+    function defaultSenderGroupIdOf(
+        address account
+    ) external view returns (uint256);
+
     function currentRound() external view returns (uint256);
 
     function messagesCount(uint256 chatGroupId) external view returns (uint256);
+
+    function message(
+        uint256 chatGroupId,
+        uint256 messageIndex
+    ) external view returns (Message memory);
 
     function messagesByRoundCount(
         uint256 chatGroupId,

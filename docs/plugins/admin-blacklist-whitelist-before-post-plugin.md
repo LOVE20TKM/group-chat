@@ -42,7 +42,7 @@
 
 - `senderGroupId` 是主身份主体
 - `senderAddress` 是辅助风控主体
-- 若需要限制 `mentionAll`，插件应基于 `mentionAll` 自行拒绝；主协议不会额外拦截
+- 若需要限制 `mentionAll` 或 `quotedMessageIndex`，插件应基于对应入参自行拒绝；主协议不会额外拦截
 
 ## 4. 状态要求
 
@@ -76,13 +76,13 @@
 - `getAddressBlacklist(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `getSenderGroupIdBlacklist(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `getSenderGroupIdWhitelist(uint256 chatGroupId, uint256 offset, uint256 limit)`
-- `beforePost(uint256 chatGroupId, uint256 senderGroupId, address senderAddress, string content, uint256[] mentions, bool mentionAll)`
+- `beforePost(uint256 chatGroupId, uint256 senderGroupId, address senderAddress, string content, uint256[] mentions, bool mentionAll, uint256 quotedMessageIndex)`
 
 说明：
 
 - `senderGroupId` 是主要名单主体
 - `senderAddress` 保留给辅助风控
-- `mentions` / `mentionAll` 供插件按自身策略决定是否拒绝消息
+- `mentions` / `mentionAll` / `quotedMessageIndex` 供插件按自身策略决定是否拒绝消息
 - 未配置 `adminGroupId` 时，插件应视为未完成配置，不应静默放行异常状态
 
 ## 6. 事件
@@ -108,7 +108,7 @@
 1. `chat controller` 挂载插件并设置 `adminGroupId`
 2. `admin controller` 维护地址黑名单与身份黑名单
 3. `chat controller` 维护身份白名单
-4. 主协议在发言前调用 `beforePost`，并传入 `mentions` / `mentionAll`
+4. 主协议在发言前调用 `beforePost`，并传入 `mentions` / `mentionAll` / `quotedMessageIndex`
 
 ## 8. 验收要点
 

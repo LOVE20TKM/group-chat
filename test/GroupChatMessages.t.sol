@@ -31,6 +31,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(result[0].timestamp, block.timestamp);
         assertEq(result[0].mentions.length, 0);
         assertTrue(!result[0].mentionAll);
+        assertEq(result[0].quotedMessageIndex, 0);
     }
 
     function testT041_crossGroupPostWithoutPluginIsAllowedByDefault() public {
@@ -100,7 +101,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.RoundNotStarted.selector);
-        futureChat.post(chatGroupId, senderGroupId, "early", _emptyMentions(), false);
+        futureChat.post(chatGroupId, senderGroupId, "early", _emptyMentions(), false, 0);
     }
 
     function testT048_postStoresMentionsAndMentionIndexes() public {
@@ -120,6 +121,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(result[0].mentions[0], otherGroupId);
         assertEq(result[0].mentions[1], delegateGroupId);
         assertTrue(!result[0].mentionAll);
+        assertEq(result[0].quotedMessageIndex, 0);
 
         assertEq(chat.messagesByMentionCount(chatGroupId, otherGroupId), 1);
         assertEq(chat.messagesByMentionCount(chatGroupId, delegateGroupId), 1);
@@ -422,9 +424,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         assertEq(logs.length, 1);
         assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
-        (uint256 messageVersion, uint256 messageRound, uint256 messageIndex) =
-            _decodeMessagePost(logs[0].data);
-        assertEq(messageVersion, chat.chatInfo(chatGroupId).configVersion);
+        (uint256 messageRound, uint256 messageIndex) = _decodeMessagePost(logs[0].data);
         assertEq(messageRound, 0);
         assertEq(messageIndex, 0);
 
@@ -441,5 +441,68 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(fetched[0].senderGroupId, senderGroupId);
         assertEq(fetched[0].mentions.length, 0);
         assertTrue(!fetched[0].mentionAll);
+        assertEq(fetched[0].quotedMessageIndex, 0);
+    }
+
+    function testT084_messageViewReadsSingleMessageAndRevertsWhenMissing() public {
+        _activateEmpty();
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        _post(chatGroupId, senderGroupId, "single");
+
+        IGroupChatStructs.Message memory fetched = chat.message(chatGroupId, 0);
+        assertEq(fetched.chatGroupId, chatGroupId);
+        assertEq(fetched.senderGroupId, senderGroupId);
+        assertEq(fetched.content, "single");
+        assertEq(fetched.messageIndex, 0);
+        assertEq(fetched.quotedMessageIndex, 0);
+
+        vm.expectRevert(IGroupChatErrors.InvalidMessageIndex.selector);
+        chat.message(chatGroupId, 1);
+    }
+
+    function testT085_postStoresQuotedMessageIndexAndRejectsInvalidQuote() public {
+        _activateEmpty();
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        _post(chatGroupId, senderGroupId, "m0");
+
+        vm.prank(senderOwner);
+        _post(chatGroupId, senderGroupId, "m1");
+
+        vm.prank(other);
+        _postWithQuote(chatGroupId, otherGroupId, "quote-m1", 1);
+
+        IGroupChatStructs.Message memory fetched = chat.message(chatGroupId, 2);
+        assertEq(fetched.messageIndex, 2);
+        assertEq(fetched.quotedMessageIndex, 1);
+
+        vm.prank(other);
+        vm.expectRevert(IGroupChatErrors.InvalidQuotedMessageIndex.selector);
+        _postWithQuote(chatGroupId, otherGroupId, "future", 3);
+    }
+
+    function testT086_postRejectsTooManyMentions() public {
+        _activateEmpty();
+
+        uint256 maxMentions = chat.MAX_MENTIONS();
+        uint256[] memory mentions = new uint256[](maxMentions + 1);
+        for (uint256 i = 0; i < maxMentions; i++) {
+            mentions[i] = senderGroupId;
+        }
+        mentions[maxMentions] = otherGroupId;
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGroupChatErrors.TooManyMentions.selector,
+                maxMentions + 1,
+                maxMentions
+            )
+        );
+        _postWithMentions(chatGroupId, senderGroupId, "too-many", mentions, false);
     }
 }

@@ -39,13 +39,13 @@ abstract contract GroupChatFixture is TestBase {
     bytes32 internal constant CHAT_ACTIVATE_SIG =
         keccak256("ChatActivate(uint256,address,uint256)");
     bytes32 internal constant MESSAGE_POST_SIG =
-        keccak256(
-            "MessagePost(uint256,uint256,address,uint256,uint256,uint256)"
-        );
+        keccak256("MessagePost(uint256,uint256,address,uint256,uint256)");
     bytes32 internal constant AFTER_POST_PLUGIN_FAILED_SIG =
-        keccak256(
-            "AfterPostPluginFailed(uint256,uint256,address,uint256,uint256,bytes)"
-        );
+        keccak256("AfterPostPluginFailed(uint256,uint256,address,uint256,bytes)");
+    bytes32 internal constant DEFAULT_SENDER_GROUP_ID_SET_SIG =
+        keccak256("DefaultSenderGroupIdSet(address,uint256)");
+    bytes32 internal constant DEFAULT_SENDER_GROUP_ID_CLEARED_SIG =
+        keccak256("DefaultSenderGroupIdCleared(address,uint256)");
 
     function setUp() public virtual {
         groupNft = new MockLOVE20Group();
@@ -76,7 +76,7 @@ abstract contract GroupChatFixture is TestBase {
         uint256 senderGroupId_,
         string memory content
     ) internal {
-        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false);
+        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false, 0);
     }
 
     function _postWithMentions(
@@ -86,7 +86,30 @@ abstract contract GroupChatFixture is TestBase {
         uint256[] memory mentions,
         bool mentionAll
     ) internal {
-        chat.post(chatGroupId_, senderGroupId_, content, mentions, mentionAll);
+        chat.post(chatGroupId_, senderGroupId_, content, mentions, mentionAll, 0);
+    }
+
+    function _postWithQuote(
+        uint256 chatGroupId_,
+        uint256 senderGroupId_,
+        string memory content,
+        uint256 quotedMessageIndex
+    ) internal {
+        chat.post(
+            chatGroupId_,
+            senderGroupId_,
+            content,
+            _emptyMentions(),
+            false,
+            quotedMessageIndex
+        );
+    }
+
+    function _postByDefaultSender(
+        uint256 chatGroupId_,
+        string memory content
+    ) internal {
+        chat.postByDefaultSender(chatGroupId_, content, _emptyMentions(), false, 0);
     }
 
     function _activateEmpty() internal {
@@ -123,17 +146,13 @@ abstract contract GroupChatFixture is TestBase {
         version = abi.decode(data, (uint256));
     }
 
-    function _decodeMessagePostVersion(bytes memory data) internal pure returns (uint256 version) {
-        (version, , ) = abi.decode(data, (uint256, uint256, uint256));
-    }
-
     function _decodeMessagePost(
         bytes memory data
-    ) internal pure returns (uint256 version, uint256 round, uint256 messageIndex) {
-        (version, round, messageIndex) = abi.decode(data, (uint256, uint256, uint256));
+    ) internal pure returns (uint256 round, uint256 messageIndex) {
+        (round, messageIndex) = abi.decode(data, (uint256, uint256));
     }
 
-    function _decodeAfterPostFailedVersion(bytes memory data) internal pure returns (uint256 version) {
-        (version, , ) = abi.decode(data, (uint256, uint256, bytes));
+    function _decodeAfterPostFailedRound(bytes memory data) internal pure returns (uint256 round) {
+        (round, ) = abi.decode(data, (uint256, bytes));
     }
 }

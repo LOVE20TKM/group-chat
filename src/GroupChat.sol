@@ -8,6 +8,7 @@ import {IAfterPostPlugin} from "./interfaces/IAfterPostPlugin.sol";
 
 contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 16384;
+    uint256 public constant MAX_MENTIONS = 32;
 
     address public immutable LOVE20_GROUP;
     uint256 public immutable originBlocks;
@@ -50,6 +51,7 @@ contract GroupChat is IGroupChat {
     mapping(uint256 => mapping(uint256 => bool)) internal _senderTracked;
     mapping(uint256 => mapping(uint256 => RoundState)) internal _roundStates;
     mapping(uint256 => uint256[]) internal _roundListByChat;
+    mapping(address => uint256) internal _defaultSenderGroupIds;
 
     uint256 internal _entered;
 
@@ -309,8 +311,63 @@ contract GroupChat is IGroupChat {
         uint256 senderGroupId,
         string calldata content,
         uint256[] calldata mentions,
-        bool mentionAll
+        bool mentionAll,
+        uint256 quotedMessageIndex
     ) external nonReentrant {
+        _post(
+            chatGroupId,
+            senderGroupId,
+            content,
+            mentions,
+            mentionAll,
+            quotedMessageIndex
+        );
+    }
+
+    function postByDefaultSender(
+        uint256 chatGroupId,
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll,
+        uint256 quotedMessageIndex
+    ) external nonReentrant {
+        uint256 senderGroupId = _effectiveDefaultSenderGroupId(msg.sender);
+        if (senderGroupId == 0) revert DefaultSenderGroupIdNotSet();
+        _post(
+            chatGroupId,
+            senderGroupId,
+            content,
+            mentions,
+            mentionAll,
+            quotedMessageIndex
+        );
+    }
+
+    function setDefaultSenderGroupId(uint256 senderGroupId) external {
+        address senderOwner = _ownerOfOrRevert(senderGroupId);
+        if (msg.sender != senderOwner) revert SenderNotGroupOwner();
+        if (_defaultSenderGroupIds[msg.sender] == senderGroupId) {
+            revert DefaultSenderGroupIdAlreadySet(senderGroupId);
+        }
+        _defaultSenderGroupIds[msg.sender] = senderGroupId;
+        emit DefaultSenderGroupIdSet(msg.sender, senderGroupId);
+    }
+
+    function clearDefaultSenderGroupId() external {
+        uint256 prevSenderGroupId = _defaultSenderGroupIds[msg.sender];
+        if (prevSenderGroupId == 0) revert DefaultSenderGroupIdNotStored();
+        delete _defaultSenderGroupIds[msg.sender];
+        emit DefaultSenderGroupIdCleared(msg.sender, prevSenderGroupId);
+    }
+
+    function _post(
+        uint256 chatGroupId,
+        uint256 senderGroupId,
+        string calldata content,
+        uint256[] calldata mentions,
+        bool mentionAll,
+        uint256 quotedMessageIndex
+    ) internal {
         _requireExistingGroup(chatGroupId);
         ChatConfig storage config = _chatConfigs[chatGroupId];
         if (!config.active) revert ChatNotActive();
@@ -326,6 +383,7 @@ contract GroupChat is IGroupChat {
         _validateMentions(mentions);
 
         uint256 round = currentRound();
+        _validateQuotedMessageIndex(chatGroupId, quotedMessageIndex);
         if (config.beforePostPlugin != address(0)) {
             IBeforePostPlugin(config.beforePostPlugin).beforePost(
                 chatGroupId,
@@ -333,7 +391,8 @@ contract GroupChat is IGroupChat {
                 msg.sender,
                 content,
                 mentions,
-                mentionAll
+                mentionAll,
+                quotedMessageIndex
             );
         }
 
@@ -343,7 +402,8 @@ contract GroupChat is IGroupChat {
             round,
             content,
             mentions,
-            mentionAll
+            mentionAll,
+            quotedMessageIndex
         );
 
         _senderMessageIndexes[chatGroupId][senderGroupId].push(messageIndex);
@@ -358,7 +418,6 @@ contract GroupChat is IGroupChat {
             chatGroupId,
             senderGroupId,
             msg.sender,
-            config.configVersion,
             round,
             messageIndex
         );
@@ -371,14 +430,17 @@ contract GroupChat is IGroupChat {
                     msg.sender,
                     content,
                     mentions,
-                    mentionAll
+                    mentionAll,
+                    quotedMessageIndex,
+                    messageIndex,
+                    block.number,
+                    block.timestamp
                 )
             {} catch (bytes memory err) {
                 emit AfterPostPluginFailed(
                     chatGroupId,
                     messageIndex,
                     config.afterPostPlugin,
-                    config.configVersion,
                     round,
                     err
                 );
@@ -446,6 +508,12 @@ contract GroupChat is IGroupChat {
         return _chatConfigs[groupId].afterPostPlugin;
     }
 
+    function defaultSenderGroupIdOf(
+        address account
+    ) external view returns (uint256) {
+        return _effectiveDefaultSenderGroupId(account);
+    }
+
     function currentRound() public view returns (uint256) {
         if (block.number < originBlocks) revert RoundNotStarted();
         return (block.number - originBlocks) / phaseBlocks;
@@ -454,6 +522,17 @@ contract GroupChat is IGroupChat {
     function messagesCount(uint256 chatGroupId) external view returns (uint256) {
         _requireExistingGroup(chatGroupId);
         return _messagesByChat[chatGroupId].length;
+    }
+
+    function message(
+        uint256 chatGroupId,
+        uint256 messageIndex
+    ) external view returns (Message memory) {
+        _requireExistingGroup(chatGroupId);
+        if (messageIndex >= _messagesByChat[chatGroupId].length) {
+            revert InvalidMessageIndex();
+        }
+        return _copyMessage(_messagesByChat[chatGroupId][messageIndex]);
     }
 
     function messagesByRoundCount(
@@ -953,6 +1032,9 @@ contract GroupChat is IGroupChat {
     }
 
     function _validateMentions(uint256[] calldata mentions) internal view {
+        if (mentions.length > MAX_MENTIONS) {
+            revert TooManyMentions(mentions.length, MAX_MENTIONS);
+        }
         for (uint256 i = 0; i < mentions.length; i++) {
             _ownerOfOrRevert(mentions[i]);
             for (uint256 j = 0; j < i; j++) {
@@ -969,7 +1051,8 @@ contract GroupChat is IGroupChat {
         uint256 round,
         string calldata content,
         uint256[] calldata mentions,
-        bool mentionAll
+        bool mentionAll,
+        uint256 quotedMessageIndex
     ) internal returns (uint256 messageIndex) {
         messageIndex = _messagesByChat[chatGroupId].length;
         _messagesByChat[chatGroupId].push();
@@ -984,6 +1067,7 @@ contract GroupChat is IGroupChat {
         message_.blockNumber = block.number;
         message_.timestamp = block.timestamp;
         message_.mentionAll = mentionAll;
+        message_.quotedMessageIndex = quotedMessageIndex;
 
         for (uint256 i = 0; i < mentions.length; i++) {
             uint256 mentionedGroupId = mentions[i];
@@ -1049,6 +1133,7 @@ contract GroupChat is IGroupChat {
         result.blockNumber = source.blockNumber;
         result.timestamp = source.timestamp;
         result.mentionAll = source.mentionAll;
+        result.quotedMessageIndex = source.quotedMessageIndex;
         result.mentions = new uint256[](source.mentions.length);
 
         for (uint256 i = 0; i < source.mentions.length; i++) {
@@ -1090,5 +1175,34 @@ contract GroupChat is IGroupChat {
 
     function _metaHash(string memory key) internal pure returns (bytes32) {
         return keccak256(bytes(key));
+    }
+
+    function _validateQuotedMessageIndex(
+        uint256 chatGroupId,
+        uint256 quotedMessageIndex
+    ) internal view {
+        if (quotedMessageIndex == 0) {
+            return;
+        }
+        if (quotedMessageIndex >= _messagesByChat[chatGroupId].length) {
+            revert InvalidQuotedMessageIndex();
+        }
+    }
+
+    function _effectiveDefaultSenderGroupId(
+        address account
+    ) internal view returns (uint256 senderGroupId) {
+        senderGroupId = _defaultSenderGroupIds[account];
+        if (senderGroupId == 0) {
+            return 0;
+        }
+        try IGroupNFTOwner(LOVE20_GROUP).ownerOf(senderGroupId) returns (
+            address owner
+        ) {
+            if (owner == account) {
+                return senderGroupId;
+            }
+        } catch {}
+        return 0;
     }
 }

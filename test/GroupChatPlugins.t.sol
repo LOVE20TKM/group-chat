@@ -3,6 +3,7 @@ pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {
+    MockAfterPostCapturePlugin,
     MockAfterPostFailPlugin,
     MockAfterPostReenterPlugin,
     MockAfterPostSetMetaPlugin,
@@ -105,8 +106,10 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(logs.length, 2);
         assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
         assertEq(logs[1].topics[0], AFTER_POST_PLUGIN_FAILED_SIG);
-        assertEq(_decodeMessagePostVersion(logs[0].data), 1);
-        assertEq(_decodeAfterPostFailedVersion(logs[1].data), 1);
+        (uint256 round, uint256 messageIndex) = _decodeMessagePost(logs[0].data);
+        assertEq(round, 0);
+        assertEq(messageIndex, 0);
+        assertEq(_decodeAfterPostFailedRound(logs[1].data), 0);
     }
 
     function testT073_pluginAddressWithoutCodeReverts() public {
@@ -210,6 +213,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(captured.length, 2);
         assertEq(captured[0], otherGroupId);
         assertEq(captured[1], delegateGroupId);
+        assertEq(beforePlugin.lastQuotedMessageIndex(), 0);
 
         assertEq(chat.messagesCount(chatGroupId), 1);
         assertTrue(chat.messages(chatGroupId, 0, 1, false)[0].mentionAll);
@@ -240,5 +244,54 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         assertEq(chat.messagesCount(chatGroupId), 1);
         assertTrue(!chat.messages(chatGroupId, 0, 1, false)[0].mentionAll);
+    }
+
+    function testT079_beforeAndAfterPostPluginsReceiveQuoteAndMessageContext() public {
+        MockBeforePostCapturePlugin beforePlugin = new MockBeforePostCapturePlugin();
+        MockAfterPostCapturePlugin afterPlugin = new MockAfterPostCapturePlugin();
+        (string[] memory keys, bytes[] memory values) = _emptyMeta();
+
+        vm.prank(chatOwner);
+        chat.activateChat(
+            chatGroupId,
+            keys,
+            values,
+            address(beforePlugin),
+            address(afterPlugin),
+            0
+        );
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        _post(chatGroupId, senderGroupId, "base");
+
+        vm.prank(senderOwner);
+        _post(chatGroupId, senderGroupId, "base-1");
+
+        uint256[] memory mentions = new uint256[](1);
+        mentions[0] = otherGroupId;
+
+        vm.prank(senderOwner);
+        chat.post(chatGroupId, senderGroupId, "quoted", mentions, true, 1);
+
+        assertEq(beforePlugin.lastQuotedMessageIndex(), 1);
+
+        uint256[] memory beforeMentions = beforePlugin.lastMentions();
+        assertEq(beforeMentions.length, 1);
+        assertEq(beforeMentions[0], otherGroupId);
+
+        assertEq(afterPlugin.lastChatGroupId(), chatGroupId);
+        assertEq(afterPlugin.lastSenderGroupId(), senderGroupId);
+        assertEq(afterPlugin.lastSenderAddress(), senderOwner);
+        assertEq(afterPlugin.lastContent(), "quoted");
+        assertTrue(afterPlugin.lastMentionAll());
+        assertEq(afterPlugin.lastQuotedMessageIndex(), 1);
+        assertEq(afterPlugin.lastMessageIndex(), 2);
+        assertEq(afterPlugin.lastBlockNumber(), block.number);
+        assertEq(afterPlugin.lastTimestamp(), block.timestamp);
+
+        uint256[] memory afterMentions = afterPlugin.lastMentions();
+        assertEq(afterMentions.length, 1);
+        assertEq(afterMentions[0], otherGroupId);
     }
 }
