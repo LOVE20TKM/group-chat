@@ -4,6 +4,10 @@ echo "========================================="
 echo "Verifying GroupChat Configuration"
 echo "========================================="
 
+if [ -z "$tokenGroupChatManagerAddress" ] && [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ]; then
+    source $network_dir/address.group.chat.params
+fi
+
 if [ -z "$groupChatAddress" ]; then
     echo -e "\033[31mError:\033[0m GroupChat address not set"
     return 1
@@ -12,8 +16,13 @@ fi
 echo "Validating initialization parameters..."
 missing_params=0
 
-if [ -z "$LOVE20_GROUP_ADDRESS" ]; then
-    echo -e "\033[31m✗\033[0m LOVE20_GROUP_ADDRESS not set"
+if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_DEFAULTS_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$EXTENSION_CENTER_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m EXTENSION_CENTER_ADDRESS not set"
     ((missing_params++))
 fi
 
@@ -27,9 +36,74 @@ if [ -z "$PHASE_BLOCKS" ]; then
     ((missing_params++))
 fi
 
+if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_DENY_SOURCE_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
+    GROUP_JOIN_ADDRESS=$groupJoinAddress
+    export GROUP_JOIN_ADDRESS
+fi
+
+if [ -z "$GROUP_JOIN_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_JOIN_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddress" ]; then
+    GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
+    export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
+fi
+
+if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_JOIN_SCOPE_SOURCE_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ] && [ -n "$adminDenySourceAddress" ]; then
+    ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
+    export ADMIN_DENY_SOURCE_ADDRESS
+fi
+
+if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m ADMIN_DENY_SOURCE_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$tokenGroupChatManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenGroupChatManagerAddress not set"
+    ((missing_params++))
+fi
+
+if [ -z "$tokenGovGroupChatManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenGovGroupChatManagerAddress not set"
+    ((missing_params++))
+fi
+
+if [ -z "$tokenActionGovGroupChatManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenActionGovGroupChatManagerAddress not set"
+    ((missing_params++))
+fi
+
+if [ -z "$tokenActionGroupChatManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenActionGroupChatManagerAddress not set"
+    ((missing_params++))
+fi
+
 if [ $missing_params -gt 0 ]; then
     echo -e "\033[31mError:\033[0m $missing_params initialization parameter(s) missing"
-    echo "Please ensure all parameters are loaded from group.chat.params / address.group.params"
+    echo "Please ensure all parameters are loaded from group.chat.params / address.group.defaults.params"
     return 1
 fi
 
@@ -37,12 +111,34 @@ echo -e "\033[32m✓\033[0m All initialization parameters are set"
 echo ""
 
 echo -e "GroupChat Address: $groupChatAddress\n"
+echo -e "AdminDenySource Address: $ADMIN_DENY_SOURCE_ADDRESS"
+echo -e "GovVotedDenySource Address: $GROUP_CHAT_DENY_SOURCE_ADDRESS\n"
+echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
+echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
+echo -e "TokenGroupChatManager Address: $tokenGroupChatManagerAddress"
+echo -e "TokenGovGroupChatManager Address: $tokenGovGroupChatManagerAddress"
+echo -e "TokenActionGovGroupChatManager Address: $tokenActionGovGroupChatManagerAddress"
+echo -e "TokenActionGroupChatManager Address: $tokenActionGroupChatManagerAddress\n"
 
 failed_checks=0
 
 echo "Verifying initialization parameters match contract values..."
 
-check_equal "GroupChat: LOVE20_GROUP" $LOVE20_GROUP_ADDRESS $(cast_call $groupChatAddress "LOVE20_GROUP()(address)")
+defaults_group_address=$(cast_call $GROUP_DEFAULTS_ADDRESS "GROUP_ADDRESS()(address)")
+if [ -n "$LOVE20_GROUP_ADDRESS" ]; then
+    check_equal "GroupDefaults: GROUP_ADDRESS" $LOVE20_GROUP_ADDRESS $defaults_group_address
+    [ $? -ne 0 ] && ((failed_checks++))
+    echo ""
+else
+    LOVE20_GROUP_ADDRESS=$defaults_group_address
+    export LOVE20_GROUP_ADDRESS
+fi
+
+check_equal "GroupChat: LOVE20_GROUP" $defaults_group_address $(cast_call $groupChatAddress "LOVE20_GROUP()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+check_equal "GroupChat: GROUP_DEFAULTS" $GROUP_DEFAULTS_ADDRESS $(cast_call $groupChatAddress "GROUP_DEFAULTS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -69,9 +165,92 @@ else
 fi
 echo ""
 
+echo "Verifying AdminDenySource configuration..."
+check_equal "AdminDenySource: GROUP_CHAT" $groupChatAddress $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_CHAT()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "AdminDenySource: GROUP_DEFAULTS" $GROUP_DEFAULTS_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_DEFAULTS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "AdminDenySource: LOVE20_GROUP" $LOVE20_GROUP_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "LOVE20_GROUP()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+echo "Verifying GovVotedDenySource configuration..."
+check_equal "GovVotedDenySource: GROUP_ADDRESS" $LOVE20_GROUP_ADDRESS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "GROUP_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+echo "Verifying GroupJoinScopeSource configuration..."
+check_equal "GroupJoinScopeSource: GROUP_JOIN" $GROUP_JOIN_ADDRESS $(cast_call $GROUP_JOIN_SCOPE_SOURCE_ADDRESS "GROUP_JOIN()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+echo "Verifying ExtensionCenter values used by managers..."
+
+extension_stake_address=$(cast_call $EXTENSION_CENTER_ADDRESS "stakeAddress()(address)")
+extension_join_address=$(cast_call $EXTENSION_CENTER_ADDRESS "joinAddress()(address)")
+extension_vote_address=$(cast_call $EXTENSION_CENTER_ADDRESS "voteAddress()(address)")
+extension_submit_address=$(cast_call $EXTENSION_CENTER_ADDRESS "submitAddress()(address)")
+
+echo -e "\033[32m✓\033[0m ExtensionCenter: dependency addresses loaded"
+echo -e "  STAKE:  $extension_stake_address"
+echo -e "  JOIN:   $extension_join_address"
+echo -e "  VOTE:   $extension_vote_address"
+echo -e "  SUBMIT: $extension_submit_address"
+echo ""
+
+check_manager_common() {
+    local manager_name=$1
+    local manager_address=$2
+
+    check_equal "$manager_name: GROUP_CHAT" $groupChatAddress $(cast_call $manager_address "GROUP_CHAT()(address)")
+    [ $? -ne 0 ] && ((failed_checks++))
+
+    check_equal "$manager_name: DENY_SOURCE" $GROUP_CHAT_DENY_SOURCE_ADDRESS $(cast_call $manager_address "DENY_SOURCE()(address)")
+    [ $? -ne 0 ] && ((failed_checks++))
+
+    check_equal "$manager_name: BEFORE_POST_PLUGIN" $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS $(cast_call $manager_address "BEFORE_POST_PLUGIN()(address)")
+    [ $? -ne 0 ] && ((failed_checks++))
+
+    check_equal "$manager_name: AFTER_POST_PLUGIN" $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS $(cast_call $manager_address "AFTER_POST_PLUGIN()(address)")
+    [ $? -ne 0 ] && ((failed_checks++))
+
+    check_equal "$manager_name: EXTENSION_CENTER" $EXTENSION_CENTER_ADDRESS $(cast_call $manager_address "EXTENSION_CENTER()(address)")
+    [ $? -ne 0 ] && ((failed_checks++))
+}
+
+echo "Verifying manager immutable configuration..."
+
+check_manager_common "TokenGroupChatManager" $tokenGroupChatManagerAddress
+check_equal "TokenGroupChatManager: STAKE" $extension_stake_address $(cast_call $tokenGroupChatManagerAddress "STAKE()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenGroupChatManager: JOIN" $extension_join_address $(cast_call $tokenGroupChatManagerAddress "JOIN()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenGroupChatManager: VOTE" $extension_vote_address $(cast_call $tokenGroupChatManagerAddress "VOTE()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenGroupChatManager: SUBMIT" $extension_submit_address $(cast_call $tokenGroupChatManagerAddress "SUBMIT()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+check_manager_common "TokenGovGroupChatManager" $tokenGovGroupChatManagerAddress
+check_equal "TokenGovGroupChatManager: STAKE" $extension_stake_address $(cast_call $tokenGovGroupChatManagerAddress "STAKE()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+check_manager_common "TokenActionGovGroupChatManager" $tokenActionGovGroupChatManagerAddress
+check_equal "TokenActionGovGroupChatManager: VOTE" $extension_vote_address $(cast_call $tokenActionGovGroupChatManagerAddress "VOTE()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+check_manager_common "TokenActionGroupChatManager" $tokenActionGroupChatManagerAddress
+check_equal "TokenActionGroupChatManager: VOTE" $extension_vote_address $(cast_call $tokenActionGroupChatManagerAddress "VOTE()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenActionGroupChatManager: JOIN" $extension_join_address $(cast_call $tokenActionGroupChatManagerAddress "JOIN()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
 echo "========================================="
 if [ $failed_checks -eq 0 ]; then
-    echo -e "\033[32m✓ All parameter checks passed (3/3)\033[0m"
+    echo -e "\033[32m✓ All parameter checks passed\033[0m"
     echo "========================================="
     return 0
 else

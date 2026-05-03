@@ -5,3 +5,13 @@ ORIGIN_BLOCKS=65467377
 
 # Number of blocks per phase
 PHASE_BLOCKS=111
+
+# ExtensionCenter used by typed decentralized managers
+extensionCenterAddress=0x5EC6968225d640f5A6DD8EaB2574539E506Bc184
+
+# GroupJoin used by chain-group managed chat scope source
+groupJoinAddress=0xF61861699CdDfBD74395060Ea36A040b3FB8251A
+
+# Optional immutable plugin slots used by typed decentralized managers
+groupChatBeforePostPluginAddress=0x0000000000000000000000000000000000000000
+groupChatAfterPostPluginAddress=0x0000000000000000000000000000000000000000

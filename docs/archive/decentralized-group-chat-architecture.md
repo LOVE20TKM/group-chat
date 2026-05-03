@@ -1,8 +1,8 @@
-# 去中心化 GroupChat 架构
+# 去中心化 GroupChat 架构（归档）
 
 - 模块：去中心化 GroupChat 架构
-- 状态：草案
-- 目标：定义基于 LOVE20 core 稳定规则的去中心化 `GroupChat` manager 架构与治理黑名单插件边界
+- 状态：归档，仅保留讨论脉络，不参与当前设计
+- 说明：该文档中的 `beforePost`、manager、黑名单插件拆分方式已被后续设计推翻。当前设计以 `docs/requirements.md` 入口下的拆分文档为准。
 
 ## 1. 身份前提
 

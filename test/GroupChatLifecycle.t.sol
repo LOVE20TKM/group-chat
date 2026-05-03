@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {
-    IGroupChatErrors,
-    IGroupChatStructs
-} from "../src/interfaces/IGroupChat.sol";
+import {GroupChat} from "../src/GroupChat.sol";
+import {IGroupChatErrors, IGroupChatStructs} from "../src/interfaces/IGroupChat.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupChatLifecycleTest is GroupChatFixture {
     function testT001_constructorStoresConfigAndRoundNotStarted() public {
         assertEq(chat.LOVE20_GROUP(), address(groupNft));
+        assertEq(chat.GROUP_DEFAULTS(), address(groupDefaults));
         assertEq(chat.originBlocks(), originBlocks);
         assertEq(chat.phaseBlocks(), phaseBlocks);
 
@@ -17,12 +16,17 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         chat.currentRound();
     }
 
+    function testT002_constructorRejectsRegistryWithoutCode() public {
+        vm.expectRevert(IGroupChatErrors.GroupDefaultsHasNoCode.selector);
+        new GroupChat(other, originBlocks, phaseBlocks);
+    }
+
     function testT010_activateChat_requiresCurrentOwner() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(other);
         vm.expectRevert(IGroupChatErrors.NotChatOwner.selector);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
     }
 
     function testT011_activateChat_setsLiveStateAndFirstActivationSnapshot() public {
@@ -42,11 +46,11 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.ChatAlreadyActive.selector);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
@@ -63,7 +67,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         values1[0] = bytes("v1");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
 
         IGroupChatStructs.ChatInfo memory firstInfo = chat.chatInfo(chatGroupId);
 
@@ -80,7 +84,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         values2[0] = bytes("v2");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), delegateGroupId);
+        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), delegateGroupId);
 
         IGroupChatStructs.ChatInfo memory secondInfo = chat.chatInfo(chatGroupId);
         assertEq(secondInfo.firstActivatedOwner, firstInfo.firstActivatedOwner);

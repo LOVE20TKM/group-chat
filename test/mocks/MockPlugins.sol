@@ -101,6 +101,62 @@ contract MockBeforePostRejectMentionAllPlugin {
     }
 }
 
+contract MockPostScopeSource {
+    bool public allowed = true;
+
+    function setAllowed(bool allowed_) external {
+        allowed = allowed_;
+    }
+
+    function canPost(
+        uint256,
+        uint256,
+        address
+    ) external view returns (bool) {
+        return allowed;
+    }
+}
+
+contract MockPostScopeFailSource {
+    error ScopeSourceBoom();
+
+    function canPost(
+        uint256,
+        uint256,
+        address
+    ) external pure returns (bool) {
+        revert ScopeSourceBoom();
+    }
+}
+
+contract MockPostDenySource {
+    bool public denied;
+
+    function setDenied(bool denied_) external {
+        denied = denied_;
+    }
+
+    function isDenied(
+        uint256,
+        uint256,
+        address
+    ) external view returns (bool) {
+        return denied;
+    }
+}
+
+contract MockPostDenyFailSource {
+    error DenySourceBoom();
+
+    function isDenied(
+        uint256,
+        uint256,
+        address
+    ) external pure returns (bool) {
+        revert DenySourceBoom();
+    }
+}
+
 contract MockAfterPostFailPlugin {
     error AfterPostFailed();
 

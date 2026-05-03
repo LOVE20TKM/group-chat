@@ -27,6 +27,14 @@ if [ -f "$network_dir/address.group.params" ]; then
     source $network_dir/address.group.params
 fi
 
+if [ -f "$network_dir/address.group.chat.params" ]; then
+    source $network_dir/address.group.chat.params
+fi
+
+if [ -f "$network_dir/address.group.defaults.params" ]; then
+    source $network_dir/address.group.defaults.params
+fi
+
 if [ -f "$network_dir/group.chat.params" ]; then
     source $network_dir/group.chat.params
 
@@ -34,18 +42,102 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export LOVE20_GROUP_ADDRESS=$groupAddress
     fi
 
-    if [ -z "$LOVE20_GROUP_ADDRESS" ]; then
-        echo -e "\033[31mError:\033[0m LOVE20_GROUP_ADDRESS not set"
-        echo -e "Please provide groupAddress in $network_dir/address.group.params"
+    if [ -n "$groupDefaultsAddress" ]; then
+        export GROUP_DEFAULTS_ADDRESS=$groupDefaultsAddress
+    fi
+
+    if [ -n "$extensionCenterAddress" ]; then
+        export EXTENSION_CENTER_ADDRESS=$extensionCenterAddress
+    fi
+
+    if [ -n "$groupJoinAddress" ]; then
+        export GROUP_JOIN_ADDRESS=$groupJoinAddress
+    fi
+
+    if [ -n "$groupChatDenySourceAddress" ]; then
+        export GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
+    fi
+
+    if [ -n "$groupJoinScopeSourceAddress" ]; then
+        export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
+    fi
+
+    if [ -n "$adminDenySourceAddress" ]; then
+        export ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
+    fi
+
+    if [ -n "$groupChatBeforePostPluginAddress" ]; then
+        export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS=$groupChatBeforePostPluginAddress
+    fi
+
+    if [ -n "$groupChatAfterPostPluginAddress" ]; then
+        export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$groupChatAfterPostPluginAddress
+    fi
+
+    if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
+        echo -e "\033[31mError:\033[0m GROUP_DEFAULTS_ADDRESS not set"
+        echo -e "Please provide groupDefaultsAddress in $network_dir/address.group.defaults.params"
         return 1
     fi
 
+    if [ -z "$EXTENSION_CENTER_ADDRESS" ]; then
+        echo -e "\033[31mError:\033[0m EXTENSION_CENTER_ADDRESS not set"
+        echo -e "Please provide extensionCenterAddress in $network_dir/group.chat.params"
+        return 1
+    fi
+
+    if [ -z "$GROUP_JOIN_ADDRESS" ]; then
+        echo -e "\033[31mError:\033[0m GROUP_JOIN_ADDRESS not set"
+        echo -e "Please provide groupJoinAddress in $network_dir/group.chat.params"
+        return 1
+    fi
+
+    zero_address=0x0000000000000000000000000000000000000000
+
+    if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
+        export GROUP_CHAT_DENY_SOURCE_ADDRESS=""
+    fi
+
+    if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ]; then
+        export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=""
+    fi
+
+    if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ]; then
+        export ADMIN_DENY_SOURCE_ADDRESS=""
+    fi
+
+    if [ -z "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" ]; then
+        export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS=$zero_address
+    fi
+
+    if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
+        export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$zero_address
+    fi
+
     export LOVE20_GROUP_ADDRESS
+    export GROUP_DEFAULTS_ADDRESS
+    export EXTENSION_CENTER_ADDRESS
+    export GROUP_JOIN_ADDRESS
+    export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
+    export ADMIN_DENY_SOURCE_ADDRESS
+    export GROUP_CHAT_DENY_SOURCE_ADDRESS
+    export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
+    export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export ORIGIN_BLOCKS
     export PHASE_BLOCKS
 
     echo "GroupChat Configuration loaded:"
-    echo "  LOVE20 Group: $LOVE20_GROUP_ADDRESS"
+    if [ -n "$LOVE20_GROUP_ADDRESS" ]; then
+        echo "  LOVE20 Group: $LOVE20_GROUP_ADDRESS"
+    fi
+    echo "  GroupDefaults: $GROUP_DEFAULTS_ADDRESS"
+    echo "  ExtensionCenter: $EXTENSION_CENTER_ADDRESS"
+    echo "  GroupJoin: $GROUP_JOIN_ADDRESS"
+    echo "  GroupJoinScopeSource: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
+    echo "  AdminDenySource: $ADMIN_DENY_SOURCE_ADDRESS"
+    echo "  DenySource: $GROUP_CHAT_DENY_SOURCE_ADDRESS"
+    echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
+    echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ORIGIN_BLOCKS: $ORIGIN_BLOCKS"
     echo "  PHASE_BLOCKS: $PHASE_BLOCKS"
 else

@@ -9,8 +9,23 @@ if [ -z "$RPC_URL" ]; then
     source 00_init.sh $network
 fi
 
-if [ -z "$groupChatAddress" ]; then
+if [ -z "$groupChatAddress" ] || [ -z "$tokenGroupChatManagerAddress" ]; then
     source $network_dir/address.group.chat.params
+fi
+
+if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
+    GROUP_JOIN_ADDRESS=$groupJoinAddress
+    export GROUP_JOIN_ADDRESS
+fi
+
+if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddress" ]; then
+    GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
+    export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
+fi
+
+if [ -z "$LOVE20_GROUP_ADDRESS" ]; then
+    LOVE20_GROUP_ADDRESS=$(cast call "$GROUP_DEFAULTS_ADDRESS" "GROUP_ADDRESS()(address)" --rpc-url "$RPC_URL")
+    export LOVE20_GROUP_ADDRESS
 fi
 
 verify_contract(){
@@ -41,8 +56,74 @@ verify_contract(){
 echo "verify_contract() loaded"
 
 constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
-    $LOVE20_GROUP_ADDRESS \
+    $GROUP_DEFAULTS_ADDRESS \
     $ORIGIN_BLOCKS \
     $PHASE_BLOCKS)
 
+failed_verifications=0
+
 verify_contract $groupChatAddress "GroupChat" "src/GroupChat.sol" $constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+admin_deny_source_constructor_args=$(cast abi-encode "constructor(address)" $groupChatAddress)
+verify_contract \
+    $adminDenySourceAddress \
+    "AdminDenySource" \
+    "src/sources/deny/AdminDenySource.sol" \
+    $admin_deny_source_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+gov_deny_source_constructor_args=$(cast abi-encode "constructor(address)" $LOVE20_GROUP_ADDRESS)
+verify_contract \
+    $groupChatDenySourceAddress \
+    "GovVotedDenySource" \
+    "src/sources/deny/GovVotedDenySource.sol" \
+    $gov_deny_source_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+group_join_scope_source_constructor_args=$(cast abi-encode "constructor(address)" $GROUP_JOIN_ADDRESS)
+verify_contract \
+    $groupJoinScopeSourceAddress \
+    "GroupJoinScopeSource" \
+    "src/sources/scope/GroupJoinScopeSource.sol" \
+    $group_join_scope_source_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
+    $groupChatAddress \
+    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
+    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
+    $EXTENSION_CENTER_ADDRESS)
+
+verify_contract \
+    $tokenGroupChatManagerAddress \
+    "TokenGroupChatManager" \
+    "src/managers/TokenGroupChatManager.sol" \
+    $manager_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+verify_contract \
+    $tokenGovGroupChatManagerAddress \
+    "TokenGovGroupChatManager" \
+    "src/managers/TokenGovGroupChatManager.sol" \
+    $manager_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+verify_contract \
+    $tokenActionGovGroupChatManagerAddress \
+    "TokenActionGovGroupChatManager" \
+    "src/managers/TokenActionGovGroupChatManager.sol" \
+    $manager_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+verify_contract \
+    $tokenActionGroupChatManagerAddress \
+    "TokenActionGroupChatManager" \
+    "src/managers/TokenActionGroupChatManager.sol" \
+    $manager_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+if [ $failed_verifications -gt 0 ]; then
+    return 1
+fi

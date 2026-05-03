@@ -100,6 +100,8 @@ contract GroupChatMetaTest is GroupChatFixture {
             chatGroupId,
             keys1,
             values1,
+            address(0),
+            address(0),
             address(beforePlugin),
             address(afterPlugin),
             delegateGroupId
@@ -117,7 +119,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), 0);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(chat.chatInfo(chatGroupId).configVersion, 3);
@@ -166,7 +168,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         values1[1] = bytes("2");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
@@ -180,7 +182,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), 0);
+        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), 0);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         IGroupChatStructs.MetaEntry[] memory entries =
