@@ -59,4 +59,21 @@ for (const needle of requiredJs) {
   }
 }
 
+const requiredProtocolCopy = [
+  'canPostStatus',
+  'ruleSlots',
+  'senderGroupId',
+  'scopeSource',
+  'denySource',
+  'quotedMessageIndex',
+  'mentions',
+  'mentionAll',
+];
+
+for (const needle of requiredProtocolCopy) {
+  if (!(html + js).includes(needle)) {
+    throw new Error(`Missing protocol copy: ${needle}`);
+  }
+}
+
 console.log('GroupChat prototype smoke test passed');

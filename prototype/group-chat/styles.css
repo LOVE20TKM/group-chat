@@ -30,6 +30,12 @@ body {
   display: none;
 }
 
+.panel-title {
+  padding: 16px;
+  border-bottom: 1px solid var(--greyscale-200);
+  font-weight: 700;
+}
+
 .phone-frame {
   width: 100%;
   max-width: 430px;
@@ -86,6 +92,53 @@ body {
   overflow: auto;
 }
 
+.round-divider {
+  width: fit-content;
+  margin: 0 auto 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #d4d4d8;
+  color: #fff;
+  font-size: 11px;
+}
+
+.message-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.message-row.mine {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 5px;
+  border: 1px solid var(--greyscale-200);
+  background: #fff;
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.message-row.mine .avatar {
+  border-color: var(--secondary);
+  background: var(--secondary);
+  color: #fff;
+}
+
+.message-meta {
+  margin-bottom: 3px;
+  color: var(--greyscale-500);
+  font-size: 11px;
+}
+
 .message-bubble {
   max-width: 82%;
   margin-bottom: 12px;
@@ -99,6 +152,34 @@ body {
   margin-left: auto;
   background: #eef2ff;
   border-color: #c7d2fe;
+}
+
+.quote-preview {
+  margin-bottom: 6px;
+  padding-left: 7px;
+  border-left: 3px solid rgba(79, 70, 229, 0.35);
+  color: #475569;
+  font-size: 12px;
+}
+
+.status-strip {
+  margin: 0 8px 8px;
+  padding: 8px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+}
+
+.status-ok {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.status-bad {
+  color: #dc2626;
+  font-weight: 700;
 }
 
 .composer {
@@ -145,6 +226,38 @@ body {
   right: 0;
   bottom: 0;
   background: #fff;
+}
+
+.status-card,
+.chat-card {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+}
+
+.chat-card.active {
+  border-color: #c7d2fe;
+  border-left: 4px solid var(--secondary);
+  background: #eef2ff;
+}
+
+.status-card dt {
+  color: var(--greyscale-500);
+}
+
+.status-card dd {
+  margin: 2px 0 8px;
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  margin: 10px auto;
+  border-radius: 999px;
+  background: #d1d5db;
 }
 
 @media (min-width: 900px) {
