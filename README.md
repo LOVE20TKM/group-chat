@@ -51,6 +51,25 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 forge test
 ```
 
+交互原型：
+
+- [GroupChat 手机优先原型](./prototype/group-chat/index.html)
+- 交互仿微信聊天布局，样式参考 `interface-test`
+- 模拟 `canPostStatus`、`ruleSlots`、引用、mentions、mentionAll、消息索引和 `MessagePost` 同步提示
+
+原型 smoke test：
+
+```bash
+node prototype/group-chat/smoke-test.mjs
+```
+
+本地预览：
+
+```bash
+cd prototype/group-chat
+python3 -m http.server 8012
+```
+
 ## 部署
 
 最小部署脚本：
