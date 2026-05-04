@@ -1,0 +1,162 @@
+:root {
+  --secondary: #4f46e5;
+  --primary: #1e3a8a;
+  --greyscale-50: #f8fafc;
+  --greyscale-100: #f1f5f9;
+  --greyscale-200: #e2e8f0;
+  --greyscale-500: #64748b;
+  --greyscale-900: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--greyscale-50);
+  color: var(--greyscale-900);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.desktop-chat-list,
+.desktop-status-panel {
+  display: none;
+}
+
+.phone-frame {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ededed;
+}
+
+.chat-header {
+  height: 50px;
+  display: grid;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid var(--greyscale-200);
+}
+
+.icon-button,
+.round-button,
+.send-button {
+  touch-action: manipulation;
+}
+
+.icon-button {
+  border: 0;
+  background: transparent;
+  color: var(--greyscale-900);
+  font-size: 16px;
+}
+
+.chat-title {
+  min-width: 0;
+  text-align: center;
+}
+
+.chat-title strong,
+.chat-title span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-title span {
+  color: var(--greyscale-500);
+  font-size: 11px;
+}
+
+.message-list {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 10px;
+  overflow: auto;
+}
+
+.message-bubble {
+  max-width: 82%;
+  margin-bottom: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.message-bubble.mine {
+  margin-left: auto;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.composer {
+  padding: 8px 8px calc(10px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid var(--greyscale-200);
+}
+
+.composer-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px 54px;
+  gap: 7px;
+  align-items: center;
+}
+
+.composer-input {
+  min-width: 0;
+  height: 36px;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.round-button,
+.send-button {
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--greyscale-200);
+  background: #fff;
+}
+
+.send-button {
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.status-sheet,
+.more-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+}
+
+@media (min-width: 900px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: 260px minmax(390px, 560px) 300px;
+  }
+
+  .desktop-chat-list,
+  .desktop-status-panel {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--greyscale-200);
+  }
+}
