@@ -79,13 +79,12 @@ contract GroupChatMessagesTest is GroupChatFixture {
         vm.expectRevert(IGroupChatErrors.ContentEmpty.selector);
         _post(chatGroupId, senderGroupId, "");
 
-        bytes memory tooLongBytes = new bytes(chat.MAX_CONTENT_LENGTH() + 1);
+        uint256 maxContentLength = chat.MAX_CONTENT_LENGTH();
+        bytes memory tooLongBytes = new bytes(maxContentLength + 1);
         string memory tooLong = string(tooLongBytes);
         vm.prank(senderOwner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IGroupChatErrors.ContentTooLong.selector, chat.MAX_CONTENT_LENGTH() + 1, chat.MAX_CONTENT_LENGTH()
-            )
+            abi.encodeWithSelector(IGroupChatErrors.ContentTooLong.selector, maxContentLength + 1, maxContentLength)
         );
         _post(chatGroupId, senderGroupId, tooLong);
 

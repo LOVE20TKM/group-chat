@@ -329,18 +329,18 @@ contract GroupChat is IGroupChat {
         ChatConfig storage config = _chatConfigs[chatGroupId];
         if (!config.active) revert ChatNotActive();
 
+        address senderOwner = _ownerOfOrRevert(senderGroupId);
+        if (msg.sender != senderOwner) revert SenderNotGroupOwner();
+
         uint256 contentLength = bytes(content).length;
         if (contentLength == 0) revert ContentEmpty();
         if (contentLength > MAX_CONTENT_LENGTH) {
             revert ContentTooLong(contentLength, MAX_CONTENT_LENGTH);
         }
-
-        address senderOwner = _ownerOfOrRevert(senderGroupId);
-        if (msg.sender != senderOwner) revert SenderNotGroupOwner();
         _validateMentions(mentions);
+        _validateQuotedMessageIndex(chatGroupId, quotedMessageIndex);
 
         uint256 round = currentRound();
-        _validateQuotedMessageIndex(chatGroupId, quotedMessageIndex);
         _requirePostSources(config, chatGroupId, senderGroupId, msg.sender);
         if (config.beforePostPlugin != address(0)) {
             IBeforePostPlugin(config.beforePostPlugin).beforePost(

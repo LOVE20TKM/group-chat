@@ -15,13 +15,19 @@
 - `metaValue` / `metaEntries`
 - `setMeta` / `setMetaBatch`
 - `setDelegateGroupId` / `delegateGroupIdOf`
+- `setScopeSource` / `setDenySource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
+- `ruleSlots`
+- `canPost` / `canPostStatus`
 - `post`
 - `postByDefaultSender`
-- `messages` / `messagesByRound`
-- `messagesBySender` / `messageIndexesBySender`
-- `senderGroupIds`
-- `rounds` / `roundInfo`
+- `messagesCount` / `messages`
+- `messagesByRoundCount` / `messagesByRound`
+- `messagesBySenderCount` / `messagesBySender` / `messageIndexesBySender`
+- `messagesByMentionCount` / `messagesByMention` / `messageIndexesByMention`
+- `messagesByMentionAllCount` / `messagesByMentionAll` / `messageIndexesByMentionAll`
+- `senderGroupIdsCount` / `senderGroupIds`
+- `roundsCount` / `rounds` / `roundInfo`
 - `GroupDefaults`
 
 ## 当前目录
@@ -67,6 +73,7 @@
 
 - `GROUP_DEFAULTS_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
+- `GROUP_JOIN_ADDRESS`
 - `ORIGIN_BLOCKS`
 - `PHASE_BLOCKS`
 - `network`

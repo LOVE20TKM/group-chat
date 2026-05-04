@@ -19,10 +19,12 @@
 普通 `post` 校验顺序：
 
 ```text
+chatGroupId exists
 chat active
 senderGroupId exists
 senderAddress owns senderGroupId
 content / mentions / quote core validation
+currentRound
 scopeSource.canPost
 denySource.isDenied
 beforePostPlugin.beforePost
@@ -32,7 +34,9 @@ afterPostPlugin.afterPost
 
 `canPost(...)` 只做无内容预检查：
 
+- chatGroupId exists
 - active
+- senderGroupId exists
 - sender owner
 - `scopeSource`
 - `denySource`

@@ -175,7 +175,7 @@ event StateVersionChanged(
 
 ## 8. 验收要点
 
-- 未设置默认身份 NFT 的地址不能行使 DenySource 管理权限
+- 未设置默认身份 NFT 的地址不能行使 DenySource admin 权限
 - 非 owner / delegate 不能调用 `setAdmins(...)`
 - 非 owner / delegate 不能修改豁免名单
 - 非 owner / delegate / admin 不能修改黑名单

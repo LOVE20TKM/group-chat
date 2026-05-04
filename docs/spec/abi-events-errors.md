@@ -6,6 +6,12 @@
 
 生命周期：
 
+- `LOVE20_GROUP`
+- `GROUP_DEFAULTS`
+- `originBlocks`
+- `phaseBlocks`
+- `MAX_CONTENT_LENGTH`
+- `MAX_MENTIONS`
 - `activateChat`
 - `deactivateChat`
 - `chatInfo`
@@ -47,15 +53,21 @@ Query：
 - `currentRound`
 - `messagesCount`
 - `message`
+- `messagesByRoundCount`
+- `messagesBySenderCount`
+- `senderGroupIdsCount`
 - `messages`
 - `messagesByRound`
 - `messagesBySender`
+- `messagesByMentionCount`
 - `messagesByMention`
+- `messagesByMentionAllCount`
 - `messagesByMentionAll`
 - `messageIndexesBySender`
 - `messageIndexesByMention`
 - `messageIndexesByMentionAll`
 - `senderGroupIds`
+- `roundsCount`
 - `rounds`
 - `roundInfo`
 

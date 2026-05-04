@@ -210,9 +210,9 @@ function stateVersion(
 ## 接口规则
 
 - 票权源固定为 `ILOVE20Group(GROUP_ADDRESS).ownerOf(chatGroupId)`。
-- 票权源必须是合约，并实现 `IDenyVoteWeightSource`。
+- 票权源必须是合约，并实现 `IDenyVoteWeightSource`；这是 Manager 与部署测试约束，读路径不做通用 ABI 探测。
 - 票权源不可用时，投票、反对、撤票、复议写接口必须拒绝。
-- 票权源不可用时，`isDenied(...)` 返回 `false`，`*DenyTallyOf(...)` 返回 `0, 0`，分页接口返回空。
+- 票权源不可用时，即 `ownerOf(chatGroupId)` 失败或 owner 无代码，`isDenied(...)` 返回 `false`，`*DenyTallyOf(...)` 返回 `0, 0`，分页接口返回空。
 - `targetAddress == address(0)` 必须拒绝。
 - `targetSenderGroupId == 0` 必须拒绝。
 - `hasVote == false` 时，`supportDeny` 无意义，前端必须忽略。
