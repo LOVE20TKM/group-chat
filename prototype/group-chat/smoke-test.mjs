@@ -76,4 +76,23 @@ for (const needle of requiredProtocolCopy) {
   }
 }
 
+const requiredInteractions = [
+  'openStatusSheet',
+  'closeStatusSheet',
+  'openMorePanel',
+  'closeMorePanel',
+  'quoteMessage',
+  'addMention',
+  'toggleMentionAll',
+  'sendMessage',
+  'setStatusMode',
+  'setIndexMode',
+];
+
+for (const needle of requiredInteractions) {
+  if (!js.includes(needle)) {
+    throw new Error(`Missing interaction: ${needle}`);
+  }
+}
+
 console.log('GroupChat prototype smoke test passed');
