@@ -199,6 +199,9 @@ function renderStatus() {
         })
         .join('')}
     </div>
+    <div class="close-row">
+      <button type="button" class="sheet-button" data-action="close-status">关闭</button>
+    </div>
   `;
   document.getElementById('status-strip').innerHTML = statusHtml;
   document.getElementById('desktop-status-content').innerHTML = detailsHtml;
@@ -226,6 +229,9 @@ function renderMorePanel() {
       <button class="panel-button${state.mentionAll ? ' active' : ''}" type="button" data-action="toggle-mention-all">mentionAll</button>
       <button class="panel-button" type="button" data-action="set-index-mode" data-index-mode="messagesByRound">按 round</button>
       <button class="panel-button" type="button" data-action="set-index-mode" data-index-mode="messagesBySender">按 sender</button>
+    </div>
+    <div class="close-row">
+      <button type="button" class="sheet-button" data-action="close-more">关闭</button>
     </div>
   `;
 }

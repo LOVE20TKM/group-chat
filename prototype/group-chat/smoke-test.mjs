@@ -95,4 +95,22 @@ for (const needle of requiredInteractions) {
   }
 }
 
+const requiredResponsiveCss = [
+  '.app-shell',
+  '.desktop-chat-list',
+  '.desktop-status-panel',
+  '.status-sheet',
+  '.more-panel',
+  'env(safe-area-inset-bottom)',
+  'touch-action: manipulation',
+  '100dvh',
+  'overscroll-behavior: contain',
+];
+
+for (const needle of requiredResponsiveCss) {
+  if (!css.includes(needle)) {
+    throw new Error(`Missing responsive CSS: ${needle}`);
+  }
+}
+
 console.log('GroupChat prototype smoke test passed');
