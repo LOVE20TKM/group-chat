@@ -30,20 +30,20 @@ contract AdminDenySourceTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.addAddressDenyList(chatGroupId, accounts);
+        deny.addDenyListsBySenderAddresses(chatGroupId, accounts);
 
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys, values, address(0), address(deny), address(0), address(0), delegateGroupId);
 
         vm.prank(delegateGroupOwner);
-        deny.addExemptListBySenderGroupId(chatGroupId, _uints(senderGroupId));
+        deny.addExemptListBySenderGroupIds(chatGroupId, _uints(senderGroupId));
         assertTrue(!deny.isDenied(chatGroupId, senderGroupId, senderOwner));
         assertEq(deny.stateVersion(chatGroupId), 2);
 
         vm.prank(delegateGroupOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.addAddressDenyList(chatGroupId, accounts);
+        deny.addDenyListsBySenderAddresses(chatGroupId, accounts);
     }
 
     function testT121_adminRequiresDefaultGroupAndCanOnlyManageDenyLists() public {
@@ -56,18 +56,18 @@ contract AdminDenySourceTest is GroupChatFixture {
 
         vm.prank(adminOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.addAddressDenyList(chatGroupId, accounts);
+        deny.addDenyListsBySenderAddresses(chatGroupId, accounts);
 
         vm.prank(adminOwner);
         groupDefaults.setDefaultGroupId(adminGroupId);
 
         vm.prank(adminOwner);
-        deny.addAddressDenyList(chatGroupId, accounts);
+        deny.addDenyListsBySenderAddresses(chatGroupId, accounts);
         assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
 
         vm.prank(adminOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.addExemptListBySenderGroupId(chatGroupId, _uints(senderGroupId));
+        deny.addExemptListBySenderGroupIds(chatGroupId, _uints(senderGroupId));
 
         vm.prank(adminOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
@@ -81,7 +81,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         chat.activateChat(chatGroupId, keys, values, address(0), address(deny), address(0), address(0), 0);
 
         vm.prank(adminOwner);
-        deny.addDenyListsBySenderGroupId(chatGroupId, senderGroupId);
+        deny.addDenyListsBySenderGroupIds(chatGroupId, _uints(senderGroupId));
 
         (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderGroupId, senderOwner);
         assertTrue(!allowed);
@@ -93,7 +93,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         _post(chatGroupId, senderGroupId, "blocked");
 
         vm.prank(chatOwner);
-        deny.addExemptListBySenderGroupId(chatGroupId, _uints(senderGroupId));
+        deny.addExemptListBySenderGroupIds(chatGroupId, _uints(senderGroupId));
 
         assertTrue(!deny.isDenied(chatGroupId, senderGroupId, senderOwner));
         vm.prank(senderOwner);
@@ -101,18 +101,18 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertEq(chat.messagesCount(chatGroupId), 1);
     }
 
-    function testT123_listsAreIsolatedPagedAndStateVersionOnlyChangesOnActualChanges() public {
+    function testT123_listsAreIsolatedPagedAndStateVersionChangesOncePerBatch() public {
         _configureAdmin();
         uint256 baseVersion = deny.stateVersion(chatGroupId);
 
         vm.prank(adminOwner);
-        deny.addAddressDenyList(chatGroupId, _addresses(address(0x101), address(0x102), address(0x103)));
+        deny.addDenyListsBySenderAddresses(chatGroupId, _addresses(address(0x101), address(0x102), address(0x103)));
         assertEq(deny.addressDenyListCount(chatGroupId), 3);
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 3);
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 1);
 
         vm.prank(adminOwner);
-        deny.addAddressDenyList(chatGroupId, _addresses(address(0x101)));
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 3);
+        deny.addDenyListsBySenderAddresses(chatGroupId, _addresses(address(0x101)));
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 1);
 
         address[] memory page = deny.addressDenyList(chatGroupId, 1, 2);
         assertEq(page.length, 2);
@@ -124,9 +124,9 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertEq(deny.addressDenyListCount(otherGroupId), 0);
 
         vm.prank(adminOwner);
-        deny.removeAddressDenyList(chatGroupId, _addresses(address(0x102), address(0x999)));
+        deny.removeDenyListsBySenderAddresses(chatGroupId, _addresses(address(0x102), address(0x999)));
         assertEq(deny.addressDenyListCount(chatGroupId), 2);
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 4);
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 2);
         assertTrue(!deny.isAddressDenied(chatGroupId, address(0x102)));
     }
 
@@ -134,7 +134,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         vm.prank(chatOwner);
         deny.setAdmins(chatGroupId, _uints(adminGroupId, secondAdminGroupId));
         assertEq(deny.adminGroupsCount(chatGroupId), 2);
-        assertEq(deny.stateVersion(chatGroupId), 2);
+        assertEq(deny.stateVersion(chatGroupId), 1);
 
         vm.prank(chatOwner);
         vm.expectRevert(AdminDenySource.DuplicateAdminGroupId.selector);
@@ -148,7 +148,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(adminGroupId);
 
         vm.prank(adminOwner);
-        deny.addDenyListsBySenderGroupId(chatGroupId, senderGroupId);
+        deny.addDenyListsBySenderGroupIds(chatGroupId, _uints(senderGroupId));
         assertTrue(deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
         assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
 
@@ -156,28 +156,34 @@ contract AdminDenySourceTest is GroupChatFixture {
 
         vm.prank(adminOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.addDenyListsBySenderGroupId(chatGroupId, otherGroupId);
+        deny.addDenyListsBySenderGroupIds(chatGroupId, _uints(otherGroupId));
     }
 
-    function testT125_senderGroupIdDenyListsResolveOwnerAndAffectAddressAndNftTogether() public {
+    function testT125_senderGroupIdDenyListsResolveOwnersAndAffectAddressesAndNftsTogether() public {
         _configureAdmin();
         uint256 baseVersion = deny.stateVersion(chatGroupId);
 
         vm.prank(adminOwner);
-        deny.addDenyListsBySenderGroupId(chatGroupId, senderGroupId);
+        deny.addDenyListsBySenderGroupIds(chatGroupId, _uints(senderGroupId, otherGroupId));
 
         assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
+        assertTrue(deny.isAddressDenied(chatGroupId, other));
         assertTrue(deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
+        assertTrue(deny.isSenderGroupIdDenied(chatGroupId, otherGroupId));
         assertTrue(deny.isDenied(chatGroupId, senderGroupId, senderOwner));
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 2);
+        assertTrue(deny.isDenied(chatGroupId, otherGroupId, other));
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 1);
 
         vm.prank(adminOwner);
-        deny.removeDenyListsBySenderGroupId(chatGroupId, senderGroupId);
+        deny.removeDenyListsBySenderGroupIds(chatGroupId, _uints(senderGroupId, otherGroupId));
 
         assertTrue(!deny.isAddressDenied(chatGroupId, senderOwner));
+        assertTrue(!deny.isAddressDenied(chatGroupId, other));
         assertTrue(!deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
+        assertTrue(!deny.isSenderGroupIdDenied(chatGroupId, otherGroupId));
         assertTrue(!deny.isDenied(chatGroupId, senderGroupId, senderOwner));
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 4);
+        assertTrue(!deny.isDenied(chatGroupId, otherGroupId, other));
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 2);
     }
 
     function testT126_senderAddressDenyListsUseDefaultGroupWhenPresentAndSkipNftWhenMissing() public {
@@ -188,23 +194,19 @@ contract AdminDenySourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(senderGroupId);
 
         vm.prank(adminOwner);
-        deny.addDenyListsBySenderAddress(chatGroupId, senderOwner);
+        deny.addDenyListsBySenderAddresses(chatGroupId, _addresses(senderOwner, stranger));
         assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
         assertTrue(deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 2);
-
-        vm.prank(adminOwner);
-        deny.addDenyListsBySenderAddress(chatGroupId, stranger);
         assertTrue(deny.isAddressDenied(chatGroupId, stranger));
         assertEq(deny.senderGroupIdDenyListCount(chatGroupId), 1);
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 3);
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 1);
 
         vm.prank(adminOwner);
-        deny.removeDenyListsBySenderAddress(chatGroupId, senderOwner);
+        deny.removeDenyListsBySenderAddresses(chatGroupId, _addresses(senderOwner, stranger));
         assertTrue(!deny.isAddressDenied(chatGroupId, senderOwner));
         assertTrue(!deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
-        assertTrue(deny.isAddressDenied(chatGroupId, stranger));
-        assertEq(deny.stateVersion(chatGroupId), baseVersion + 5);
+        assertTrue(!deny.isAddressDenied(chatGroupId, stranger));
+        assertEq(deny.stateVersion(chatGroupId), baseVersion + 2);
     }
 
     function testT127_ownerCanManageDenyListsOnlyThroughAdminNftList() public {
@@ -213,13 +215,13 @@ contract AdminDenySourceTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.addAddressDenyList(chatGroupId, _addresses(senderOwner));
+        deny.addDenyListsBySenderAddresses(chatGroupId, _addresses(senderOwner));
 
         vm.prank(chatOwner);
         groupDefaults.setDefaultGroupId(chatGroupId);
 
         vm.prank(chatOwner);
-        deny.addAddressDenyList(chatGroupId, _addresses(senderOwner));
+        deny.addDenyListsBySenderAddresses(chatGroupId, _addresses(senderOwner));
         assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
     }
 

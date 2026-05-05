@@ -96,7 +96,7 @@ DenySource 合约全局至少维护：
 - `uint256[] senderGroupIdDenyList`
 - `uint256[] senderGroupIdExemptList`
 - 对应 `indexPlusOne` 映射，用于去重、删除、分页
-- `uint256 stateVersion`，任意实际状态变化时递增
+- `uint256 stateVersion`，任意批量写调用发生至少一项实际状态变化时递增一次
 
 约束：
 
@@ -112,14 +112,12 @@ DenySource 合约全局至少维护：
 ## 5. 最小接口
 
 - `setAdmins(uint256 chatGroupId, uint256[] adminGroupIds)`
-- `addAddressDenyList(uint256 chatGroupId, address[] accounts)`
-- `removeAddressDenyList(uint256 chatGroupId, address[] accounts)`
-- `addDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId)`：通过 `ownerOf(targetSenderGroupId)` 解析地址，同时加入地址与 NFT 黑名单
-- `removeDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId)`：通过 `ownerOf(targetSenderGroupId)` 解析地址，同时移除地址与 NFT 黑名单
-- `addDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress)`：加入地址黑名单；若该地址有有效默认 NFT，同时加入 NFT 黑名单
-- `removeDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress)`：移除地址黑名单；若该地址有有效默认 NFT，同时移除 NFT 黑名单
-- `addExemptListBySenderGroupId(uint256 chatGroupId, uint256[] senderGroupIds)`
-- `removeExemptListBySenderGroupId(uint256 chatGroupId, uint256[] senderGroupIds)`
+- `addDenyListsBySenderGroupIds(uint256 chatGroupId, uint256[] targetSenderGroupIds)`：逐个通过 `ownerOf(targetSenderGroupId)` 解析地址，同时加入地址与 NFT 黑名单
+- `removeDenyListsBySenderGroupIds(uint256 chatGroupId, uint256[] targetSenderGroupIds)`：逐个通过 `ownerOf(targetSenderGroupId)` 解析地址，同时移除地址与 NFT 黑名单
+- `addDenyListsBySenderAddresses(uint256 chatGroupId, address[] targetAddresses)`：逐个加入地址黑名单；若地址有有效默认 NFT，同时加入 NFT 黑名单
+- `removeDenyListsBySenderAddresses(uint256 chatGroupId, address[] targetAddresses)`：逐个移除地址黑名单；若地址有有效默认 NFT，同时移除 NFT 黑名单
+- `addExemptListBySenderGroupIds(uint256 chatGroupId, uint256[] senderGroupIds)`
+- `removeExemptListBySenderGroupIds(uint256 chatGroupId, uint256[] senderGroupIds)`
 - `isAdminGroup(uint256 chatGroupId, uint256 adminGroupId)`
 - `isAddressDenied(uint256 chatGroupId, address account)`
 - `isSenderGroupIdDenied(uint256 chatGroupId, uint256 senderGroupId)`
@@ -155,9 +153,9 @@ DenySource 合约全局至少维护：
 - `listed`
 - `stateVersion`，如适用
 
-批量写接口必须对每个实际变更目标各自 `emit` 一条事件。
+批量写接口必须对每个实际变更目标各自 `emit` 一条明细事件；同一批实际变更的明细事件使用同一个 `stateVersion`。
 
-任意实际状态变化后，必须递增该 `chatGroupId` 的 `stateVersion`，并发出：
+每次外部名单写调用，包括 `setAdmins(...)`，若至少发生一项实际状态变化，必须只递增一次该 `chatGroupId` 的 `stateVersion`，并只发出一条：
 
 ```solidity
 event StateVersionChanged(
@@ -165,6 +163,8 @@ event StateVersionChanged(
     uint256 stateVersion
 );
 ```
+
+若输入没有带来实际状态变化，不递增 `stateVersion`，也不发出 `StateVersionChanged`。
 
 ## 7. 典型流程
 

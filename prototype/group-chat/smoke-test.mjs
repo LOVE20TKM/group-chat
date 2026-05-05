@@ -165,7 +165,7 @@ const requiredAppJs = [
   'voteSenderDenyFromMessage',
   'addSenderDenyFromMessage',
   'voteDenySenderBySenderGroupId',
-  'addDenyListsBySenderGroupId',
+  'addDenyListsBySenderGroupIds',
   'data-action="vote-sender-deny"',
   'data-action="add-sender-deny"',
   'revalidateGovVote',

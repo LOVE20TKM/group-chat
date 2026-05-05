@@ -1517,10 +1517,10 @@ function addAdminList(listName, inputId) {
       changes += 1;
     }
     if (changes > 0) {
-      chat.adminDeny.stateVersion += changes;
+      chat.adminDeny.stateVersion += 1;
       state.syncHint = profileAddress
-        ? `addDenyListsBySenderGroupId(${targetValue}) 已模拟，联动地址 ${profileAddress}`
-        : `addDenyListsBySenderGroupId(${targetValue}) 已模拟，地址待 ownerOf 解析`;
+        ? `addDenyListsBySenderGroupIds([${targetValue}]) 已模拟，联动地址 ${profileAddress}`
+        : `addDenyListsBySenderGroupIds([${targetValue}]) 已模拟，地址待 ownerOf 解析`;
     }
     render();
     return;
@@ -1607,10 +1607,10 @@ function removeAdminList(listName, value) {
       changes += 1;
     }
     if (changes > 0) {
-      chat.adminDeny.stateVersion += changes;
+      chat.adminDeny.stateVersion += 1;
       state.syncHint = profileAddress
-        ? `removeDenyListsBySenderGroupId(${value}) 已模拟，联动地址 ${profileAddress}`
-        : `removeDenyListsBySenderGroupId(${value}) 已模拟`;
+        ? `removeDenyListsBySenderGroupIds([${value}]) 已模拟，联动地址 ${profileAddress}`
+        : `removeDenyListsBySenderGroupIds([${value}]) 已模拟`;
     }
   } else {
     chat.adminDeny[listName] = chat.adminDeny[listName].filter((item) => item !== value);
@@ -1702,7 +1702,7 @@ function voteSenderDenyFromMessage(messageIndex) {
   const changes = Number(addressChanged) + Number(groupChanged);
 
   if (changes > 0) {
-    chat.govDeny.stateVersion += changes;
+    chat.govDeny.stateVersion += 1;
     state.syncHint =
       `voteDenySenderBySenderGroupId(${targetSenderGroupId}) 已模拟，合约解析地址 ${targetAddress}`;
   } else {
@@ -1730,9 +1730,9 @@ function addSenderDenyFromMessage(messageIndex) {
   }
 
   if (changes > 0) {
-    chat.adminDeny.stateVersion += changes;
+    chat.adminDeny.stateVersion += 1;
     state.syncHint =
-      `addDenyListsBySenderGroupId(${targetSenderGroupId}) 已模拟，合约解析地址 ${targetAddress}`;
+      `addDenyListsBySenderGroupIds([${targetSenderGroupId}]) 已模拟，合约解析地址 ${targetAddress}`;
   } else {
     state.syncHint = `sender ${targetAddress} / NFT #${targetSenderGroupId} 已在黑名单`;
   }

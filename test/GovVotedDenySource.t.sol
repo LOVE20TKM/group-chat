@@ -216,6 +216,17 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(groupSupport, 7);
         assertEq(groupOppose, 0);
         assertTrue(deny.isDenied(chatGroupId, senderGroupId, senderOwner));
+        assertEq(deny.stateVersion(chatGroupId), 1);
+
+        protocol.setGovVotes(token, senderOwner, 4);
+        deny.revalidateDenySenderVoteBySenderGroupId(chatGroupId, senderGroupId, senderOwner);
+
+        (addressSupport, addressOppose) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
+        (groupSupport, groupOppose) = deny.senderGroupIdDenyTallyOf(chatGroupId, senderGroupId);
+        assertEq(addressSupport, 4);
+        assertEq(addressOppose, 0);
+        assertEq(groupSupport, 4);
+        assertEq(groupOppose, 0);
         assertEq(deny.stateVersion(chatGroupId), 2);
 
         vm.prank(senderOwner);
@@ -224,18 +235,18 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         (addressSupport, addressOppose) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
         (groupSupport, groupOppose) = deny.senderGroupIdDenyTallyOf(chatGroupId, senderGroupId);
         assertEq(addressSupport, 0);
-        assertEq(addressOppose, 7);
+        assertEq(addressOppose, 4);
         assertEq(groupSupport, 0);
-        assertEq(groupOppose, 7);
+        assertEq(groupOppose, 4);
         assertTrue(!deny.isDenied(chatGroupId, senderGroupId, senderOwner));
-        assertEq(deny.stateVersion(chatGroupId), 4);
+        assertEq(deny.stateVersion(chatGroupId), 3);
 
         vm.prank(senderOwner);
         deny.clearDenySenderVoteBySenderGroupId(chatGroupId, senderGroupId);
 
         assertEq(deny.addressDenyTargetsCount(chatGroupId), 0);
         assertEq(deny.senderGroupIdDenyTargetsCount(chatGroupId), 0);
-        assertEq(deny.stateVersion(chatGroupId), 6);
+        assertEq(deny.stateVersion(chatGroupId), 4);
     }
 
     function testT137_senderAddressVoteUsesDefaultGroupWhenPresentAndSkipsNftWhenMissing() public {
@@ -263,7 +274,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(addressSupport, 5);
         assertEq(addressOppose, 0);
         assertEq(deny.senderGroupIdDenyTargetsCount(chatGroupId), 1);
-        assertEq(deny.stateVersion(chatGroupId), 3);
+        assertEq(deny.stateVersion(chatGroupId), 2);
     }
 
     function _activateTokenGovManager() internal {

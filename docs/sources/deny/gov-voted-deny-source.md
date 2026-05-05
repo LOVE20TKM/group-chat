@@ -271,7 +271,8 @@ function stateVersion(
 - 分页接口 `limit == 0` 或 `offset` 越界时返回空数组。
 - 同一分页接口返回的数组长度必须一致。
 - 目标与投票人列表必须去重，返回顺序不作协议承诺。
-- 任意实际状态变化都必须递增对应 `chatGroupId` 的 `stateVersion`。
+- 任意外部投票写调用发生至少一项实际状态变化时，必须递增一次对应 `chatGroupId` 的 `stateVersion`。
+- `*DenySender*` 联动写接口若同时改变地址目标和 NFT 目标，两条明细事件必须使用同一个 `stateVersion`，且只发出一条 `StateVersionChanged`。
 
 ## 最小事件
 
@@ -306,7 +307,7 @@ event StateVersionChanged(
 );
 ```
 
-`vote`、`oppose`、`clear`、`revalidate` 发生实际状态变化时，统一发对应的 `*DenyVoteSet` 事件。
+`vote`、`oppose`、`clear`、`revalidate` 发生实际状态变化时，统一发对应的 `*DenyVoteSet` 明细事件。
 
 ## 状态要求
 
