@@ -161,13 +161,13 @@ function addressDenyVoteOf(
     uint256 chatGroupId,
     address targetAddress,
     address voter
-) external view returns (bool hasVote, bool supportDeny, uint256 settledWeight);
+) external view returns (bool supportDeny, uint256 settledWeight);
 
 function senderGroupIdDenyVoteOf(
     uint256 chatGroupId,
     uint256 targetSenderGroupId,
     address voter
-) external view returns (bool hasVote, bool supportDeny, uint256 settledWeight);
+) external view returns (bool supportDeny, uint256 settledWeight);
 
 function addressDenyTallyOf(
     uint256 chatGroupId,
@@ -260,7 +260,8 @@ function stateVersion(
 - 票权源不可用时，即 `ownerOf(chatGroupId)` 失败或 owner 无代码，`isDenied(...)` 返回 `false`，`*DenyTallyOf(...)` 返回 `0, 0`，分页接口返回空。
 - `targetAddress == address(0)` 必须拒绝。
 - `targetSenderGroupId == 0` 必须拒绝。
-- `hasVote == false` 时，`supportDeny` 无意义，前端必须忽略。
+- 单个 voter 当前无票时，`*DenyVoteOf(...)` 返回 `supportDeny=false, settledWeight=0`。
+- `settledWeight == 0` 表示无当前票；`settledWeight > 0` 时 `supportDeny` 才表示支持或反对。
 - `voteDeny*` 和 `opposeDeny*` 读取到的当前票权必须 `> 0`，否则拒绝。
 - 重复投相同立场且票权未变化时必须拒绝。
 - 已无当前票时调用 `clearDeny*Vote(...)` 必须拒绝。
@@ -281,7 +282,6 @@ event AddressDenyVoteSet(
     uint256 indexed chatGroupId,
     address indexed targetAddress,
     address indexed voter,
-    bool hasVote,
     bool supportDeny,
     uint256 settledWeight,
     uint256 supportWeight,
@@ -293,7 +293,6 @@ event SenderGroupIdDenyVoteSet(
     uint256 indexed chatGroupId,
     uint256 indexed targetSenderGroupId,
     address indexed voter,
-    bool hasVote,
     bool supportDeny,
     uint256 settledWeight,
     uint256 supportWeight,
@@ -327,7 +326,7 @@ event StateVersionChanged(
 - `supportWeight`
 - `opposeWeight`
 - `address[] voters` 与对应 `indexPlusOne`
-- 每个 voter 的 `hasVote`、`supportDeny`、`settledWeight`
+- 每个 voter 的 `supportDeny`、`settledWeight`
 
 每个 `senderGroupId` 目标至少维护同样的聚合票权、投票人列表和 voter 投票状态。
 

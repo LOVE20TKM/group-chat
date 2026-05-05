@@ -20,7 +20,6 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 indexed chatGroupId,
         address indexed targetAddress,
         address indexed voter,
-        bool hasVote,
         bool supportDeny,
         uint256 settledWeight,
         uint256 supportWeight,
@@ -32,7 +31,6 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 indexed chatGroupId,
         uint256 indexed targetSenderGroupId,
         address indexed voter,
-        bool hasVote,
         bool supportDeny,
         uint256 settledWeight,
         uint256 supportWeight,
@@ -46,7 +44,6 @@ contract GovVotedDenySource is IPostDenySource {
     address public immutable GROUP_DEFAULTS;
 
     struct VoteState {
-        bool hasVote;
         bool supportDeny;
         uint256 settledWeight;
     }
@@ -155,25 +152,25 @@ contract GovVotedDenySource is IPostDenySource {
     function addressDenyVoteOf(uint256 chatGroupId, address targetAddress, address voter)
         external
         view
-        returns (bool hasVote, bool supportDeny, uint256 settledWeight)
+        returns (bool supportDeny, uint256 settledWeight)
     {
         if (!_sourceHasCode(chatGroupId)) {
-            return (false, false, 0);
+            return (false, 0);
         }
         VoteState storage vote = _states[chatGroupId].addressTargetStates[targetAddress].votes[voter];
-        return (vote.hasVote, vote.supportDeny, vote.settledWeight);
+        return (vote.supportDeny, vote.settledWeight);
     }
 
     function senderGroupIdDenyVoteOf(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
         external
         view
-        returns (bool hasVote, bool supportDeny, uint256 settledWeight)
+        returns (bool supportDeny, uint256 settledWeight)
     {
         if (!_sourceHasCode(chatGroupId)) {
-            return (false, false, 0);
+            return (false, 0);
         }
         VoteState storage vote = _states[chatGroupId].senderGroupIdTargetStates[targetSenderGroupId].votes[voter];
-        return (vote.hasVote, vote.supportDeny, vote.settledWeight);
+        return (vote.supportDeny, vote.settledWeight);
     }
 
     function addressDenyTallyOf(uint256 chatGroupId, address targetAddress)
@@ -356,11 +353,12 @@ contract GovVotedDenySource is IPostDenySource {
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.addressTargetStates[targetAddress];
         VoteState storage vote = target.votes[voter];
-        if (vote.hasVote && vote.supportDeny == supportDeny && vote.settledWeight == weight) {
+        bool voteExists = vote.settledWeight != 0;
+        if (voteExists && vote.supportDeny == supportDeny && vote.settledWeight == weight) {
             return newVersion;
         }
 
-        if (!vote.hasVote) {
+        if (!voteExists) {
             _addAddressTarget(state, targetAddress);
             _addVoter(target, voter);
         } else {
@@ -368,11 +366,10 @@ contract GovVotedDenySource is IPostDenySource {
         }
 
         _addWeight(target, supportDeny, weight);
-        vote.hasVote = true;
         vote.supportDeny = supportDeny;
         vote.settledWeight = weight;
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, true, supportDeny, weight, newVersion);
+        _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, supportDeny, weight, newVersion);
         return newVersion;
     }
 
@@ -392,7 +389,7 @@ contract GovVotedDenySource is IPostDenySource {
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.addressTargetStates[targetAddress];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) return newVersion;
+        if (vote.settledWeight == 0) return newVersion;
 
         _removeWeight(target, vote.supportDeny, vote.settledWeight);
         delete target.votes[voter];
@@ -401,7 +398,7 @@ contract GovVotedDenySource is IPostDenySource {
             _removeAddressTarget(state, targetAddress);
         }
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, false, false, 0, newVersion);
+        _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, false, 0, newVersion);
         return newVersion;
     }
 
@@ -411,17 +408,19 @@ contract GovVotedDenySource is IPostDenySource {
         _emitStateVersionChangedIfChanged(chatGroupId, newVersion);
     }
 
-    function _revalidateAddressVoteIfFound(uint256 chatGroupId, address targetAddress, address voter, uint256 newVersion)
-        internal
-        returns (bool found, uint256)
-    {
+    function _revalidateAddressVoteIfFound(
+        uint256 chatGroupId,
+        address targetAddress,
+        address voter,
+        uint256 newVersion
+    ) internal returns (bool found, uint256) {
         if (targetAddress == address(0)) revert TargetAddressZero();
         address source = _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.addressTargetStates[targetAddress];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) return (false, newVersion);
+        if (vote.settledWeight == 0) return (false, newVersion);
 
         uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, targetAddress, 0);
         if (weight == vote.settledWeight) {
@@ -436,14 +435,14 @@ contract GovVotedDenySource is IPostDenySource {
                 _removeAddressTarget(state, targetAddress);
             }
             newVersion = _ensureStateVersion(state, newVersion);
-            _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, false, false, 0, newVersion);
+            _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, false, 0, newVersion);
             return (true, newVersion);
         }
 
         _addWeight(target, vote.supportDeny, weight);
         vote.settledWeight = weight;
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, true, vote.supportDeny, weight, newVersion);
+        _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, vote.supportDeny, weight, newVersion);
         return (true, newVersion);
     }
 
@@ -470,11 +469,12 @@ contract GovVotedDenySource is IPostDenySource {
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.senderGroupIdTargetStates[targetSenderGroupId];
         VoteState storage vote = target.votes[voter];
-        if (vote.hasVote && vote.supportDeny == supportDeny && vote.settledWeight == weight) {
+        bool voteExists = vote.settledWeight != 0;
+        if (voteExists && vote.supportDeny == supportDeny && vote.settledWeight == weight) {
             return newVersion;
         }
 
-        if (!vote.hasVote) {
+        if (!voteExists) {
             _addSenderGroupIdTarget(state, targetSenderGroupId);
             _addVoter(target, voter);
         } else {
@@ -482,13 +482,10 @@ contract GovVotedDenySource is IPostDenySource {
         }
 
         _addWeight(target, supportDeny, weight);
-        vote.hasVote = true;
         vote.supportDeny = supportDeny;
         vote.settledWeight = weight;
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitSenderGroupIdVoteSet(
-            state, chatGroupId, targetSenderGroupId, voter, true, supportDeny, weight, newVersion
-        );
+        _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, supportDeny, weight, newVersion);
         return newVersion;
     }
 
@@ -503,17 +500,14 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 targetSenderGroupId,
         address voter,
         uint256 newVersion
-    )
-        internal
-        returns (uint256)
-    {
+    ) internal returns (uint256) {
         if (targetSenderGroupId == 0) revert TargetSenderGroupIdZero();
         _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.senderGroupIdTargetStates[targetSenderGroupId];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) return newVersion;
+        if (vote.settledWeight == 0) return newVersion;
 
         _removeWeight(target, vote.supportDeny, vote.settledWeight);
         delete target.votes[voter];
@@ -522,7 +516,7 @@ contract GovVotedDenySource is IPostDenySource {
             _removeSenderGroupIdTarget(state, targetSenderGroupId);
         }
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, false, false, 0, newVersion);
+        _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, false, 0, newVersion);
         return newVersion;
     }
 
@@ -538,17 +532,14 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 targetSenderGroupId,
         address voter,
         uint256 newVersion
-    )
-        internal
-        returns (bool found, uint256)
-    {
+    ) internal returns (bool found, uint256) {
         if (targetSenderGroupId == 0) revert TargetSenderGroupIdZero();
         address source = _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.senderGroupIdTargetStates[targetSenderGroupId];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) return (false, newVersion);
+        if (vote.settledWeight == 0) return (false, newVersion);
 
         uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, address(0), targetSenderGroupId);
         if (weight == vote.settledWeight) {
@@ -563,16 +554,14 @@ contract GovVotedDenySource is IPostDenySource {
                 _removeSenderGroupIdTarget(state, targetSenderGroupId);
             }
             newVersion = _ensureStateVersion(state, newVersion);
-            _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, false, false, 0, newVersion);
+            _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, false, 0, newVersion);
             return (true, newVersion);
         }
 
         _addWeight(target, vote.supportDeny, weight);
         vote.settledWeight = weight;
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitSenderGroupIdVoteSet(
-            state, chatGroupId, targetSenderGroupId, voter, true, vote.supportDeny, weight, newVersion
-        );
+        _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, vote.supportDeny, weight, newVersion);
         return (true, newVersion);
     }
 
@@ -584,8 +573,7 @@ contract GovVotedDenySource is IPostDenySource {
         bool supportDeny
     ) internal {
         uint256 newVersion = _setAddressVoteIfChanged(chatGroupId, targetAddress, voter, supportDeny, 0);
-        newVersion =
-            _setSenderGroupIdVoteIfChanged(chatGroupId, targetSenderGroupId, voter, supportDeny, newVersion);
+        newVersion = _setSenderGroupIdVoteIfChanged(chatGroupId, targetSenderGroupId, voter, supportDeny, newVersion);
         if (newVersion == 0) revert VoteUnchanged();
         _emitStateVersionChanged(chatGroupId, newVersion);
     }
@@ -663,7 +651,6 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 chatGroupId,
         address targetAddress,
         address voter,
-        bool hasVote,
         bool supportDeny,
         uint256 settledWeight,
         uint256 newVersion
@@ -673,7 +660,6 @@ contract GovVotedDenySource is IPostDenySource {
             chatGroupId,
             targetAddress,
             voter,
-            hasVote,
             supportDeny,
             settledWeight,
             target.supportWeight,
@@ -687,7 +673,6 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 chatGroupId,
         uint256 targetSenderGroupId,
         address voter,
-        bool hasVote,
         bool supportDeny,
         uint256 settledWeight,
         uint256 newVersion
@@ -697,7 +682,6 @@ contract GovVotedDenySource is IPostDenySource {
             chatGroupId,
             targetSenderGroupId,
             voter,
-            hasVote,
             supportDeny,
             settledWeight,
             target.supportWeight,
