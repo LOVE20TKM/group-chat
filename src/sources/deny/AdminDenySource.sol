@@ -54,8 +54,6 @@ contract AdminDenySource is IPostDenySource {
 
     uint8 internal constant _ROLE_OWNER = 1;
     uint8 internal constant _ROLE_DELEGATE = 2;
-    uint8 internal constant _ROLE_ADMIN = 3;
-
     address public immutable GROUP_CHAT;
     address public immutable GROUP_DEFAULTS;
     address public immutable LOVE20_GROUP;
@@ -117,40 +115,34 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function addAddressDenyList(uint256 chatGroupId, address[] calldata accounts) external {
-        (uint8 role, uint256 operatorGroupId) = _roleOf(chatGroupId);
-        _requireManager(role);
+        uint256 operatorGroupId = _requireAdmin(chatGroupId);
         _addAddressDenyTargets(chatGroupId, operatorGroupId, accounts);
     }
 
     function removeAddressDenyList(uint256 chatGroupId, address[] calldata accounts) external {
-        (uint8 role, uint256 operatorGroupId) = _roleOf(chatGroupId);
-        _requireManager(role);
+        uint256 operatorGroupId = _requireAdmin(chatGroupId);
         _removeAddressDenyTargets(chatGroupId, operatorGroupId, accounts);
     }
 
     function addDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external {
-        (uint8 role, uint256 operatorGroupId) = _roleOf(chatGroupId);
-        _requireManager(role);
+        uint256 operatorGroupId = _requireAdmin(chatGroupId);
         address targetAddress = _ownerOfOrRevert(targetSenderGroupId);
         _addSenderDenyTarget(chatGroupId, operatorGroupId, targetSenderGroupId, targetAddress);
     }
 
     function removeDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external {
-        (uint8 role, uint256 operatorGroupId) = _roleOf(chatGroupId);
-        _requireManager(role);
+        uint256 operatorGroupId = _requireAdmin(chatGroupId);
         address targetAddress = _ownerOfOrRevert(targetSenderGroupId);
         _removeSenderDenyTarget(chatGroupId, operatorGroupId, targetSenderGroupId, targetAddress);
     }
 
     function addDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress) external {
-        (uint8 role, uint256 operatorGroupId) = _roleOf(chatGroupId);
-        _requireManager(role);
+        uint256 operatorGroupId = _requireAdmin(chatGroupId);
         _addSenderAddressDenyTarget(chatGroupId, operatorGroupId, targetAddress);
     }
 
     function removeDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress) external {
-        (uint8 role, uint256 operatorGroupId) = _roleOf(chatGroupId);
-        _requireManager(role);
+        uint256 operatorGroupId = _requireAdmin(chatGroupId);
         _removeSenderAddressDenyTarget(chatGroupId, operatorGroupId, targetAddress);
     }
 
@@ -373,20 +365,17 @@ contract AdminDenySource is IPostDenySource {
             return (_ROLE_DELEGATE, delegateGroupId);
         }
 
-        uint256 defaultGroupId = IGroupDefaults(GROUP_DEFAULTS).defaultGroupIdOf(msg.sender);
-        if (defaultGroupId != 0 && _contains(_states[chatGroupId].adminGroups, defaultGroupId)) {
-            return (_ROLE_ADMIN, defaultGroupId);
-        }
-
-        return (0, defaultGroupId);
+        return (0, IGroupDefaults(GROUP_DEFAULTS).defaultGroupIdOf(msg.sender));
     }
 
     function _requireOwnerOrDelegate(uint8 role) internal pure {
         if (role != _ROLE_OWNER && role != _ROLE_DELEGATE) revert UnauthorizedDenySourceManager();
     }
 
-    function _requireManager(uint8 role) internal pure {
-        if (role != _ROLE_OWNER && role != _ROLE_DELEGATE && role != _ROLE_ADMIN) {
+    function _requireAdmin(uint256 chatGroupId) internal view returns (uint256 operatorGroupId) {
+        _ownerOfOrRevert(chatGroupId);
+        operatorGroupId = _validDefaultGroupIdOf(msg.sender);
+        if (operatorGroupId == 0 || !_contains(_states[chatGroupId].adminGroups, operatorGroupId)) {
             revert UnauthorizedDenySourceManager();
         }
     }
