@@ -151,7 +151,6 @@ const requiredProtocolCopy = [
   'stateVersion',
   'addressDenyList',
   'senderGroupIdDenyList',
-  'addressExemptList',
   'senderGroupIdExemptList',
   'voteWeight',
   'revalidate',

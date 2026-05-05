@@ -12,7 +12,7 @@
 - 不处理提案、快照、投票轮次
 - 不处理 `mentionAll`、频率、内容格式等额外发言前规则
 - 只影响未来发言，不回溯历史消息
-- 同时支持 `senderAddress` 与 `senderGroupId` 两个名单维度
+- 黑名单同时支持 `senderAddress` 与 `senderGroupId` 两个维度，豁免名单只支持 `senderGroupId` 维度
 - 一个 DenySource 合约可以被多个 `chatGroupId` 复用
 - 同一 DenySource 合约复用时，所有管理员、黑名单、豁免名单状态都必须按 `chatGroupId` 隔离
 
@@ -61,7 +61,7 @@
 
 `isDenied` 判定顺序固定为：
 
-1. 若 `senderAddress` 或 `senderGroupId` 命中豁免名单，返回 `false`
+1. 若 `senderGroupId` 命中豁免名单，返回 `false`
 2. 否则若 `senderAddress` 命中地址黑名单，返回 `true`
 3. 否则若 `senderGroupId` 命中身份黑名单，返回 `true`
 4. 否则返回 `false`
@@ -69,7 +69,8 @@
 说明：
 
 - 基础发言资格已由 `GroupChat.scopeSource` 在调用 `denySource` 前判断
-- `senderAddress` 与 `senderGroupId` 都可以作为独立的黑名单 / 豁免名单目标
+- `senderAddress` 与 `senderGroupId` 都可以作为黑名单目标
+- 豁免绑定发言身份 NFT，不绑定当前 owner 地址
 - `exemptList` 不提供基础发言资格
 
 ## 4. 状态要求
@@ -83,12 +84,10 @@ DenySource 合约全局至少维护：
 - `mapping(uint256 => bool) adminGroupListed`
 - `mapping(address => bool) addressDenied`
 - `mapping(uint256 => bool) senderGroupIdDenied`
-- `mapping(address => bool) addressExempt`
 - `mapping(uint256 => bool) senderGroupIdExempt`
 - `uint256[] adminGroupIds`
 - `address[] addressDenyList`
 - `uint256[] senderGroupIdDenyList`
-- `address[] addressExemptList`
 - `uint256[] senderGroupIdExemptList`
 - 对应 `indexPlusOne` 映射，用于去重、删除、分页
 - `uint256 stateVersion`，任意实际状态变化时递增
@@ -109,20 +108,15 @@ DenySource 合约全局至少维护：
 - `setAdmins(uint256 chatGroupId, uint256[] adminGroupIds)`
 - `addAddressDenyList(uint256 chatGroupId, address[] accounts)`
 - `removeAddressDenyList(uint256 chatGroupId, address[] accounts)`
-- `addSenderGroupIdDenyList(uint256 chatGroupId, uint256[] senderGroupIds)`
-- `removeSenderGroupIdDenyList(uint256 chatGroupId, uint256[] senderGroupIds)`
 - `addDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId)`：通过 `ownerOf(targetSenderGroupId)` 解析地址，同时加入地址与 NFT 黑名单
 - `removeDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId)`：通过 `ownerOf(targetSenderGroupId)` 解析地址，同时移除地址与 NFT 黑名单
 - `addDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress)`：加入地址黑名单；若该地址有有效默认 NFT，同时加入 NFT 黑名单
 - `removeDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress)`：移除地址黑名单；若该地址有有效默认 NFT，同时移除 NFT 黑名单
-- `addAddressExemptList(uint256 chatGroupId, address[] accounts)`
-- `removeAddressExemptList(uint256 chatGroupId, address[] accounts)`
-- `addSenderGroupIdExemptList(uint256 chatGroupId, uint256[] senderGroupIds)`
-- `removeSenderGroupIdExemptList(uint256 chatGroupId, uint256[] senderGroupIds)`
+- `addExemptListBySenderGroupId(uint256 chatGroupId, uint256[] senderGroupIds)`
+- `removeExemptListBySenderGroupId(uint256 chatGroupId, uint256[] senderGroupIds)`
 - `isAdminGroup(uint256 chatGroupId, uint256 adminGroupId)`
 - `isAddressDenied(uint256 chatGroupId, address account)`
 - `isSenderGroupIdDenied(uint256 chatGroupId, uint256 senderGroupId)`
-- `isAddressExempt(uint256 chatGroupId, address account)`
 - `isSenderGroupIdExempt(uint256 chatGroupId, uint256 senderGroupId)`
 - `adminGroupsCount(uint256 chatGroupId)`
 - `adminGroups(uint256 chatGroupId, uint256 offset, uint256 limit)`
@@ -130,8 +124,6 @@ DenySource 合约全局至少维护：
 - `addressDenyList(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `senderGroupIdDenyListCount(uint256 chatGroupId)`
 - `senderGroupIdDenyList(uint256 chatGroupId, uint256 offset, uint256 limit)`
-- `addressExemptListCount(uint256 chatGroupId)`
-- `addressExemptList(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `senderGroupIdExemptListCount(uint256 chatGroupId)`
 - `senderGroupIdExemptList(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `isDenied(uint256 chatGroupId, uint256 senderGroupId, address senderAddress)`
@@ -144,7 +136,6 @@ DenySource 合约全局至少维护：
 - `AdminSet`
 - `AddressDenySet`
 - `SenderGroupIdDenySet`
-- `AddressExemptSet`
 - `SenderGroupIdExemptSet`
 - `StateVersionChanged`
 

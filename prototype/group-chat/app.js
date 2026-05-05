@@ -295,7 +295,6 @@ const state = {
         adminGroupIds: ['1308', '1310'],
         addressDenyList: ['0x66...d0'],
         senderGroupIdDenyList: ['9017'],
-        addressExemptList: ['0x8b...91'],
         senderGroupIdExemptList: ['1309'],
       },
     },
@@ -330,7 +329,6 @@ const state = {
         adminGroupIds: ['9007'],
         addressDenyList: [],
         senderGroupIdDenyList: ['9050'],
-        addressExemptList: [],
         senderGroupIdExemptList: [],
       },
     },
@@ -365,7 +363,6 @@ const state = {
         adminGroupIds: [],
         addressDenyList: [],
         senderGroupIdDenyList: [],
-        addressExemptList: [],
         senderGroupIdExemptList: [],
       },
     },
@@ -400,7 +397,6 @@ const state = {
         adminGroupIds: ['9007'],
         addressDenyList: [],
         senderGroupIdDenyList: [],
-        addressExemptList: [],
         senderGroupIdExemptList: ['9007'],
       },
     },
@@ -460,6 +456,21 @@ function activeConversation() {
 
 function nftProfile(senderGroupId) {
   return state.nftProfiles[senderGroupId] || { name: '群成员', badge: '人' };
+}
+
+function resolveNftInput(value, mode = 'name') {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const query = raw.toLowerCase();
+  const entries = Object.entries(state.nftProfiles);
+  const byName = () => {
+    const exact = entries.find(([, profile]) => profile.name.toLowerCase() === query);
+    if (exact) return exact[0];
+    const partial = entries.find(([, profile]) => profile.name.toLowerCase().includes(query));
+    return partial ? partial[0] : '';
+  };
+  const byId = () => (/^\d+$/.test(raw) ? raw : '');
+  return mode === 'id' ? byId() || byName() : byName() || byId();
 }
 
 function messageByIndex(messageIndex) {
@@ -534,7 +545,7 @@ function activationFieldLabel(field) {
 }
 
 function activationInputMode(field) {
-  return ['chatGroupId', 'actionId', 'recentRounds', 'delegateGroupId'].includes(field) ? 'numeric' : 'text';
+  return ['chatGroupId', 'actionId', 'recentRounds'].includes(field) ? 'numeric' : 'text';
 }
 
 function ruleSlotOptions(slot) {
@@ -574,15 +585,18 @@ function activationBlocker(chat, draft) {
   if (['action', 'action-gov'].includes(chat.type) && Number(draft.recentRounds) <= 0) {
     return 'recentRounds 必须大于 0';
   }
-  if (chat.model === 'chain-service' && Number(draft.delegateGroupId) === chat.groupId) {
-    return 'delegateGroupId 不能等于 chatGroupId';
+  if (chat.model === 'chain-service') {
+    const delegateGroupId = resolveNftInput(draft.delegateGroupId);
+    if (draft.delegateGroupId && !delegateGroupId) return `未找到 NFT：${draft.delegateGroupId}`;
+    if (Number(delegateGroupId || 0) === chat.groupId) return 'delegateGroupId 不能等于 chatGroupId';
   }
   return '';
 }
 
 function activationPreview(chat, draft) {
   if (chat.model === 'chain-service') {
-    return `activateChat(${draft.chatGroupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${draft.delegateGroupId || 0})`;
+    const delegateGroupId = resolveNftInput(draft.delegateGroupId) || 0;
+    return `activateChat(${draft.chatGroupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${delegateGroupId})`;
   }
   const values = Object.keys(chat.params).map((key) => draft[key]).join(', ');
   return `${chat.manager}.activate(${values})`;
@@ -652,9 +666,8 @@ function currentSenderDenied(chat) {
   }
 
   const deny = chat.adminDeny;
-  const addressExempt = deny.addressExemptList.includes(state.account);
   const groupExempt = deny.senderGroupIdExemptList.includes(String(state.senderGroupId));
-  if (addressExempt || groupExempt) return false;
+  if (groupExempt) return false;
   return deny.addressDenyList.includes(state.account) || deny.senderGroupIdDenyList.includes(String(state.senderGroupId));
 }
 
@@ -971,10 +984,11 @@ function renderDirectActivationFields(chat, draft) {
 
 function renderActivationTextInput(field, value, readonly = false) {
   const id = `activation-${field}-input`;
+  const placeholder = field === 'delegateGroupId' ? '输入 NFT 名称或编号' : '';
   return `
     <div class="field-row activation-field-row">
       <label for="${id}">${escapeHtml(activationFieldLabel(field))}</label>
-      <input id="${id}" data-activation-field="${field}" value="${escapeHtml(value ?? '')}" inputmode="${activationInputMode(field)}" ${readonly ? 'readonly' : ''}>
+      <input id="${id}" data-activation-field="${field}" value="${escapeHtml(value ?? '')}" inputmode="${activationInputMode(field)}" placeholder="${placeholder}" ${readonly ? 'readonly' : ''}>
     </div>
   `;
 }
@@ -1058,10 +1072,11 @@ function renderRuleInput(chat, slot) {
   if (options) return renderRuleChoice(chat, slot, options);
 
   const id = `${slot}-input`;
+  const placeholder = slot === 'delegateGroupId' ? '输入 NFT 名称或编号' : '';
   return `
     <div class="field-row">
       <label for="${id}">${slot}</label>
-      <input id="${id}" value="${escapeHtml(chat.ruleSlots[slot])}">
+      <input id="${id}" value="${escapeHtml(chat.ruleSlots[slot])}" placeholder="${placeholder}">
       <button class="sheet-button" type="button" data-action="set-rule-slot" data-slot="${slot}" data-input="${id}">更新</button>
     </div>
   `;
@@ -1158,7 +1173,7 @@ function renderAdminBlacklist(chat) {
 
 function renderBlacklistPanel(chat) {
   const version = chat.blacklistMode === 'gov' ? chat.govDeny.stateVersion : chat.adminDeny.stateVersion;
-  const placeholder = state.blacklistQueryType === 'address' ? '输入地址 0x...' : '输入 NFT groupId';
+  const placeholder = state.blacklistQueryType === 'address' ? '输入地址 0x...' : '输入 NFT 名称或编号';
   const selfLabel = state.blacklistQueryType === 'address' ? '查自己' : '查我的NFT';
   return `
     <section class="workspace-band">
@@ -1198,7 +1213,8 @@ function renderBlacklistControls(chat, placeholder, selfLabel) {
 
 function renderAdminBlacklistAdd(chat, listName) {
   if (chat.blacklistMode !== 'admin') return '';
-  return `<button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="blacklist-query-input" ${canEditAdminDeny(chat) ? '' : 'disabled'}>加入黑名单</button>`;
+  const label = listName === 'senderGroupIdDenyList' ? '联动加入黑名单' : '加入黑名单';
+  return `<button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="blacklist-query-input" ${canEditAdminDeny(chat) ? '' : 'disabled'}>${label}</button>`;
 }
 
 function blacklistRows(chat) {
@@ -1296,10 +1312,11 @@ function renderBlacklistRowMenu(chat, row) {
   }
 
   const listName = row.type === 'address' ? 'addressDenyList' : 'senderGroupIdDenyList';
+  const label = row.type === 'address' ? '移出黑名单' : '联动移出黑名单';
   const disabled = canEditAdminDeny(chat) ? '' : 'disabled';
   return `
     <div class="blacklist-menu">
-      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>移出黑名单</button>
+      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>${label}</button>
     </div>
   `;
 }
@@ -1319,9 +1336,6 @@ function renderExemptList() {
   const chat = activeChat();
   if (!chat) return '<div class="empty-state">请选择群聊</div>';
   if (!chat.adminDeny) return '<div class="empty-state">该群没有豁免名单</div>';
-  const listLabel = state.blacklistQueryType === 'address' ? '地址列表' : 'NFT列表';
-  const placeholder = state.blacklistQueryType === 'address' ? '输入地址 0x...' : '输入 NFT groupId';
-  const listName = state.blacklistQueryType === 'address' ? 'addressExemptList' : 'senderGroupIdExemptList';
   return `
     <section class="workspace-band">
       <div class="screen-heading">
@@ -1329,37 +1343,31 @@ function renderExemptList() {
         <span>v${chat.adminDeny.stateVersion}</span>
       </div>
       <div class="muted">${escapeHtml(chatDisplayName(chat))}</div>
-      <div class="filter-tabs blacklist-query-tabs">
-        <button class="filter-tab${state.blacklistQueryType === 'address' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="address">按地址</button>
-        <button class="filter-tab${state.blacklistQueryType === 'nft' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="nft">按NFT</button>
-      </div>
       <div class="field-row compact">
-        <input id="exempt-input" placeholder="${placeholder}">
-        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="exempt-input" ${canEditExempt(chat) ? '' : 'disabled'}>加入豁免</button>
+        <input id="exempt-input" placeholder="输入 NFT 名称或编号">
+        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="senderGroupIdExemptList" data-input="exempt-input" ${canEditExempt(chat) ? '' : 'disabled'}>加入豁免</button>
       </div>
       <div class="tab-content-block">
-        ${renderExemptRows(chat, listLabel)}
+        ${renderExemptRows(chat)}
       </div>
     </section>
   `;
 }
 
 function exemptRows(chat) {
-  return state.blacklistQueryType === 'address'
-    ? chat.adminDeny.addressExemptList.map((item) => ({ type: 'address', target: item, label: item }))
-    : chat.adminDeny.senderGroupIdExemptList.map((item) => ({ type: 'nft', target: item, label: `NFT #${item}` }));
+  return chat.adminDeny.senderGroupIdExemptList.map((item) => ({ type: 'nft', target: item, label: `NFT #${item}` }));
 }
 
-function renderExemptRows(chat, listLabel) {
+function renderExemptRows(chat) {
   const rows = exemptRows(chat);
-  if (!rows.length) return `<div class="empty-state">暂无${listLabel}记录</div>`;
+  if (!rows.length) return '<div class="empty-state">暂无NFT列表记录</div>';
   const totalPages = Math.max(1, Math.ceil(rows.length / blacklistPageSize));
   const page = Math.min(Math.max(1, state.blacklistPage), totalPages);
   const start = (page - 1) * blacklistPageSize;
   const items = rows.slice(start, start + blacklistPageSize).map((row) => renderExemptRow(chat, row)).join('');
   return `
     <div class="card-topline blacklist-list-head">
-      <h2>${listLabel}</h2>
+      <h2>NFT列表</h2>
       <span>${rows.length} 条</span>
     </div>
     ${items}
@@ -1383,11 +1391,10 @@ function renderExemptRow(chat, row) {
 }
 
 function renderExemptRowMenu(chat, row) {
-  const listName = row.type === 'address' ? 'addressExemptList' : 'senderGroupIdExemptList';
   const disabled = canEditExempt(chat) ? '' : 'disabled';
   return `
     <div class="blacklist-menu">
-      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>移出豁免名单</button>
+      <button type="button" data-action="admin-list-remove" data-list="senderGroupIdExemptList" data-value="${escapeHtml(row.target)}" ${disabled}>移出豁免名单</button>
     </div>
   `;
 }
@@ -1672,6 +1679,8 @@ function openExempt(chatId) {
   }
   selectChat(chat.groupId);
   state.view = 'exempt';
+  state.blacklistQueryType = 'nft';
+  state.blacklistPage = 1;
   render();
 }
 
@@ -1795,6 +1804,26 @@ function addAdminList(listName, inputId) {
     render();
     return;
   }
+  if (listName === 'senderGroupIdDenyList') {
+    const profileAddress = state.messages.find((message) => String(message.senderGroupId) === targetValue)?.senderAddress;
+    let changes = 0;
+    if (!chat.adminDeny.senderGroupIdDenyList.includes(targetValue)) {
+      chat.adminDeny.senderGroupIdDenyList.push(targetValue);
+      changes += 1;
+    }
+    if (profileAddress && !chat.adminDeny.addressDenyList.includes(profileAddress)) {
+      chat.adminDeny.addressDenyList.push(profileAddress);
+      changes += 1;
+    }
+    if (changes > 0) {
+      chat.adminDeny.stateVersion += changes;
+      state.syncHint = profileAddress
+        ? `addDenyListsBySenderGroupId(${targetValue}) 已模拟，联动地址 ${profileAddress}`
+        : `addDenyListsBySenderGroupId(${targetValue}) 已模拟，地址待 ownerOf 解析`;
+    }
+    render();
+    return;
+  }
   if (!chat.adminDeny[listName].includes(targetValue)) {
     chat.adminDeny[listName].push(targetValue);
     chat.adminDeny.stateVersion += 1;
@@ -1860,11 +1889,30 @@ function removeAdminList(listName, value) {
   if (listName.includes('Exempt') && !canEditExempt(chat)) return;
   if (!listName.includes('Exempt') && listName !== 'adminGroupIds' && !canEditAdminDeny(chat)) return;
   if (listName === 'adminGroupIds' && !canEditRules(chat)) return;
-  chat.adminDeny[listName] = chat.adminDeny[listName].filter((item) => item !== value);
-  chat.adminDeny.stateVersion += 1;
+  if (listName === 'senderGroupIdDenyList') {
+    const profileAddress = state.messages.find((message) => String(message.senderGroupId) === value)?.senderAddress;
+    let changes = 0;
+    if (chat.adminDeny.senderGroupIdDenyList.includes(value)) {
+      chat.adminDeny.senderGroupIdDenyList = chat.adminDeny.senderGroupIdDenyList.filter((item) => item !== value);
+      changes += 1;
+    }
+    if (profileAddress && chat.adminDeny.addressDenyList.includes(profileAddress)) {
+      chat.adminDeny.addressDenyList = chat.adminDeny.addressDenyList.filter((item) => item !== profileAddress);
+      changes += 1;
+    }
+    if (changes > 0) {
+      chat.adminDeny.stateVersion += changes;
+      state.syncHint = profileAddress
+        ? `removeDenyListsBySenderGroupId(${value}) 已模拟，联动地址 ${profileAddress}`
+        : `removeDenyListsBySenderGroupId(${value}) 已模拟`;
+    }
+  } else {
+    chat.adminDeny[listName] = chat.adminDeny[listName].filter((item) => item !== value);
+    chat.adminDeny.stateVersion += 1;
+    state.syncHint = `${listName} 移除 ${value}`;
+  }
   state.activeBlacklistMenuKey = null;
   state.activeExemptMenuKey = null;
-  state.syncHint = `${listName} 移除 ${value}`;
   render();
 }
 
@@ -2127,7 +2175,7 @@ function queryBlacklistValue(value) {
     extra = target ? `support ${target.support} / oppose ${target.oppose}` : '无投票目标';
   } else {
     const deny = chat.adminDeny;
-    const exempt = isAddress ? deny.addressExemptList.includes(value) : deny.senderGroupIdExemptList.includes(value);
+    const exempt = !isAddress && deny.senderGroupIdExemptList.includes(value);
     const denied = isAddress ? deny.addressDenyList.includes(value) : deny.senderGroupIdDenyList.includes(value);
     result = exempt ? false : denied;
     extra = exempt ? '命中豁免名单' : 'AdminDenySource 当前状态';

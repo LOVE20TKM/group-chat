@@ -70,21 +70,16 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         groupJoin.setTokenAddressCount(chatGroupId, senderOwner, 1);
 
         vm.prank(chatOwner);
-        deny.addSenderGroupIdDenyList(chatGroupId, _uints(senderGroupId));
+        deny.addDenyListsBySenderGroupId(chatGroupId, senderGroupId);
 
         (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderGroupId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
 
         vm.prank(chatOwner);
-        deny.addAddressExemptList(chatGroupId, _addresses(senderOwner));
+        deny.addExemptListBySenderGroupId(chatGroupId, _uints(senderGroupId));
 
         assertTrue(chat.canPost(chatGroupId, senderGroupId, senderOwner));
-    }
-
-    function _addresses(address account) internal pure returns (address[] memory accounts) {
-        accounts = new address[](1);
-        accounts[0] = account;
     }
 
     function _uints(uint256 value) internal pure returns (uint256[] memory values) {
