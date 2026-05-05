@@ -16,9 +16,10 @@ const css = readFileSync(join(root, 'styles.css'), 'utf8');
 const js = readFileSync(join(root, 'app.js'), 'utf8');
 
 const requiredHtml = [
-  'data-view="chat"',
-  'data-action="open-status"',
-  'data-action="open-more"',
+  'data-entry="love20-chat"',
+  'id="wallet-button"',
+  'id="bottom-nav"',
+  'id="workspace-screen"',
   'id="message-list"',
   'id="composer-input"',
 ];
@@ -30,9 +31,25 @@ for (const needle of requiredHtml) {
 }
 
 const requiredCss = [
-  '--secondary: #4f46e5',
+  '--primary: #0f766e',
+  '.bottom-nav',
+  '.conversation-row',
+  '.conversation-row.group-row',
+  '.group-icon-token-community',
+  '.group-icon-token-gov',
+  '.group-icon-action',
+  '.group-icon-action-gov',
+  '.group-icon-chain-service',
+  '.chat-menu-button',
+  '.chat-menu',
+  '.blacklist-row',
+  '.blacklist-menu',
+  '.pager-row',
+  '.filter-tabs',
+  '.action-row',
+  '.query-row',
   '@media (min-width: 900px)',
-  '.message-bubble.mine',
+  '@media (max-width: 390px)',
   'font-size: 16px',
 ];
 
@@ -43,14 +60,78 @@ for (const needle of requiredCss) {
 }
 
 const requiredJs = [
-  'canPostStatus',
-  'ScopeRejected',
-  'DenyRejected',
-  'SenderNotGroupOwner',
+  'LOVE20 Chat',
+  '爱聊',
+  'directMessages',
+  'bottomTabs',
+  'TokenGroupChatManager',
+  'TokenGovGroupChatManager',
+  'TokenActionGroupChatManager',
+  'TokenActionGovGroupChatManager',
+  'GroupJoinScopeSource',
+  'AdminDenySource',
+  'GovVotedDenySource',
+  'renderInbox',
+  'chatDisplayName',
+  'chatIconLabel',
+  'activationTabs',
+  'activationTypeForChat',
+  'renderActivationSection',
+  'set-activation-type',
+  'toggleChatMenu',
+  'activeGroupMenuId',
+  'blacklistQueryType',
+  'blacklistRows',
+  'setBlacklistQueryType',
+  'setBlacklistPage',
+  'toggleBlacklistMenu',
+  'renderExemptList',
+  'openExempt',
+  'toggleExemptMenu',
+  'activeExemptMenuKey',
+  'openGovVoters',
+  '查看voter列表',
+  'voterList',
+  'setVoterPage',
+  'queryVoter',
+  'revalidateVoter',
+  'voterPage',
+  'openActivation',
+  'renderActivationHub',
+  'renderActivationForm',
+  'setActivationOption',
+  'renderChainServiceManagement',
+  'managementNotice',
+  'renderAdminGroupControls',
+  'setAdminGroupQueryType',
+  'resolveAdminGroupQuery',
+  '按名称',
+  '按编号',
+  'queryAdminSelf',
+  'queryAdminGroup',
+  'ruleSlotDisplay',
+  'admin-nft-row',
+  'renderBlacklistControls',
+  'blacklist-controls',
+  '群黑名单',
+  '群豁免名单',
+  'renderGovBlacklist',
+  'renderAdminBlacklist',
+  'queryBlacklist',
+  'voteSenderDenyFromMessage',
+  'addSenderDenyFromMessage',
+  'voteDenySenderBySenderGroupId',
+  'addDenyListsBySenderGroupId',
+  'data-action="vote-sender-deny"',
+  'data-action="add-sender-deny"',
+  'revalidateGovVote',
+  'canEditRules',
+  'canEditAdminDeny',
+  'canEditExempt',
+  'activateChat',
+  '配置入参',
+  'setRuleSlot',
   'MessagePost',
-  'quotedMessageIndex',
-  'mentionAll',
-  'messagesByMentionAll',
 ];
 
 for (const needle of requiredJs) {
@@ -60,14 +141,29 @@ for (const needle of requiredJs) {
 }
 
 const requiredProtocolCopy = [
-  'canPostStatus',
   'ruleSlots',
   'senderGroupId',
   'scopeSource',
   'denySource',
-  'quotedMessageIndex',
-  'mentions',
-  'mentionAll',
+  'beforePostPlugin',
+  'afterPostPlugin',
+  'delegateGroupId',
+  'stateVersion',
+  'addressDenyList',
+  'senderGroupIdDenyList',
+  'addressExemptList',
+  'senderGroupIdExemptList',
+  'voteWeight',
+  'revalidate',
+  '激活群聊',
+  '代币群',
+  '大群 ${chat.token}',
+  '治理群 ${chat.token}',
+  '行动大群',
+  '行动治理群',
+  '链群#${chat.groupId}',
+  '春节公益铸造',
+  '雪松节点',
 ];
 
 for (const needle of requiredProtocolCopy) {
@@ -76,41 +172,4 @@ for (const needle of requiredProtocolCopy) {
   }
 }
 
-const requiredInteractions = [
-  'openStatusSheet',
-  'closeStatusSheet',
-  'openMorePanel',
-  'closeMorePanel',
-  'quoteMessage',
-  'addMention',
-  'toggleMentionAll',
-  'sendMessage',
-  'setStatusMode',
-  'setIndexMode',
-];
-
-for (const needle of requiredInteractions) {
-  if (!js.includes(needle)) {
-    throw new Error(`Missing interaction: ${needle}`);
-  }
-}
-
-const requiredResponsiveCss = [
-  '.app-shell',
-  '.desktop-chat-list',
-  '.desktop-status-panel',
-  '.status-sheet',
-  '.more-panel',
-  'env(safe-area-inset-bottom)',
-  'touch-action: manipulation',
-  '100dvh',
-  'overscroll-behavior: contain',
-];
-
-for (const needle of requiredResponsiveCss) {
-  if (!css.includes(needle)) {
-    throw new Error(`Missing responsive CSS: ${needle}`);
-  }
-}
-
-console.log('GroupChat prototype smoke test passed');
+console.log('LOVE20 Chat prototype smoke test passed');

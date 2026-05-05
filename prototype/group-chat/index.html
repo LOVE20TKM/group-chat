@@ -3,44 +3,44 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>GroupChat Prototype</title>
+    <title>LOVE20 Chat Prototype</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
-    <div class="app-shell" data-view="chat">
-      <aside class="desktop-chat-list" aria-label="群聊列表">
-        <div class="panel-title">链上群聊</div>
-        <div id="desktop-chat-list"></div>
-      </aside>
+    <div class="app-shell" data-entry="love20-chat">
       <main class="phone-frame">
-        <header class="chat-header">
-          <button class="icon-button" type="button" aria-label="返回">&lt;</button>
-          <div class="chat-title">
-            <strong id="chat-title">群聊 #1024</strong>
-            <span id="chat-subtitle">代币社区群</span>
+        <header class="app-header">
+          <button class="icon-button" type="button" data-action="go-back" aria-label="返回">&lt;</button>
+          <div class="app-title">
+            <strong id="screen-title"></strong>
+            <span id="screen-subtitle"></span>
           </div>
-          <button class="icon-button" type="button" data-action="open-status" aria-label="链上状态">···</button>
+          <button class="wallet-button" type="button" id="wallet-button" data-action="toggle-wallet">0x8b...91</button>
         </header>
-        <section class="message-list" id="message-list" aria-label="消息列表"></section>
+
+        <section class="workspace-screen" id="workspace-screen" aria-label="爱聊工作区"></section>
+        <section class="message-list" id="message-list" aria-label="消息列表" hidden></section>
+
         <div class="status-strip" id="status-strip"></div>
-        <footer class="composer">
+
+        <footer class="composer" id="composer" hidden>
           <div class="composer-chips" id="composer-chips"></div>
           <div class="composer-row">
-            <button class="round-button" type="button" id="quote-button">#</button>
+            <button class="round-button" type="button" id="quote-button" aria-label="引用">#</button>
             <input id="composer-input" class="composer-input" value="输入公开链上消息" aria-label="消息内容">
             <button class="round-button" type="button" data-action="open-more" aria-label="更多">+</button>
             <button class="send-button" type="button" id="send-button">发送</button>
           </div>
         </footer>
+
+        <nav class="bottom-nav" id="bottom-nav" aria-label="底部导航"></nav>
       </main>
-      <aside class="desktop-status-panel" aria-label="链上状态">
-        <div class="panel-title">链上状态</div>
-        <div id="desktop-status-content"></div>
-      </aside>
+
       <div class="status-sheet" id="status-sheet" hidden>
         <div class="sheet-handle"></div>
         <div id="status-sheet-content"></div>
       </div>
+
       <div class="more-panel" id="more-panel" hidden>
         <div class="sheet-handle"></div>
         <div id="more-panel-content"></div>

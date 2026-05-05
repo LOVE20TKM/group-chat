@@ -1,272 +1,2174 @@
 const state = {
   account: '0x8b...91',
-  activeChatId: 1024,
+  walletConnected: true,
   senderGroupId: 9007,
+  bottomTab: 'chat',
+  view: 'inbox',
+  manageReturnTo: null,
+  manageReturnView: null,
+  inboxFilter: 'all',
+  activationType: 'token',
+  activationDrafts: {},
+  activeToken: 'LOVE20A',
+  activeConversationId: '1024',
+  activeChatId: 1024,
   indexMode: 'messages',
+  blacklistQuery: '',
+  blacklistQueryType: 'address',
+  blacklistQueryResult: '',
+  blacklistPage: 1,
+  activeBlacklistMenuKey: null,
+  activeExemptMenuKey: null,
+  adminGroupQueryType: 'name',
+  adminGroupQuery: '',
+  adminGroupQueryResult: '',
+  activeGovVoterTargetType: null,
+  activeGovVoterTarget: null,
+  voterPage: 1,
+  voterQuery: '',
+  voterQueryResult: '',
+  revalidateVoter: '0x3a...02',
   quotedMessageIndex: null,
   mentions: [],
   mentionAll: false,
   activeMenuIndex: null,
-  syncHint: 'MessagePost 只做发现信号，正文以 message/messages view 回查。',
+  activeGroupMenuId: null,
+  syncHint: '爱聊入口承载个人点对点聊天、群聊、激活、管理和黑名单。',
+  nftProfiles: {
+    9001: { name: '行动发起人', badge: '行' },
+    9007: { name: '北极熊', badge: '北' },
+    1029: { name: '验证员小周', badge: '周' },
+    1308: { name: '链群服务者', badge: '服' },
+    1309: { name: '代理运营员', badge: '代' },
+    1310: { name: '链群管理员', badge: '管' },
+    9101: { name: '治理观察员', badge: '治' },
+  },
+  directMessages: [
+    {
+      id: 'dm:0x3a',
+      title: '治理观察员',
+      subtitle: '点对点聊天',
+      lastMessage: '我把行动票权截图发你了。',
+      time: '10:42',
+      unread: 2,
+    },
+    {
+      id: 'dm:0x52',
+      title: '验证员小周',
+      subtitle: '点对点聊天',
+      lastMessage: '等 GovVotedDenySource 重算完成。',
+      time: '09:18',
+      unread: 0,
+    },
+  ],
+  actions: [
+    { token: 'LOVE20A', actionId: '77', title: '春节公益铸造', round: 42, actionChatId: 1188, actionGovChatId: 1189 },
+    { token: 'LOVE20A', actionId: '88', title: 'LP 激励迁移', round: 42, actionChatId: 1190, actionGovChatId: 1191 },
+    { token: 'LOVE20B', actionId: '19', title: '社区验证扩容', round: 12, actionChatId: 2190, actionGovChatId: 2191 },
+  ],
   chats: [
     {
       groupId: 1024,
-      title: '群聊 #1024',
-      kind: '代币社区群',
+      title: 'LOVE20A 社区群',
+      shortTitle: '社区群',
+      token: 'LOVE20A',
+      type: 'token-community',
+      typeLabel: '代币社区群聊',
+      model: 'decentralized',
+      manager: 'TokenGroupChatManager',
+      activationCall: 'activate(chatGroupId, token)',
+      params: { chatGroupId: '1024', token: 'LOVE20A' },
       active: true,
-      lastMessageIndex: 79,
+      immutableAfterActivate: true,
       round: 42,
-      memberCount: 78,
-      canPostStatus: { allowed: true, reasonCode: '0x00000000', label: '可发言' },
+      lastMessageIndex: 79,
+      scopeAllowed: true,
+      voteWeight: 18,
+      voteWeightLabel: 'token 治理票',
       ruleSlots: {
         scopeSource: 'TokenGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'gov',
+      govDeny: {
+        stateVersion: 7,
+        addressTargets: [
+          { target: '0x44...aa', support: 43, oppose: 12, voters: 5, myVote: null, myWeight: 0, voterList: [
+            { voter: '0x3a...02', stance: '支持', weight: 18 },
+            { voter: '0x52...13', stance: '支持', weight: 13 },
+            { voter: '0x66...d0', stance: '反对', weight: 12 },
+          ] },
+        ],
+        groupTargets: [
+          { target: '9011', support: 24, oppose: 2, voters: 3, myVote: 'support', myWeight: 18, voterList: [
+            { voter: '0x8b...91', stance: '支持', weight: 18 },
+            { voter: '0x21...ce', stance: '支持', weight: 6 },
+            { voter: '0x66...d0', stance: '反对', weight: 2 },
+          ] },
+        ],
       },
     },
     {
-      groupId: 1188,
-      title: '群聊 #1188',
-      kind: '代币行动群',
-      active: true,
-      lastMessageIndex: 32,
+      groupId: 1025,
+      title: 'LOVE20A 治理者群',
+      shortTitle: '治理群',
+      token: 'LOVE20A',
+      type: 'token-gov',
+      typeLabel: '代币治理者群聊',
+      model: 'decentralized',
+      manager: 'TokenGovGroupChatManager',
+      activationCall: 'activate(chatGroupId, token)',
+      params: { chatGroupId: '1025', token: 'LOVE20A' },
+      active: false,
+      immutableAfterActivate: true,
       round: 42,
-      memberCount: 26,
-      canPostStatus: { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' },
+      lastMessageIndex: 0,
+      scopeAllowed: true,
+      voteWeight: 18,
+      voteWeightLabel: 'token 治理票',
+      ruleSlots: {
+        scopeSource: 'TokenGovGroupChatManager',
+        denySource: 'GovVotedDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'gov',
+      govDeny: { stateVersion: 0, addressTargets: [], groupTargets: [] },
+    },
+    {
+      groupId: 1188,
+      title: 'LOVE20A 行动 #77 群',
+      shortTitle: '行动群 #77',
+      token: 'LOVE20A',
+      actionId: '77',
+      type: 'action',
+      typeLabel: '代币行动群聊',
+      model: 'decentralized',
+      manager: 'TokenActionGroupChatManager',
+      activationCall: 'activate(chatGroupId, token, actionId, recentRounds)',
+      params: { chatGroupId: '1188', token: 'LOVE20A', actionId: '77', recentRounds: '8' },
+      active: true,
+      immutableAfterActivate: true,
+      round: 42,
+      lastMessageIndex: 32,
+      scopeAllowed: false,
+      voteWeight: 9,
+      voteWeightLabel: '当前行动轮投票数',
       ruleSlots: {
         scopeSource: 'TokenActionGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'gov',
+      govDeny: {
+        stateVersion: 3,
+        addressTargets: [],
+        groupTargets: [
+          { target: '9020', support: 13, oppose: 15, voters: 4, myVote: null, myWeight: 0, voterList: [
+            { voter: '0x3a...02', stance: '支持', weight: 9 },
+            { voter: '0x52...13', stance: '反对', weight: 15 },
+          ] },
+        ],
       },
     },
     {
-      groupId: 1301,
-      title: '群聊 #1301',
-      kind: '链群服务者管理型',
-      active: true,
-      lastMessageIndex: 12,
+      groupId: 1189,
+      title: 'LOVE20A 行动 #77 治理群',
+      shortTitle: '行动治理 #77',
+      token: 'LOVE20A',
+      actionId: '77',
+      type: 'action-gov',
+      typeLabel: '代币行动治理者群聊',
+      model: 'decentralized',
+      manager: 'TokenActionGovGroupChatManager',
+      activationCall: 'activate(chatGroupId, token, actionId, recentRounds)',
+      params: { chatGroupId: '1189', token: 'LOVE20A', actionId: '77', recentRounds: '8' },
+      active: false,
+      immutableAfterActivate: true,
       round: 42,
-      memberCount: 41,
-      canPostStatus: { allowed: false, reasonCode: 'DenyRejected', label: '已被禁言' },
+      lastMessageIndex: 0,
+      scopeAllowed: true,
+      voteWeight: 9,
+      voteWeightLabel: '当前行动轮投票数',
+      ruleSlots: {
+        scopeSource: 'TokenActionGovGroupChatManager',
+        denySource: 'GovVotedDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'gov',
+      govDeny: { stateVersion: 0, addressTargets: [], groupTargets: [] },
+    },
+    {
+      groupId: 1190,
+      title: 'LOVE20A 行动 #88 群',
+      shortTitle: '行动群 #88',
+      token: 'LOVE20A',
+      actionId: '88',
+      type: 'action',
+      typeLabel: '代币行动群聊',
+      model: 'decentralized',
+      manager: 'TokenActionGroupChatManager',
+      activationCall: 'activate(chatGroupId, token, actionId, recentRounds)',
+      params: { chatGroupId: '1190', token: 'LOVE20A', actionId: '88', recentRounds: '8' },
+      active: false,
+      immutableAfterActivate: true,
+      round: 42,
+      lastMessageIndex: 0,
+      scopeAllowed: true,
+      voteWeight: 0,
+      voteWeightLabel: '当前行动轮投票数',
+      ruleSlots: {
+        scopeSource: 'TokenActionGroupChatManager',
+        denySource: 'GovVotedDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'gov',
+      govDeny: { stateVersion: 0, addressTargets: [], groupTargets: [] },
+    },
+    {
+      groupId: 1191,
+      title: 'LOVE20A 行动 #88 治理群',
+      shortTitle: '行动治理 #88',
+      token: 'LOVE20A',
+      actionId: '88',
+      type: 'action-gov',
+      typeLabel: '代币行动治理者群聊',
+      model: 'decentralized',
+      manager: 'TokenActionGovGroupChatManager',
+      activationCall: 'activate(chatGroupId, token, actionId, recentRounds)',
+      params: { chatGroupId: '1191', token: 'LOVE20A', actionId: '88', recentRounds: '8' },
+      active: false,
+      immutableAfterActivate: true,
+      round: 42,
+      lastMessageIndex: 0,
+      scopeAllowed: true,
+      voteWeight: 0,
+      voteWeightLabel: '当前行动轮投票数',
+      ruleSlots: {
+        scopeSource: 'TokenActionGovGroupChatManager',
+        denySource: 'GovVotedDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'gov',
+      govDeny: { stateVersion: 0, addressTargets: [], groupTargets: [] },
+    },
+    {
+      groupId: 1301,
+      title: '链群 #1301 服务群',
+      shortTitle: '链群 #1301',
+      chainName: '雪松节点',
+      token: 'LOVE20A',
+      type: 'chain-service',
+      typeLabel: '链群服务者管理型群聊',
+      model: 'chain-service',
+      role: 'owner',
+      manager: 'GroupChat owner / delegate',
+      activationCall: 'activateChat(...)',
+      params: { chatGroupId: '1301', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      active: true,
+      immutableAfterActivate: false,
+      round: 42,
+      lastMessageIndex: 12,
+      scopeAllowed: true,
       ruleSlots: {
         scopeSource: 'GroupJoinScopeSource',
         denySource: 'AdminDenySource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
+        delegateGroupId: '1309',
+      },
+      blacklistMode: 'admin',
+      adminDeny: {
+        stateVersion: 12,
+        adminGroupIds: ['1308', '1310'],
+        addressDenyList: ['0x66...d0'],
+        senderGroupIdDenyList: ['9017'],
+        addressExemptList: ['0x8b...91'],
+        senderGroupIdExemptList: ['1309'],
+      },
+    },
+    {
+      groupId: 1302,
+      title: '链群 #1302 服务群',
+      shortTitle: '链群 #1302',
+      chainName: '北海验证节点',
+      token: 'LOVE20A',
+      type: 'chain-service',
+      typeLabel: '链群服务者管理型群聊',
+      model: 'chain-service',
+      role: 'admin',
+      manager: 'GroupChat owner / delegate',
+      activationCall: 'activateChat(...)',
+      params: { chatGroupId: '1302', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      active: true,
+      immutableAfterActivate: false,
+      round: 42,
+      lastMessageIndex: 4,
+      scopeAllowed: true,
+      ruleSlots: {
+        scopeSource: 'GroupJoinScopeSource',
+        denySource: 'AdminDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'admin',
+      adminDeny: {
+        stateVersion: 4,
+        adminGroupIds: ['9007'],
+        addressDenyList: [],
+        senderGroupIdDenyList: ['9050'],
+        addressExemptList: [],
+        senderGroupIdExemptList: [],
+      },
+    },
+    {
+      groupId: 1303,
+      title: '链群 #1303 服务群',
+      shortTitle: '链群 #1303',
+      chainName: '公共服务节点',
+      token: 'LOVE20A',
+      type: 'chain-service',
+      typeLabel: '链群服务者管理型群聊',
+      model: 'chain-service',
+      role: 'owner',
+      manager: 'GroupChat owner / delegate',
+      activationCall: 'activateChat(...)',
+      params: { chatGroupId: '1303', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      active: false,
+      immutableAfterActivate: false,
+      round: 42,
+      lastMessageIndex: 0,
+      scopeAllowed: true,
+      ruleSlots: {
+        scopeSource: 'GroupJoinScopeSource',
+        denySource: 'AdminDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '0',
+      },
+      blacklistMode: 'admin',
+      adminDeny: {
+        stateVersion: 0,
+        adminGroupIds: [],
+        addressDenyList: [],
+        senderGroupIdDenyList: [],
+        addressExemptList: [],
+        senderGroupIdExemptList: [],
+      },
+    },
+    {
+      groupId: 1304,
+      title: '链群 #1304 服务群',
+      shortTitle: '链群 #1304',
+      chainName: '代理运营节点',
+      token: 'LOVE20A',
+      type: 'chain-service',
+      typeLabel: '链群服务者管理型群聊',
+      model: 'chain-service',
+      role: 'delegate',
+      manager: 'GroupChat owner / delegate',
+      activationCall: 'activateChat(...)',
+      params: { chatGroupId: '1304', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      active: true,
+      immutableAfterActivate: false,
+      round: 42,
+      lastMessageIndex: 6,
+      scopeAllowed: true,
+      ruleSlots: {
+        scopeSource: 'GroupJoinScopeSource',
+        denySource: 'AdminDenySource',
+        beforePostPlugin: 'address(0)',
+        afterPostPlugin: 'address(0)',
+        delegateGroupId: '9007',
+      },
+      blacklistMode: 'admin',
+      adminDeny: {
+        stateVersion: 5,
+        adminGroupIds: ['9007'],
+        addressDenyList: [],
+        senderGroupIdDenyList: [],
+        addressExemptList: [],
+        senderGroupIdExemptList: ['9007'],
       },
     },
   ],
   messages: [
-    {
-      chatGroupId: 1024,
-      senderGroupId: 9001,
-      senderAddress: '0x3a...02',
-      round: 42,
-      messageIndex: 77,
-      content: '本轮行动投票窗口已经开始，建议先确认治理票。',
-      mentions: [],
-      mentionAll: false,
-      quotedMessageIndex: 0,
-      mine: false,
-    },
-    {
-      chatGroupId: 1024,
-      senderGroupId: 9007,
-      senderAddress: '0x8b...91',
-      round: 42,
-      messageIndex: 78,
-      content: '@1029 我补充：MessagePost 只是发现信号，正文回查 messages。',
-      mentions: [1029],
-      mentionAll: false,
-      quotedMessageIndex: 77,
-      mine: true,
-    },
-    {
-      chatGroupId: 1024,
-      senderGroupId: 1029,
-      senderAddress: '0x52...13',
-      round: 42,
-      messageIndex: 79,
-      content: 'mentionAll 只记录声明语义，主协议不做许可判断。',
-      mentions: [],
-      mentionAll: true,
-      quotedMessageIndex: 0,
-      mine: false,
-    },
+    { conversationId: 'dm:0x3a', senderGroupId: 9101, senderAddress: '0x3a...02', messageIndex: 1, content: '我把行动票权截图发你了。', mine: false },
+    { conversationId: 'dm:0x3a', senderGroupId: 9007, senderAddress: '0x8b...91', messageIndex: 2, content: '收到，我去行动群看黑名单投票。', mine: true },
+    { conversationId: '1024', senderGroupId: 9001, senderAddress: '0x3a...02', round: 42, messageIndex: 77, content: '本轮行动投票窗口已经开始，建议先确认治理票。', mentions: [], mentionAll: false, quotedMessageIndex: 0, mine: false },
+    { conversationId: '1024', senderGroupId: 9007, senderAddress: '0x8b...91', round: 42, messageIndex: 78, content: '@验证员小周 我补充：MessagePost 只是发现信号，正文回查 messages。', mentions: [1029], mentionAll: false, quotedMessageIndex: 77, mine: true },
+    { conversationId: '1024', senderGroupId: 1029, senderAddress: '0x52...13', round: 42, messageIndex: 79, content: 'mentionAll 只记录声明语义，主协议不做许可判断。', mentions: [], mentionAll: true, quotedMessageIndex: 0, mine: false },
+    { conversationId: '1301', senderGroupId: 1308, senderAddress: '0x21...ce', round: 42, messageIndex: 12, content: 'AdminDenySource 已按 chatGroupId 隔离，黑名单只影响后续发言。', mentions: [], mentionAll: false, quotedMessageIndex: 0, mine: false },
   ],
 };
 
-const statusModes = {
-  ok: { allowed: true, reasonCode: '0x00000000', label: '可发言' },
-  ScopeRejected: { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' },
-  DenyRejected: { allowed: false, reasonCode: 'DenyRejected', label: '已被禁言' },
-  SenderNotGroupOwner: { allowed: false, reasonCode: 'SenderNotGroupOwner', label: '不是身份 owner' },
-};
+const bottomTabs = [
+  { id: 'chat', label: '爱聊' },
+  { id: 'actions', label: '行动' },
+  { id: 'discover', label: '发现' },
+  { id: 'me', label: '我的' },
+];
+
+const inboxFilters = [
+  { id: 'all', label: '与我有关' },
+  { id: 'dm', label: '私聊' },
+  { id: 'group', label: '群聊' },
+  { id: 'managed', label: '我的' },
+];
+
+const activationTabs = [
+  { id: 'token', label: '代币群' },
+  { id: 'action', label: '行动群' },
+  { id: 'chain', label: '链群' },
+];
+
+const blacklistPageSize = 4;
+const voterPageSize = 2;
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
 
 function activeChat() {
   return state.chats.find((chat) => chat.groupId === state.activeChatId);
 }
 
-function renderChatList() {
-  const html = state.chats
-    .map((chat) => {
-      const active = chat.groupId === state.activeChatId ? ' active' : '';
-      return `
-        <article class="chat-card${active}">
-          <strong>${chat.title}</strong>
-          <div>${chat.kind}</div>
-          <small>round ${chat.round} · last #${chat.lastMessageIndex}</small>
-        </article>
-      `;
+function activeConversation() {
+  const dm = state.directMessages.find((item) => item.id === state.activeConversationId);
+  if (dm) return { kind: 'dm', item: dm };
+  const chat = state.chats.find((item) => String(item.groupId) === String(state.activeConversationId));
+  return chat ? { kind: 'group', item: chat } : null;
+}
+
+function nftProfile(senderGroupId) {
+  return state.nftProfiles[senderGroupId] || { name: '群成员', badge: '人' };
+}
+
+function messageByIndex(messageIndex) {
+  return state.messages.find((message) => message.messageIndex === Number(messageIndex));
+}
+
+function chatDisplayName(chat) {
+  if (chat.type === 'token-community') return `大群 ${chat.token}`;
+  if (chat.type === 'token-gov') return `治理群 ${chat.token}`;
+  if (chat.type === 'action') return `行动大群 #${chat.actionId}-${actionTitle(chat)}`;
+  if (chat.type === 'action-gov') return `行动治理群 #${chat.actionId}-${actionTitle(chat)}`;
+  if (chat.type === 'chain-service') return `链群#${chat.groupId}-${chat.chainName || chat.shortTitle}`;
+  return chat.title;
+}
+
+function actionTitle(chat) {
+  const action = state.actions.find((item) => item.token === chat.token && item.actionId === chat.actionId);
+  return action ? action.title : '行动';
+}
+
+function chatIconLabel(chat) {
+  const labels = {
+    'token-community': '大',
+    'token-gov': '治',
+    action: '行',
+    'action-gov': '审',
+    'chain-service': '链',
+  };
+  return labels[chat.type] || '群';
+}
+
+function activationTypeForChat(chat) {
+  if (!chat) return 'token';
+  if (['token-community', 'token-gov'].includes(chat.type)) return 'token';
+  if (['action', 'action-gov'].includes(chat.type)) return 'action';
+  if (chat.type === 'chain-service') return 'chain';
+  return 'token';
+}
+
+function activationDraftFor(chat) {
+  const key = String(chat.groupId);
+  if (!state.activationDrafts[key]) {
+    state.activationDrafts[key] = {
+      ...chat.params,
+      metaTitle: chatDisplayName(chat),
+      metaDescription: chat.typeLabel,
+      scopeSource: chat.ruleSlots.scopeSource,
+      denySource: chat.ruleSlots.denySource,
+      beforePostPlugin: chat.ruleSlots.beforePostPlugin,
+      afterPostPlugin: chat.ruleSlots.afterPostPlugin,
+      delegateGroupId: chat.ruleSlots.delegateGroupId,
+    };
+  }
+  return state.activationDrafts[key];
+}
+
+function activationFieldLabel(field) {
+  const labels = {
+    chatGroupId: 'chatGroupId',
+    token: 'token',
+    actionId: 'actionId',
+    recentRounds: 'recentRounds',
+    metaTitle: 'meta.title',
+    metaDescription: 'meta.description',
+    scopeSource: 'scopeSource',
+    denySource: 'denySource',
+    beforePostPlugin: 'beforePostPlugin',
+    afterPostPlugin: 'afterPostPlugin',
+    delegateGroupId: 'delegateGroupId',
+  };
+  return labels[field] || field;
+}
+
+function activationInputMode(field) {
+  return ['chatGroupId', 'actionId', 'recentRounds', 'delegateGroupId'].includes(field) ? 'numeric' : 'text';
+}
+
+function ruleSlotOptions(slot) {
+  const options = {
+    scopeSource: [
+      { value: 'address(0)', label: '不设置' },
+      { value: 'GroupJoinScopeSource', label: 'GroupJoinScopeSource' },
+    ],
+    denySource: [
+      { value: 'address(0)', label: '不设置' },
+      { value: 'AdminDenySource', label: 'AdminDenySource' },
+    ],
+    beforePostPlugin: [
+      { value: 'address(0)', label: '不设置' },
+    ],
+    afterPostPlugin: [
+      { value: 'address(0)', label: '不设置' },
+    ],
+  };
+  return options[slot] || null;
+}
+
+function captureActivationDraft(chat) {
+  const draft = activationDraftFor(chat);
+  document.querySelectorAll('[data-activation-field]').forEach((input) => {
+    draft[input.dataset.activationField] = input.value.trim();
+  });
+  draft.chatGroupId = draft.chatGroupId || String(chat.groupId);
+  return draft;
+}
+
+function activationBlocker(chat, draft) {
+  if (!chat) return '请选择群聊';
+  if (chat.active) return '该群聊已激活';
+  if (Number(draft.chatGroupId) !== chat.groupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
+  if (chat.model === 'chain-service' && chat.role !== 'owner') return '只有 chatGroupId 当前 owner 可以直接激活';
+  if (['action', 'action-gov'].includes(chat.type) && Number(draft.recentRounds) <= 0) {
+    return 'recentRounds 必须大于 0';
+  }
+  if (chat.model === 'chain-service' && Number(draft.delegateGroupId) === chat.groupId) {
+    return 'delegateGroupId 不能等于 chatGroupId';
+  }
+  return '';
+}
+
+function activationPreview(chat, draft) {
+  if (chat.model === 'chain-service') {
+    return `activateChat(${draft.chatGroupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${draft.delegateGroupId || 0})`;
+  }
+  const values = Object.keys(chat.params).map((key) => draft[key]).join(', ');
+  return `${chat.manager}.activate(${values})`;
+}
+
+function manageableRole(chat) {
+  return chat && ['owner', 'delegate', 'admin'].includes(chat.role);
+}
+
+function myChainServiceRole(chat) {
+  return chat && ['owner', 'delegate'].includes(chat.role);
+}
+
+function canEditRules(chat) {
+  return chat && ['owner', 'delegate'].includes(chat.role);
+}
+
+function canEditAdminDeny(chat) {
+  return chat && ['owner', 'delegate', 'admin'].includes(chat.role);
+}
+
+function canEditExempt(chat) {
+  return chat && ['owner', 'delegate'].includes(chat.role);
+}
+
+function targetDenied(target) {
+  return Number(target.support) > Number(target.oppose);
+}
+
+function normalizeBlacklistTargetType(targetType) {
+  return targetType === 'nft' ? 'group' : targetType;
+}
+
+function blacklistTypeLabel(targetType) {
+  return targetType === 'address' ? '地址' : 'NFT';
+}
+
+function blacklistRowKey(targetType, target) {
+  return `${targetType}:${target}`;
+}
+
+function govTargets(chat, targetType) {
+  targetType = normalizeBlacklistTargetType(targetType);
+  return targetType === 'address' ? chat.govDeny.addressTargets : chat.govDeny.groupTargets;
+}
+
+function findGovTarget(chat, targetType, target) {
+  return govTargets(chat, targetType).find((item) => item.target === target);
+}
+
+function ensureGovTarget(chat, targetType, target) {
+  const list = govTargets(chat, targetType);
+  let item = findGovTarget(chat, targetType, target);
+  if (!item) {
+    item = { target, support: 0, oppose: 0, voters: 0, myVote: null, myWeight: 0, voterList: [] };
+    list.push(item);
+  }
+  return item;
+}
+
+function currentSenderDenied(chat) {
+  if (!chat || chat.blacklistMode === 'none') return false;
+  if (chat.blacklistMode === 'gov') {
+    const addressDenied = chat.govDeny.addressTargets.some((item) => item.target === state.account && targetDenied(item));
+    const groupDenied = chat.govDeny.groupTargets.some((item) => item.target === String(state.senderGroupId) && targetDenied(item));
+    return addressDenied || groupDenied;
+  }
+
+  const deny = chat.adminDeny;
+  const addressExempt = deny.addressExemptList.includes(state.account);
+  const groupExempt = deny.senderGroupIdExemptList.includes(String(state.senderGroupId));
+  if (addressExempt || groupExempt) return false;
+  return deny.addressDenyList.includes(state.account) || deny.senderGroupIdDenyList.includes(String(state.senderGroupId));
+}
+
+function chatStatus(chat) {
+  if (!chat) return { allowed: true, reasonCode: 'DirectMessage', label: '私聊' };
+  if (!chat.active) return { allowed: false, reasonCode: 'ChatInactive', label: '未激活' };
+  if (!chat.scopeAllowed) return { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' };
+  if (currentSenderDenied(chat)) return { allowed: false, reasonCode: 'DenyRejected', label: '命中黑名单' };
+  return { allowed: true, reasonCode: '0x00000000', label: '可发言' };
+}
+
+function renderBottomNav() {
+  document.getElementById('bottom-nav').innerHTML = bottomTabs
+    .map((tab) => {
+      const active = state.bottomTab === tab.id ? ' active' : '';
+      return `<button class="bottom-nav-item${active}" type="button" data-action="set-bottom-tab" data-tab="${tab.id}"><span></span>${tab.label}</button>`;
     })
     .join('');
-  document.getElementById('desktop-chat-list').innerHTML = html;
+}
+
+function renderHeader() {
+  const title = document.getElementById('screen-title');
+  const subtitle = document.getElementById('screen-subtitle');
+  const wallet = document.getElementById('wallet-button');
+  const back = document.querySelector('[data-action="go-back"]');
+  const canGoBack = state.bottomTab !== 'chat' || state.view !== 'inbox';
+
+  wallet.textContent = state.walletConnected ? state.account : '连接钱包';
+  back.classList.toggle('is-hidden', !canGoBack);
+  back.disabled = !canGoBack;
+
+  title.textContent = '';
+  subtitle.textContent = '';
+  if (state.bottomTab === 'chat') return;
+
+  const tab = bottomTabs.find((item) => item.id === state.bottomTab);
+  title.textContent = tab.label;
+  subtitle.textContent = 'interface-test 原页面占位';
+}
+
+function renderWorkspace() {
+  const workspace = document.getElementById('workspace-screen');
+  const messageList = document.getElementById('message-list');
+  const composer = document.getElementById('composer');
+  const statusStrip = document.getElementById('status-strip');
+  const chatView = state.bottomTab === 'chat' && state.view === 'chat';
+  const active = activeConversation();
+  const chat = active && active.kind === 'group' ? active.item : null;
+  const canCompose = chatView && chatStatus(chat).allowed;
+
+  workspace.hidden = chatView;
+  messageList.hidden = !chatView;
+  composer.hidden = !canCompose;
+  statusStrip.hidden = state.bottomTab === 'chat' && state.view === 'inbox';
+
+  if (state.bottomTab !== 'chat') {
+    workspace.innerHTML = renderPlaceholder();
+    return;
+  }
+
+  if (state.view === 'inbox') workspace.innerHTML = renderInbox();
+  if (state.view === 'activate') workspace.innerHTML = renderActivationHub();
+  if (state.view === 'activate-form') workspace.innerHTML = renderActivationForm();
+  if (state.view === 'manage') workspace.innerHTML = renderManagement();
+  if (state.view === 'blacklist') workspace.innerHTML = renderBlacklist();
+  if (state.view === 'exempt') workspace.innerHTML = renderExemptList();
+  if (chatView) renderMessages();
+}
+
+function renderPlaceholder() {
+  return `
+    <section class="workspace-band">
+      <div class="screen-heading">
+        <h1>${escapeHtml(bottomTabs.find((item) => item.id === state.bottomTab).label)}</h1>
+        <span>占位</span>
+      </div>
+      <div class="empty-state">这里代表 interface-test 现有底导航页面；本原型只替换左下角入口为爱聊。</div>
+    </section>
+  `;
+}
+
+function renderInbox() {
+  return `
+    <div class="hero-row">
+      <div>
+        <h1>LOVE20 Chat</h1>
+        <p>私聊、群聊、激活和黑名单从这里进入。</p>
+      </div>
+      <button class="sheet-button primary" type="button" data-action="set-view" data-view="activate">激活</button>
+    </div>
+    <div class="filter-tabs">
+      ${inboxFilters
+        .map((filter) => `<button class="filter-tab${state.inboxFilter === filter.id ? ' active' : ''}" type="button" data-action="set-inbox-filter" data-filter="${filter.id}">${filter.label}</button>`)
+        .join('')}
+    </div>
+    <section class="conversation-list">${renderConversationRows()}</section>
+  `;
+}
+
+function inboxConversations() {
+  const dms = state.directMessages.map((item) => ({ kind: 'dm', item }));
+  const groups = state.chats.map((item) => ({ kind: 'group', item }));
+
+  if (state.inboxFilter === 'dm') return dms;
+  if (state.inboxFilter === 'group') return groups.filter((entry) => entry.item.active);
+  if (state.inboxFilter === 'managed') return groups.filter((entry) => entry.item.active && myChainServiceRole(entry.item));
+  return [...dms, ...groups.filter((entry) => entry.item.active)];
+}
+
+function renderConversationRows() {
+  const rows = inboxConversations();
+  if (!rows.length) return '<div class="empty-state">暂无会话</div>';
+  return rows.map(renderConversationRow).join('');
+}
+
+function renderConversationRow(entry) {
+  if (entry.kind === 'dm') {
+    const dm = entry.item;
+    return `
+      <article class="conversation-row" data-action="open-conversation" data-conversation-id="${dm.id}">
+        <div class="avatar private">私</div>
+        <div class="conversation-main">
+          <div class="card-topline"><strong>${escapeHtml(dm.title)}</strong><span>${dm.time}</span></div>
+          <div class="muted">${escapeHtml(dm.subtitle)}</div>
+          <small>${escapeHtml(dm.lastMessage)}</small>
+        </div>
+        ${dm.unread ? `<span class="unread">${dm.unread}</span>` : ''}
+      </article>
+    `;
+  }
+
+  const chat = entry.item;
+  const rowAction = chat.active ? 'open-conversation' : 'open-activation';
+  const rowTarget = chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+
+  return `
+    <article class="conversation-row group-row" data-action="${rowAction}" ${rowTarget}>
+      <div class="avatar group group-icon group-icon-${chat.type}">${chatIconLabel(chat)}</div>
+      <div class="conversation-main">
+        <div class="conversation-title">${escapeHtml(chatDisplayName(chat))}</div>
+      </div>
+    </article>
+  `;
+}
+
+function renderActivationHub() {
+  return `
+    <div class="screen-heading">
+      <h1>激活群聊</h1>
+      <span>${state.activeToken}</span>
+    </div>
+    <div class="chat-picker">
+      ${activationTabs
+        .map((tab) => `<button class="picker-button${state.activationType === tab.id ? ' active' : ''}" type="button" data-action="set-activation-type" data-activation-type="${tab.id}">${tab.label}</button>`)
+        .join('')}
+    </div>
+    ${renderActivationSection()}
+  `;
+}
+
+function renderActivationSection() {
+  if (state.activationType === 'token') return `
+    <section class="workspace-band">
+      <h2>代币群</h2>
+      ${state.chats
+        .filter((chat) => chat.token === state.activeToken && ['token-community', 'token-gov'].includes(chat.type))
+        .map(renderActivationCard)
+        .join('')}
+    </section>
+  `;
+
+  if (state.activationType === 'action') return `
+    <section class="workspace-band">
+      <h2>行动群</h2>
+      ${state.actions.filter((action) => action.token === state.activeToken).map(renderActionActivation).join('')}
+    </section>
+  `;
+
+  return `
+    <section class="workspace-band">
+      <h2>链群</h2>
+      ${state.chats
+        .filter((chat) => chat.token === state.activeToken && chat.type === 'chain-service')
+        .map(renderChainActivation)
+        .join('')}
+    </section>
+  `;
+}
+
+function renderActivationCard(chat) {
+  const mainAction = chat.active ? 'open-conversation' : 'open-activation-form';
+  const mainTarget = chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  return `
+    <article class="type-card">
+      <div class="card-topline">
+        <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+        <span class="pill ${chat.active ? 'pill-ok' : 'pill-warn'}">${chat.active ? '已激活' : '待激活'}</span>
+      </div>
+      <div class="muted">${escapeHtml(chat.manager)} · ${escapeHtml(chat.activationCall)}</div>
+      <div class="kv-grid">${renderParams(chat.params)}</div>
+      <div class="card-actions">
+        <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.active ? '进入' : '配置入参'}</button>
+        <button class="sheet-button" type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}" ${chat.active ? '' : 'disabled'}>黑名单</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderActionActivation(action) {
+  const actionChat = chatById(action.actionChatId);
+  const actionGovChat = chatById(action.actionGovChatId);
+  return `
+    <article class="action-row">
+      <div class="card-topline">
+        <strong>#${escapeHtml(action.actionId)} ${escapeHtml(action.title)}</strong>
+        <span>round ${action.round}</span>
+      </div>
+      <div class="split-cards">
+        ${renderMiniActivate(actionChat)}
+        ${renderMiniActivate(actionGovChat)}
+      </div>
+    </article>
+  `;
+}
+
+function renderMiniActivate(chat) {
+  const mainAction = chat.active ? 'open-conversation' : 'open-activation-form';
+  const mainTarget = chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  return `
+    <div class="mini-card">
+      <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+      <button class="sheet-button${chat.active ? '' : ' primary'}" type="button" data-action="${mainAction}" ${mainTarget}>
+        ${chat.active ? '进入' : '配置'}
+      </button>
+    </div>
+  `;
+}
+
+function renderChainActivation(chat) {
+  return `
+    <article class="action-row">
+      <div class="card-topline">
+        <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+        <span class="pill ${chat.active ? 'pill-ok' : 'pill-warn'}">${chat.active ? chat.role : '待激活'}</span>
+      </div>
+      <div class="muted">一个代币社区可有多个链群服务者管理群</div>
+      <div class="inline-actions">
+        <button type="button" data-action="${chat.active ? 'open-conversation' : 'open-activation-form'}" ${chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`}>${chat.active ? '进入' : '配置'}</button>
+        ${chat.active && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.groupId}">群管理</button>` : ''}
+        ${chat.active ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">黑名单</button>` : ''}
+      </div>
+    </article>
+  `;
+}
+
+function renderActivationForm() {
+  const chat = activeChat();
+  if (!chat) return renderActivationHub();
+  const draft = activationDraftFor(chat);
+  const blocker = activationBlocker(chat, draft);
+  const fields = chat.model === 'chain-service'
+    ? renderDirectActivationFields(chat, draft)
+    : renderManagerActivationFields(chat, draft);
+
+  return `
+    <section class="workspace-band activation-form">
+      <div class="screen-heading">
+        <h1>${escapeHtml(chatDisplayName(chat))}</h1>
+        <span class="pill ${chat.active ? 'pill-ok' : 'pill-warn'}">${chat.active ? '已激活' : '待激活'}</span>
+      </div>
+      <div class="kv-grid">${renderParams(chat.params)}</div>
+      ${fields}
+      <div class="activation-preview">
+        <b>调用预览</b>
+        <code>${escapeHtml(activationPreview(chat, draft))}</code>
+      </div>
+      ${blocker ? `<div class="notice-row">${escapeHtml(blocker)}</div>` : ''}
+      <div class="card-actions">
+        <button class="sheet-button primary" type="button" data-action="activate-chat" data-chat-id="${chat.groupId}" ${blocker ? 'disabled' : ''}>提交激活</button>
+        <button class="sheet-button" type="button" data-action="set-view" data-view="activate">返回列表</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderManagerActivationFields(chat, draft) {
+  return `
+    <section class="activation-section">
+      <h2>Manager 入参</h2>
+      ${Object.keys(chat.params).map((field) => renderActivationTextInput(field, draft[field], field === 'chatGroupId')).join('')}
+      <div class="rule-table">${renderRuleRows(chat)}</div>
+      <div class="notice-row">Manager 型群聊激活后不再修改 token、actionId、recentRounds 或规则槽。</div>
+    </section>
+  `;
+}
+
+function renderDirectActivationFields(chat, draft) {
+  return `
+    <section class="activation-section">
+      <h2>metadata</h2>
+      ${renderActivationTextInput('metaTitle', draft.metaTitle)}
+      ${renderActivationTextInput('metaDescription', draft.metaDescription)}
+    </section>
+    <section class="activation-section">
+      <h2>规则槽</h2>
+      ${renderActivationChoice('scopeSource', draft.scopeSource)}
+      ${renderActivationChoice('denySource', draft.denySource)}
+      ${renderActivationChoice('beforePostPlugin', draft.beforePostPlugin)}
+      ${renderActivationChoice('afterPostPlugin', draft.afterPostPlugin)}
+      ${renderActivationTextInput('delegateGroupId', draft.delegateGroupId)}
+    </section>
+  `;
+}
+
+function renderActivationTextInput(field, value, readonly = false) {
+  const id = `activation-${field}-input`;
+  return `
+    <div class="field-row activation-field-row">
+      <label for="${id}">${escapeHtml(activationFieldLabel(field))}</label>
+      <input id="${id}" data-activation-field="${field}" value="${escapeHtml(value ?? '')}" inputmode="${activationInputMode(field)}" ${readonly ? 'readonly' : ''}>
+    </div>
+  `;
+}
+
+function renderActivationChoice(field, value) {
+  const options = ruleSlotOptions(field) || [];
+  return `
+    <div class="field-row activation-choice-row">
+      <label>${escapeHtml(activationFieldLabel(field))}</label>
+      <div class="choice-group">
+        ${options.map((option) => `
+          <button class="picker-button${value === option.value ? ' active' : ''}" type="button" data-action="set-activation-option" data-field="${field}" data-value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderParams(params) {
+  return Object.entries(params)
+    .map(([key, value]) => `<span><b>${escapeHtml(key)}</b>${escapeHtml(value)}</span>`)
+    .join('');
+}
+
+function renderManagement() {
+  const chat = activeChat();
+  if (!chat) return '<div class="empty-state">请选择群聊</div>';
+  if (chat.model === 'decentralized') return renderDecentralizedManagement(chat);
+  return renderChainServiceManagement(chat);
+}
+
+function renderDecentralizedManagement(chat) {
+  return `
+    <section class="workspace-band">
+      <div class="screen-heading">
+        <h1>${escapeHtml(chat.shortTitle)}</h1>
+        <span class="pill pill-ok">Manager 持有 NFT</span>
+      </div>
+      <div class="rule-table">${renderRuleRows(chat)}</div>
+      <div class="notice-row">去中心化群聊激活后不提供关闭、重配规则槽、改 token/action/recentRounds 的入口。</div>
+      <div class="card-actions single-action">
+        <button class="sheet-button primary" type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">治理黑名单</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderChainServiceManagement(chat) {
+  const ruleEditor = canEditRules(chat) ? `
+    <section class="workspace-band">
+      <h2>owner / delegate 配置</h2>
+      ${renderRuleInput(chat, 'scopeSource')}
+      ${renderRuleInput(chat, 'denySource')}
+      ${renderRuleInput(chat, 'beforePostPlugin')}
+      ${renderRuleInput(chat, 'afterPostPlugin')}
+      ${renderRuleInput(chat, 'delegateGroupId')}
+    </section>
+    <section class="workspace-band">
+      <h2>管理员 NFT</h2>
+      ${renderAdminGroupControls(chat)}
+      ${state.adminGroupQueryResult ? `<div class="query-result">${escapeHtml(state.adminGroupQueryResult)}</div>` : ''}
+      ${renderAdminList(chat.adminDeny.adminGroupIds, 'adminGroupIds', canEditRules(chat))}
+    </section>
+  ` : '';
+
+  return `
+    <section class="workspace-band">
+      <div class="screen-heading">
+        <h1>${escapeHtml(chat.shortTitle)}</h1>
+        <span class="pill ${manageableRole(chat) ? 'pill-ok' : 'pill-warn'}">${escapeHtml(chat.role)}</span>
+      </div>
+      <div class="rule-table">${renderRuleRows(chat)}</div>
+      <div class="notice-row">${managementNotice(chat)}</div>
+    </section>
+    ${ruleEditor}
+  `;
+}
+
+function renderRuleInput(chat, slot) {
+  const options = ruleSlotOptions(slot);
+  if (options) return renderRuleChoice(chat, slot, options);
+
+  const id = `${slot}-input`;
+  return `
+    <div class="field-row">
+      <label for="${id}">${slot}</label>
+      <input id="${id}" value="${escapeHtml(chat.ruleSlots[slot])}">
+      <button class="sheet-button" type="button" data-action="set-rule-slot" data-slot="${slot}" data-input="${id}">更新</button>
+    </div>
+  `;
+}
+
+function managementNotice(chat) {
+  if (canEditRules(chat)) return 'owner/delegate 可管理规则槽和管理员 NFT。黑名单与豁免名单从群详情菜单进入。';
+  if (canEditAdminDeny(chat)) return 'admin 只维护黑名单；入口在群详情菜单。';
+  return '当前地址只读。';
+}
+
+function renderRuleChoice(chat, slot, options) {
+  return `
+    <div class="field-row activation-choice-row">
+      <label>${slot}</label>
+      <div class="choice-group">
+        ${options.map((option) => `
+          <button class="picker-button${chat.ruleSlots[slot] === option.value ? ' active' : ''}" type="button" data-action="set-rule-slot-option" data-slot="${slot}" data-value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminGroupControls(chat) {
+  const placeholder = state.adminGroupQueryType === 'name' ? '输入 NFT 名称' : '输入 NFT 编号';
+  const inputMode = state.adminGroupQueryType === 'name' ? 'text' : 'numeric';
+  return `
+    <div class="admin-group-controls">
+      <div class="filter-tabs admin-query-tabs">
+        <button class="filter-tab${state.adminGroupQueryType === 'name' ? ' active' : ''}" type="button" data-action="set-admin-query-type" data-query-type="name">按名称</button>
+        <button class="filter-tab${state.adminGroupQueryType === 'id' ? ' active' : ''}" type="button" data-action="set-admin-query-type" data-query-type="id">按编号</button>
+      </div>
+      <input id="admin-group-input" value="${escapeHtml(state.adminGroupQuery)}" placeholder="${placeholder}" inputmode="${inputMode}">
+      <div class="admin-action-row">
+        <button class="sheet-button" type="button" data-action="query-admin-self">查自己</button>
+        <button class="sheet-button" type="button" data-action="query-admin-group" data-input="admin-group-input">查询</button>
+        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="adminGroupIds" data-input="admin-group-input" ${canEditRules(chat) ? '' : 'disabled'}>加入名单</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminList(items, listName, canRemove) {
+  if (!items.length) return '<div class="empty-state">暂无记录</div>';
+  return `
+    <div class="admin-nft-list">
+      ${items.map((item) => `
+        <article class="list-row admin-nft-row">
+          <div>
+            <strong>NFT #${escapeHtml(item)}</strong>
+            <small>${escapeHtml(nftProfile(item).name)}</small>
+          </div>
+          <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(item)}" ${canRemove ? '' : 'disabled'} aria-label="移除">×</button>
+        </article>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderRuleRows(chat) {
+  return Object.entries(chat.ruleSlots)
+    .map(([key, value]) => `<div><span>${escapeHtml(key)}</span><strong>${escapeHtml(ruleSlotDisplay(key, value))}</strong></div>`)
+    .join('');
+}
+
+function ruleSlotDisplay(key, value) {
+  if (key !== 'delegateGroupId' || value === '0') return value;
+  return `${value} · ${nftProfile(value).name}`;
+}
+
+function renderGroupPicker() {
+  const groups = state.chats.filter((chat) => chat.active);
+  return `
+    <div class="chat-picker" aria-label="选择群聊">
+      ${groups.map((chat) => `<button class="picker-button${chat.groupId === state.activeChatId ? ' active' : ''}" type="button" data-action="select-chat" data-chat-id="${chat.groupId}">${escapeHtml(chat.shortTitle)}</button>`).join('')}
+    </div>
+  `;
+}
+
+function renderBlacklist() {
+  const chat = activeChat();
+  if (!chat) return '<div class="empty-state">请选择群聊</div>';
+  return chat.blacklistMode === 'gov' ? renderGovBlacklist(chat) : renderAdminBlacklist(chat);
+}
+
+function renderGovBlacklist(chat) {
+  return renderBlacklistPanel(chat);
+}
+
+function renderAdminBlacklist(chat) {
+  return renderBlacklistPanel(chat);
+}
+
+function renderBlacklistPanel(chat) {
+  const version = chat.blacklistMode === 'gov' ? chat.govDeny.stateVersion : chat.adminDeny.stateVersion;
+  const placeholder = state.blacklistQueryType === 'address' ? '输入地址 0x...' : '输入 NFT groupId';
+  const selfLabel = state.blacklistQueryType === 'address' ? '查自己' : '查我的NFT';
+  return `
+    <section class="workspace-band">
+      <div class="screen-heading">
+        <h1>群黑名单</h1>
+        <span>v${version}</span>
+      </div>
+      <div class="muted">${escapeHtml(chatDisplayName(chat))}</div>
+      <div class="filter-tabs blacklist-query-tabs">
+        <button class="filter-tab${state.blacklistQueryType === 'address' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="address">按地址</button>
+        <button class="filter-tab${state.blacklistQueryType === 'nft' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="nft">按NFT</button>
+      </div>
+      ${renderBlacklistControls(chat, placeholder, selfLabel)}
+      ${state.blacklistQueryResult ? `<div class="query-result">${escapeHtml(state.blacklistQueryResult)}</div>` : ''}
+      <div class="tab-content-block">
+        ${renderBlacklistRows(chat)}
+      </div>
+    </section>
+  `;
+}
+
+function renderBlacklistControls(chat, placeholder, selfLabel) {
+  const listName = state.blacklistQueryType === 'address' ? 'addressDenyList' : 'senderGroupIdDenyList';
+  const adminAdd = renderAdminBlacklistAdd(chat, listName);
+  const countClass = chat.blacklistMode === 'admin' ? 'count-3' : 'count-2';
+  return `
+    <div class="blacklist-controls ${countClass}">
+      <input id="blacklist-query-input" value="${escapeHtml(state.blacklistQuery)}" placeholder="${placeholder}">
+      <div class="blacklist-action-row ${countClass}">
+        <button class="sheet-button" type="button" data-action="query-self">${selfLabel}</button>
+        <button class="sheet-button primary" type="button" data-action="query-blacklist" data-input="blacklist-query-input">查询</button>
+        ${adminAdd}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminBlacklistAdd(chat, listName) {
+  if (chat.blacklistMode !== 'admin') return '';
+  return `<button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="blacklist-query-input" ${canEditAdminDeny(chat) ? '' : 'disabled'}>加入黑名单</button>`;
+}
+
+function blacklistRows(chat) {
+  if (chat.blacklistMode === 'gov') {
+    return [
+      ...chat.govDeny.addressTargets.map((item) => {
+        const denied = targetDenied(item);
+        return {
+          type: 'address',
+          target: item.target,
+          label: item.target,
+          status: denied ? '已拉黑' : '未拉黑',
+          statusClass: denied ? 'pill-bad' : 'pill-ok',
+          detail: `支持 ${item.support} / 反对 ${item.oppose}`,
+        };
+      }),
+      ...chat.govDeny.groupTargets.map((item) => {
+        const denied = targetDenied(item);
+        return {
+          type: 'nft',
+          target: item.target,
+          label: `NFT #${item.target}`,
+          status: denied ? '已拉黑' : '未拉黑',
+          statusClass: denied ? 'pill-bad' : 'pill-ok',
+          detail: `支持 ${item.support} / 反对 ${item.oppose}`,
+        };
+      }),
+    ];
+  }
+
+  return [
+    ...chat.adminDeny.addressDenyList.map((item) => ({
+      type: 'address',
+      target: item,
+      label: item,
+      status: '已拉黑',
+      statusClass: 'pill-bad',
+      detail: 'AdminDenySource',
+    })),
+    ...chat.adminDeny.senderGroupIdDenyList.map((item) => ({
+      type: 'nft',
+      target: item,
+      label: `NFT #${item}`,
+      status: '已拉黑',
+      statusClass: 'pill-bad',
+      detail: 'AdminDenySource',
+    })),
+  ];
+}
+
+function renderBlacklistRows(chat) {
+  const rows = blacklistRows(chat).filter((row) => row.type === state.blacklistQueryType);
+  const listLabel = state.blacklistQueryType === 'address' ? '地址列表' : 'NFT列表';
+  if (!rows.length) return `<div class="empty-state">暂无${listLabel}记录</div>`;
+  const totalPages = Math.max(1, Math.ceil(rows.length / blacklistPageSize));
+  const page = Math.min(Math.max(1, state.blacklistPage), totalPages);
+  const start = (page - 1) * blacklistPageSize;
+  const items = rows.slice(start, start + blacklistPageSize).map((row) => renderBlacklistRow(chat, row)).join('');
+  return `
+    <div class="card-topline blacklist-list-head">
+      <h2>${listLabel}</h2>
+      <span>${rows.length} 条</span>
+    </div>
+    ${items}
+    ${renderBlacklistPager(page, totalPages)}
+  `;
+}
+
+function renderBlacklistRow(chat, row) {
+  const key = blacklistRowKey(row.type, row.target);
+  const menu = state.activeBlacklistMenuKey === key ? renderBlacklistRowMenu(chat, row) : '';
+  return `
+    <article class="list-row blacklist-row" data-action="toggle-blacklist-menu" data-target-type="${row.type}" data-target="${escapeHtml(row.target)}">
+      <div>
+        <strong>${escapeHtml(row.label)}</strong>
+        <small>${blacklistTypeLabel(row.type)} · ${escapeHtml(row.detail)}</small>
+      </div>
+      <span class="pill ${row.statusClass}">${row.status}</span>
+      ${menu}
+    </article>
+  `;
+}
+
+function renderBlacklistRowMenu(chat, row) {
+  if (chat.blacklistMode === 'gov') {
+    const voteDisabled = chat.voteWeight > 0 ? '' : 'disabled';
+    return `
+      <div class="blacklist-menu">
+        <button type="button" data-action="gov-vote" data-target-type="${row.type}" data-target="${escapeHtml(row.target)}" data-stance="support" ${voteDisabled}>支持</button>
+        <button type="button" data-action="gov-vote" data-target-type="${row.type}" data-target="${escapeHtml(row.target)}" data-stance="oppose" ${voteDisabled}>反对</button>
+        <button type="button" data-action="gov-vote" data-target-type="${row.type}" data-target="${escapeHtml(row.target)}" data-stance="clear" ${voteDisabled}>撤票</button>
+        <button type="button" data-action="open-gov-voters" data-target-type="${row.type}" data-target="${escapeHtml(row.target)}">查看voter列表</button>
+      </div>
+    `;
+  }
+
+  const listName = row.type === 'address' ? 'addressDenyList' : 'senderGroupIdDenyList';
+  const disabled = canEditAdminDeny(chat) ? '' : 'disabled';
+  return `
+    <div class="blacklist-menu">
+      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>移出黑名单</button>
+    </div>
+  `;
+}
+
+function renderBlacklistPager(page, totalPages) {
+  if (totalPages <= 1) return '';
+  return `
+    <div class="pager-row">
+      <button class="sheet-button" type="button" data-action="set-blacklist-page" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+      <span>${page} / ${totalPages}</span>
+      <button class="sheet-button" type="button" data-action="set-blacklist-page" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>下一页</button>
+    </div>
+  `;
+}
+
+function renderExemptList() {
+  const chat = activeChat();
+  if (!chat) return '<div class="empty-state">请选择群聊</div>';
+  if (!chat.adminDeny) return '<div class="empty-state">该群没有豁免名单</div>';
+  const listLabel = state.blacklistQueryType === 'address' ? '地址列表' : 'NFT列表';
+  const placeholder = state.blacklistQueryType === 'address' ? '输入地址 0x...' : '输入 NFT groupId';
+  const listName = state.blacklistQueryType === 'address' ? 'addressExemptList' : 'senderGroupIdExemptList';
+  return `
+    <section class="workspace-band">
+      <div class="screen-heading">
+        <h1>豁免名单</h1>
+        <span>v${chat.adminDeny.stateVersion}</span>
+      </div>
+      <div class="muted">${escapeHtml(chatDisplayName(chat))}</div>
+      <div class="filter-tabs blacklist-query-tabs">
+        <button class="filter-tab${state.blacklistQueryType === 'address' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="address">按地址</button>
+        <button class="filter-tab${state.blacklistQueryType === 'nft' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="nft">按NFT</button>
+      </div>
+      <div class="field-row compact">
+        <input id="exempt-input" placeholder="${placeholder}">
+        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="exempt-input" ${canEditExempt(chat) ? '' : 'disabled'}>加入豁免</button>
+      </div>
+      <div class="tab-content-block">
+        ${renderExemptRows(chat, listLabel)}
+      </div>
+    </section>
+  `;
+}
+
+function exemptRows(chat) {
+  return state.blacklistQueryType === 'address'
+    ? chat.adminDeny.addressExemptList.map((item) => ({ type: 'address', target: item, label: item }))
+    : chat.adminDeny.senderGroupIdExemptList.map((item) => ({ type: 'nft', target: item, label: `NFT #${item}` }));
+}
+
+function renderExemptRows(chat, listLabel) {
+  const rows = exemptRows(chat);
+  if (!rows.length) return `<div class="empty-state">暂无${listLabel}记录</div>`;
+  const totalPages = Math.max(1, Math.ceil(rows.length / blacklistPageSize));
+  const page = Math.min(Math.max(1, state.blacklistPage), totalPages);
+  const start = (page - 1) * blacklistPageSize;
+  const items = rows.slice(start, start + blacklistPageSize).map((row) => renderExemptRow(chat, row)).join('');
+  return `
+    <div class="card-topline blacklist-list-head">
+      <h2>${listLabel}</h2>
+      <span>${rows.length} 条</span>
+    </div>
+    ${items}
+    ${renderBlacklistPager(page, totalPages)}
+  `;
+}
+
+function renderExemptRow(chat, row) {
+  const key = blacklistRowKey(row.type, row.target);
+  const menu = state.activeExemptMenuKey === key ? renderExemptRowMenu(chat, row) : '';
+  return `
+    <article class="list-row blacklist-row" data-action="toggle-exempt-menu" data-target-type="${row.type}" data-target="${escapeHtml(row.target)}">
+      <div>
+        <strong>${escapeHtml(row.label)}</strong>
+        <small>${blacklistTypeLabel(row.type)} · 豁免</small>
+      </div>
+      <span class="pill pill-ok">已豁免</span>
+      ${menu}
+    </article>
+  `;
+}
+
+function renderExemptRowMenu(chat, row) {
+  const listName = row.type === 'address' ? 'addressExemptList' : 'senderGroupIdExemptList';
+  const disabled = canEditExempt(chat) ? '' : 'disabled';
+  return `
+    <div class="blacklist-menu">
+      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>移出豁免名单</button>
+    </div>
+  `;
 }
 
 function renderMessages() {
-  const items = state.messages
-    .filter((message) => message.chatGroupId === state.activeChatId)
-    .map((message) => {
-      const mine = message.mine ? ' mine' : '';
-      const quote = message.quotedMessageIndex
-        ? `<div class="quote-preview">引用 #${message.quotedMessageIndex} · quotedMessageIndex</div>`
-        : '';
-      const mention = message.mentions.length ? ` · mentions ${message.mentions.join(', ')}` : '';
-      const mentionAll = message.mentionAll ? ' · mentionAll' : '';
-      const actions = state.activeMenuIndex === message.messageIndex
-        ? `
-          <div class="message-actions">
-            <button type="button" data-action="quote-message" data-message-index="${message.messageIndex}">引用</button>
-            <button type="button" data-action="mention-sender" data-sender-group-id="${message.senderGroupId}">@身份</button>
-            <button type="button" data-action="copy-index" data-message-index="${message.messageIndex}">复制 #</button>
-          </div>
-        `
-        : '';
-      return `
-        <article class="message-row${mine}" data-action="select-message" data-message-index="${message.messageIndex}">
-          <div class="avatar">${message.senderGroupId}</div>
-          <div class="message-body">
-            <div class="message-meta">#${message.senderGroupId} · message #${message.messageIndex}${mention}${mentionAll}</div>
-            <div class="message-bubble${mine}">
-              ${quote}
-              ${message.content}
-            </div>
-            ${actions}
-          </div>
-        </article>
-      `;
-    })
-    .join('');
-  document.getElementById('message-list').innerHTML = `<div class="round-divider">Round ${activeChat().round}</div>${items}`;
+  const active = activeConversation();
+  const conversationId = state.activeConversationId;
+  const visibleMessages = state.messages.filter((message) => message.conversationId === String(conversationId));
+  const groupTools = active && active.kind === 'group' ? renderChatTools(active.item) : '';
+  const chat = active && active.kind === 'group' ? active.item : null;
+  const status = chatStatus(chat);
+  const cannotPost = !status.allowed ? renderCannotPost(status) : '';
+  const roundLabel = active && active.kind === 'group' ? `<div class="round-divider">Round ${active.item.round}</div>` : '';
+  const items = visibleMessages.map(renderMessage).join('');
+  document.getElementById('message-list').innerHTML = `${groupTools}${roundLabel}${items || '<div class="empty-state">暂无消息</div>'}${cannotPost}`;
+}
+
+function renderChatTools(chat) {
+  const exemptMenuItem = chat.adminDeny
+    ? `<button type="button" data-action="open-exempt" data-chat-id="${chat.groupId}">群豁免名单</button>`
+    : '';
+  const blacklistLabel = '群黑名单';
+  const manageMenuItem = canEditRules(chat)
+    ? `<button type="button" data-action="open-manage" data-chat-id="${chat.groupId}">群管理</button>`
+    : '<button type="button" disabled title="仅群NFT拥有者或代理可以进">群管理</button>';
+  const menu = state.activeGroupMenuId === chat.groupId ? `
+    <div class="chat-menu">
+      <button type="button" data-action="open-status">群详情</button>
+      <button type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">${blacklistLabel}</button>
+      ${exemptMenuItem}
+      ${manageMenuItem}
+    </div>
+  ` : '';
+  return `
+    <div class="chat-tools">
+      <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+      <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-chat-id="${chat.groupId}" aria-label="群聊菜单">...</button>
+      ${menu}
+    </div>
+  `;
+}
+
+function renderCannotPost(status) {
+  return `
+    <div class="cannot-post">
+      <strong>${escapeHtml(status.label)}</strong>
+      <span>${escapeHtml(status.reasonCode)}</span>
+    </div>
+  `;
+}
+
+function renderMessage(message) {
+  const mine = message.mine ? ' mine' : '';
+  const profile = nftProfile(message.senderGroupId);
+  const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex) : null;
+  const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderGroupId).name)}</div>` : '';
+  const chat = chatById(message.conversationId);
+  const senderDenyAction = renderSenderDenyAction(chat, message);
+  const mentions = message.mentions && message.mentions.length
+    ? ` · @${message.mentions.map((mention) => nftProfile(mention).name).join(' @')}`
+    : '';
+  const mentionAll = message.mentionAll ? ' · @全部' : '';
+  const actions = state.activeMenuIndex === message.messageIndex
+    ? `
+      <div class="message-actions">
+        <button type="button" data-action="quote-message" data-message-index="${message.messageIndex}">引用</button>
+        <button type="button" data-action="mention-sender" data-sender-group-id="${message.senderGroupId || state.senderGroupId}">@${escapeHtml(profile.name)}</button>
+        ${senderDenyAction}
+      </div>
+    `
+    : '';
+  return `
+    <article class="message-row${mine}" data-action="select-message" data-message-index="${message.messageIndex}">
+      <div class="avatar">${escapeHtml(profile.badge)}</div>
+      <div class="message-body">
+        <div class="message-meta">${escapeHtml(profile.name)}${mentions}${mentionAll}</div>
+        <div class="message-bubble${mine}">${quote}${escapeHtml(message.content)}</div>
+        ${actions}
+      </div>
+    </article>
+  `;
+}
+
+function renderSenderDenyAction(chat, message) {
+  if (!chat || message.mine || !message.senderAddress || !message.senderGroupId) return '';
+  if (chat.blacklistMode === 'gov') {
+    const disabled = chat.voteWeight > 0 ? '' : ' disabled';
+    return `<button type="button" data-action="vote-sender-deny" data-message-index="${message.messageIndex}"${disabled}>支持拉黑</button>`;
+  }
+  if (chat.blacklistMode === 'admin' && canEditAdminDeny(chat)) {
+    return `<button type="button" data-action="add-sender-deny" data-message-index="${message.messageIndex}">拉黑sender</button>`;
+  }
+  return '';
 }
 
 function renderStatus() {
-  const chat = activeChat();
-  const status = chat.canPostStatus;
-  const statusClass = status.allowed ? 'status-ok' : 'status-bad';
-  const statusHtml = `
-    <span class="${statusClass}">${status.label}</span>
-    <span> · senderGroupId #${state.senderGroupId} · canPostStatus ${status.reasonCode}</span>
+  const active = state.view === 'chat' ? activeConversation() : null;
+  const chat = active && active.kind === 'group' ? active.item : activeChat();
+  const status = active && active.kind === 'dm' ? chatStatus(null) : chatStatus(chat);
+  const className = status.allowed ? 'status-ok' : 'status-bad';
+  document.getElementById('status-strip').innerHTML = `
+    <span class="${className}">${status.label}</span>
+    <span> · ${state.walletConnected ? state.account : '未连接'} · ${escapeHtml(state.syncHint)}</span>
   `;
-  const detailsHtml = `
+  const groupAbout = chat ? `
+      <dt>群聊</dt>
+      <dd>${escapeHtml(chatDisplayName(chat))}</dd>
+      <dt>chatGroupId</dt>
+      <dd>#${chat.groupId}</dd>
+      <dt>类型</dt>
+      <dd>${escapeHtml(chat.typeLabel)}</dd>
+  ` : `
+      <dt>入口</dt>
+      <dd>底导航 爱聊 / LOVE20 Chat</dd>
+  `;
+  document.getElementById('status-sheet-content').innerHTML = `
     <dl class="status-card">
+      ${groupAbout}
+      <dt>当前身份</dt>
+      <dd>senderGroupId #${state.senderGroupId}</dd>
       <dt>canPostStatus</dt>
-      <dd><span class="${statusClass}">${status.label}</span> · ${status.reasonCode}</dd>
-      <dt>ruleSlots</dt>
-      <dd>scopeSource: ${chat.ruleSlots.scopeSource}<br>denySource: ${chat.ruleSlots.denySource}</dd>
-      <dt>senderGroupId</dt>
-      <dd>#${state.senderGroupId} · GroupDefaults.defaultGroupIdOf(account)</dd>
-      <dt>消息索引</dt>
-      <dd>${state.indexMode} / messagesByRound / messagesBySender / messagesByMention / messagesByMentionAll</dd>
-      <dt>同步策略</dt>
-      <dd>${state.syncHint}</dd>
+      <dd><span class="${className}">${status.label}</span> · ${status.reasonCode}</dd>
     </dl>
-    <div class="sheet-actions">
-      ${Object.keys(statusModes)
-        .map((mode) => {
-          const active = chat.canPostStatus.reasonCode === statusModes[mode].reasonCode ? ' active' : '';
-          return `<button type="button" class="sheet-button${active}" data-action="set-status-mode" data-status-mode="${mode}">${statusModes[mode].label}</button>`;
-        })
-        .join('')}
-    </div>
-    <div class="sheet-actions">
-      ${['messages', 'messagesByRound', 'messagesBySender', 'messagesByMention', 'messagesByMentionAll']
-        .map((mode) => {
-          const active = state.indexMode === mode ? ' active' : '';
-          return `<button type="button" class="sheet-button${active}" data-action="set-index-mode" data-index-mode="${mode}">${mode}</button>`;
-        })
-        .join('')}
-    </div>
-    <div class="close-row">
+    <div class="close-row status-actions">
+      ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-chat-id="${chat.groupId}" data-source="status">群管理</button>` : ''}
       <button type="button" class="sheet-button" data-action="close-status">关闭</button>
     </div>
   `;
-  document.getElementById('status-strip').innerHTML = statusHtml;
-  document.getElementById('desktop-status-content').innerHTML = detailsHtml;
-  document.getElementById('status-sheet-content').innerHTML = detailsHtml;
 }
 
 function renderComposerChips() {
   const chips = [];
   if (state.quotedMessageIndex) {
-    chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 #${state.quotedMessageIndex} ×</button>`);
+    const quoted = messageByIndex(state.quotedMessageIndex);
+    const quotedName = quoted ? nftProfile(quoted.senderGroupId).name : '消息';
+    chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
   }
-  for (const mention of state.mentions) {
-    chips.push(`<button class="chip" type="button" data-action="remove-mention" data-sender-group-id="${mention}">@${mention} ×</button>`);
-  }
-  if (state.mentionAll) {
-    chips.push('<button class="chip" type="button" data-action="toggle-mention-all">@all ×</button>');
-  }
+  for (const mention of state.mentions) chips.push(`<button class="chip" type="button" data-action="remove-mention" data-sender-group-id="${mention}">@${escapeHtml(nftProfile(mention).name)} ×</button>`);
+  if (state.mentionAll) chips.push('<button class="chip" type="button" data-action="toggle-mention-all">@all ×</button>');
   document.getElementById('composer-chips').innerHTML = chips.join('');
 }
 
 function renderMorePanel() {
   document.getElementById('more-panel-content').innerHTML = `
     <div class="panel-grid">
-      <button class="panel-button" type="button" data-action="add-mention" data-sender-group-id="1029">@1029</button>
+      <button class="panel-button" type="button" data-action="add-mention" data-sender-group-id="1029">@${escapeHtml(nftProfile(1029).name)}</button>
       <button class="panel-button${state.mentionAll ? ' active' : ''}" type="button" data-action="toggle-mention-all">mentionAll</button>
       <button class="panel-button" type="button" data-action="set-index-mode" data-index-mode="messagesByRound">按 round</button>
       <button class="panel-button" type="button" data-action="set-index-mode" data-index-mode="messagesBySender">按 sender</button>
     </div>
-    <div class="close-row">
-      <button type="button" class="sheet-button" data-action="close-more">关闭</button>
-    </div>
+    <div class="close-row"><button type="button" class="sheet-button" data-action="close-more">关闭</button></div>
   `;
-}
-
-function renderHeader() {
-  const chat = activeChat();
-  document.getElementById('chat-title').textContent = chat.title;
-  document.getElementById('chat-subtitle').textContent = `${chat.kind} · ${chat.memberCount}人`;
 }
 
 function render() {
   renderHeader();
-  renderChatList();
-  renderMessages();
+  renderBottomNav();
+  renderWorkspace();
   renderStatus();
   renderComposerChips();
   renderMorePanel();
 }
 
-render();
+function chatById(chatId) {
+  return state.chats.find((chat) => chat.groupId === Number(chatId));
+}
 
-function openStatusSheet() {
+function setBottomTab(tab) {
+  state.bottomTab = tab;
+  if (tab === 'chat') state.view = 'inbox';
+  render();
+}
+
+function setView(view) {
+  state.manageReturnTo = null;
+  state.manageReturnView = null;
+  state.view = view;
+  render();
+}
+
+function goBack() {
+  if (state.bottomTab !== 'chat') {
+    state.bottomTab = 'chat';
+    state.view = 'inbox';
+  } else if (state.view === 'chat') {
+    state.view = 'inbox';
+  } else if (state.view === 'activate-form') {
+    state.view = 'activate';
+  } else if (state.view === 'manage' && state.manageReturnTo === 'status') {
+    state.view = state.manageReturnView || 'chat';
+    state.manageReturnTo = null;
+    state.manageReturnView = null;
+    render();
+    openStatusSheet();
+    return;
+  } else if (state.view !== 'inbox') {
+    state.view = 'inbox';
+  }
+  state.manageReturnTo = null;
+  state.manageReturnView = null;
+  render();
+}
+
+function selectChat(chatId) {
+  const chat = chatById(chatId);
+  if (!chat) return;
+  state.activeChatId = chat.groupId;
+  state.activeConversationId = String(chat.groupId);
+  state.blacklistQueryResult = '';
+  state.blacklistPage = 1;
+  state.activeBlacklistMenuKey = null;
+  state.activeExemptMenuKey = null;
+  state.adminGroupQuery = '';
+  state.adminGroupQueryResult = '';
+  state.syncHint = `已选择 chatGroupId #${chat.groupId}`;
+  render();
+}
+
+function openActivation(chatId) {
+  if (chatId) {
+    openActivationForm(chatId);
+    return;
+  }
+  state.view = 'activate';
+  render();
+}
+
+function openActivationForm(chatId) {
+  const chat = chatById(chatId);
+  if (chat) {
+    state.activeChatId = chat.groupId;
+    state.activeConversationId = String(chat.groupId);
+    state.activeToken = chat.token;
+    state.activationType = activationTypeForChat(chat);
+  }
+  state.view = 'activate-form';
+  render();
+}
+
+function openConversation(conversationId) {
+  state.activeConversationId = String(conversationId);
+  const chat = chatById(conversationId);
+  if (chat) state.activeChatId = chat.groupId;
+  state.view = 'chat';
+  state.activeMenuIndex = null;
+  state.activeGroupMenuId = null;
+  render();
+}
+
+function openManage(chatId, source) {
+  const chat = chatById(chatId);
+  state.activeGroupMenuId = null;
+  if (!canEditRules(chat)) {
+    state.syncHint = '仅群NFT拥有者或代理可以进入群管理。';
+    render();
+    return;
+  }
+  state.manageReturnTo = source === 'status' ? 'status' : null;
+  state.manageReturnView = source === 'status' ? state.view : null;
+  if (source === 'status') closeStatusSheet();
+  selectChat(chat.groupId);
+  state.view = 'manage';
+  render();
+}
+
+function openBlacklist(chatId) {
+  state.activeGroupMenuId = null;
+  state.activeBlacklistMenuKey = null;
+  selectChat(chatId);
+  state.view = 'blacklist';
+  render();
+}
+
+function openExempt(chatId) {
+  const chat = chatById(chatId);
+  state.activeGroupMenuId = null;
+  state.activeExemptMenuKey = null;
+  if (!chat || !chat.adminDeny) {
+    state.syncHint = '该群没有豁免名单。';
+    render();
+    return;
+  }
+  selectChat(chat.groupId);
+  state.view = 'exempt';
+  render();
+}
+
+function toggleChatMenu(chatId) {
+  const groupId = Number(chatId);
+  state.activeGroupMenuId = state.activeGroupMenuId === groupId ? null : groupId;
+  render();
+}
+
+function setBlacklistQueryType(queryType) {
+  state.blacklistQueryType = queryType === 'nft' ? 'nft' : 'address';
+  state.blacklistQuery = '';
+  state.blacklistQueryResult = '';
+  state.blacklistPage = 1;
+  state.activeBlacklistMenuKey = null;
+  state.activeExemptMenuKey = null;
+  render();
+}
+
+function setBlacklistPage(page) {
+  state.blacklistPage = Math.max(1, Number(page) || 1);
+  state.activeBlacklistMenuKey = null;
+  state.activeExemptMenuKey = null;
+  render();
+}
+
+function toggleBlacklistMenu(targetType, target) {
+  const key = blacklistRowKey(targetType, target);
+  state.activeBlacklistMenuKey = state.activeBlacklistMenuKey === key ? null : key;
+  render();
+}
+
+function toggleExemptMenu(targetType, target) {
+  const key = blacklistRowKey(targetType, target);
+  state.activeExemptMenuKey = state.activeExemptMenuKey === key ? null : key;
+  render();
+}
+
+function activateChat(chatId) {
+  const chat = chatById(chatId);
+  if (!chat || chat.active) return;
+  const draft = captureActivationDraft(chat);
+  const blocker = activationBlocker(chat, draft);
+  if (blocker) {
+    state.syncHint = blocker;
+    render();
+    return;
+  }
+
+  if (chat.model === 'chain-service') {
+    chat.ruleSlots.scopeSource = draft.scopeSource || 'address(0)';
+    chat.ruleSlots.denySource = draft.denySource || 'address(0)';
+    chat.ruleSlots.beforePostPlugin = draft.beforePostPlugin || 'address(0)';
+    chat.ruleSlots.afterPostPlugin = draft.afterPostPlugin || 'address(0)';
+    chat.ruleSlots.delegateGroupId = draft.delegateGroupId || '0';
+    chat.params = {
+      chatGroupId: String(chat.groupId),
+      scopeSource: chat.ruleSlots.scopeSource,
+      denySource: chat.ruleSlots.denySource,
+    };
+    chat.meta = {
+      title: draft.metaTitle,
+      description: draft.metaDescription,
+    };
+  } else {
+    Object.keys(chat.params).forEach((key) => {
+      chat.params[key] = draft[key];
+    });
+    chat.token = draft.token || chat.token;
+    if (draft.actionId) chat.actionId = draft.actionId;
+  }
+
+  chat.active = true;
+  chat.lastMessageIndex = 0;
+  state.activeChatId = chat.groupId;
+  state.activeConversationId = String(chat.groupId);
+  state.view = 'chat';
+  state.syncHint = `${activationPreview(chat, draft)} 已模拟提交。`;
+  render();
+}
+
+function setActivationOption(field, value) {
+  const chat = activeChat();
+  if (!chat) return;
+  const draft = captureActivationDraft(chat);
+  draft[field] = value;
+  render();
+}
+
+function setRuleSlot(slot, inputId) {
+  const chat = activeChat();
+  const input = document.getElementById(inputId);
+  const value = input.value.trim();
+  if (!chat || !value || !canEditRules(chat)) return;
+  chat.ruleSlots[slot] = value;
+  state.syncHint = `${slot} 已更新为 ${value}`;
+  render();
+}
+
+function setRuleSlotOption(slot, value) {
+  const chat = activeChat();
+  const options = ruleSlotOptions(slot);
+  if (!chat || !options || !canEditRules(chat)) return;
+  if (!options.some((option) => option.value === value)) return;
+  chat.ruleSlots[slot] = value;
+  state.syncHint = `${slot} 已更新为 ${value}`;
+  render();
+}
+
+function addAdminList(listName, inputId) {
+  const chat = activeChat();
+  const input = document.getElementById(inputId);
+  const value = input.value.trim();
+  if (!chat || !chat.adminDeny || !value) return;
+  if (listName.includes('Exempt') && !canEditExempt(chat)) return;
+  if (!listName.includes('Exempt') && listName !== 'adminGroupIds' && !canEditAdminDeny(chat)) return;
+  if (listName === 'adminGroupIds' && !canEditRules(chat)) return;
+  const targetValue = listName === 'adminGroupIds' ? resolveAdminGroupQuery(value) : value;
+  if (!targetValue) {
+    state.adminGroupQueryResult = `未找到 NFT：${value}`;
+    render();
+    return;
+  }
+  if (!chat.adminDeny[listName].includes(targetValue)) {
+    chat.adminDeny[listName].push(targetValue);
+    chat.adminDeny.stateVersion += 1;
+    state.syncHint = `${listName} 新增 ${targetValue}`;
+  }
+  if (listName === 'adminGroupIds') {
+    state.adminGroupQuery = value;
+    queryAdminGroupValue(value, false);
+    render();
+    return;
+  }
+  render();
+}
+
+function setAdminGroupQueryType(queryType) {
+  state.adminGroupQueryType = queryType === 'id' ? 'id' : 'name';
+  state.adminGroupQuery = '';
+  state.adminGroupQueryResult = '';
+  render();
+}
+
+function queryAdminSelf() {
+  state.adminGroupQuery = state.adminGroupQueryType === 'name'
+    ? nftProfile(state.senderGroupId).name
+    : String(state.senderGroupId);
+  queryAdminGroupValue(state.adminGroupQuery, true);
+}
+
+function queryAdminGroup(inputId) {
+  const input = document.getElementById(inputId);
+  state.adminGroupQuery = input.value.trim();
+  queryAdminGroupValue(state.adminGroupQuery, true);
+}
+
+function queryAdminGroupValue(value, shouldRender) {
+  const chat = activeChat();
+  if (!chat || !chat.adminDeny || !value) return;
+  const groupId = resolveAdminGroupQuery(value);
+  if (!groupId) {
+    state.adminGroupQueryResult = `未找到 NFT：${value}`;
+    if (shouldRender) render();
+    return;
+  }
+  const inList = chat.adminDeny.adminGroupIds.includes(groupId);
+  const profile = nftProfile(groupId);
+  state.adminGroupQueryResult = `NFT #${groupId} · ${profile.name} · ${inList ? '已在管理员名单' : '不在管理员名单'}`;
+  if (shouldRender) render();
+}
+
+function resolveAdminGroupQuery(value) {
+  if (state.adminGroupQueryType === 'id') return value;
+  const query = value.trim().toLowerCase();
+  const entries = Object.entries(state.nftProfiles);
+  const exact = entries.find(([, profile]) => profile.name.toLowerCase() === query);
+  if (exact) return exact[0];
+  const partial = entries.find(([, profile]) => profile.name.toLowerCase().includes(query));
+  return partial ? partial[0] : '';
+}
+
+function removeAdminList(listName, value) {
+  const chat = activeChat();
+  if (!chat || !chat.adminDeny) return;
+  if (listName.includes('Exempt') && !canEditExempt(chat)) return;
+  if (!listName.includes('Exempt') && listName !== 'adminGroupIds' && !canEditAdminDeny(chat)) return;
+  if (listName === 'adminGroupIds' && !canEditRules(chat)) return;
+  chat.adminDeny[listName] = chat.adminDeny[listName].filter((item) => item !== value);
+  chat.adminDeny.stateVersion += 1;
+  state.activeBlacklistMenuKey = null;
+  state.activeExemptMenuKey = null;
+  state.syncHint = `${listName} 移除 ${value}`;
+  render();
+}
+
+function addGovTarget(targetType, inputId) {
+  const chat = activeChat();
+  const input = document.getElementById(inputId);
+  const target = input.value.trim();
+  if (!chat || chat.blacklistMode !== 'gov' || !target) return;
+  if (chat.voteWeight <= 0) {
+    state.syncHint = '当前地址没有票权，只能查看、查询、发起 revalidate。';
+    render();
+    return;
+  }
+  ensureGovTarget(chat, targetType, target);
+  voteGovTarget(targetType, target, 'support');
+}
+
+function applyGovVote(item, stance, weight) {
+  if (!item || weight <= 0) return false;
+  if (item.myVote === stance && item.myWeight === weight) return false;
+  if (!item.myVote && stance === 'clear') return false;
+
+  if (item.myVote === 'support') item.support -= item.myWeight;
+  if (item.myVote === 'oppose') item.oppose -= item.myWeight;
+  if (item.myVote && stance === 'clear') item.voters -= 1;
+
+  if (stance === 'support') {
+    if (!item.myVote) item.voters += 1;
+    item.support += weight;
+    item.myVote = 'support';
+    item.myWeight = weight;
+  } else if (stance === 'oppose') {
+    if (!item.myVote) item.voters += 1;
+    item.oppose += weight;
+    item.myVote = 'oppose';
+    item.myWeight = weight;
+  } else {
+    item.myVote = null;
+    item.myWeight = 0;
+  }
+
+  item.voterList = (item.voterList || []).filter((entry) => entry.voter !== state.account);
+  if (item.myVote) item.voterList.unshift({ voter: state.account, stance: item.myVote === 'support' ? '支持' : '反对', weight });
+  return true;
+}
+
+function voteGovTarget(targetType, target, stance) {
+  const chat = activeChat();
+  const item = chat && findGovTarget(chat, targetType, target);
+  if (!chat || !item || chat.voteWeight <= 0) return;
+  const weight = chat.voteWeight;
+  const changed = applyGovVote(item, stance, weight);
+  if (!changed) {
+    state.syncHint = `VoteUnchanged：${targetType} ${target}`;
+    render();
+    return;
+  }
+  chat.govDeny.stateVersion += 1;
+  state.activeBlacklistMenuKey = null;
+  state.syncHint = `GovVotedDenySource ${targetType} ${target} -> ${stance}`;
+  render();
+}
+
+function voteSenderDenyFromMessage(messageIndex) {
+  const message = messageByIndex(messageIndex);
+  const chat = message && chatById(message.conversationId);
+  if (!chat || chat.blacklistMode !== 'gov' || chat.voteWeight <= 0) return;
+
+  const targetAddress = message.senderAddress;
+  const targetSenderGroupId = String(message.senderGroupId);
+  const addressTarget = ensureGovTarget(chat, 'address', targetAddress);
+  const groupTarget = ensureGovTarget(chat, 'nft', targetSenderGroupId);
+  const addressChanged = applyGovVote(addressTarget, 'support', chat.voteWeight);
+  const groupChanged = applyGovVote(groupTarget, 'support', chat.voteWeight);
+  const changes = Number(addressChanged) + Number(groupChanged);
+
+  if (changes > 0) {
+    chat.govDeny.stateVersion += changes;
+    state.syncHint =
+      `voteDenySenderBySenderGroupId(${targetSenderGroupId}) 已模拟，合约解析地址 ${targetAddress}`;
+  } else {
+    state.syncHint = `VoteUnchanged：sender ${targetAddress} / NFT #${targetSenderGroupId}`;
+  }
+  state.activeMenuIndex = null;
+  render();
+}
+
+function addSenderDenyFromMessage(messageIndex) {
+  const message = messageByIndex(messageIndex);
+  const chat = message && chatById(message.conversationId);
+  if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
+
+  const targetAddress = message.senderAddress;
+  const targetSenderGroupId = String(message.senderGroupId);
+  let changes = 0;
+  if (!chat.adminDeny.addressDenyList.includes(targetAddress)) {
+    chat.adminDeny.addressDenyList.push(targetAddress);
+    changes += 1;
+  }
+  if (!chat.adminDeny.senderGroupIdDenyList.includes(targetSenderGroupId)) {
+    chat.adminDeny.senderGroupIdDenyList.push(targetSenderGroupId);
+    changes += 1;
+  }
+
+  if (changes > 0) {
+    chat.adminDeny.stateVersion += changes;
+    state.syncHint =
+      `addDenyListsBySenderGroupId(${targetSenderGroupId}) 已模拟，合约解析地址 ${targetAddress}`;
+  } else {
+    state.syncHint = `sender ${targetAddress} / NFT #${targetSenderGroupId} 已在黑名单`;
+  }
+  state.activeMenuIndex = null;
+  render();
+}
+
+function openGovVoters(targetType, target) {
+  const chat = activeChat();
+  const item = chat && findGovTarget(chat, targetType, target);
+  if (!chat || !item) return;
+  state.activeBlacklistMenuKey = null;
+  state.activeGovVoterTargetType = targetType;
+  state.activeGovVoterTarget = target;
+  state.voterPage = 1;
+  state.voterQuery = '';
+  state.voterQueryResult = '';
+  render();
+  renderGovVoterSheet();
+}
+
+function activeGovVoterTarget() {
+  const chat = activeChat();
+  const item = chat && findGovTarget(chat, state.activeGovVoterTargetType, state.activeGovVoterTarget);
+  return { chat, item };
+}
+
+function filteredGovVoters(item) {
+  const voters = item ? item.voterList || [] : [];
+  const query = state.voterQuery.trim();
+  if (!query) return voters;
+  return voters.filter((entry) => entry.voter.toLowerCase() === query.toLowerCase());
+}
+
+function renderGovVoterSheet() {
+  const { item } = activeGovVoterTarget();
+  if (!item) return;
+  const voters = filteredGovVoters(item);
+  const totalPages = Math.max(1, Math.ceil(voters.length / voterPageSize));
+  const page = Math.min(Math.max(1, state.voterPage), totalPages);
+  const start = (page - 1) * voterPageSize;
+  const rows = voters.slice(start, start + voterPageSize);
+  document.getElementById('status-sheet-content').innerHTML = `
+    <dl class="status-card">
+      <dt>目标</dt>
+      <dd>${escapeHtml(blacklistTypeLabel(state.activeGovVoterTargetType))} ${escapeHtml(state.activeGovVoterTargetType === 'address' ? state.activeGovVoterTarget : `#${state.activeGovVoterTarget}`)}</dd>
+      <dt>投票</dt>
+      <dd>支持 ${item.support} · 反对 ${item.oppose}</dd>
+    </dl>
+    <section class="workspace-band">
+      <h2>voter列表</h2>
+      <div class="query-row blacklist-query-row">
+        <input id="voter-query-input" value="${escapeHtml(state.voterQuery)}" placeholder="输入 voter 地址">
+        <button class="sheet-button primary" type="button" data-action="query-voter" data-input="voter-query-input">查询</button>
+        <button class="sheet-button" type="button" data-action="clear-voter-query">清除</button>
+      </div>
+      ${state.voterQueryResult ? `<div class="query-result">${escapeHtml(state.voterQueryResult)}</div>` : ''}
+      ${rows.length ? rows.map((entry) => `
+        <article class="list-row">
+          <div>
+            <strong>${escapeHtml(entry.voter)}</strong>
+            <small>权重 ${entry.weight}</small>
+          </div>
+          <span class="pill ${entry.stance === '支持' ? 'pill-ok' : 'pill-warn'}">${escapeHtml(entry.stance)}</span>
+          <div class="row-actions">
+            <button type="button" data-action="revalidate-voter" data-voter="${escapeHtml(entry.voter)}">重算</button>
+          </div>
+        </article>
+      `).join('') : '<div class="empty-state">暂无 voter</div>'}
+      ${renderVoterPager(page, totalPages)}
+    </section>
+    <div class="close-row"><button type="button" class="sheet-button" data-action="close-status">关闭</button></div>
+  `;
   document.getElementById('status-sheet').hidden = false;
 }
 
-function closeStatusSheet() {
-  document.getElementById('status-sheet').hidden = true;
+function renderVoterPager(page, totalPages) {
+  if (totalPages <= 1) return '';
+  return `
+    <div class="pager-row">
+      <button class="sheet-button" type="button" data-action="set-voter-page" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>上一页</button>
+      <span>${page} / ${totalPages}</span>
+      <button class="sheet-button" type="button" data-action="set-voter-page" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''}>下一页</button>
+    </div>
+  `;
 }
 
-function openMorePanel() {
-  document.getElementById('more-panel').hidden = false;
+function setVoterPage(page) {
+  state.voterPage = Math.max(1, Number(page) || 1);
+  renderGovVoterSheet();
 }
 
-function closeMorePanel() {
-  document.getElementById('more-panel').hidden = true;
+function queryVoter(inputId) {
+  const input = document.getElementById(inputId);
+  const voter = input.value.trim();
+  const { item } = activeGovVoterTarget();
+  state.voterQuery = voter;
+  state.voterPage = 1;
+  const found = item && voter ? (item.voterList || []).find((entry) => entry.voter.toLowerCase() === voter.toLowerCase()) : null;
+  state.voterQueryResult = voter ? `${voter}：${found ? `${found.stance} · 权重 ${found.weight}` : '未投票'}` : '';
+  renderGovVoterSheet();
+}
+
+function clearVoterQuery() {
+  state.voterQuery = '';
+  state.voterQueryResult = '';
+  state.voterPage = 1;
+  renderGovVoterSheet();
+}
+
+function revalidateVoter(voter) {
+  if (!voter) return;
+  state.revalidateVoter = voter;
+  state.voterQueryResult = `已重算 voter ${voter}`;
+  state.syncHint = `已发起 revalidate：target ${state.activeGovVoterTarget} / voter ${voter}`;
+  renderGovVoterSheet();
+}
+
+function revalidateGovVote(targetType, target, inputId) {
+  const chat = activeChat();
+  const input = document.getElementById(inputId);
+  const voter = input.value.trim();
+  if (!chat || !voter) return;
+  state.revalidateVoter = voter;
+  state.syncHint = `已发起 revalidate：target ${target} / voter ${voter}`;
+  render();
+}
+
+function querySelf() {
+  state.blacklistQuery = state.blacklistQueryType === 'address' ? state.account : String(state.senderGroupId);
+  queryBlacklistValue(state.blacklistQuery);
+}
+
+function queryBlacklist(inputId) {
+  const input = document.getElementById(inputId);
+  state.blacklistQuery = input.value.trim();
+  queryBlacklistValue(state.blacklistQuery);
+}
+
+function queryBlacklistValue(value) {
+  const chat = activeChat();
+  if (!chat || !value) return;
+  const isAddress = state.blacklistQueryType === 'address';
+  const targetType = isAddress ? 'address' : 'nft';
+  const govType = normalizeBlacklistTargetType(targetType);
+  const label = blacklistTypeLabel(targetType);
+  let result = false;
+  let extra = '';
+  if (chat.blacklistMode === 'gov') {
+    const target = findGovTarget(chat, govType, value);
+    result = target ? targetDenied(target) : false;
+    extra = target ? `support ${target.support} / oppose ${target.oppose}` : '无投票目标';
+  } else {
+    const deny = chat.adminDeny;
+    const exempt = isAddress ? deny.addressExemptList.includes(value) : deny.senderGroupIdExemptList.includes(value);
+    const denied = isAddress ? deny.addressDenyList.includes(value) : deny.senderGroupIdDenyList.includes(value);
+    result = exempt ? false : denied;
+    extra = exempt ? '命中豁免名单' : 'AdminDenySource 当前状态';
+  }
+  state.activeBlacklistMenuKey = null;
+  state.blacklistQueryResult = `${label} ${value}：${result ? '在黑名单' : '不在黑名单'} · ${extra}`;
+  render();
+}
+
+function sendMessage() {
+  const input = document.getElementById('composer-input');
+  const content = input.value.trim();
+  const active = activeConversation();
+  const chat = active && active.kind === 'group' ? active.item : null;
+  const status = chatStatus(chat);
+  if (!content || !status.allowed) {
+    state.syncHint = status.allowed ? 'ContentEmpty：空消息会被合约拒绝。' : `${status.reasonCode}：当前身份不能发言。`;
+    render();
+    return;
+  }
+
+  const nextIndex = Math.max(0, ...state.messages.map((message) => message.messageIndex)) + 1;
+  state.messages.push({
+    conversationId: state.activeConversationId,
+    senderGroupId: state.senderGroupId,
+    senderAddress: state.account,
+    round: chat ? chat.round : 0,
+    messageIndex: nextIndex,
+    content,
+    mentions: [...state.mentions],
+    mentionAll: state.mentionAll,
+    quotedMessageIndex: state.quotedMessageIndex || 0,
+    mine: true,
+  });
+  if (chat) chat.lastMessageIndex = nextIndex;
+  state.syncHint = chat ? `MessagePost 发现 messageIndex #${nextIndex}，正文已通过 messages 补拉。` : `私聊消息 #${nextIndex} 已写入本地会话。`;
+  state.quotedMessageIndex = null;
+  state.mentions = [];
+  state.mentionAll = false;
+  input.value = '';
+  render();
 }
 
 function quoteMessage(messageIndex) {
@@ -277,58 +2179,8 @@ function quoteMessage(messageIndex) {
 
 function addMention(senderGroupId) {
   const groupId = Number(senderGroupId);
-  if (!state.mentions.includes(groupId) && state.mentions.length < 32) {
-    state.mentions.push(groupId);
-  }
+  if (!state.mentions.includes(groupId) && state.mentions.length < 32) state.mentions.push(groupId);
   state.activeMenuIndex = null;
-  render();
-}
-
-function toggleMentionAll() {
-  state.mentionAll = !state.mentionAll;
-  render();
-}
-
-function sendMessage() {
-  const input = document.getElementById('composer-input');
-  const content = input.value.trim();
-  const status = activeChat().canPostStatus;
-  if (!content || !status.allowed) {
-    state.syncHint = status.allowed ? 'ContentEmpty：空消息会被合约拒绝。' : `${status.reasonCode}：当前身份不能发言。`;
-    render();
-    return;
-  }
-
-  const nextIndex = Math.max(...state.messages.map((message) => message.messageIndex)) + 1;
-  state.messages.push({
-    chatGroupId: state.activeChatId,
-    senderGroupId: state.senderGroupId,
-    senderAddress: state.account,
-    round: activeChat().round,
-    messageIndex: nextIndex,
-    content,
-    mentions: [...state.mentions],
-    mentionAll: state.mentionAll,
-    quotedMessageIndex: state.quotedMessageIndex || 0,
-    mine: true,
-  });
-  activeChat().lastMessageIndex = nextIndex;
-  state.syncHint = `MessagePost 发现 messageIndex #${nextIndex}，正文已通过 messages 补拉。`;
-  state.quotedMessageIndex = null;
-  state.mentions = [];
-  state.mentionAll = false;
-  input.value = '';
-  render();
-}
-
-function setStatusMode(mode) {
-  activeChat().canPostStatus = { ...statusModes[mode] };
-  render();
-}
-
-function setIndexMode(mode) {
-  state.indexMode = mode;
-  state.syncHint = `当前查看 ${mode} 索引；事件缺口时按区间补拉。`;
   render();
 }
 
@@ -344,11 +2196,85 @@ function selectMessage(messageIndex) {
   render();
 }
 
+function toggleMentionAll() {
+  state.mentionAll = !state.mentionAll;
+  render();
+}
+
+function setIndexMode(mode) {
+  state.indexMode = mode;
+  state.syncHint = `当前查看 ${mode} 索引；事件缺口时按区间补拉。`;
+  render();
+}
+
+function openStatusSheet() {
+  state.activeGroupMenuId = null;
+  document.getElementById('status-sheet').hidden = false;
+}
+
+function closeStatusSheet() {
+  document.getElementById('status-sheet').hidden = true;
+}
+
+function openMorePanel() {
+  document.getElementById('more-panel').hidden = false;
+}
+
+function closeMorePanel() {
+  document.getElementById('more-panel').hidden = true;
+}
+
 document.addEventListener('click', (event) => {
   const target = event.target.closest('[data-action]');
   if (!target) return;
   const action = target.dataset.action;
 
+  if (action === 'set-bottom-tab') setBottomTab(target.dataset.tab);
+  if (action === 'go-back') goBack();
+  if (action === 'toggle-wallet') {
+    state.walletConnected = !state.walletConnected;
+    render();
+  }
+  if (action === 'set-view') setView(target.dataset.view);
+  if (action === 'set-inbox-filter') {
+    state.inboxFilter = target.dataset.filter;
+    render();
+  }
+  if (action === 'set-blacklist-query-type') setBlacklistQueryType(target.dataset.queryType);
+  if (action === 'set-blacklist-page') setBlacklistPage(target.dataset.page);
+  if (action === 'toggle-blacklist-menu') toggleBlacklistMenu(target.dataset.targetType, target.dataset.target);
+  if (action === 'toggle-exempt-menu') toggleExemptMenu(target.dataset.targetType, target.dataset.target);
+  if (action === 'set-activation-type') {
+    state.activationType = target.dataset.activationType;
+    render();
+  }
+  if (action === 'select-chat') selectChat(target.dataset.chatId);
+  if (action === 'open-activation') openActivation(target.dataset.chatId);
+  if (action === 'open-activation-form') openActivationForm(target.dataset.chatId);
+  if (action === 'open-conversation') openConversation(target.dataset.conversationId);
+  if (action === 'activate-chat') activateChat(target.dataset.chatId);
+  if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
+  if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.chatId);
+  if (action === 'open-manage') openManage(target.dataset.chatId, target.dataset.source);
+  if (action === 'open-blacklist') openBlacklist(target.dataset.chatId);
+  if (action === 'open-exempt') openExempt(target.dataset.chatId);
+  if (action === 'set-rule-slot') setRuleSlot(target.dataset.slot, target.dataset.input);
+  if (action === 'set-rule-slot-option') setRuleSlotOption(target.dataset.slot, target.dataset.value);
+  if (action === 'admin-list-add') addAdminList(target.dataset.list, target.dataset.input);
+  if (action === 'admin-list-remove') removeAdminList(target.dataset.list, target.dataset.value);
+  if (action === 'set-admin-query-type') setAdminGroupQueryType(target.dataset.queryType);
+  if (action === 'query-admin-self') queryAdminSelf();
+  if (action === 'query-admin-group') queryAdminGroup(target.dataset.input);
+  if (action === 'gov-add-target') addGovTarget(target.dataset.targetType, target.dataset.input);
+  if (action === 'gov-vote') voteGovTarget(target.dataset.targetType, target.dataset.target, target.dataset.stance);
+  if (action === 'open-gov-voters') openGovVoters(target.dataset.targetType, target.dataset.target);
+  if (action === 'set-voter-page') setVoterPage(target.dataset.page);
+  if (action === 'query-voter') queryVoter(target.dataset.input);
+  if (action === 'clear-voter-query') clearVoterQuery();
+  if (action === 'revalidate-voter') revalidateVoter(target.dataset.voter);
+  if (action === 'gov-revalidate') revalidateGovVote(target.dataset.targetType, target.dataset.target, target.dataset.input);
+  if (action === 'query-self') querySelf();
+  if (action === 'query-blacklist') queryBlacklist(target.dataset.input);
   if (action === 'open-status') openStatusSheet();
   if (action === 'close-status') closeStatusSheet();
   if (action === 'open-more') openMorePanel();
@@ -356,18 +2282,17 @@ document.addEventListener('click', (event) => {
   if (action === 'select-message') selectMessage(target.dataset.messageIndex);
   if (action === 'quote-message') quoteMessage(target.dataset.messageIndex);
   if (action === 'mention-sender' || action === 'add-mention') addMention(target.dataset.senderGroupId);
-  if (action === 'copy-index') {
-    state.syncHint = `已复制 messageIndex #${target.dataset.messageIndex}`;
-    render();
-  }
+  if (action === 'vote-sender-deny') voteSenderDenyFromMessage(target.dataset.messageIndex);
+  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex);
   if (action === 'clear-quote') {
     state.quotedMessageIndex = null;
     render();
   }
   if (action === 'remove-mention') removeMention(target.dataset.senderGroupId);
   if (action === 'toggle-mention-all') toggleMentionAll();
-  if (action === 'set-status-mode') setStatusMode(target.dataset.statusMode);
   if (action === 'set-index-mode') setIndexMode(target.dataset.indexMode);
 });
 
 document.getElementById('send-button').addEventListener('click', sendMessage);
+
+render();
