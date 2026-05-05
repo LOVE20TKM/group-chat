@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = new URL('.', import.meta.url).pathname;
-const requiredFiles = ['index.html', 'styles.css', 'app.js'];
+const requiredFiles = ['index.html', 'styles.css', 'prototype-data.js', 'app.js', 'AI_EDITING.md'];
 
 for (const file of requiredFiles) {
   const path = join(root, file);
@@ -13,7 +13,9 @@ for (const file of requiredFiles) {
 
 const html = readFileSync(join(root, 'index.html'), 'utf8');
 const css = readFileSync(join(root, 'styles.css'), 'utf8');
+const data = readFileSync(join(root, 'prototype-data.js'), 'utf8');
 const js = readFileSync(join(root, 'app.js'), 'utf8');
+const prototypeSource = html + data + js;
 
 const cssOpenBraces = (css.match(/\{/g) || []).length;
 const cssCloseBraces = (css.match(/\}/g) || []).length;
@@ -35,6 +37,12 @@ for (const needle of requiredHtml) {
   if (!html.includes(needle)) {
     throw new Error(`Missing HTML marker: ${needle}`);
   }
+}
+
+const dataScriptIndex = html.indexOf('src="./prototype-data.js"');
+const appScriptIndex = html.indexOf('src="./app.js"');
+if (dataScriptIndex === -1 || appScriptIndex === -1 || dataScriptIndex > appScriptIndex) {
+  throw new Error('prototype-data.js must load before app.js');
 }
 
 const requiredCss = [
@@ -69,25 +77,17 @@ for (const needle of requiredCss) {
   }
 }
 
-const requiredJs = [
+const requiredAppJs = [
   'LOVE20 Chat',
-  '爱聊',
-  'bottomTabs',
-  'TokenGroupChatManager',
-  'TokenGovGroupChatManager',
-  'TokenActionGroupChatManager',
-  'TokenActionGovGroupChatManager',
-  'GroupJoinScopeSource',
-  'AdminDenySource',
-  'GovVotedDenySource',
+  'LOVE20_CHAT_PROTOTYPE_DATA',
+  'Load prototype-data.js before app.js',
+  'prototypeData.initialState',
   'renderInbox',
   'chatDisplayName',
   'chatIconLabel',
-  'activationTabs',
   'activationTypeForChat',
   'renderActivationSection',
   'set-activation-type',
-  '群聊激活',
   'toggleChatMenu',
   'activeGroupMenuId',
   'pageReturnStack',
@@ -154,9 +154,65 @@ const requiredJs = [
   'MessagePost',
 ];
 
-for (const needle of requiredJs) {
+for (const needle of requiredAppJs) {
   if (!js.includes(needle)) {
-    throw new Error(`Missing JS marker: ${needle}`);
+    throw new Error(`Missing app.js marker: ${needle}`);
+  }
+}
+
+const requiredDataJs = [
+  '爱聊',
+  'bottomTabs',
+  'TokenGroupChatManager',
+  'TokenGovGroupChatManager',
+  'TokenActionGroupChatManager',
+  'TokenActionGovGroupChatManager',
+  'GroupJoinScopeSource',
+  'AdminDenySource',
+  'GovVotedDenySource',
+  'activationTabs',
+];
+
+for (const needle of requiredDataJs) {
+  if (!data.includes(needle)) {
+    throw new Error(`Missing prototype-data.js marker: ${needle}`);
+  }
+}
+
+const dataWindow = {};
+new Function('window', data)(dataWindow);
+const prototypeData = dataWindow.LOVE20_CHAT_PROTOTYPE_DATA;
+if (!prototypeData || !prototypeData.initialState) {
+  throw new Error('prototype-data.js did not define LOVE20_CHAT_PROTOTYPE_DATA.initialState');
+}
+
+const { initialState } = prototypeData;
+if (!Array.isArray(initialState.chats) || !initialState.chats.length) {
+  throw new Error('initialState.chats must be a non-empty array');
+}
+if (!Array.isArray(initialState.messages)) {
+  throw new Error('initialState.messages must be an array');
+}
+
+const chatIds = new Set();
+for (const chat of initialState.chats) {
+  if (chatIds.has(chat.groupId)) throw new Error(`Duplicate chat groupId: ${chat.groupId}`);
+  chatIds.add(chat.groupId);
+  for (const field of ['groupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'ruleSlots']) {
+    if (chat[field] === undefined) throw new Error(`Chat ${chat.groupId} missing ${field}`);
+  }
+  if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.groupId} missing govDeny`);
+  if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
+}
+
+for (const action of initialState.actions) {
+  if (!chatIds.has(action.actionChatId)) throw new Error(`Action ${action.actionId} missing actionChatId ${action.actionChatId}`);
+  if (!chatIds.has(action.actionGovChatId)) throw new Error(`Action ${action.actionId} missing actionGovChatId ${action.actionGovChatId}`);
+}
+
+for (const message of initialState.messages) {
+  if (!chatIds.has(Number(message.conversationId))) {
+    throw new Error(`Message ${message.messageIndex} points to missing conversationId ${message.conversationId}`);
   }
 }
 
@@ -186,7 +242,7 @@ const requiredProtocolCopy = [
 ];
 
 for (const needle of requiredProtocolCopy) {
-  if (!(html + js).includes(needle)) {
+  if (!prototypeSource.includes(needle)) {
     throw new Error(`Missing protocol copy: ${needle}`);
   }
 }
