@@ -8,6 +8,8 @@ const state = JSON.parse(JSON.stringify(prototypeData.initialState));
 const { bottomTabs, inboxFilters, activationTabs } = prototypeData;
 const blacklistPageSize = prototypeData.pageSizes.blacklist;
 const voterPageSize = prototypeData.pageSizes.voter;
+const avatarLongPressMs = 520;
+let avatarPressState = null;
 
 function escapeHtml(value) {
   return String(value)
@@ -201,8 +203,12 @@ function canEditRules(chat) {
   return chat && ['owner', 'delegate'].includes(chat.role);
 }
 
+function isAdminDenyOperator(chat) {
+  return Boolean(chat?.adminDeny?.adminGroupIds.includes(String(state.senderGroupId)));
+}
+
 function canEditAdminDeny(chat) {
-  return chat && ['owner', 'delegate', 'admin'].includes(chat.role);
+  return chat && chat.blacklistMode === 'admin' && isAdminDenyOperator(chat);
 }
 
 function canEditExempt(chat) {
@@ -313,7 +319,7 @@ function renderWorkspace() {
   composer.hidden = !canCompose;
   composerBlocked.hidden = !showComposerBlocked;
   composerBlocked.innerHTML = showComposerBlocked ? renderCannotPost(chat, status) : '';
-  statusStrip.hidden = !(state.bottomTab === 'chat' && state.view === 'chat');
+  statusStrip.hidden = !(state.bottomTab === 'chat' && state.view === 'chat') || showComposerBlocked;
 
   if (state.bottomTab !== 'chat') {
     workspace.innerHTML = renderPlaceholder();
@@ -687,8 +693,8 @@ function renderDelegateInput(chat) {
 }
 
 function managementNotice(chat) {
-  if (canEditRules(chat)) return 'owner/delegate 可管理规则槽和管理员 NFT。黑名单与豁免名单从右上角菜单进入。';
-  if (canEditAdminDeny(chat)) return 'admin 只维护黑名单；入口在右上角菜单。';
+  if (canEditRules(chat)) return 'owner/delegate 可管理规则槽、管理员 NFT 和豁免名单。黑名单仅管理员 NFT 可维护。';
+  if (canEditAdminDeny(chat)) return '当前默认 NFT 命中管理员名单，可维护黑名单。';
   return '当前地址只读。';
 }
 
@@ -1094,26 +1100,19 @@ function renderMessage(message) {
   const profile = nftProfile(message.senderGroupId);
   const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderGroupId).name)}</div>` : '';
-  const chat = chatById(message.conversationId);
-  const senderDenyAction = renderSenderDenyAction(chat, message);
-  const mentions = message.mentions && message.mentions.length
-    ? ` · @${message.mentions.map((mention) => nftProfile(mention).name).join(' @')}`
-    : '';
-  const mentionAll = message.mentionAll ? ' · @全部' : '';
   const actions = state.activeMenuIndex === message.messageIndex
     ? `
       <div class="message-actions">
         <button type="button" data-action="quote-message" data-message-index="${message.messageIndex}">引用</button>
-        <button type="button" data-action="mention-sender" data-sender-group-id="${message.senderGroupId || state.senderGroupId}">@${escapeHtml(profile.name)}</button>
-        ${senderDenyAction}
+        <button type="button" data-action="copy-message" data-message-index="${message.messageIndex}">复制</button>
       </div>
     `
     : '';
   return `
     <article class="message-row${mine}" data-action="select-message" data-message-index="${message.messageIndex}">
-      <div class="avatar">${escapeHtml(profile.badge)}</div>
+      <div class="avatar" data-action="avatar-hold" data-long-press-mention data-sender-group-id="${message.senderGroupId || state.senderGroupId}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
-        <div class="message-meta">${escapeHtml(profile.name)}${mentions}${mentionAll}</div>
+        <div class="message-meta">${escapeHtml(profile.name)}</div>
         <div class="message-bubble${mine}">${quote}${escapeHtml(message.content)}</div>
         ${actions}
       </div>
@@ -1134,13 +1133,11 @@ function renderSenderDenyAction(chat, message) {
 }
 
 function renderStatus() {
-  const active = state.view === 'chat' ? activeConversation() : null;
-  const chat = active ? active.item : activeChat();
-  const status = chatStatus(chat);
-  const className = status.allowed ? 'status-ok' : 'status-bad';
-  document.getElementById('status-strip').innerHTML = `
-    <span class="${className}">${status.label}</span>
-    <span> · ${state.walletConnected ? state.account : '未连接'} · ${escapeHtml(state.syncHint)}</span>
+  const statusStrip = document.getElementById('status-strip');
+  const statusText = state.syncHint;
+  statusStrip.hidden = statusStrip.hidden || !statusText;
+  statusStrip.innerHTML = `
+    <span>${escapeHtml(statusText)}</span>
   `;
 }
 
@@ -1192,18 +1189,16 @@ function renderComposerChips() {
     const quotedName = quoted ? nftProfile(quoted.senderGroupId).name : '消息';
     chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
   }
-  for (const mention of state.mentions) chips.push(`<button class="chip" type="button" data-action="remove-mention" data-sender-group-id="${mention}">@${escapeHtml(nftProfile(mention).name)} ×</button>`);
-  if (state.mentionAll) chips.push('<button class="chip" type="button" data-action="toggle-mention-all">@all ×</button>');
-  document.getElementById('composer-chips').innerHTML = chips.join('');
+  const composerChips = document.getElementById('composer-chips');
+  composerChips.hidden = !chips.length;
+  composerChips.innerHTML = chips.join('');
 }
 
 function renderMorePanel() {
   document.getElementById('more-panel-content').innerHTML = `
     <div class="panel-grid">
       <button class="panel-button" type="button" data-action="add-mention" data-sender-group-id="1029">@${escapeHtml(nftProfile(1029).name)}</button>
-      <button class="panel-button${state.mentionAll ? ' active' : ''}" type="button" data-action="toggle-mention-all">@全部</button>
-      <button class="panel-button" type="button" data-action="set-index-mode" data-index-mode="messagesByRound">按 round</button>
-      <button class="panel-button" type="button" data-action="set-index-mode" data-index-mode="messagesBySender">按 sender</button>
+      <button class="panel-button" type="button" data-action="add-mention-all">@全部</button>
     </div>
     <div class="close-row"><button type="button" class="sheet-button" data-action="close-more">关闭</button></div>
   `;
@@ -1917,9 +1912,45 @@ function queryBlacklistValue(value) {
   render();
 }
 
+function mentionTokenFor(senderGroupId) {
+  return `@${nftProfile(senderGroupId).name}`;
+}
+
+function insertComposerToken(token) {
+  const input = document.getElementById('composer-input');
+  if (!input || input.value.includes(token)) return;
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  const before = input.value.slice(0, start);
+  const after = input.value.slice(end);
+  const prefix = before && !/\s$/.test(before) ? ' ' : '';
+  const suffix = after && !/^\s/.test(after) ? ' ' : ' ';
+  input.value = `${before}${prefix}${token}${suffix}${after}`;
+  const cursor = before.length + prefix.length + token.length + 1;
+  input.focus();
+  input.setSelectionRange(cursor, cursor);
+}
+
+function parseComposerMentions(content) {
+  const selected = new Set(state.mentions.map(String));
+  for (const [senderGroupId, profile] of Object.entries(state.nftProfiles)) {
+    if (content.includes(`@${profile.name}`)) selected.add(senderGroupId);
+  }
+  const mentions = [];
+  for (const senderGroupId of selected) {
+    if (mentions.length >= 32) break;
+    if (content.includes(mentionTokenFor(senderGroupId))) mentions.push(Number(senderGroupId));
+  }
+  return {
+    mentions,
+    mentionAll: content.includes('@全部'),
+  };
+}
+
 function sendMessage() {
   const input = document.getElementById('composer-input');
   const content = input.value.trim();
+  const draftMentions = parseComposerMentions(content);
   const active = activeConversation();
   const chat = active && active.kind === 'group' ? active.item : null;
   const status = chatStatus(chat);
@@ -1937,8 +1968,8 @@ function sendMessage() {
     round: chat ? chat.round : 0,
     messageIndex: nextIndex,
     content,
-    mentions: [...state.mentions],
-    mentionAll: state.mentionAll,
+    mentions: draftMentions.mentions,
+    mentionAll: draftMentions.mentionAll,
     quotedMessageIndex: state.quotedMessageIndex || 0,
     mine: true,
   });
@@ -1957,16 +1988,41 @@ function quoteMessage(messageIndex) {
   render();
 }
 
-function addMention(senderGroupId) {
-  const groupId = Number(senderGroupId);
-  if (!state.mentions.includes(groupId) && state.mentions.length < 32) state.mentions.push(groupId);
+async function copyMessage(messageIndex) {
+  const message = messageByIndex(messageIndex);
+  if (!message) return;
   state.activeMenuIndex = null;
+  try {
+    await writeClipboardText(message.content);
+    state.syncHint = '已复制消息正文。';
+  } catch (error) {
+    state.syncHint = '复制失败：浏览器没有开放剪贴板权限。';
+  }
   render();
 }
 
-function removeMention(senderGroupId) {
+async function writeClipboardText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) throw new Error('copy failed');
+}
+
+function addMention(senderGroupId) {
   const groupId = Number(senderGroupId);
-  state.mentions = state.mentions.filter((mention) => mention !== groupId);
+  if (!state.mentions.includes(groupId) && state.mentions.length < 32) state.mentions.push(groupId);
+  insertComposerToken(mentionTokenFor(groupId));
+  state.activeMenuIndex = null;
   render();
 }
 
@@ -1976,8 +2032,9 @@ function selectMessage(messageIndex) {
   render();
 }
 
-function toggleMentionAll() {
-  state.mentionAll = !state.mentionAll;
+function addMentionAll() {
+  state.mentionAll = true;
+  insertComposerToken('@全部');
   render();
 }
 
@@ -1994,6 +2051,40 @@ function openMorePanel() {
 function closeMorePanel() {
   document.getElementById('more-panel').hidden = true;
 }
+
+function clearAvatarPress() {
+  if (avatarPressState) clearTimeout(avatarPressState.timer);
+  avatarPressState = null;
+}
+
+document.addEventListener('pointerdown', (event) => {
+  const avatar = event.target.closest('[data-long-press-mention]');
+  if (!avatar || event.button !== 0) return;
+  clearAvatarPress();
+  avatarPressState = {
+    pointerId: event.pointerId,
+    senderGroupId: avatar.dataset.senderGroupId,
+    x: event.clientX,
+    y: event.clientY,
+    timer: setTimeout(() => {
+      const senderGroupId = avatarPressState?.senderGroupId;
+      avatarPressState = null;
+      if (senderGroupId) addMention(senderGroupId);
+    }, avatarLongPressMs),
+  };
+});
+
+document.addEventListener('pointermove', (event) => {
+  if (!avatarPressState || event.pointerId !== avatarPressState.pointerId) return;
+  const moved = Math.abs(event.clientX - avatarPressState.x) > 10 || Math.abs(event.clientY - avatarPressState.y) > 10;
+  if (moved) clearAvatarPress();
+});
+
+document.addEventListener('pointerup', clearAvatarPress);
+document.addEventListener('pointercancel', clearAvatarPress);
+document.addEventListener('contextmenu', (event) => {
+  if (event.target.closest('[data-long-press-mention]')) event.preventDefault();
+});
 
 document.addEventListener('click', (event) => {
   const target = event.target.closest('[data-action]');
@@ -2053,15 +2144,15 @@ document.addEventListener('click', (event) => {
   if (action === 'close-more') closeMorePanel();
   if (action === 'select-message') selectMessage(target.dataset.messageIndex);
   if (action === 'quote-message') quoteMessage(target.dataset.messageIndex);
-  if (action === 'mention-sender' || action === 'add-mention') addMention(target.dataset.senderGroupId);
+  if (action === 'copy-message') copyMessage(target.dataset.messageIndex);
+  if (action === 'add-mention') addMention(target.dataset.senderGroupId);
+  if (action === 'add-mention-all') addMentionAll();
   if (action === 'vote-sender-deny') voteSenderDenyFromMessage(target.dataset.messageIndex);
   if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex);
   if (action === 'clear-quote') {
     state.quotedMessageIndex = null;
     render();
   }
-  if (action === 'remove-mention') removeMention(target.dataset.senderGroupId);
-  if (action === 'toggle-mention-all') toggleMentionAll();
   if (action === 'set-index-mode') setIndexMode(target.dataset.indexMode);
 });
 

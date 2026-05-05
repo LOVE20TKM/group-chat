@@ -122,8 +122,8 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) > 0
 
 权限模型：
 
-- owner / delegate 可配置管理员、黑名单、豁免名单。
-- admin 只能管理黑名单。
+- owner / delegate 可配置管理员、豁免名单。
+- admin 管理黑名单；owner / delegate 要管理黑名单，需将自己的默认身份 NFT 加入管理员集合。
 - 黑名单和豁免名单同时支持地址维度与 `senderGroupId` 维度。
 - 豁免名单只豁免黑名单，不增加基础发言资格。
 

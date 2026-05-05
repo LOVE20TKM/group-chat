@@ -294,6 +294,12 @@ button:disabled {
   color: #fff;
 }
 
+.avatar[data-long-press-mention] {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .group-icon-token-community {
   border-color: #0f766e;
   background: #0f766e;
@@ -812,9 +818,10 @@ button:disabled {
 }
 
 .cannot-post {
-  margin-top: 10px;
+  margin: 0;
   display: grid;
   gap: 4px;
+  min-height: 36px;
   padding: 10px;
   border: 1px solid #fecaca;
   border-radius: 8px;

@@ -37,7 +37,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   mentionAll: false,
   activeMenuIndex: null,
   activeGroupMenuId: null,
-  syncHint: '爱聊入口承载群聊、激活、管理和黑名单。',
+  syncHint: '',
   nftProfiles: {
     9001: { name: '行动发起人', badge: '行' },
     9007: { name: '北极熊', badge: '北' },
@@ -448,7 +448,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   messages: [
     { conversationId: '1024', senderGroupId: 9001, senderAddress: '0x3a...02', round: 42, messageIndex: 77, content: '本轮行动投票窗口已经开始，建议先确认治理票。', mentions: [], mentionAll: false, quotedMessageIndex: 0, mine: false },
     { conversationId: '1024', senderGroupId: 9007, senderAddress: '0x8b...91', round: 42, messageIndex: 78, content: '@验证员小周 我补充：MessagePost 只是发现信号，正文回查 messages。', mentions: [1029], mentionAll: false, quotedMessageIndex: 77, mine: true },
-    { conversationId: '1024', senderGroupId: 1029, senderAddress: '0x52...13', round: 42, messageIndex: 79, content: 'mentionAll 只记录声明语义，主协议不做许可判断。', mentions: [], mentionAll: true, quotedMessageIndex: 0, mine: false },
+    { conversationId: '1024', senderGroupId: 1029, senderAddress: '0x52...13', round: 42, messageIndex: 79, content: '@全部 mentionAll 只记录声明语义，主协议不做许可判断。', mentions: [], mentionAll: true, quotedMessageIndex: 0, mine: false },
     { conversationId: '1301', senderGroupId: 1308, senderAddress: '0x21...ce', round: 42, messageIndex: 12, content: 'AdminDenySource 已按 chatGroupId 隔离，黑名单只影响后续发言。', mentions: [], mentionAll: false, quotedMessageIndex: 0, mine: false },
   ],
 },

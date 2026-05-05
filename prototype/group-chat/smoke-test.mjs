@@ -16,6 +16,23 @@ const css = readFileSync(join(root, 'styles.css'), 'utf8');
 const data = readFileSync(join(root, 'prototype-data.js'), 'utf8');
 const js = readFileSync(join(root, 'app.js'), 'utf8');
 const prototypeSource = html + data + js;
+const renderStatusMatch = js.match(/function renderStatus\(\) \{([\s\S]*?)\n\}/);
+
+if (!renderStatusMatch) {
+  throw new Error('Missing renderStatus');
+}
+
+if (renderStatusMatch[1].includes('chatStatus(') || renderStatusMatch[1].includes('status.label')) {
+  throw new Error('Chat input status strip must not render posting status');
+}
+
+if (js.includes('data-action="remove-mention"') || js.includes('@all ×')) {
+  throw new Error('Mentions must render in composer text, not composer chips');
+}
+
+if (js.includes('mentions: [...state.mentions]') || js.includes('mentionAll: state.mentionAll')) {
+  throw new Error('Sending must parse mentions from composer content');
+}
 
 const cssOpenBraces = (css.match(/\{/g) || []).length;
 const cssCloseBraces = (css.match(/\}/g) || []).length;
@@ -30,6 +47,7 @@ const requiredHtml = [
   'id="workspace-screen"',
   'id="message-list"',
   'id="composer-input"',
+  'placeholder="输入公开链上消息"',
   'id="composer-blocked"',
 ];
 
@@ -105,6 +123,12 @@ const requiredAppJs = [
   'openExempt',
   'toggleExemptMenu',
   'activeExemptMenuKey',
+  'data-action="copy-message"',
+  'data-long-press-mention',
+  'data-action="add-mention-all"',
+  'avatarLongPressMs',
+  'insertComposerToken',
+  'parseComposerMentions',
   'openGovVoters',
   '查看voter列表',
   'voterList',

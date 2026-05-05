@@ -2,7 +2,7 @@
 
 - 模块：Admin 黑名单与豁免名单 DenySource
 - 类型：`denySource`
-- 定位：由群聊 NFT 当前 owner / 有效代理 / 管理员维护黑名单，由群聊 NFT 当前 owner / 有效代理维护豁免名单
+- 定位：由管理员 NFT 维护黑名单，由群聊 NFT 当前 owner / 有效代理配置管理员与维护豁免名单
 
 ## 1. 边界
 
@@ -36,26 +36,32 @@
 - admin 权限以 `operatorGroupId = defaultGroupIdOf(msg.sender)` 作为权限主体
 - 为保持写接口简单，当前不额外提供显式传入 `operatorGroupId` 的双接口
 - 走 admin 权限路径时，未设置默认身份 NFT，或默认身份 NFT 不具备 admin 权限时，必须拒绝
-- owner / delegate 可以配置管理员、管理黑名单、管理豁免名单
+- owner / delegate 可以配置管理员、管理豁免名单
 - admin 只能管理黑名单
+- owner / delegate 若也要管理黑名单，必须把自己当前默认身份 NFT 加入管理员集合
 - 豁免名单只豁免黑名单，不提供基础发言资格
 - 权限必须实时读取默认身份注册表、`ownerOf(chatGroupId)`、`delegateGroupIdOf(chatGroupId)` 与 delegate NFT 当前 owner，不得缓存权限地址或权限快照
 - 管理员 NFT 集合变更不影响既有黑名单与豁免名单内容
 
-权限判定顺序：
+owner / delegate 权限判定顺序：
 
 1. 若 `msg.sender == GroupNFT.ownerOf(chatGroupId)`，视为 owner 权限
 2. 否则读取 `delegateGroupId = GroupChat.delegateGroupIdOf(chatGroupId)`
 3. 若 `delegateGroupId != 0 && msg.sender == GroupNFT.ownerOf(delegateGroupId)`，视为 delegate 权限
-4. 否则读取 `operatorGroupId = GroupDefaults.defaultGroupIdOf(msg.sender)`
-5. 若 `operatorGroupId != 0 && adminGroupListed[chatGroupId][operatorGroupId] == true`，视为 admin 权限
-6. 否则拒绝
+4. 否则拒绝
+
+黑名单写接口只走 admin 权限路径：
+
+1. 读取 `operatorGroupId = GroupDefaults.defaultGroupIdOf(msg.sender)`
+2. 若 `operatorGroupId != 0 && adminGroupListed[chatGroupId][operatorGroupId] == true`，允许修改黑名单
+3. 否则拒绝
 
 因此：
 
-- 当前持有 `chatGroupId` NFT 的地址，即使没有把 `chatGroupId` 设为默认身份，也可以行使 DenySource owner 权限。
-- 当前 delegate NFT owner，即使没有把该 delegate NFT 设为默认身份，也可以行使 DenySource delegate 权限。
+- 当前持有 `chatGroupId` NFT 的地址，即使没有把 `chatGroupId` 设为默认身份，也可以配置管理员和豁免名单。
+- 当前 delegate NFT owner，即使没有把该 delegate NFT 设为默认身份，也可以配置管理员和豁免名单。
 - 当前管理员 NFT owner，如果没有把对应管理员 NFT 设为默认身份，不能行使 DenySource admin 权限。
+- 当前 owner / delegate 如果没有通过默认身份 NFT 命中管理员集合，不能修改黑名单。
 - owner / delegate NFT 转让后，旧地址权限必须立即失效。
 - 管理员 NFT 转让后，旧地址的 `GroupDefaults.defaultGroupIdOf(...)` 必须返回 `0`，旧地址 admin 权限必须立即失效。
 
@@ -164,7 +170,7 @@ event StateVersionChanged(
 
 1. owner 或 delegate 挂载 DenySource
 2. owner 或 delegate 配置管理员 NFT 集合
-3. owner / delegate / admin 维护黑名单
+3. admin 维护黑名单
 4. owner / delegate 维护豁免名单
 5. 主协议在发言资格通过后调用 `isDenied`
 
@@ -173,7 +179,8 @@ event StateVersionChanged(
 - 未设置默认身份 NFT 的地址不能行使 DenySource admin 权限
 - 非 owner / delegate 不能调用 `setAdmins(...)`
 - 非 owner / delegate 不能修改豁免名单
-- 非 owner / delegate / admin 不能修改黑名单
+- 非 admin 不能修改黑名单
+- owner / delegate 想修改黑名单时，必须通过默认身份 NFT 命中管理员集合
 - `setAdmins([])` 必须允许
 - `setAdmins(...)` 传入不存在的 `adminGroupId` 时必须拒绝
 - 黑名单、豁免名单需支持单查和分页读列表
