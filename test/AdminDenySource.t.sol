@@ -147,6 +147,48 @@ contract AdminDenySourceTest is GroupChatFixture {
         deny.addSenderGroupIdDenyList(chatGroupId, _uints(otherGroupId));
     }
 
+    function testT125_senderGroupIdDenyListsResolveOwnerAndAffectAddressAndNftTogether() public {
+        vm.prank(chatOwner);
+        deny.addDenyListsBySenderGroupId(chatGroupId, senderGroupId);
+
+        assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
+        assertTrue(deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
+        assertTrue(deny.isDenied(chatGroupId, senderGroupId, senderOwner));
+        assertEq(deny.stateVersion(chatGroupId), 2);
+
+        vm.prank(chatOwner);
+        deny.removeDenyListsBySenderGroupId(chatGroupId, senderGroupId);
+
+        assertTrue(!deny.isAddressDenied(chatGroupId, senderOwner));
+        assertTrue(!deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
+        assertTrue(!deny.isDenied(chatGroupId, senderGroupId, senderOwner));
+        assertEq(deny.stateVersion(chatGroupId), 4);
+    }
+
+    function testT126_senderAddressDenyListsUseDefaultGroupWhenPresentAndSkipNftWhenMissing() public {
+        vm.prank(senderOwner);
+        groupDefaults.setDefaultGroupId(senderGroupId);
+
+        vm.prank(chatOwner);
+        deny.addDenyListsBySenderAddress(chatGroupId, senderOwner);
+        assertTrue(deny.isAddressDenied(chatGroupId, senderOwner));
+        assertTrue(deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
+        assertEq(deny.stateVersion(chatGroupId), 2);
+
+        vm.prank(chatOwner);
+        deny.addDenyListsBySenderAddress(chatGroupId, stranger);
+        assertTrue(deny.isAddressDenied(chatGroupId, stranger));
+        assertEq(deny.senderGroupIdDenyListCount(chatGroupId), 1);
+        assertEq(deny.stateVersion(chatGroupId), 3);
+
+        vm.prank(chatOwner);
+        deny.removeDenyListsBySenderAddress(chatGroupId, senderOwner);
+        assertTrue(!deny.isAddressDenied(chatGroupId, senderOwner));
+        assertTrue(!deny.isSenderGroupIdDenied(chatGroupId, senderGroupId));
+        assertTrue(deny.isAddressDenied(chatGroupId, stranger));
+        assertEq(deny.stateVersion(chatGroupId), 5);
+    }
+
     function _addresses(address account) internal pure returns (address[] memory accounts) {
         accounts = new address[](1);
         accounts[0] = account;

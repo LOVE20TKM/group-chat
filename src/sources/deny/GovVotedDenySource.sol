@@ -2,12 +2,14 @@
 pragma solidity =0.8.17;
 
 import {IDenyVoteWeightSource} from "../../interfaces/IDenyVoteWeightSource.sol";
+import {IGroupDefaults} from "../../interfaces/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../interfaces/ILOVE20Group.sol";
 import {IPostDenySource} from "../../interfaces/IPostDenySource.sol";
 
 contract GovVotedDenySource is IPostDenySource {
     error GovVotedDenySourceAddressHasNoCode();
     error DenyVoteWeightSourceUnavailable();
+    error GroupNotExist();
     error TargetAddressZero();
     error TargetSenderGroupIdZero();
     error VoteWeightZero();
@@ -41,6 +43,7 @@ contract GovVotedDenySource is IPostDenySource {
     event StateVersionChanged(uint256 indexed chatGroupId, uint256 stateVersion);
 
     address public immutable GROUP_ADDRESS;
+    address public immutable GROUP_DEFAULTS;
 
     struct VoteState {
         bool hasVote;
@@ -68,9 +71,11 @@ contract GovVotedDenySource is IPostDenySource {
 
     mapping(uint256 => ChatState) internal _states;
 
-    constructor(address groupAddress_) {
+    constructor(address groupAddress_, address groupDefaults_) {
         if (groupAddress_.code.length == 0) revert GovVotedDenySourceAddressHasNoCode();
+        if (groupDefaults_.code.length == 0) revert GovVotedDenySourceAddressHasNoCode();
         GROUP_ADDRESS = groupAddress_;
+        GROUP_DEFAULTS = groupDefaults_;
     }
 
     function voteDenyAddress(uint256 chatGroupId, address targetAddress) external {
@@ -105,6 +110,46 @@ contract GovVotedDenySource is IPostDenySource {
         external
     {
         _revalidateSenderGroupIdVote(chatGroupId, targetSenderGroupId, voter);
+    }
+
+    function voteDenySenderBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external {
+        address targetAddress = _ownerOfOrRevert(targetSenderGroupId);
+        _setSenderVote(chatGroupId, targetSenderGroupId, targetAddress, msg.sender, true);
+    }
+
+    function opposeDenySenderBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external {
+        address targetAddress = _ownerOfOrRevert(targetSenderGroupId);
+        _setSenderVote(chatGroupId, targetSenderGroupId, targetAddress, msg.sender, false);
+    }
+
+    function clearDenySenderVoteBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external {
+        address targetAddress = _ownerOfOrRevert(targetSenderGroupId);
+        _clearSenderVote(chatGroupId, targetSenderGroupId, targetAddress, msg.sender);
+    }
+
+    function revalidateDenySenderVoteBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
+        external
+    {
+        address targetAddress = _ownerOfOrRevert(targetSenderGroupId);
+        _revalidateSenderVote(chatGroupId, targetSenderGroupId, targetAddress, voter);
+    }
+
+    function voteDenySenderBySenderAddress(uint256 chatGroupId, address targetAddress) external {
+        _setSenderAddressVote(chatGroupId, targetAddress, msg.sender, true);
+    }
+
+    function opposeDenySenderBySenderAddress(uint256 chatGroupId, address targetAddress) external {
+        _setSenderAddressVote(chatGroupId, targetAddress, msg.sender, false);
+    }
+
+    function clearDenySenderVoteBySenderAddress(uint256 chatGroupId, address targetAddress) external {
+        _clearSenderAddressVote(chatGroupId, targetAddress, msg.sender);
+    }
+
+    function revalidateDenySenderVoteBySenderAddress(uint256 chatGroupId, address targetAddress, address voter)
+        external
+    {
+        _revalidateSenderAddressVote(chatGroupId, targetAddress, voter);
     }
 
     function addressDenyVoteOf(uint256 chatGroupId, address targetAddress, address voter)
@@ -271,11 +316,7 @@ contract GovVotedDenySource is IPostDenySource {
         return _votersPage(_states[chatGroupId].senderGroupIdTargetStates[targetSenderGroupId], offset, limit);
     }
 
-    function isDenied(uint256 chatGroupId, uint256 senderGroupId, address senderAddress)
-        external
-        view
-        returns (bool)
-    {
+    function isDenied(uint256 chatGroupId, uint256 senderGroupId, address senderAddress) external view returns (bool) {
         if (!_sourceHasCode(chatGroupId)) {
             return false;
         }
@@ -295,6 +336,13 @@ contract GovVotedDenySource is IPostDenySource {
     }
 
     function _setAddressVote(uint256 chatGroupId, address targetAddress, address voter, bool supportDeny) internal {
+        if (!_setAddressVoteIfChanged(chatGroupId, targetAddress, voter, supportDeny)) revert VoteUnchanged();
+    }
+
+    function _setAddressVoteIfChanged(uint256 chatGroupId, address targetAddress, address voter, bool supportDeny)
+        internal
+        returns (bool)
+    {
         if (targetAddress == address(0)) revert TargetAddressZero();
         address source = _sourceOrRevert(chatGroupId);
         uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, targetAddress, 0);
@@ -304,7 +352,7 @@ contract GovVotedDenySource is IPostDenySource {
         TargetState storage target = state.addressTargetStates[targetAddress];
         VoteState storage vote = target.votes[voter];
         if (vote.hasVote && vote.supportDeny == supportDeny && vote.settledWeight == weight) {
-            revert VoteUnchanged();
+            return false;
         }
 
         if (!vote.hasVote) {
@@ -319,16 +367,24 @@ contract GovVotedDenySource is IPostDenySource {
         vote.supportDeny = supportDeny;
         vote.settledWeight = weight;
         _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, true, supportDeny, weight);
+        return true;
     }
 
     function _clearAddressVote(uint256 chatGroupId, address targetAddress, address voter) internal {
+        if (!_clearAddressVoteIfFound(chatGroupId, targetAddress, voter)) revert VoteNotFound();
+    }
+
+    function _clearAddressVoteIfFound(uint256 chatGroupId, address targetAddress, address voter)
+        internal
+        returns (bool)
+    {
         if (targetAddress == address(0)) revert TargetAddressZero();
         _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.addressTargetStates[targetAddress];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) revert VoteNotFound();
+        if (!vote.hasVote) return false;
 
         _removeWeight(target, vote.supportDeny, vote.settledWeight);
         delete target.votes[voter];
@@ -337,20 +393,28 @@ contract GovVotedDenySource is IPostDenySource {
             _removeAddressTarget(state, targetAddress);
         }
         _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, false, false, 0);
+        return true;
     }
 
     function _revalidateAddressVote(uint256 chatGroupId, address targetAddress, address voter) internal {
+        if (!_revalidateAddressVoteIfFound(chatGroupId, targetAddress, voter)) revert VoteNotFound();
+    }
+
+    function _revalidateAddressVoteIfFound(uint256 chatGroupId, address targetAddress, address voter)
+        internal
+        returns (bool)
+    {
         if (targetAddress == address(0)) revert TargetAddressZero();
         address source = _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.addressTargetStates[targetAddress];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) revert VoteNotFound();
+        if (!vote.hasVote) return false;
 
         uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, targetAddress, 0);
         if (weight == vote.settledWeight) {
-            return;
+            return true;
         }
 
         _removeWeight(target, vote.supportDeny, vote.settledWeight);
@@ -361,17 +425,29 @@ contract GovVotedDenySource is IPostDenySource {
                 _removeAddressTarget(state, targetAddress);
             }
             _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, false, false, 0);
-            return;
+            return true;
         }
 
         _addWeight(target, vote.supportDeny, weight);
         vote.settledWeight = weight;
         _emitAddressVoteSet(state, chatGroupId, targetAddress, voter, true, vote.supportDeny, weight);
+        return true;
     }
 
     function _setSenderGroupIdVote(uint256 chatGroupId, uint256 targetSenderGroupId, address voter, bool supportDeny)
         internal
     {
+        if (!_setSenderGroupIdVoteIfChanged(chatGroupId, targetSenderGroupId, voter, supportDeny)) {
+            revert VoteUnchanged();
+        }
+    }
+
+    function _setSenderGroupIdVoteIfChanged(
+        uint256 chatGroupId,
+        uint256 targetSenderGroupId,
+        address voter,
+        bool supportDeny
+    ) internal returns (bool) {
         if (targetSenderGroupId == 0) revert TargetSenderGroupIdZero();
         address source = _sourceOrRevert(chatGroupId);
         uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, address(0), targetSenderGroupId);
@@ -381,7 +457,7 @@ contract GovVotedDenySource is IPostDenySource {
         TargetState storage target = state.senderGroupIdTargetStates[targetSenderGroupId];
         VoteState storage vote = target.votes[voter];
         if (vote.hasVote && vote.supportDeny == supportDeny && vote.settledWeight == weight) {
-            revert VoteUnchanged();
+            return false;
         }
 
         if (!vote.hasVote) {
@@ -396,16 +472,24 @@ contract GovVotedDenySource is IPostDenySource {
         vote.supportDeny = supportDeny;
         vote.settledWeight = weight;
         _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, true, supportDeny, weight);
+        return true;
     }
 
     function _clearSenderGroupIdVote(uint256 chatGroupId, uint256 targetSenderGroupId, address voter) internal {
+        if (!_clearSenderGroupIdVoteIfFound(chatGroupId, targetSenderGroupId, voter)) revert VoteNotFound();
+    }
+
+    function _clearSenderGroupIdVoteIfFound(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
+        internal
+        returns (bool)
+    {
         if (targetSenderGroupId == 0) revert TargetSenderGroupIdZero();
         _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.senderGroupIdTargetStates[targetSenderGroupId];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) revert VoteNotFound();
+        if (!vote.hasVote) return false;
 
         _removeWeight(target, vote.supportDeny, vote.settledWeight);
         delete target.votes[voter];
@@ -414,20 +498,28 @@ contract GovVotedDenySource is IPostDenySource {
             _removeSenderGroupIdTarget(state, targetSenderGroupId);
         }
         _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, false, false, 0);
+        return true;
     }
 
     function _revalidateSenderGroupIdVote(uint256 chatGroupId, uint256 targetSenderGroupId, address voter) internal {
+        if (!_revalidateSenderGroupIdVoteIfFound(chatGroupId, targetSenderGroupId, voter)) revert VoteNotFound();
+    }
+
+    function _revalidateSenderGroupIdVoteIfFound(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
+        internal
+        returns (bool)
+    {
         if (targetSenderGroupId == 0) revert TargetSenderGroupIdZero();
         address source = _sourceOrRevert(chatGroupId);
 
         ChatState storage state = _states[chatGroupId];
         TargetState storage target = state.senderGroupIdTargetStates[targetSenderGroupId];
         VoteState storage vote = target.votes[voter];
-        if (!vote.hasVote) revert VoteNotFound();
+        if (!vote.hasVote) return false;
 
         uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, address(0), targetSenderGroupId);
         if (weight == vote.settledWeight) {
-            return;
+            return true;
         }
 
         _removeWeight(target, vote.supportDeny, vote.settledWeight);
@@ -438,12 +530,73 @@ contract GovVotedDenySource is IPostDenySource {
                 _removeSenderGroupIdTarget(state, targetSenderGroupId);
             }
             _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, false, false, 0);
-            return;
+            return true;
         }
 
         _addWeight(target, vote.supportDeny, weight);
         vote.settledWeight = weight;
         _emitSenderGroupIdVoteSet(state, chatGroupId, targetSenderGroupId, voter, true, vote.supportDeny, weight);
+        return true;
+    }
+
+    function _setSenderVote(
+        uint256 chatGroupId,
+        uint256 targetSenderGroupId,
+        address targetAddress,
+        address voter,
+        bool supportDeny
+    ) internal {
+        bool addressChanged = _setAddressVoteIfChanged(chatGroupId, targetAddress, voter, supportDeny);
+        bool senderGroupIdChanged = _setSenderGroupIdVoteIfChanged(chatGroupId, targetSenderGroupId, voter, supportDeny);
+        if (!addressChanged && !senderGroupIdChanged) revert VoteUnchanged();
+    }
+
+    function _clearSenderVote(uint256 chatGroupId, uint256 targetSenderGroupId, address targetAddress, address voter)
+        internal
+    {
+        bool addressCleared = _clearAddressVoteIfFound(chatGroupId, targetAddress, voter);
+        bool senderGroupIdCleared = _clearSenderGroupIdVoteIfFound(chatGroupId, targetSenderGroupId, voter);
+        if (!addressCleared && !senderGroupIdCleared) revert VoteNotFound();
+    }
+
+    function _revalidateSenderVote(
+        uint256 chatGroupId,
+        uint256 targetSenderGroupId,
+        address targetAddress,
+        address voter
+    ) internal {
+        bool addressFound = _revalidateAddressVoteIfFound(chatGroupId, targetAddress, voter);
+        bool senderGroupIdFound = _revalidateSenderGroupIdVoteIfFound(chatGroupId, targetSenderGroupId, voter);
+        if (!addressFound && !senderGroupIdFound) revert VoteNotFound();
+    }
+
+    function _setSenderAddressVote(uint256 chatGroupId, address targetAddress, address voter, bool supportDeny)
+        internal
+    {
+        uint256 targetSenderGroupId = _validDefaultGroupIdOf(targetAddress);
+        if (targetSenderGroupId == 0) {
+            _setAddressVote(chatGroupId, targetAddress, voter, supportDeny);
+            return;
+        }
+        _setSenderVote(chatGroupId, targetSenderGroupId, targetAddress, voter, supportDeny);
+    }
+
+    function _clearSenderAddressVote(uint256 chatGroupId, address targetAddress, address voter) internal {
+        uint256 targetSenderGroupId = _validDefaultGroupIdOf(targetAddress);
+        if (targetSenderGroupId == 0) {
+            _clearAddressVote(chatGroupId, targetAddress, voter);
+            return;
+        }
+        _clearSenderVote(chatGroupId, targetSenderGroupId, targetAddress, voter);
+    }
+
+    function _revalidateSenderAddressVote(uint256 chatGroupId, address targetAddress, address voter) internal {
+        uint256 targetSenderGroupId = _validDefaultGroupIdOf(targetAddress);
+        if (targetSenderGroupId == 0) {
+            _revalidateAddressVote(chatGroupId, targetAddress, voter);
+            return;
+        }
+        _revalidateSenderVote(chatGroupId, targetSenderGroupId, targetAddress, voter);
     }
 
     function _emitAddressVoteSet(
@@ -513,6 +666,31 @@ contract GovVotedDenySource is IPostDenySource {
         }
     }
 
+    function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
+        if (groupId == 0) revert TargetSenderGroupIdZero();
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+            return resolved;
+        } catch {
+            revert GroupNotExist();
+        }
+    }
+
+    function _tryOwnerOf(uint256 groupId) internal view returns (address owner) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+            return resolved;
+        } catch {
+            return address(0);
+        }
+    }
+
+    function _validDefaultGroupIdOf(address account) internal view returns (uint256 groupId) {
+        if (account == address(0)) revert TargetAddressZero();
+        groupId = IGroupDefaults(GROUP_DEFAULTS).defaultGroupIdOf(account);
+        if (groupId == 0 || _tryOwnerOf(groupId) != account) {
+            return 0;
+        }
+    }
+
     function _voteWeightOrRevert(
         address source,
         uint256 chatGroupId,
@@ -521,8 +699,7 @@ contract GovVotedDenySource is IPostDenySource {
         uint256 targetSenderGroupId
     ) internal view returns (uint256 weight) {
         try IDenyVoteWeightSource(source).denyVoteWeightOf(chatGroupId, voter, targetAddress, targetSenderGroupId)
-            returns (uint256 resolved)
-        {
+        returns (uint256 resolved) {
             return resolved;
         } catch {
             revert DenyVoteWeightSourceUnavailable();

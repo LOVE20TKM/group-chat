@@ -31,6 +31,7 @@ GroupChat.denySource = GovVotedDenySource
 构造参数只固定外部依赖：
 
 - `GROUP_ADDRESS`
+- `GROUP_DEFAULTS`
 
 治理语义硬编码固定：
 
@@ -56,7 +57,9 @@ GroupChat.denySource = GovVotedDenySource
 - 不引入 `voterGroupId`；治理票来自地址维度的流动性质押，票权源按 `voter` 地址计算。
 - `senderGroupId` 只作为被投票目标维度，不作为投票人身份。
 - 每个投票主体对同一目标只有一个当前立场：无票、赞成拉黑、反对拉黑。
-- 目标分两类：`targetAddress` 与 `targetSenderGroupId`，接口层分开，不用“二选一参数”。
+- 基础目标分两类：`targetAddress` 与 `targetSenderGroupId`，接口层分开，不用“二选一参数”。
+- `*BySenderGroupId` 通过 `ownerOf(targetSenderGroupId)` 解析目标地址，一次操作同步影响地址与 NFT 两个目标维度。
+- `*BySenderAddress` 直接影响地址目标；若 `defaultGroupIdOf(targetAddress) != 0` 且该 NFT 当前 owner 仍是 `targetAddress`，同时影响 NFT 目标，否则不处理 NFT 且不拒绝。
 - `voteDeny*` 会用当前票权覆盖旧立场。
 - `opposeDeny*` 是反对票，也是一种复议手段。
 - `clearDeny*Vote` 只撤回 `msg.sender` 自己的当前票。
@@ -109,6 +112,48 @@ function clearDenySenderGroupIdVote(
 function revalidateDenySenderGroupIdVote(
     uint256 chatGroupId,
     uint256 targetSenderGroupId,
+    address voter
+) external;
+
+function voteDenySenderBySenderGroupId(
+    uint256 chatGroupId,
+    uint256 targetSenderGroupId
+) external;
+
+function opposeDenySenderBySenderGroupId(
+    uint256 chatGroupId,
+    uint256 targetSenderGroupId
+) external;
+
+function clearDenySenderVoteBySenderGroupId(
+    uint256 chatGroupId,
+    uint256 targetSenderGroupId
+) external;
+
+function revalidateDenySenderVoteBySenderGroupId(
+    uint256 chatGroupId,
+    uint256 targetSenderGroupId,
+    address voter
+) external;
+
+function voteDenySenderBySenderAddress(
+    uint256 chatGroupId,
+    address targetAddress
+) external;
+
+function opposeDenySenderBySenderAddress(
+    uint256 chatGroupId,
+    address targetAddress
+) external;
+
+function clearDenySenderVoteBySenderAddress(
+    uint256 chatGroupId,
+    address targetAddress
+) external;
+
+function revalidateDenySenderVoteBySenderAddress(
+    uint256 chatGroupId,
+    address targetAddress,
     address voter
 ) external;
 
@@ -268,6 +313,7 @@ event StateVersionChanged(
 合约全局至少维护：
 
 - `address immutable GROUP_ADDRESS`
+- `address immutable GROUP_DEFAULTS`
 
 每个 `chatGroupId` 至少维护：
 

@@ -82,6 +82,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS(), address(groupDefaults));
         assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_ADDRESS(), address(groupNft));
+        assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_DEFAULTS(), address(groupDefaults));
         assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN(), address(groupJoin));
 
         _assertManagerCommon(deployed.tokenGroupChatManager, deployed);

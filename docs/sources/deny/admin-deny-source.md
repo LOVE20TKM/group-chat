@@ -111,6 +111,10 @@ DenySource 合约全局至少维护：
 - `removeAddressDenyList(uint256 chatGroupId, address[] accounts)`
 - `addSenderGroupIdDenyList(uint256 chatGroupId, uint256[] senderGroupIds)`
 - `removeSenderGroupIdDenyList(uint256 chatGroupId, uint256[] senderGroupIds)`
+- `addDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId)`：通过 `ownerOf(targetSenderGroupId)` 解析地址，同时加入地址与 NFT 黑名单
+- `removeDenyListsBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId)`：通过 `ownerOf(targetSenderGroupId)` 解析地址，同时移除地址与 NFT 黑名单
+- `addDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress)`：加入地址黑名单；若该地址有有效默认 NFT，同时加入 NFT 黑名单
+- `removeDenyListsBySenderAddress(uint256 chatGroupId, address targetAddress)`：移除地址黑名单；若该地址有有效默认 NFT，同时移除 NFT 黑名单
 - `addAddressExemptList(uint256 chatGroupId, address[] accounts)`
 - `removeAddressExemptList(uint256 chatGroupId, address[] accounts)`
 - `addSenderGroupIdExemptList(uint256 chatGroupId, uint256[] senderGroupIds)`
