@@ -15,6 +15,12 @@ const html = readFileSync(join(root, 'index.html'), 'utf8');
 const css = readFileSync(join(root, 'styles.css'), 'utf8');
 const js = readFileSync(join(root, 'app.js'), 'utf8');
 
+const cssOpenBraces = (css.match(/\{/g) || []).length;
+const cssCloseBraces = (css.match(/\}/g) || []).length;
+if (cssOpenBraces !== cssCloseBraces) {
+  throw new Error(`CSS brace mismatch: ${cssOpenBraces} "{" vs ${cssCloseBraces} "}"`);
+}
+
 const requiredHtml = [
   'data-entry="love20-chat"',
   'id="wallet-button"',
@@ -22,6 +28,7 @@ const requiredHtml = [
   'id="workspace-screen"',
   'id="message-list"',
   'id="composer-input"',
+  'id="composer-blocked"',
 ];
 
 for (const needle of requiredHtml) {
@@ -45,9 +52,12 @@ const requiredCss = [
   '.blacklist-row',
   '.blacklist-menu',
   '.pager-row',
+  '.inbox-filter-row',
   '.filter-tabs',
   '.action-row',
   '.query-row',
+  '.composer-blocked',
+  '.delegate-panel',
   '@media (min-width: 900px)',
   '@media (max-width: 390px)',
   'font-size: 16px',
@@ -62,7 +72,6 @@ for (const needle of requiredCss) {
 const requiredJs = [
   'LOVE20 Chat',
   '爱聊',
-  'directMessages',
   'bottomTabs',
   'TokenGroupChatManager',
   'TokenGovGroupChatManager',
@@ -78,11 +87,18 @@ const requiredJs = [
   'activationTypeForChat',
   'renderActivationSection',
   'set-activation-type',
+  '群聊激活',
   'toggleChatMenu',
   'activeGroupMenuId',
+  'pageReturnStack',
+  'renderGroupDetails',
+  'openDetails',
+  'postBlockReason',
+  'scopeSourceReason',
   'blacklistQueryType',
   'blacklistRows',
   'setBlacklistQueryType',
+  'setNftInputMode',
   'setBlacklistPage',
   'toggleBlacklistMenu',
   'renderExemptList',
@@ -101,6 +117,10 @@ const requiredJs = [
   'renderActivationForm',
   'setActivationOption',
   'renderChainServiceManagement',
+  'renderDelegateInput',
+  'delegateDisplay',
+  'delegateQueryResult',
+  'resolveOptionalKnownNftInput',
   'managementNotice',
   'renderAdminGroupControls',
   'setAdminGroupQueryType',
@@ -113,8 +133,8 @@ const requiredJs = [
   'admin-nft-row',
   'renderBlacklistControls',
   'blacklist-controls',
-  '群黑名单',
-  '群豁免名单',
+  '黑名单',
+  '豁免名单',
   'renderGovBlacklist',
   'renderAdminBlacklist',
   'queryBlacklist',
