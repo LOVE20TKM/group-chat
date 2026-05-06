@@ -4,7 +4,7 @@ pragma solidity =0.8.17;
 import {IGroupChat} from "../interfaces/IGroupChat.sol";
 import {IPostScopeSource} from "../interfaces/IPostScopeSource.sol";
 import {IDenyVoteWeightSource} from "../interfaces/IDenyVoteWeightSource.sol";
-import {IERC721Receiver} from "../interfaces/IERC721Receiver.sol";
+import {IERC721Receiver} from "../interfaces/external/IERC721Receiver.sol";
 
 abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();

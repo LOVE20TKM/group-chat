@@ -5,7 +5,9 @@
 - 主合约：[GroupChat.sol](../src/GroupChat.sol)
 - 默认身份注册表：[GroupDefaults.sol](../../group/src/GroupDefaults.sol)
 - 主接口：[IGroupChat.sol](../src/interfaces/IGroupChat.sol)
-- 注册表接口：[IGroupDefaults.sol](../../group/src/interfaces/IGroupDefaults.sol)
+- 本库接口目录：[interfaces](../src/interfaces)
+- 外部适配接口目录：[interfaces/external](../src/interfaces/external)
+- 上游注册表接口：[IGroupDefaults.sol](../../group/src/interfaces/IGroupDefaults.sol)
 - 测试入口：`test/*.t.sol`
 
 当前已实现并覆盖测试的核心能力：
@@ -34,6 +36,8 @@
 
 - `src/`
   - 协议接口与实现
+  - `interfaces/` 放本库协议接口与扩展点
+  - `interfaces/external/` 放上游合约或通用标准的最小适配接口
 - `test/`
   - 按主题拆分的 Foundry 测试
 - `script/`

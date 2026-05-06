@@ -2,8 +2,8 @@
 pragma solidity =0.8.17;
 
 import {IDenyVoteWeightSource} from "../../interfaces/IDenyVoteWeightSource.sol";
-import {IGroupDefaults} from "../../interfaces/IGroupDefaults.sol";
-import {ILOVE20Group} from "../../interfaces/ILOVE20Group.sol";
+import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
+import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
 import {IPostDenySource} from "../../interfaces/IPostDenySource.sol";
 
 contract GovVotedDenySource is IPostDenySource {

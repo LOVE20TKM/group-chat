@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {ActionBody, ActionHead, ActionInfo} from "../../src/interfaces/ILOVE20Submit.sol";
+import {ActionBody, ActionHead, ActionInfo} from "../../src/interfaces/external/ILOVE20Submit.sol";
 
 contract MockLOVE20Protocols {
     uint256 internal _currentRound = 1;

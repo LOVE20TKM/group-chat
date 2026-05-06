@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupJoinGlobal} from "../../interfaces/IGroupJoinGlobal.sol";
+import {IGroupJoinGlobal} from "../../interfaces/external/IGroupJoinGlobal.sol";
 import {IPostScopeSource} from "../../interfaces/IPostScopeSource.sol";
 
 contract GroupJoinScopeSource is IPostScopeSource {

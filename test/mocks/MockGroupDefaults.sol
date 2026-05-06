@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupDefaults} from "../../src/interfaces/IGroupDefaults.sol";
-import {ILOVE20Group} from "../../src/interfaces/ILOVE20Group.sol";
+import {IGroupDefaults} from "../../src/interfaces/external/IGroupDefaults.sol";
+import {ILOVE20Group} from "../../src/interfaces/external/ILOVE20Group.sol";
 
 contract MockGroupDefaults is IGroupDefaults {
     address public immutable GROUP_ADDRESS;

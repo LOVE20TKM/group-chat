@@ -2,9 +2,9 @@
 pragma solidity =0.8.17;
 
 import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
-import {IExtensionCenter} from "../interfaces/IExtensionCenter.sol";
-import {ILOVE20Join} from "../interfaces/ILOVE20Join.sol";
-import {ILOVE20Vote} from "../interfaces/ILOVE20Vote.sol";
+import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
+import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
+import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 
 contract TokenActionGroupChatManager is BaseGroupChatManager {
     struct TokenActionChatParams {

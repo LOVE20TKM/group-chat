@@ -4,8 +4,8 @@ pragma solidity =0.8.17;
 import {IGroupChat} from "./interfaces/IGroupChat.sol";
 import {IBeforePostPlugin} from "./interfaces/IBeforePostPlugin.sol";
 import {IAfterPostPlugin} from "./interfaces/IAfterPostPlugin.sol";
-import {IGroupDefaults} from "./interfaces/IGroupDefaults.sol";
-import {ILOVE20Group} from "./interfaces/ILOVE20Group.sol";
+import {IGroupDefaults} from "./interfaces/external/IGroupDefaults.sol";
+import {ILOVE20Group} from "./interfaces/external/ILOVE20Group.sol";
 import {IPostScopeSource} from "./interfaces/IPostScopeSource.sol";
 import {IPostDenySource} from "./interfaces/IPostDenySource.sol";
 

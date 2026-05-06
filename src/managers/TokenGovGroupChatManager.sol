@@ -2,8 +2,8 @@
 pragma solidity =0.8.17;
 
 import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
-import {IExtensionCenter} from "../interfaces/IExtensionCenter.sol";
-import {ILOVE20Stake} from "../interfaces/ILOVE20Stake.sol";
+import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
+import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 
 contract TokenGovGroupChatManager is BaseGroupChatManager {
     address public immutable STAKE;
