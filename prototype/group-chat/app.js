@@ -38,6 +38,15 @@ function currentDefaultGroupId() {
   return state.defaultGroupId;
 }
 
+function ownerOfGroupId(groupId) {
+  return state.groupOwners?.[String(groupId)] || '';
+}
+
+function validDefaultGroupIdOf(address) {
+  const groupId = state.defaultGroupIdsByAddress?.[address];
+  return groupId && ownerOfGroupId(groupId) === address ? groupId : '';
+}
+
 function resolveNftInput(value, mode = 'name') {
   const raw = String(value || '').trim();
   if (!raw) return '';
@@ -92,16 +101,20 @@ function clearActiveQuote() {
 }
 
 function chatDisplayName(chat) {
-  if (chat.type === 'token-community') return `大群 ${chat.token}`;
-  if (chat.type === 'token-gov') return `治理群 ${chat.token}`;
+  if (chat.type === 'token-community') return `大群 ${chatTokenSymbol(chat)}`;
+  if (chat.type === 'token-gov') return `治理群 ${chatTokenSymbol(chat)}`;
   if (chat.type === 'action') return `行动大群 #${chat.actionId}-${actionTitle(chat)}`;
   if (chat.type === 'action-gov') return `行动治理群 #${chat.actionId}-${actionTitle(chat)}`;
   if (chat.type === 'chain-service') return `链群#${chat.groupId}-${chat.chainName || chat.shortTitle}`;
   return chat.title;
 }
 
+function chatTokenSymbol(chat) {
+  return chat.tokenSymbol || chat.token;
+}
+
 function actionTitle(chat) {
-  const action = state.actions.find((item) => item.token === chat.token && item.actionId === chat.actionId);
+  const action = state.actions.find((item) => item.token === chatTokenSymbol(chat) && item.actionId === chat.actionId);
   return action ? action.title : '行动';
 }
 
@@ -1080,6 +1093,7 @@ function renderChatTools(chat) {
   const menu = state.activeGroupMenuId === chat.groupId ? `
     <div class="chat-menu">
       <button type="button" data-action="open-details" data-chat-id="${chat.groupId}">详情</button>
+      <button type="button" data-action="simulate-message-gap" data-chat-id="${chat.groupId}">模拟缺口</button>
       <button type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">${blacklistLabel}</button>
       ${exemptMenuItem}
       ${manageMenuItem}
@@ -1109,19 +1123,19 @@ function postBlockReason(chat, status) {
   if (status.reasonCode === 'SenderNotGroupOwner') return '当前钱包不是 defaultGroupId 的 owner，合约会返回 SenderNotGroupOwner。';
   if (status.reasonCode === 'DenyRejected') return '发言资格已通过，但 denySource 拦截了当前地址或当前 NFT。请检查黑名单和豁免名单。';
   if (status.reasonCode === 'ScopeRejected') return scopeSourceReason(chat);
-  return '当前 defaultGroupId 暂时不满足这个群聊的发言条件。';
+  return '当前地址暂时不满足这个群聊的发言条件。';
 }
 
 function scopeSourceReason(chat) {
   const source = chat.ruleSlots?.scopeSource || chat.params?.scopeSource || 'scopeSource';
   const messages = {
-    TokenGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否属于这个代币的大群范围；当前 defaultGroupId 不在范围内。',
-    TokenGovGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否有这个代币治理群的发言资格；当前 defaultGroupId 不满足。',
-    TokenActionGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否属于这个行动群的参与范围；当前 defaultGroupId 不在范围内。',
-    TokenActionGovGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否有这个行动治理群的发言资格；当前 defaultGroupId 不满足。',
+    TokenGroupChatManager: 'scopeSource 会检查当前地址是否属于这个代币的大群范围；当前地址不在范围内。',
+    TokenGovGroupChatManager: 'scopeSource 会检查当前地址是否有这个代币治理群的发言资格；当前地址不满足。',
+    TokenActionGroupChatManager: 'scopeSource 会检查当前地址是否属于这个行动群的参与范围；当前地址不在范围内。',
+    TokenActionGovGroupChatManager: 'scopeSource 会检查当前地址是否有这个行动治理群的发言资格；当前地址不满足。',
     GroupJoinScopeSource: 'scopeSource 会检查当前地址是否在该链群下参与至少一个代币社区行动；当前地址不满足。',
   };
-  return messages[source] || `${source} 判断当前 defaultGroupId 没有这个群聊的发言资格。`;
+  return messages[source] || `${source} 判断当前地址没有这个群聊的发言资格。`;
 }
 
 function renderMessage(chat, message) {
@@ -1129,6 +1143,7 @@ function renderMessage(chat, message) {
   const profile = nftProfile(message.senderGroupId);
   const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex, message.chatGroupId) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderGroupId).name)}</div>` : '';
+  const content = renderMessageContent(message);
   const avatarMenu = state.activeAvatarMenuKey === messageMenuKey(message)
     ? `<div class="message-actions avatar-actions">${renderSenderDenyAction(chat, message)}</div>`
     : '';
@@ -1148,12 +1163,26 @@ function renderMessage(chat, message) {
       <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-chat-group-id="${message.chatGroupId}" data-message-index="${message.messageIndex}" data-sender-group-id="${message.senderGroupId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
         <div class="message-meta">${escapeHtml(profile.name)}</div>
-        <div class="message-bubble${mine}">${quote}${escapeHtml(message.content)}</div>
+        <div class="message-bubble${mine}">${quote}${content}</div>
         ${avatarMenu}
         ${actions}
       </div>
     </article>
   `;
+}
+
+function renderMessageContent(message) {
+  let content = escapeHtml(message.content);
+  const tokens = [];
+  if (message.mentionAll) tokens.push('@全部');
+  for (const senderGroupId of message.mentions || []) {
+    tokens.push(mentionTokenFor(senderGroupId));
+  }
+  for (const token of tokens.sort((left, right) => right.length - left.length)) {
+    const escapedToken = escapeHtml(token);
+    content = content.split(escapedToken).join(`<span class="message-mention">${escapedToken}</span>`);
+  }
+  return content;
 }
 
 function renderSenderDenyAction(chat, message) {
@@ -1449,7 +1478,7 @@ function activateChat(chatId) {
     Object.keys(chat.params).forEach((key) => {
       chat.params[key] = draft[key];
     });
-    chat.token = draft.token || chat.token;
+    if (draft.token) chat.tokenAddress = draft.token;
     if (draft.actionId) chat.actionId = draft.actionId;
   }
 
@@ -1533,7 +1562,12 @@ function addAdminList(listName, inputId) {
     return;
   }
   if (listName === 'senderGroupIdDenyList') {
-    const profileAddress = state.messages.find((message) => String(message.senderGroupId) === targetValue)?.senderAddress;
+    const profileAddress = ownerOfGroupId(targetValue);
+    if (!profileAddress) {
+      state.syncHint = `GroupNotExist：NFT #${targetValue} 当前 ownerOf 不存在`;
+      render();
+      return;
+    }
     let changes = 0;
     if (!chat.adminDeny.senderGroupIdDenyList.includes(targetValue)) {
       chat.adminDeny.senderGroupIdDenyList.push(targetValue);
@@ -1545,9 +1579,27 @@ function addAdminList(listName, inputId) {
     }
     if (changes > 0) {
       chat.adminDeny.stateVersion += 1;
-      state.syncHint = profileAddress
-        ? `addDenyListsBySenderGroupIds([${targetValue}]) 已模拟，联动地址 ${profileAddress}`
-        : `addDenyListsBySenderGroupIds([${targetValue}]) 已模拟，地址待 ownerOf 解析`;
+      state.syncHint = `addDenyListsBySenderGroupIds([${targetValue}]) 已模拟，当前 ownerOf=${profileAddress}`;
+    }
+    render();
+    return;
+  }
+  if (listName === 'addressDenyList') {
+    const targetGroupId = validDefaultGroupIdOf(targetValue);
+    let changes = 0;
+    if (!chat.adminDeny.addressDenyList.includes(targetValue)) {
+      chat.adminDeny.addressDenyList.push(targetValue);
+      changes += 1;
+    }
+    if (targetGroupId && !chat.adminDeny.senderGroupIdDenyList.includes(targetGroupId)) {
+      chat.adminDeny.senderGroupIdDenyList.push(targetGroupId);
+      changes += 1;
+    }
+    if (changes > 0) {
+      chat.adminDeny.stateVersion += 1;
+      state.syncHint = targetGroupId
+        ? `addDenyListsBySenderAddresses([${targetValue}]) 已模拟，联动 NFT #${targetGroupId}`
+        : `addDenyListsBySenderAddresses([${targetValue}]) 已模拟`;
     }
     render();
     return;
@@ -1623,7 +1675,12 @@ function removeAdminList(listName, value) {
   if (!listName.includes('Exempt') && listName !== 'adminGroupIds' && !canEditAdminDeny(chat)) return;
   if (listName === 'adminGroupIds' && !canEditRules(chat)) return;
   if (listName === 'senderGroupIdDenyList') {
-    const profileAddress = state.messages.find((message) => String(message.senderGroupId) === value)?.senderAddress;
+    const profileAddress = ownerOfGroupId(value);
+    if (!profileAddress) {
+      state.syncHint = `GroupNotExist：NFT #${value} 当前 ownerOf 不存在`;
+      render();
+      return;
+    }
     let changes = 0;
     if (chat.adminDeny.senderGroupIdDenyList.includes(value)) {
       chat.adminDeny.senderGroupIdDenyList = chat.adminDeny.senderGroupIdDenyList.filter((item) => item !== value);
@@ -1635,9 +1692,24 @@ function removeAdminList(listName, value) {
     }
     if (changes > 0) {
       chat.adminDeny.stateVersion += 1;
-      state.syncHint = profileAddress
-        ? `removeDenyListsBySenderGroupIds([${value}]) 已模拟，联动地址 ${profileAddress}`
-        : `removeDenyListsBySenderGroupIds([${value}]) 已模拟`;
+      state.syncHint = `removeDenyListsBySenderGroupIds([${value}]) 已模拟，当前 ownerOf=${profileAddress}`;
+    }
+  } else if (listName === 'addressDenyList') {
+    const targetGroupId = validDefaultGroupIdOf(value);
+    let changes = 0;
+    if (chat.adminDeny.addressDenyList.includes(value)) {
+      chat.adminDeny.addressDenyList = chat.adminDeny.addressDenyList.filter((item) => item !== value);
+      changes += 1;
+    }
+    if (targetGroupId && chat.adminDeny.senderGroupIdDenyList.includes(targetGroupId)) {
+      chat.adminDeny.senderGroupIdDenyList = chat.adminDeny.senderGroupIdDenyList.filter((item) => item !== targetGroupId);
+      changes += 1;
+    }
+    if (changes > 0) {
+      chat.adminDeny.stateVersion += 1;
+      state.syncHint = targetGroupId
+        ? `removeDenyListsBySenderAddresses([${value}]) 已模拟，联动 NFT #${targetGroupId}`
+        : `removeDenyListsBySenderAddresses([${value}]) 已模拟`;
     }
   } else {
     chat.adminDeny[listName] = chat.adminDeny[listName].filter((item) => item !== value);
@@ -1720,8 +1792,13 @@ function addSenderDenyFromMessage(messageIndex, chatGroupId = state.activeChatGr
   const chat = message && chatById(message.chatGroupId);
   if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
 
-  const targetAddress = message.senderAddress;
   const targetSenderGroupId = String(message.senderGroupId);
+  const targetAddress = ownerOfGroupId(targetSenderGroupId);
+  if (!targetAddress) {
+    state.syncHint = `GroupNotExist：NFT #${targetSenderGroupId} 当前 ownerOf 不存在`;
+    render();
+    return;
+  }
   let changes = 0;
   if (!chat.adminDeny.addressDenyList.includes(targetAddress)) {
     chat.adminDeny.addressDenyList.push(targetAddress);
@@ -1735,12 +1812,41 @@ function addSenderDenyFromMessage(messageIndex, chatGroupId = state.activeChatGr
   if (changes > 0) {
     chat.adminDeny.stateVersion += 1;
     state.syncHint =
-      `addDenyListsBySenderGroupIds([${targetSenderGroupId}]) 已模拟，合约解析地址 ${targetAddress}`;
+      `addDenyListsBySenderGroupIds([${targetSenderGroupId}]) 已模拟，当前 ownerOf=${targetAddress}，消息发送地址=${message.senderAddress}`;
   } else {
     state.syncHint = `sender ${targetAddress} / NFT #${targetSenderGroupId} 已在黑名单`;
   }
   state.activeMenuIndex = null;
   state.activeAvatarMenuKey = null;
+  render();
+}
+
+function simulateMessageGap(chatId) {
+  const chat = chatById(chatId);
+  if (!chat) return;
+  const chatGroupId = String(chat.groupId);
+  const visibleMessages = messagesForChat(chatGroupId);
+  const latestIndex = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageIndex)) : -1;
+  const eventIndex = latestIndex + 3;
+  const startIndex = latestIndex + 1;
+  for (let messageIndex = startIndex; messageIndex <= eventIndex; messageIndex++) {
+    state.messages.push({
+      chatGroupId,
+      senderGroupId: 9101,
+      senderAddress: ownerOfGroupId(9101),
+      round: chat.round,
+      messageIndex,
+      content: `外部消息 #${messageIndex} 已通过 messages 区间补拉。`,
+      mentions: [],
+      mentionAll: false,
+      quotedMessageIndex: 0,
+      mine: false,
+    });
+  }
+  chat.lastMessageIndex = eventIndex;
+  state.activeGroupMenuId = null;
+  state.syncHint =
+    `MessagePost 发现 messageIndex #${eventIndex}，本地最新 #${latestIndex}，已通过 messages(${chatGroupId}, ${startIndex}, ${eventIndex - latestIndex}, false) 补拉 #${startIndex}-#${eventIndex}。`;
   render();
 }
 
@@ -2152,6 +2258,7 @@ document.addEventListener('click', (event) => {
   if (action === 'activate-chat') activateChat(target.dataset.chatId);
   if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
   if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.chatId);
+  if (action === 'simulate-message-gap') simulateMessageGap(target.dataset.chatId);
   if (action === 'open-manage') openManage(target.dataset.chatId);
   if (action === 'open-details') openDetails(target.dataset.chatId);
   if (action === 'open-blacklist') openBlacklist(target.dataset.chatId);

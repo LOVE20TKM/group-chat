@@ -27,7 +27,7 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 ## 目录
 
 - `src/`
-  - `IGroupChat.sol`
+  - `interfaces/IGroupChat.sol`
   - `GroupChat.sol`
   - `managers/`
 - `test/`

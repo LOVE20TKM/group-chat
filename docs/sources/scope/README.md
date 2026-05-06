@@ -28,7 +28,7 @@ function canPost(
 
 ## 当前实现
 
-四个 typed Manager 都实现 `ScopeSource`：
+当前实现的 `ScopeSource` 包括四个 typed Manager 与 `GroupJoinScopeSource`：
 
 - [TokenGroupChatManager](../../managers/token.md)
 - [TokenGovGroupChatManager](../../managers/token-gov.md)

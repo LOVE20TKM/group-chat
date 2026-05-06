@@ -133,6 +133,7 @@ const requiredCss = [
   '.group-icon-chain-service',
   '.chat-menu-button',
   '.chat-menu',
+  '.message-mention',
   '.blacklist-row',
   '.blacklist-menu',
   '.pager-row',
@@ -190,6 +191,7 @@ const requiredAppJs = [
   'SenderNotGroupOwner',
   'ChatNotActive',
   'messagesForChat',
+  'renderMessageContent',
   'quotedMessagesByChatGroupId',
   'activeQuotedMessageIndex',
   'clearActiveQuote',
@@ -233,8 +235,13 @@ const requiredAppJs = [
   'renderGovBlacklist',
   'renderAdminBlacklist',
   'queryBlacklist',
+  'ownerOfGroupId',
+  'validDefaultGroupIdOf',
   'addSenderDenyFromMessage',
   'addDenyListsBySenderGroupIds',
+  'simulateMessageGap',
+  'simulate-message-gap',
+  'messages(${chatGroupId}, ${startIndex}, ${eventIndex - latestIndex}, false)',
   'data-action="add-sender-deny"',
   'revalidateGovVote',
   'canEditRules',
@@ -263,6 +270,8 @@ const requiredDataJs = [
   'GroupJoinScopeSource',
   'AdminDenySource',
   'GovVotedDenySource',
+  'groupOwners',
+  'defaultGroupIdsByAddress',
   'activationTabs',
 ];
 
@@ -299,6 +308,14 @@ for (const chat of initialState.chats) {
   }
   if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.groupId} missing govDeny`);
   if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
+  if (chat.params?.token !== undefined) {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(chat.params.token)) {
+      throw new Error(`Chat ${chat.groupId} params.token must be a token contract address`);
+    }
+    if (chat.tokenAddress !== chat.params.token) {
+      throw new Error(`Chat ${chat.groupId} tokenAddress must match params.token`);
+    }
+  }
 }
 
 for (const action of initialState.actions) {
@@ -342,11 +359,12 @@ const requiredProtocolCopy = [
   'senderGroupIdDenyList',
   'senderGroupIdExemptList',
   'voteWeight',
+  'tokenAddress',
   'revalidate',
   '激活群聊',
   '代币群',
-  '大群 ${chat.token}',
-  '治理群 ${chat.token}',
+  '大群 ${chatTokenSymbol(chat)}',
+  '治理群 ${chatTokenSymbol(chat)}',
   '行动大群',
   '行动治理群',
   '链群#${chat.groupId}',

@@ -878,6 +878,11 @@ button:disabled {
   border-color: #99f6e4;
 }
 
+.message-mention {
+  color: var(--primary);
+  font-weight: 700;
+}
+
 .message-actions {
   width: fit-content;
   margin-top: 4px;

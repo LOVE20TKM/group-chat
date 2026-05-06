@@ -174,7 +174,7 @@ fi
 
 if [ $missing_params -gt 0 ]; then
     echo -e "\033[31mError:\033[0m $missing_params initialization parameter(s) missing"
-    echo "Please ensure all parameters are loaded from group.chat.params / address.group.defaults.params / address.group.chat.params"
+    echo "Please ensure all parameters are loaded from group.chat.params / address.group.params / address.group.defaults.params / address.group.chat.params"
     return 1
 fi
 
