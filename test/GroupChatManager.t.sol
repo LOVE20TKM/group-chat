@@ -5,6 +5,7 @@ import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IERC721Receiver} from "../src/interfaces/external/IERC721Receiver.sol";
 import {BaseGroupChatManager} from "../src/managers/BaseGroupChatManager.sol";
 import {MockBeforePostRejectPlugin, MockPostDenySource} from "./mocks/MockPlugins.sol";
+import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
 import {MockGroupChatManager} from "./mocks/MockManagers.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
@@ -15,10 +16,8 @@ contract GroupChatManagerTest is GroupChatFixture {
         MockGroupChatManager manager =
             new MockGroupChatManager(address(chat), address(deny), address(beforePlugin), address(0));
 
-        groupNft.transferFrom(chatOwner, address(manager), chatGroupId);
+        chatGroupId = manager.activateMockManagedChat();
         assertEq(chat.chatInfo(chatGroupId).owner, address(manager));
-
-        manager.activateMockManagedChat(chatGroupId);
 
         assertTrue(chat.chatInfo(chatGroupId).active);
         assertEq(chat.delegateGroupIdOf(chatGroupId), 0);
@@ -36,8 +35,7 @@ contract GroupChatManagerTest is GroupChatFixture {
     function testT101_managerOwnerCannotCloseChatThroughGroupChat() public {
         MockGroupChatManager manager = new MockGroupChatManager(address(chat), address(0), address(0), address(0));
 
-        groupNft.transferFrom(chatOwner, address(manager), chatGroupId);
-        manager.activateMockManagedChat(chatGroupId);
+        chatGroupId = manager.activateMockManagedChat();
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.NotChatOwner.selector);
@@ -85,6 +83,22 @@ contract GroupChatManagerTest is GroupChatFixture {
         MockGroupChatManager manager = new MockGroupChatManager(address(chat), address(0), address(0), address(0));
         bytes4 received = manager.onERC721Received(chatOwner, chatOwner, chatGroupId, "");
         assertEq(received, IERC721Receiver.onERC721Received.selector);
+    }
+
+    function testT105_managerPullsMintCostAndPaysGroupNft() public {
+        MockERC20Payment token = new MockERC20Payment();
+        groupNft.setMintPayment(address(token), 10);
+        token.mint(address(this), 10);
+
+        MockGroupChatManager manager = new MockGroupChatManager(address(chat), address(0), address(0), address(0));
+        token.approve(address(manager), 10);
+
+        chatGroupId = manager.activateMockManagedChat();
+
+        assertEq(token.balanceOf(address(this)), 0);
+        assertEq(token.balanceOf(address(manager)), 0);
+        assertEq(token.balanceOf(address(groupNft)), 10);
+        assertEq(chat.chatInfo(chatGroupId).owner, address(manager));
     }
 
     function _expectUnknownSelector(address target, bytes memory data) internal {

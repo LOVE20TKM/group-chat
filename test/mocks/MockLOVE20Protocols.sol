@@ -4,6 +4,7 @@ pragma solidity =0.8.17;
 import {ActionBody, ActionHead, ActionInfo} from "../../src/interfaces/external/ILOVE20Submit.sol";
 
 contract MockLOVE20Protocols {
+    string public symbol = "LOVE20";
     uint256 internal _currentRound = 1;
 
     mapping(address => uint256) public balances;

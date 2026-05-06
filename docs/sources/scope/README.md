@@ -38,6 +38,8 @@ function canPost(
 
 链群服务者管理型群聊不使用 Manager。其 `scopeSource` 应挂载 `GroupJoinScopeSource`，用于判断发送地址是否当前属于该链群。
 
+专用接口位于 `src/interfaces/sources/scope/IGroupJoinScopeSource.sol`。
+
 详见：[群聊类型](../../chat-types.md)。
 
 ## 前端规则

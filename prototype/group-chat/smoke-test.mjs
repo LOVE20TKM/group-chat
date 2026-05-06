@@ -499,4 +499,44 @@ if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== 1) {
   throw new Error('quoteMessage must store positive messageIndex quotes');
 }
 
+const managerActivateHarness = new Function(
+  'state',
+  'render',
+  [
+    extractFunctionSource(js, 'chatById'),
+    extractFunctionSource(js, 'nextManagedChatGroupId'),
+    extractFunctionSource(js, 'syncManagedChatGroupId'),
+    'function captureActivationDraft(chat) { return state.activationDrafts[String(chat.groupId)] || { ...chat.params }; }',
+    'function activationBlocker() { return ""; }',
+    'function activationPreview(chat, draft) { const values = Object.keys(chat.params).map((key) => draft[key]).join(", "); return `${chat.manager}.activate(${values})`; }',
+    'function resolveOptionalKnownNftInput(value) { return value; }',
+    extractFunctionSource(js, 'activateChat'),
+    'return { activateChat };',
+  ].join('\n'),
+);
+
+const managerActivationState = JSON.parse(JSON.stringify(initialState));
+const expectedMintedChatGroupId =
+  managerActivationState.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
+managerActivateHarness(managerActivationState, () => {}).activateChat(1189);
+
+const activatedActionGovChat = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && chat.actionId === '77');
+const linkedAction = managerActivationState.actions.find((action) => action.token === 'LOVE20A' && action.actionId === '77');
+if (!activatedActionGovChat || !activatedActionGovChat.active) {
+  throw new Error('Manager activation must mark the chat active');
+}
+if (activatedActionGovChat.groupId !== expectedMintedChatGroupId) {
+  throw new Error('Manager activation must replace the placeholder groupId with the minted chatGroupId');
+}
+if (managerActivationState.activeChatId !== expectedMintedChatGroupId
+  || managerActivationState.activeChatGroupId !== String(expectedMintedChatGroupId)) {
+  throw new Error('Manager activation must switch the active chat to the minted chatGroupId');
+}
+if (!linkedAction || linkedAction.actionGovChatId !== expectedMintedChatGroupId) {
+  throw new Error('Manager activation must sync action references to the minted chatGroupId');
+}
+if (!managerActivationState.syncHint.includes(`chatGroupId ${expectedMintedChatGroupId}`)) {
+  throw new Error('Manager activation hint must mention the minted chatGroupId');
+}
+
 console.log('LOVE20 Chat prototype smoke test passed');

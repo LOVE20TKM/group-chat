@@ -115,39 +115,62 @@ verify_contract \
     $group_join_scope_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
+token_group_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
     $groupChatAddress \
     $GROUP_CHAT_DENY_SOURCE_ADDRESS \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS)
 
+token_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
+    $groupChatAddress \
+    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
+    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
+    $EXTENSION_CENTER_ADDRESS)
+
+token_action_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
+    $groupChatAddress \
+    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
+    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
+    $EXTENSION_CENTER_ADDRESS \
+    $GROUP_CHAT_ACTION_RECENT_ROUNDS)
+
+token_action_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
+    $groupChatAddress \
+    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
+    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
+    $EXTENSION_CENTER_ADDRESS \
+    $GROUP_CHAT_ACTION_RECENT_ROUNDS)
+
 verify_contract \
     $tokenGroupChatManagerAddress \
     "TokenGroupChatManager" \
     "src/managers/TokenGroupChatManager.sol" \
-    $manager_constructor_args
+    $token_group_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
     $tokenGovGroupChatManagerAddress \
     "TokenGovGroupChatManager" \
     "src/managers/TokenGovGroupChatManager.sol" \
-    $manager_constructor_args
+    $token_gov_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
     $tokenActionGovGroupChatManagerAddress \
     "TokenActionGovGroupChatManager" \
     "src/managers/TokenActionGovGroupChatManager.sol" \
-    $manager_constructor_args
+    $token_action_gov_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
     $tokenActionGroupChatManagerAddress \
     "TokenActionGroupChatManager" \
     "src/managers/TokenActionGroupChatManager.sol" \
-    $manager_constructor_args
+    $token_action_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 if [ $failed_verifications -gt 0 ]; then

@@ -11,7 +11,8 @@ contract MockGroupChatManager is BaseGroupChatManager {
         BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_)
     {}
 
-    function activateMockManagedChat(uint256 chatGroupId) external {
+    function activateMockManagedChat() external returns (uint256 chatGroupId) {
+        chatGroupId = _mintManagedChatGroup("mock_manager");
         _activateManagedChat(chatGroupId);
     }
 
@@ -30,4 +31,5 @@ contract MockGroupChatManager is BaseGroupChatManager {
     function denyVoteWeightOf(uint256, address, address, uint256) external view returns (uint256) {
         return voteWeight;
     }
+
 }

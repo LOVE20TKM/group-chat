@@ -20,6 +20,7 @@ contract DeployGroupChat is ScriptBase {
         address afterPostPlugin;
         uint256 originBlocks;
         uint256 phaseBlocks;
+        uint256 actionRecentRounds;
     }
 
     struct DeployedAddresses {
@@ -41,7 +42,8 @@ contract DeployGroupChat is ScriptBase {
             beforePostPlugin: vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
             afterPostPlugin: vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
             originBlocks: vm.envUint("ORIGIN_BLOCKS"),
-            phaseBlocks: vm.envUint("PHASE_BLOCKS")
+            phaseBlocks: vm.envUint("PHASE_BLOCKS"),
+            actionRecentRounds: vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS")
         });
 
         vm.startBroadcast();
@@ -83,7 +85,8 @@ contract DeployGroupChat is ScriptBase {
             deployed.groupChatDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
-            config.extensionCenter
+            config.extensionCenter,
+            config.actionRecentRounds
         );
         deployed.tokenActionGovGroupChatManager = address(tokenActionGovGroupChatManager);
         TokenActionGroupChatManager tokenActionGroupChatManager = new TokenActionGroupChatManager(
@@ -91,7 +94,8 @@ contract DeployGroupChat is ScriptBase {
             deployed.groupChatDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
-            config.extensionCenter
+            config.extensionCenter,
+            config.actionRecentRounds
         );
         deployed.tokenActionGroupChatManager = address(tokenActionGroupChatManager);
     }

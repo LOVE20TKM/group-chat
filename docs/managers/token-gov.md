@@ -9,12 +9,20 @@
 ## 激活
 
 ```solidity
-function activate(uint256 chatGroupId, address token) external;
+function activate(address token) external returns (uint256 chatGroupId);
 ```
+
+流程：
+
+- Manager 生成群 NFT 名：`mgr_token_gov_[symbol]_[xxxxxx]`
+- 从调用者拉取 GroupNFT 铸造所需 LOVE20
+- 调用 `GroupNFT.mint(...)` 得到 `chatGroupId`
+- 激活对应 chat
 
 写入：
 
 - `tokenOf[chatGroupId] = token`
+- `chatGroupIdOfToken[token] = chatGroupId`
 - `GroupChat.scopeSource = address(this)`
 - `GroupChat.denySource = DENY_SOURCE`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN`
@@ -44,6 +52,7 @@ denyVoteWeightOf(...) = ILOVE20Stake.validGovVotes(token, voter)
 ## 状态
 
 - `mapping(uint256 => address) public tokenOf`
+- `mapping(address => uint256) public chatGroupIdOfToken`
 - `tokenOf(chatGroupId) == address(0)` 表示未激活
 
 ## Review 重点

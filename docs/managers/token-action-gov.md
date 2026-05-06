@@ -10,20 +10,25 @@
 
 ```solidity
 function activate(
-    uint256 chatGroupId,
     address token,
-    uint256 actionId,
-    uint256 recentRounds
-) external;
+    uint256 actionId
+) external returns (uint256 chatGroupId);
 ```
 
-`recentRounds == 0` 必须 revert。
+`recentRounds` 是构造函数入参，当前部署配置为 `3`；`recentRounds == 0` 必须在构造时 revert。
+
+流程：
+
+- Manager 生成群 NFT 名：`mgr_action_gov_[symbol]_[actionId]_[xxxxxx]`
+- 从调用者拉取 GroupNFT 铸造所需 LOVE20
+- 调用 `GroupNFT.mint(...)` 得到 `chatGroupId`
+- 激活对应 chat
 
 写入：
 
 - `paramsOf[chatGroupId].token = token`
 - `paramsOf[chatGroupId].actionId = actionId`
-- `paramsOf[chatGroupId].recentRounds = recentRounds`
+- `chatGroupIdOfAction[token][actionId] = chatGroupId`
 - `GroupChat.scopeSource = address(this)`
 - `GroupChat.denySource = DENY_SOURCE`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN`
@@ -32,7 +37,7 @@ function activate(
 
 ## 发言资格
 
-最近 `recentRounds` 轮内给该 `actionId` 投过票。
+最近 `RECENT_ROUNDS` 轮内给该 `actionId` 投过票。
 
 不包含：
 
@@ -66,10 +71,11 @@ denyVoteWeightOf(...) =
 struct TokenActionGovChatParams {
     address token;
     uint256 actionId;
-    uint256 recentRounds;
 }
 
 mapping(uint256 => TokenActionGovChatParams) public paramsOf;
+mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
+uint256 public immutable RECENT_ROUNDS;
 ```
 
 `paramsOf(chatGroupId).token == address(0)` 表示未激活。

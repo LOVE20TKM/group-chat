@@ -4,7 +4,7 @@
 
 本文档只覆盖当前正式支持的五类群聊：
 
-- 四种去中心化群聊：由 typed Manager 持有群聊 NFT 并激活。
+- 四种去中心化群聊：由 typed Manager 铸造、持有群聊 NFT 并激活。
 - 一种链群服务者管理型群聊：由链群服务者持有群聊 NFT，直接配置 `scopeSource` 与 `denySource`。
 
 ## 1. 类型边界
@@ -19,7 +19,7 @@
 
 ## 2. 四种去中心化群聊
 
-去中心化群聊由 typed Manager 激活。Manager 持有对应 `GroupNFT`，并在激活时一次性写入：
+去中心化群聊由 typed Manager 激活。Manager 铸造并持有对应 `GroupNFT`，并在激活时一次性写入：
 
 - `scopeSource`
 - `denySource`
@@ -64,7 +64,7 @@
 
 发言资格满足任一条件即可：
 
-- 最近 `recentRounds` 轮内给该行动投过票
+- 最近 `RECENT_ROUNDS` 轮内给该行动投过票
 - 通过主协议参与过该行动
 - 通过 extension 参与过该行动
 
@@ -78,7 +78,7 @@
 
 发言资格：
 
-- 最近 `recentRounds` 轮内给该行动投过票
+- 最近 `RECENT_ROUNDS` 轮内给该行动投过票
 
 不包含持币资格、普通参与资格或 extension 参与资格。
 

@@ -77,6 +77,11 @@ if [ -n "$groupChatAfterPostPluginAddress" ]; then
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 fi
 
+if [ -n "$actionRecentRounds" ]; then
+    GROUP_CHAT_ACTION_RECENT_ROUNDS=$actionRecentRounds
+    export GROUP_CHAT_ACTION_RECENT_ROUNDS
+fi
+
 zero_address=0x0000000000000000000000000000000000000000
 
 if [ -z "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" ]; then
@@ -117,8 +122,18 @@ if [ -z "$PHASE_BLOCKS" ]; then
     ((missing_params++))
 fi
 
+if [ -z "$GROUP_CHAT_ACTION_RECENT_ROUNDS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_ACTION_RECENT_ROUNDS not set"
+    ((missing_params++))
+fi
+
 if [ -n "$PHASE_BLOCKS" ] && [ "$PHASE_BLOCKS" = "0" ]; then
     echo -e "\033[31m✗\033[0m PHASE_BLOCKS must be greater than zero"
+    ((missing_params++))
+fi
+
+if [ -n "$GROUP_CHAT_ACTION_RECENT_ROUNDS" ] && [ "$GROUP_CHAT_ACTION_RECENT_ROUNDS" = "0" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_ACTION_RECENT_ROUNDS must be greater than zero"
     ((missing_params++))
 fi
 
@@ -310,12 +325,16 @@ echo ""
 check_manager_common "TokenActionGovGroupChatManager" $tokenActionGovGroupChatManagerAddress
 check_equal "TokenActionGovGroupChatManager: VOTE" $extension_vote_address $(cast_call $tokenActionGovGroupChatManagerAddress "VOTE()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenActionGovGroupChatManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGovGroupChatManagerAddress "RECENT_ROUNDS()(uint256)")
+[ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 check_manager_common "TokenActionGroupChatManager" $tokenActionGroupChatManagerAddress
 check_equal "TokenActionGroupChatManager: VOTE" $extension_vote_address $(cast_call $tokenActionGroupChatManagerAddress "VOTE()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenActionGroupChatManager: JOIN" $extension_join_address $(cast_call $tokenActionGroupChatManagerAddress "JOIN()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenActionGroupChatManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGroupChatManagerAddress "RECENT_ROUNDS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

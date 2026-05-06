@@ -159,7 +159,6 @@ function activationFieldLabel(field) {
     chatGroupId: 'chatGroupId',
     token: 'token',
     actionId: 'actionId',
-    recentRounds: 'recentRounds',
     metaTitle: 'meta.title',
     metaDescription: 'meta.description',
     scopeSource: 'scopeSource',
@@ -172,7 +171,7 @@ function activationFieldLabel(field) {
 }
 
 function activationInputMode(field) {
-  return ['chatGroupId', 'actionId', 'recentRounds'].includes(field) ? 'numeric' : 'text';
+  return ['chatGroupId', 'actionId'].includes(field) ? 'numeric' : 'text';
 }
 
 function ruleSlotOptions(slot) {
@@ -200,19 +199,18 @@ function captureActivationDraft(chat) {
   document.querySelectorAll('[data-activation-field]').forEach((input) => {
     draft[input.dataset.activationField] = input.value.trim();
   });
-  draft.chatGroupId = draft.chatGroupId || String(chat.groupId);
+  if (chat.model === 'chain-service') {
+    draft.chatGroupId = draft.chatGroupId || String(chat.groupId);
+  }
   return draft;
 }
 
 function activationBlocker(chat, draft) {
   if (!chat) return '请选择群聊';
   if (chat.active) return '该群聊已激活';
-  if (Number(draft.chatGroupId) !== chat.groupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
-  if (chat.model === 'chain-service' && chat.role !== 'owner') return '只有 chatGroupId 当前 owner 可以直接激活';
-  if (['action', 'action-gov'].includes(chat.type) && Number(draft.recentRounds) <= 0) {
-    return 'recentRounds 必须大于 0';
-  }
   if (chat.model === 'chain-service') {
+    if (Number(draft.chatGroupId) !== chat.groupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
+    if (chat.role !== 'owner') return '只有 chatGroupId 当前 owner 可以直接激活';
     const delegateGroupId = resolveOptionalKnownNftInput(draft.delegateGroupId, state.nftInputMode);
     if (!delegateGroupId) return `未找到 NFT：${draft.delegateGroupId}`;
     if (Number(delegateGroupId || 0) === chat.groupId) return 'delegateGroupId 不能等于 chatGroupId';
@@ -578,7 +576,7 @@ function renderManagerActivationFields(chat, draft) {
       <h2>Manager 入参</h2>
       ${Object.keys(chat.params).map((field) => renderActivationTextInput(field, draft[field], field === 'chatGroupId')).join('')}
       <div class="rule-table">${renderRuleRows(chat)}</div>
-      <div class="notice-row">Manager 型群聊激活后不再修改 token、actionId、recentRounds 或规则槽。</div>
+      <div class="notice-row">Manager 型群聊激活后不再修改 token、actionId 或规则槽；recentRounds 由 Manager 构造配置固定。</div>
     </section>
   `;
 }
@@ -655,7 +653,7 @@ function renderDecentralizedManagement(chat) {
         <span class="pill pill-ok">Manager 持有 NFT</span>
       </div>
       <div class="rule-table">${renderRuleRows(chat)}</div>
-      <div class="notice-row">去中心化群聊激活后不提供关闭、重配规则槽、改 token/action/recentRounds 的入口。</div>
+      <div class="notice-row">去中心化群聊激活后不提供关闭、重配规则槽、改 token/action 的入口。</div>
       <div class="card-actions single-action">
         <button class="sheet-button primary" type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">治理黑名单</button>
       </div>
@@ -1448,6 +1446,50 @@ function toggleExemptMenu(targetType, target) {
   render();
 }
 
+function nextManagedChatGroupId() {
+  return state.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
+}
+
+function syncManagedChatGroupId(chat, nextGroupId) {
+  const prevGroupId = Number(chat.groupId);
+  if (prevGroupId === nextGroupId) return;
+
+  chat.groupId = nextGroupId;
+
+  if (chat.type === 'action' || chat.type === 'action-gov') {
+    const action = state.actions.find((item) => item.token === chat.token && item.actionId === chat.actionId);
+    if (action) {
+      if (chat.type === 'action') action.actionChatId = nextGroupId;
+      else action.actionGovChatId = nextGroupId;
+    }
+  }
+
+  if (state.activeChatId === prevGroupId) state.activeChatId = nextGroupId;
+  if (String(state.activeChatGroupId) === String(prevGroupId)) state.activeChatGroupId = String(nextGroupId);
+  if (state.activeGroupMenuId === prevGroupId) state.activeGroupMenuId = nextGroupId;
+
+  state.pageReturnStack.forEach((entry) => {
+    if (entry.activeChatId === prevGroupId) entry.activeChatId = nextGroupId;
+    if (String(entry.activeChatGroupId) === String(prevGroupId)) entry.activeChatGroupId = String(nextGroupId);
+  });
+
+  if (state.activationDrafts[String(prevGroupId)]) {
+    state.activationDrafts[String(nextGroupId)] = state.activationDrafts[String(prevGroupId)];
+    delete state.activationDrafts[String(prevGroupId)];
+  }
+
+  if (state.quotedMessagesByChatGroupId[String(prevGroupId)] !== undefined) {
+    state.quotedMessagesByChatGroupId[String(nextGroupId)] = state.quotedMessagesByChatGroupId[String(prevGroupId)];
+    delete state.quotedMessagesByChatGroupId[String(prevGroupId)];
+  }
+
+  state.messages.forEach((message) => {
+    if (String(message.chatGroupId) === String(prevGroupId)) {
+      message.chatGroupId = String(nextGroupId);
+    }
+  });
+}
+
 function activateChat(chatId) {
   const chat = chatById(chatId);
   if (!chat || chat.active) return;
@@ -1480,6 +1522,7 @@ function activateChat(chatId) {
     });
     if (draft.token) chat.tokenAddress = draft.token;
     if (draft.actionId) chat.actionId = draft.actionId;
+    syncManagedChatGroupId(chat, nextManagedChatGroupId());
   }
 
   chat.active = true;
@@ -1487,7 +1530,9 @@ function activateChat(chatId) {
   state.activeChatId = chat.groupId;
   state.activeChatGroupId = String(chat.groupId);
   state.view = 'chat';
-  state.syncHint = `${activationPreview(chat, draft)} 已模拟提交。`;
+  state.syncHint = chat.model === 'chain-service'
+    ? `${activationPreview(chat, draft)} 已模拟提交。`
+    : `${activationPreview(chat, draft)} => chatGroupId ${chat.groupId} 已模拟提交。`;
   render();
 }
 

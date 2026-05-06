@@ -10,23 +10,26 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
     struct TokenActionChatParams {
         address token;
         uint256 actionId;
-        uint256 recentRounds;
     }
 
     address public immutable VOTE;
     address public immutable JOIN;
     address public immutable EXTENSION_CENTER;
+    uint256 public immutable RECENT_ROUNDS;
 
     mapping(uint256 => TokenActionChatParams) public paramsOf;
+    mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
 
     constructor(
         address groupChat_,
         address denySource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
-        address extensionCenter_
+        address extensionCenter_,
+        uint256 recentRounds_
     ) BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
         _requireCode(extensionCenter_);
+        _requireRecentRounds(recentRounds_);
 
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
         address join = IExtensionCenter(extensionCenter_).joinAddress();
@@ -36,17 +39,18 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         EXTENSION_CENTER = extensionCenter_;
         VOTE = vote;
         JOIN = join;
+        RECENT_ROUNDS = recentRounds_;
     }
 
-    function activate(uint256 chatGroupId, address token, uint256 actionId, uint256 recentRounds) external {
+    function activate(address token, uint256 actionId) external returns (uint256 chatGroupId) {
         _requireCode(token);
-        _requireRecentRounds(recentRounds);
-        TokenActionChatParams storage params = paramsOf[chatGroupId];
-        _requireNotManaged(params.token != address(0));
+        _requireNotManaged(chatGroupIdOfAction[token][actionId] != 0);
 
+        chatGroupId = _mintManagedChatGroup(_tokenActionGroupNameStem("mgr_action_", token, actionId));
+        TokenActionChatParams storage params = paramsOf[chatGroupId];
         params.token = token;
         params.actionId = actionId;
-        params.recentRounds = recentRounds;
+        chatGroupIdOfAction[token][actionId] = chatGroupId;
         _activateManagedChat(chatGroupId);
     }
 
@@ -55,7 +59,7 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         address token = params.token;
         return token != address(0)
             && (
-                _hasRecentActionVote(token, params.actionId, params.recentRounds, senderAddress)
+                _hasRecentActionVote(token, params.actionId, senderAddress)
                     || _hasActionParticipation(token, params.actionId, senderAddress)
             );
     }
@@ -69,13 +73,9 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         return _currentActionVoteWeight(token, params.actionId, voter);
     }
 
-    function _hasRecentActionVote(address token, uint256 actionId, uint256 recentRounds, address account)
-        internal
-        view
-        returns (bool)
-    {
+    function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {
         uint256 round = ILOVE20Vote(VOTE).currentRound();
-        for (uint256 i = 0; i < recentRounds; i++) {
+        for (uint256 i = 0; i < RECENT_ROUNDS; i++) {
             if (ILOVE20Vote(VOTE).votesNumByAccountByActionId(token, round, account, actionId) != 0) {
                 return true;
             }
@@ -101,4 +101,5 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
     {
         return ILOVE20Vote(VOTE).votesNumByAccountByActionId(token, ILOVE20Vote(VOTE).currentRound(), account, actionId);
     }
+
 }

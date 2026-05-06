@@ -84,6 +84,7 @@ python3 -m http.server 8012
 - `ORIGIN_BLOCKS`
 - `PHASE_BLOCKS`（必须大于 `0`）
 - `GROUP_JOIN_ADDRESS`
+- `GROUP_CHAT_ACTION_RECENT_ROUNDS`（当前配置为 `3`）
 - `network`
 
 可选环境变量：

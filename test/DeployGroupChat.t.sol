@@ -59,7 +59,8 @@ contract DeployGroupChatTest is TestBase {
             beforePostPlugin: address(0),
             afterPostPlugin: address(0),
             originBlocks: 100,
-            phaseBlocks: 25
+            phaseBlocks: 25,
+            actionRecentRounds: 3
         });
 
         DeployGroupChat.DeployedAddresses memory deployed = deployer.deployForTest(config);
@@ -96,8 +97,10 @@ contract DeployGroupChatTest is TestBase {
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).SUBMIT(), address(protocol));
         assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).STAKE(), address(protocol));
         assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE(), address(protocol));
+        assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).RECENT_ROUNDS(), 3);
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).VOTE(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN(), address(protocol));
+        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).RECENT_ROUNDS(), 3);
     }
 
     function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {
@@ -108,7 +111,8 @@ contract DeployGroupChatTest is TestBase {
             beforePostPlugin: address(0xBEEF),
             afterPostPlugin: address(0xCAFE),
             originBlocks: 123,
-            phaseBlocks: 456
+            phaseBlocks: 456,
+            actionRecentRounds: 7
         });
         DeployGroupChat.DeployedAddresses memory deployed = DeployGroupChat.DeployedAddresses({
             groupChat: address(0x101),

@@ -24,8 +24,9 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         deny = new GovVotedDenySource(address(groupNft), address(groupDefaults));
         tokenGovManager =
             new TokenGovGroupChatManager(address(chat), address(deny), address(0), address(0), address(protocol));
-        actionGovManager =
-            new TokenActionGovGroupChatManager(address(chat), address(deny), address(0), address(0), address(protocol));
+        actionGovManager = new TokenActionGovGroupChatManager(
+            address(chat), address(deny), address(0), address(0), address(protocol), 3
+        );
         voter2GroupId = groupNft.mint(voter2);
     }
 
@@ -146,9 +147,8 @@ contract GovVotedDenySourceTest is GroupChatFixture {
     }
 
     function testT134_actionGovManagerActsAsWeightSource() public {
-        groupNft.transferFrom(chatOwner, address(actionGovManager), chatGroupId);
         protocol.setCurrentRound(7);
-        actionGovManager.activate(chatGroupId, token, 42, 3);
+        chatGroupId = actionGovManager.activate(token, 42);
 
         protocol.setActionVotes(token, 7, senderOwner, 42, 11);
         vm.prank(senderOwner);
@@ -275,7 +275,6 @@ contract GovVotedDenySourceTest is GroupChatFixture {
     }
 
     function _activateTokenGovManager() internal {
-        groupNft.transferFrom(chatOwner, address(tokenGovManager), chatGroupId);
-        tokenGovManager.activate(chatGroupId, token);
+        chatGroupId = tokenGovManager.activate(token);
     }
 }

@@ -74,6 +74,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$groupChatAfterPostPluginAddress
     fi
 
+    if [ -n "$actionRecentRounds" ]; then
+        export GROUP_CHAT_ACTION_RECENT_ROUNDS=$actionRecentRounds
+    fi
+
     if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
         echo -e "\033[31mError:\033[0m GROUP_DEFAULTS_ADDRESS not set"
         echo -e "Please provide groupDefaultsAddress in $network_dir/address.group.defaults.params"
@@ -89,6 +93,12 @@ if [ -f "$network_dir/group.chat.params" ]; then
     if [ -z "$GROUP_JOIN_ADDRESS" ]; then
         echo -e "\033[31mError:\033[0m GROUP_JOIN_ADDRESS not set"
         echo -e "Please provide groupJoinAddress in $network_dir/group.chat.params"
+        return 1
+    fi
+
+    if [ -z "$GROUP_CHAT_ACTION_RECENT_ROUNDS" ]; then
+        echo -e "\033[31mError:\033[0m GROUP_CHAT_ACTION_RECENT_ROUNDS not set"
+        echo -e "Please provide actionRecentRounds in $network_dir/group.chat.params"
         return 1
     fi
 
@@ -123,6 +133,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_CHAT_DENY_SOURCE_ADDRESS
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
+    export GROUP_CHAT_ACTION_RECENT_ROUNDS
     export ORIGIN_BLOCKS
     export PHASE_BLOCKS
 
@@ -138,6 +149,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  DenySource: $GROUP_CHAT_DENY_SOURCE_ADDRESS"
     echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
+    echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"
     echo "  ORIGIN_BLOCKS: $ORIGIN_BLOCKS"
     echo "  PHASE_BLOCKS: $PHASE_BLOCKS"
 else

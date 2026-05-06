@@ -90,7 +90,7 @@ source ./one_click_deploy.sh <network>
 - `GroupJoinScopeSource`
 - 四个 typed Manager
 
-Manager 构造参数统一为：
+基础 token 类 Manager 构造参数为：
 
 ```text
 groupChatAddress
@@ -98,6 +98,12 @@ groupChatDenySourceAddress
 GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
 GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 EXTENSION_CENTER_ADDRESS
+```
+
+Action 类 Manager 额外追加：
+
+```text
+GROUP_CHAT_ACTION_RECENT_ROUNDS
 ```
 
 ## Check

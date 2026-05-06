@@ -25,6 +25,11 @@ function isDenied(
 - [AdminDenySource](./admin-deny-source.md)
 - [GovVotedDenySource](./gov-voted-deny-source.md)
 
+专用接口位于：
+
+- `src/interfaces/sources/deny/IAdminDenySource.sol`
+- `src/interfaces/sources/deny/IGovVotedDenySource.sol`
+
 ## 共同约束
 
 - 不得保存 chat owner 或 delegate 当前 owner 快照。

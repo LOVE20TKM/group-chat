@@ -18,6 +18,7 @@ contract TokenGroupChatManager is BaseGroupChatManager {
     address public immutable EXTENSION_CENTER;
 
     mapping(uint256 => address) public tokenOf;
+    mapping(address => uint256) public chatGroupIdOfToken;
 
     constructor(
         address groupChat_,
@@ -44,11 +45,13 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         SUBMIT = submit;
     }
 
-    function activate(uint256 chatGroupId, address token) external {
+    function activate(address token) external returns (uint256 chatGroupId) {
         _requireCode(token);
-        _requireNotManaged(tokenOf[chatGroupId] != address(0));
+        _requireNotManaged(chatGroupIdOfToken[token] != 0);
 
+        chatGroupId = _mintManagedChatGroup(_tokenGroupNameStem("mgr_token_", token));
         tokenOf[chatGroupId] = token;
+        chatGroupIdOfToken[token] = chatGroupId;
         _activateManagedChat(chatGroupId);
     }
 
@@ -107,4 +110,5 @@ contract TokenGroupChatManager is BaseGroupChatManager {
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {
         return ILOVE20Stake(STAKE).validGovVotes(token, account);
     }
+
 }
