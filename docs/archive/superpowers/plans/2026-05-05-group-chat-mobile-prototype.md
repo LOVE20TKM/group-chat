@@ -1,4 +1,6 @@
-# GroupChat Mobile Prototype Implementation Plan
+# GroupChat Mobile Prototype Implementation Plan（历史归档）
+
+> 归档说明：本文件记录 2026-05-05 早期原型实施计划，仅保留历史上下文，不作为当前实现或验收依据。当前交互以 `docs/superpowers/specs/2026-05-05-group-chat-mobile-prototype-design.md`、`prototype/group-chat/` 和 `prototype/group-chat/smoke-test.mjs` 为准；旧计划里的 `+` 面板、通用 status sheet、桌面三栏和索引切换均已废弃。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -43,7 +45,6 @@ const js = readFileSync(join(root, 'app.js'), 'utf8');
 const requiredHtml = [
   'data-view="chat"',
   'data-action="open-status"',
-  'data-action="open-more"',
   'id="message-list"',
   'id="composer-input"',
 ];
@@ -218,11 +219,10 @@ Expected: FAIL on `Missing interaction: openStatusSheet`.
 Implement:
 
 - Top `...` opens status sheet.
-- `+` opens more panel.
 - Message click opens action menu.
 - Quote sets `quotedMessageIndex`.
-- Mention adds `senderGroupId` to `mentions`.
-- MentionAll toggles `mentionAll`.
+- Typing `@姓名` maps to `mentions`.
+- Typing `@全部` maps to `mentionAll`.
 - Send appends a new mock message and shows `MessagePost` sync hint.
 - Status mode buttons simulate `OK`, `ScopeRejected`, `DenyRejected`, `SenderNotGroupOwner`.
 - Index mode buttons simulate `messages`, `messagesByRound`, `messagesBySender`, `messagesByMention`, `messagesByMentionAll`.
@@ -256,7 +256,6 @@ const requiredResponsiveCss = [
   '.desktop-chat-list',
   '.desktop-status-panel',
   '.status-sheet',
-  '.more-panel',
   'env(safe-area-inset-bottom)',
   'touch-action: manipulation',
 ];

@@ -75,7 +75,7 @@
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `ORIGIN_BLOCKS`
-- `PHASE_BLOCKS`
+- `PHASE_BLOCKS`（必须大于 `0`）
 - `network`
 
 可选变量：
@@ -84,16 +84,12 @@
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
 
-直接 `forge script` 执行示例：
+直接 `forge script` 时也先从网络配置加载参数，不在命令里写 `ORIGIN_BLOCKS` / `PHASE_BLOCKS` 默认值：
 
 ```bash
-GROUP_DEFAULTS_ADDRESS=0x... \
-EXTENSION_CENTER_ADDRESS=0x... \
-GROUP_JOIN_ADDRESS=0x... \
-ORIGIN_BLOCKS=123456 \
-PHASE_BLOCKS=30126 \
-network=anvil \
-forge script script/DeployGroupChat.s.sol:DeployGroupChat --broadcast
+cd script/deploy
+source ./00_init.sh anvil
+forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 ```
 
 shell 一键部署时：

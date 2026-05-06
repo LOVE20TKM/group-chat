@@ -48,6 +48,7 @@ interface IGroupChatErrors {
     error NotChatOwnerOrDelegateGroupOwner();
     error SenderNotGroupOwner();
     error RoundNotStarted();
+    error PhaseBlocksZero();
     error MetaKeyEmpty();
     error MetaArrayLengthMismatch();
     error DuplicateMetaKey();

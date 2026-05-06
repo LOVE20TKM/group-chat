@@ -102,6 +102,7 @@ DenySourceFailed.selector          denySource 调用失败
 - `round` 从 `0` 开始。
 - `currentRound()` 等于 `roundByBlockNumber(block.number)`。
 - `roundByBlockNumber(blockNumber) = (blockNumber - originBlocks) / phaseBlocks`。
+- `phaseBlocks` 必须大于 `0`，否则部署无效。
 - `block.number < originBlocks` 时 `currentRound()` revert。
 - 因 `post` 依赖 `currentRound()`，origin 之前不能成功发消息。
 

@@ -100,7 +100,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN(), address(protocol));
     }
 
-    function testT141_addressFileContentIncludesAllDeployedAddressFields() public view {
+    function testT141_addressFileContentIncludesOnlyDeployedAddressFields() public view {
         DeployGroupChat.DeployConfig memory config = DeployGroupChat.DeployConfig({
             groupDefaults: address(groupDefaults),
             extensionCenter: address(protocol),
@@ -136,8 +136,8 @@ contract DeployGroupChatTest is TestBase {
         _assertContains(content, "tokenGovGroupChatManagerAddress=");
         _assertContains(content, "tokenActionGovGroupChatManagerAddress=");
         _assertContains(content, "tokenActionGroupChatManagerAddress=");
-        _assertContains(content, "originBlocks=123");
-        _assertContains(content, "phaseBlocks=456");
+        _assertNotContains(content, "originBlocks=");
+        _assertNotContains(content, "phaseBlocks=");
     }
 
     function _assertManagerCommon(address manager, DeployGroupChat.DeployedAddresses memory deployed) internal view {
@@ -166,5 +166,26 @@ contract DeployGroupChatTest is TestBase {
         }
 
         revert("ASSERT_CONTAINS");
+    }
+
+    function _assertNotContains(string memory haystack, string memory needle) internal pure {
+        bytes memory h = bytes(haystack);
+        bytes memory n = bytes(needle);
+        require(n.length != 0, "ASSERT_NOT_CONTAINS_EMPTY");
+
+        if (h.length < n.length) {
+            return;
+        }
+
+        for (uint256 i = 0; i <= h.length - n.length; i++) {
+            bool matched = true;
+            for (uint256 j = 0; j < n.length; j++) {
+                if (h[i + j] != n[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            require(!matched, "ASSERT_NOT_CONTAINS");
+        }
     }
 }

@@ -31,7 +31,7 @@ source ./one_click_deploy.sh <network>
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `ORIGIN_BLOCKS`
-- `PHASE_BLOCKS`
+- `PHASE_BLOCKS`：必须大于 `0`
 - `network`
 
 ## 可选参数
@@ -39,6 +39,9 @@ source ./one_click_deploy.sh <network>
 - `LOVE20_GROUP_ADDRESS`：仅用于部署后校验。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
+
+`ORIGIN_BLOCKS` 与 `PHASE_BLOCKS` 是部署输入，写在 `script/network/<network>/group.chat.params`。
+`thinkium70001_public` 当前按约 24 小时一轮配置为 `PHASE_BLOCKS=30126`；`thinkium70001_public_test` 当前按约 5 分钟一轮配置。
 
 `DeployGroupChat` 固定部署 `AdminDenySource` 与 `GovVotedDenySource`。
 `DeployGroupChat` 固定部署 `GroupJoinScopeSource`，构造参数为 `GROUP_JOIN_ADDRESS`。
@@ -74,10 +77,10 @@ source ./one_click_deploy.sh <network>
 - `tokenGovGroupChatManagerAddress`
 - `tokenActionGovGroupChatManagerAddress`
 - `tokenActionGroupChatManagerAddress`
-- `originBlocks`
-- `phaseBlocks`
 
 ## Verify
+
+子脚本默认由 `one_click_deploy.sh` 调用；单独运行前必须先执行 `source ./00_init.sh <network>`。
 
 `script/deploy/02_verify.sh` 会验证：
 
@@ -98,6 +101,9 @@ EXTENSION_CENTER_ADDRESS
 ```
 
 ## Check
+
+子脚本默认由 `one_click_deploy.sh` 调用；单独运行前必须先执行 `source ./00_init.sh <network>`。
+`99_check.sh` 会重新读取 `script/network/<network>/group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与配置文件值比对；不一致即视为部署失败，该合约实例不得继续使用。
 
 `script/deploy/99_check.sh` 会检查：
 

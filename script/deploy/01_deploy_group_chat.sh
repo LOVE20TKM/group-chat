@@ -16,8 +16,6 @@ if [ $? -eq 0 ]; then
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS=$groupChatBeforePostPluginAddress
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$groupChatAfterPostPluginAddress
-    export ORIGIN_BLOCKS=$originBlocks
-    export PHASE_BLOCKS=$phaseBlocks
     echo -e "\033[32m✓\033[0m GroupChat deployed at: $groupChatAddress"
     echo -e "\033[32m✓\033[0m AdminDenySource deployed at: $adminDenySourceAddress"
     echo -e "\033[32m✓\033[0m GovVotedDenySource deployed at: $groupChatDenySourceAddress"

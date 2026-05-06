@@ -4,6 +4,10 @@ pragma solidity =0.8.17;
 interface Vm {
     function envAddress(string calldata name) external returns (address);
 
+    function envString(string calldata name) external returns (string memory);
+
+    function envUint(string calldata name) external returns (uint256);
+
     function envOr(string calldata name, string calldata defaultValue)
         external
         returns (string memory);

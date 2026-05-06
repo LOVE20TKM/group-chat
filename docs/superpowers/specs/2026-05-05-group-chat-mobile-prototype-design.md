@@ -11,14 +11,14 @@
 3. 用户选择或使用默认 `senderGroupId`。
 4. 前端展示 `canPostStatus`、`scopeSource`、`denySource` 等链上状态。
 5. 用户读取消息、引用消息、提及身份、发送公开链上消息。
-6. 桌面端同一路由自适应展开群列表和链上状态面板。
+6. 桌面端同一路由保持手机优先预览，不额外引入宽屏分栏。
 
 ## 设计原则
 
-- 交互布局仿照微信聊天：顶部群名、消息气泡、底部输入栏、`+` 面板、顶部 `...` 详情入口。
-- 视觉样式参考 `../interface-test`：白底、slate 灰阶、secondary 蓝紫、8px 圆角、轻边框、紧凑移动端卡片。
-- 不使用微信品牌绿色作为视觉基准；自己消息气泡和主按钮使用 `interface-test` 的 secondary / primary 色系。
-- 手机为主，桌面为自适应增强，不做桌面三栏优先。
+- 交互布局仿照微信聊天：顶部群名、消息气泡、底部输入栏、顶部 `...` 群菜单。
+- 视觉样式参考 `../interface-test`：白底、slate 灰阶、primary / secondary 色系、8px 圆角、轻边框、紧凑移动端卡片。
+- 不复刻微信品牌元素；自己消息气泡和主按钮使用当前原型的 primary / secondary 色系。
+- 手机为主，桌面为居中预览增强。
 - 协议状态服务于用户判断，不做 ABI 控制台。
 - 不复刻微信品牌元素、图标或专有视觉资产，只复用通用聊天交互范式。
 
@@ -28,12 +28,11 @@
 
 - 聊天列表入口与当前 chat 头部。
 - 消息流：普通消息、自己消息、引用消息、mentions、mentionAll 标识。
-- 底部输入栏：内容输入、引用 chip、mention chip、发送按钮。
+- 底部输入栏：内容输入、引用 chip、发送按钮；`@姓名` 与 `@全部` 由输入框文本自动解析。
 - 长按消息菜单：引用、提及、复制 `messageIndex`。
-- `+` 面板：切换发言身份、添加 mention、mentionAll、按索引查看消息。
-- 顶部 `...` 状态 sheet：`canPostStatus`、`ruleSlots`、`senderGroupId`、管理入口。
+- 顶部 `...` 群菜单：详情、黑名单、豁免名单、管理入口。
 - 不可发言状态：显示标准错误 selector 对应中文原因。
-- 桌面自适应：左侧群列表、中央聊天、右侧状态面板。
+- 桌面自适应：居中手机壳预览，保持同一移动端交互。
 
 ### 不包含
 
@@ -68,7 +67,7 @@
    - 返回按钮。
    - 群名：`群聊 #<chatGroupId>`。
    - 副标题：群类型、成员/消息摘要。
-   - `...` 打开链上状态 sheet。
+   - `...` 打开群菜单。
 
 2. 消息区
    - 灰色背景。
@@ -78,32 +77,29 @@
    - 引用消息在气泡内用小引用块展示。
 
 3. 状态条
-   - 靠近输入区显示当前发言资格。
-   - 示例：`可发言 · senderGroupId #9007 · canPostStatus OK`。
-   - 不可发言时显示 `不可发言 · ScopeRejected`，点击打开 sheet。
+   - 靠近输入区显示同步提示和模拟交易反馈。
+   - 示例：`MessagePost 发现 messageIndex #80，正文已通过 messages 补拉。`
+   - 发言资格失败时由不可发言输入区展示标准 selector 对应中文原因。
 
 4. 输入区
-   - 引用 chip、mention chip 显示在输入框上方。
+   - 引用 chip 显示在输入框上方。
+   - 引用草稿按 `chatGroupId` 隔离，切换群聊不会串用其他群的 `quotedMessageIndex`。
    - 输入框字号至少 `16px`，避免移动端浏览器自动缩放。
-   - `#` 用于引用或索引选择。
-   - `@` 用于添加 mentions。
-   - `+` 打开更多面板。
+   - 用户直接输入 `@姓名` 生成 `mentions`，直接输入 `@全部` 生成 `mentionAll=true`。
+   - 长按头像可把对应 `@姓名` 插入输入框。
+   - 点击头像时，若当前地址默认 NFT 是该 chat 的管理员 NFT，则弹出拉黑 sender 菜单。
    - 发送按钮触发模拟 `post`。
 
-5. `...` 状态 sheet
-   - `canPostStatus` 与 reasonCode。
-   - `scopeSource` / `denySource` / plugin。
-   - 当前 `senderGroupId`。
-   - 消息索引入口。
-   - 治理禁言或管理入口。
+5. `...` 群菜单与详情页
+   - 详情页展示当前 `senderGroupId` 与不可发言原因。
+   - 管理页展示 `scopeSource` / `denySource` / plugin。
+   - 黑名单页展示治理禁言或管理员禁言状态。
 
 ### 桌面端
 
-- 同一路由宽屏展开：
-  - 左侧：群列表。
-  - 中间：聊天区。
-  - 右侧：链上状态。
-- 移动端 sheet 在桌面端变为常驻右栏。
+- 同一路由宽屏下保持手机壳预览。
+- 手机壳居中展示，不展开左侧群列表或右侧状态栏。
+- 详情、黑名单、管理仍通过群菜单进入独立页面。
 
 ## 交互状态
 
@@ -114,20 +110,19 @@
 - `DenyRejected`：被黑名单拒绝。
 - `SenderNotGroupOwner`：当前钱包不是 `senderGroupId` owner。
 - 引用某条消息后发送。
-- 添加 mention 与 mentionAll。
-- 切换消息索引视图：全部、round、sender、mention、mentionAll。
+- 输入框自动解析 mention 与 mentionAll。
 - 从 `MessagePost` 发现缺口后补拉区间的提示。
 
 ## 组件边界
 
-- `ChatShell`：响应式布局容器。
-- `ChatHeader`：移动端顶部栏和状态入口。
-- `ChatList`：桌面群列表，移动端作为独立入口或 sheet。
+- `ChatShell`：手机优先布局容器。
+- `ChatHeader`：移动端顶部栏。
+- `ChatList`：聊天列表入口。
 - `MessageList`：消息渲染和分页状态。
 - `MessageBubble`：气泡、引用、mention 标记、长按菜单。
-- `Composer`：输入栏、引用/mention chips、发送按钮。
-- `ProtocolStatusSheet`：链上状态、错误原因、管理入口。
-- `MoreActionsPanel`：`+` 面板。
+- `Composer`：输入栏、引用 chip、自动解析 `@姓名` / `@全部`、发送按钮。
+- `GroupMenu`：详情、黑名单、豁免名单、管理入口。
+- `GroupDetails`：当前身份、`canPostStatus` 和错误原因。
 - `MockProtocolState`：原型用 mock 数据和状态切换。
 
 ## 测试与验收
@@ -135,12 +130,12 @@
 - 手机宽度约 `390px` 下：
   - 文本不溢出。
   - 输入栏不遮挡消息。
-  - 状态 sheet 可打开和关闭。
+  - 顶部 `...` 可打开群菜单。
   - 长按菜单或点击菜单可完成引用。
   - 发送后新消息出现在消息流。
 
 - 桌面宽度约 `1280px` 下：
-  - 群列表、聊天区、状态栏同时可见。
+  - 手机壳居中显示。
   - 消息区仍使用同一气泡组件。
   - 不出现嵌套卡片堆叠。
 

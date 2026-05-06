@@ -151,6 +151,7 @@ Query：
 - `NotChatOwnerOrDelegateGroupOwner`
 - `SenderNotGroupOwner`
 - `RoundNotStarted`
+- `PhaseBlocksZero`
 
 Meta 错误：
 

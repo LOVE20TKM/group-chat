@@ -21,6 +21,11 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         new GroupChat(other, originBlocks, phaseBlocks);
     }
 
+    function testT003_constructorRejectsZeroPhaseBlocks() public {
+        vm.expectRevert(IGroupChatErrors.PhaseBlocksZero.selector);
+        new GroupChat(address(groupDefaults), originBlocks, 0);
+    }
+
     function testT010_activateChat_requiresCurrentOwner() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 

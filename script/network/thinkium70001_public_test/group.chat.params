@@ -3,8 +3,8 @@
 # Origin block number for phase calculation
 ORIGIN_BLOCKS=65467377
 
-# Number of blocks per phase
-PHASE_BLOCKS=111
+# Number of blocks per phase: about 5 minutes on thinkium70001 public test
+PHASE_BLOCKS=94
 
 # ExtensionCenter used by typed decentralized managers
 extensionCenterAddress=0x5EC6968225d640f5A6DD8EaB2574539E506Bc184

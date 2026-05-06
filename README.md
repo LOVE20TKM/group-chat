@@ -23,7 +23,6 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 - 主接口与主合约已落地
 - Typed Manager 已落地
 - Foundry 测试已拆分为多文件主题结构
-- 当前测试结果：`75 passed`
 
 ## 目录
 
@@ -87,7 +86,7 @@ python3 -m http.server 8012
 - `GROUP_DEFAULTS_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
 - `ORIGIN_BLOCKS`
-- `PHASE_BLOCKS`
+- `PHASE_BLOCKS`（必须大于 `0`）
 - `GROUP_JOIN_ADDRESS`
 - `network`
 
@@ -97,16 +96,12 @@ python3 -m http.server 8012
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
 
-直接 `forge script` 示例：
+直接 `forge script` 时也先从网络配置加载参数，不在命令里写 `ORIGIN_BLOCKS` / `PHASE_BLOCKS` 默认值：
 
 ```bash
-GROUP_DEFAULTS_ADDRESS=0x... \
-EXTENSION_CENTER_ADDRESS=0x... \
-GROUP_JOIN_ADDRESS=0x... \
-ORIGIN_BLOCKS=123456 \
-PHASE_BLOCKS=30126 \
-network=anvil \
-forge script script/DeployGroupChat.s.sol:DeployGroupChat --broadcast
+cd script/deploy
+source ./00_init.sh anvil
+forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 ```
 
 shell 一键部署：
@@ -124,15 +119,7 @@ cd script/deploy
 source ./one_click_deploy.sh anvil
 ```
 
-部署结果会写入：
-
-- `script/network/<network>/address.group.chat.params`
-  - `groupChatAddress`
-  - `groupJoinScopeSourceAddress`
-  - `tokenGroupChatManagerAddress`
-  - `tokenGovGroupChatManagerAddress`
-  - `tokenActionGovGroupChatManagerAddress`
-  - `tokenActionGroupChatManagerAddress`
+部署结果字段以 [部署说明](./docs/deployment.md) 为准。
 
 当前已补模板网络：
 

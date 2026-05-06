@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -z "$network" ]; then
+  echo -e "\033[31mError:\033[0m Environment not initialized. Please run 00_init.sh first."
+  return 1
+fi
+
 if [[ "$network" != thinkium70001* ]]; then
   echo "Network is not thinkium70001 related, skipping verification"
   return 0
@@ -73,7 +78,9 @@ verify_contract \
     $admin_deny_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-gov_deny_source_constructor_args=$(cast abi-encode "constructor(address)" $LOVE20_GROUP_ADDRESS)
+gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,address)" \
+    $LOVE20_GROUP_ADDRESS \
+    $GROUP_DEFAULTS_ADDRESS)
 verify_contract \
     $groupChatDenySourceAddress \
     "GovVotedDenySource" \

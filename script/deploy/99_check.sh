@@ -8,6 +8,13 @@ if [ -z "$tokenGroupChatManagerAddress" ] && [ -n "$network_dir" ] && [ -f "$net
     source $network_dir/address.group.chat.params
 fi
 
+if [ -n "$network_dir" ] && [ -f "$network_dir/group.chat.params" ]; then
+    source $network_dir/group.chat.params
+else
+    echo -e "\033[31mError:\033[0m group.chat.params not found; run 00_init.sh <network> before 99_check.sh"
+    return 1
+fi
+
 if [ -z "$groupChatAddress" ]; then
     echo -e "\033[31mError:\033[0m GroupChat address not set"
     return 1
@@ -33,6 +40,11 @@ fi
 
 if [ -z "$PHASE_BLOCKS" ]; then
     echo -e "\033[31m✗\033[0m PHASE_BLOCKS not set"
+    ((missing_params++))
+fi
+
+if [ -n "$PHASE_BLOCKS" ] && [ "$PHASE_BLOCKS" = "0" ]; then
+    echo -e "\033[31m✗\033[0m PHASE_BLOCKS must be greater than zero"
     ((missing_params++))
 fi
 
@@ -142,11 +154,11 @@ check_equal "GroupChat: GROUP_DEFAULTS" $GROUP_DEFAULTS_ADDRESS $(cast_call $gro
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: ORIGIN_BLOCKS" $ORIGIN_BLOCKS $(cast_call $groupChatAddress "originBlocks()(uint256)")
+check_equal "GroupChat: ORIGIN_BLOCKS from group.chat.params" $ORIGIN_BLOCKS $(cast_call $groupChatAddress "originBlocks()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: PHASE_BLOCKS" $PHASE_BLOCKS $(cast_call $groupChatAddress "phaseBlocks()(uint256)")
+check_equal "GroupChat: PHASE_BLOCKS from group.chat.params" $PHASE_BLOCKS $(cast_call $groupChatAddress "phaseBlocks()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

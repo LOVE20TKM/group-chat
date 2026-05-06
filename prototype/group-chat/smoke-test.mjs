@@ -30,8 +30,24 @@ if (js.includes('data-action="remove-mention"') || js.includes('@all ×')) {
   throw new Error('Mentions must render in composer text, not composer chips');
 }
 
+if (html.includes('data-action="open-more"') || html.includes('id="more-panel"') || js.includes('openMorePanel')) {
+  throw new Error('Chat composer must not render a plus/more panel');
+}
+
 if (js.includes('mentions: [...state.mentions]') || js.includes('mentionAll: state.mentionAll')) {
   throw new Error('Sending must parse mentions from composer content');
+}
+
+if (js.includes('...state.messages.map((message) => message.messageIndex)')) {
+  throw new Error('messageIndex must be calculated per chatGroupId, not globally');
+}
+
+if (data.includes('indexMode') || js.includes('setIndexMode') || js.includes('set-index-mode')) {
+  throw new Error('Index mode switch is not part of the current prototype interaction');
+}
+
+if (data.includes('quotedMessageIndex: null') || js.includes('state.quotedMessageIndex')) {
+  throw new Error('Composer quote state must be stored by chatGroupId');
 }
 
 const cssOpenBraces = (css.match(/\{/g) || []).length;
@@ -125,7 +141,16 @@ const requiredAppJs = [
   'activeExemptMenuKey',
   'data-action="copy-message"',
   'data-long-press-mention',
-  'data-action="add-mention-all"',
+  'data-action="toggle-avatar-menu"',
+  'activeAvatarMenuKey',
+  'toggleAvatarMenu',
+  'canShowAvatarDenyMenu',
+  'SenderNotGroupOwner',
+  'ChatNotActive',
+  'messagesForConversation',
+  'quotedMessagesByChatGroupId',
+  'activeQuotedMessageIndex',
+  'clearActiveQuote',
   'avatarLongPressMs',
   'insertComposerToken',
   'parseComposerMentions',
@@ -162,11 +187,8 @@ const requiredAppJs = [
   'renderGovBlacklist',
   'renderAdminBlacklist',
   'queryBlacklist',
-  'voteSenderDenyFromMessage',
   'addSenderDenyFromMessage',
-  'voteDenySenderBySenderGroupId',
   'addDenyListsBySenderGroupIds',
-  'data-action="vote-sender-deny"',
   'data-action="add-sender-deny"',
   'revalidateGovVote',
   'canEditRules',
@@ -238,6 +260,17 @@ for (const message of initialState.messages) {
   if (!chatIds.has(Number(message.conversationId))) {
     throw new Error(`Message ${message.messageIndex} points to missing conversationId ${message.conversationId}`);
   }
+}
+
+const messageIndexesByConversation = new Map();
+for (const message of initialState.messages) {
+  const key = String(message.conversationId);
+  if (!messageIndexesByConversation.has(key)) messageIndexesByConversation.set(key, new Set());
+  const indexes = messageIndexesByConversation.get(key);
+  if (indexes.has(message.messageIndex)) {
+    throw new Error(`Duplicate messageIndex ${message.messageIndex} in conversation ${key}`);
+  }
+  indexes.add(message.messageIndex);
 }
 
 const requiredProtocolCopy = [

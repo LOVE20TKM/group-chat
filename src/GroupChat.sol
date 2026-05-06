@@ -64,6 +64,7 @@ contract GroupChat is IGroupChat {
         if (groupDefaults_.code.length == 0) {
             revert GroupDefaultsHasNoCode();
         }
+        if (phaseBlocks_ == 0) revert PhaseBlocksZero();
         GROUP_DEFAULTS = groupDefaults_;
         LOVE20_GROUP = IGroupDefaults(groupDefaults_).GROUP_ADDRESS();
         originBlocks = originBlocks_;

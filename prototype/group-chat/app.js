@@ -10,6 +10,7 @@ const blacklistPageSize = prototypeData.pageSizes.blacklist;
 const voterPageSize = prototypeData.pageSizes.voter;
 const avatarLongPressMs = 520;
 let avatarPressState = null;
+let suppressAvatarClick = false;
 
 function escapeHtml(value) {
   return String(value)
@@ -62,8 +63,24 @@ function resolveOptionalKnownNftInput(value, mode = 'name') {
   return resolveKnownNftInput(raw, mode);
 }
 
-function messageByIndex(messageIndex) {
-  return state.messages.find((message) => message.messageIndex === Number(messageIndex));
+function messagesForConversation(conversationId = state.activeConversationId) {
+  return state.messages.filter((message) => message.conversationId === String(conversationId));
+}
+
+function messageByIndex(messageIndex, conversationId = state.activeConversationId) {
+  return messagesForConversation(conversationId).find((message) => message.messageIndex === Number(messageIndex));
+}
+
+function messageMenuKey(message) {
+  return `${message.conversationId}:${message.messageIndex}`;
+}
+
+function activeQuotedMessageIndex() {
+  return state.quotedMessagesByChatGroupId[String(state.activeConversationId)] || null;
+}
+
+function clearActiveQuote() {
+  delete state.quotedMessagesByChatGroupId[String(state.activeConversationId)];
 }
 
 function chatDisplayName(chat) {
@@ -266,7 +283,10 @@ function currentSenderDenied(chat) {
 
 function chatStatus(chat) {
   if (!chat) return { allowed: false, reasonCode: 'ChatNotSelected', label: '未选择群聊' };
-  if (!chat.active) return { allowed: false, reasonCode: 'ChatInactive', label: '未激活' };
+  if (!chat.active) return { allowed: false, reasonCode: 'ChatNotActive', label: '未激活' };
+  if (chat.senderOwnerMatches === false) {
+    return { allowed: false, reasonCode: 'SenderNotGroupOwner', label: '不是身份 owner' };
+  }
   if (!chat.scopeAllowed) return { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' };
   if (currentSenderDenied(chat)) return { allowed: false, reasonCode: 'DenyRejected', label: '命中黑名单' };
   return { allowed: true, reasonCode: '0x00000000', label: '可发言' };
@@ -1033,11 +1053,11 @@ function renderExemptRowMenu(chat, row) {
 function renderMessages() {
   const active = activeConversation();
   const conversationId = state.activeConversationId;
-  const visibleMessages = state.messages.filter((message) => message.conversationId === String(conversationId));
+  const visibleMessages = messagesForConversation(conversationId);
   const chat = active ? active.item : null;
   const groupTools = chat ? renderChatTools(chat) : '';
   const roundLabel = chat ? `<div class="round-divider">Round ${chat.round}</div>` : '';
-  const items = visibleMessages.map(renderMessage).join('');
+  const items = visibleMessages.map((message) => renderMessage(chat, message)).join('');
   document.getElementById('message-list').innerHTML = `${groupTools}${roundLabel}${items || '<div class="empty-state">暂无消息</div>'}`;
 }
 
@@ -1069,7 +1089,7 @@ function renderChatTools(chat) {
 function renderCannotPost(chat, status) {
   return `
     <div class="cannot-post">
-      <strong>无法发言</strong>
+      <strong>无法发言 · ${escapeHtml(status.reasonCode)}</strong>
       <span>${escapeHtml(postBlockReason(chat, status))}</span>
     </div>
   `;
@@ -1077,7 +1097,8 @@ function renderCannotPost(chat, status) {
 
 function postBlockReason(chat, status) {
   if (!chat) return '还没有选中群聊。';
-  if (status.reasonCode === 'ChatInactive') return '这个群聊还没有激活，链上暂时没有可用的发言规则。';
+  if (status.reasonCode === 'ChatNotActive') return '这个群聊还没有激活，链上暂时没有可用的发言规则。';
+  if (status.reasonCode === 'SenderNotGroupOwner') return '当前钱包不是 senderGroupId 的 owner，合约会返回 SenderNotGroupOwner。';
   if (status.reasonCode === 'DenyRejected') return '发言资格已通过，但 denySource 拦截了当前地址或当前 NFT。请检查黑名单和豁免名单。';
   if (status.reasonCode === 'ScopeRejected') return scopeSourceReason(chat);
   return '当前身份暂时不满足这个群聊的发言条件。';
@@ -1090,16 +1111,19 @@ function scopeSourceReason(chat) {
     TokenGovGroupChatManager: 'scopeSource 会检查当前 NFT 是否有这个代币治理群的发言资格；当前身份不满足。',
     TokenActionGroupChatManager: 'scopeSource 会检查当前 NFT 是否属于这个行动群的参与范围；当前身份不在范围内。',
     TokenActionGovGroupChatManager: 'scopeSource 会检查当前 NFT 是否有这个行动治理群的发言资格；当前身份不满足。',
-    GroupJoinScopeSource: 'scopeSource 会检查当前 NFT 是否已加入该链群，或是否是允许的代理身份；当前身份不满足。',
+    GroupJoinScopeSource: 'scopeSource 会检查当前地址是否在该链群下参与至少一个代币社区行动；当前地址不满足。',
   };
   return messages[source] || `${source} 判断当前 NFT 没有这个群聊的发言资格。`;
 }
 
-function renderMessage(message) {
+function renderMessage(chat, message) {
   const mine = message.mine ? ' mine' : '';
   const profile = nftProfile(message.senderGroupId);
-  const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex) : null;
+  const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex, message.conversationId) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderGroupId).name)}</div>` : '';
+  const avatarMenu = state.activeAvatarMenuKey === messageMenuKey(message)
+    ? `<div class="message-actions avatar-actions">${renderSenderDenyAction(chat, message)}</div>`
+    : '';
   const actions = state.activeMenuIndex === message.messageIndex
     ? `
       <div class="message-actions">
@@ -1110,10 +1134,11 @@ function renderMessage(message) {
     : '';
   return `
     <article class="message-row${mine}" data-action="select-message" data-message-index="${message.messageIndex}">
-      <div class="avatar" data-action="avatar-hold" data-long-press-mention data-sender-group-id="${message.senderGroupId || state.senderGroupId}">${escapeHtml(profile.badge)}</div>
+      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-conversation-id="${message.conversationId}" data-message-index="${message.messageIndex}" data-sender-group-id="${message.senderGroupId || state.senderGroupId}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
         <div class="message-meta">${escapeHtml(profile.name)}</div>
         <div class="message-bubble${mine}">${quote}${escapeHtml(message.content)}</div>
+        ${avatarMenu}
         ${actions}
       </div>
     </article>
@@ -1121,15 +1146,12 @@ function renderMessage(message) {
 }
 
 function renderSenderDenyAction(chat, message) {
-  if (!chat || message.mine || !message.senderAddress || !message.senderGroupId) return '';
-  if (chat.blacklistMode === 'gov') {
-    const disabled = chat.voteWeight > 0 ? '' : ' disabled';
-    return `<button type="button" data-action="vote-sender-deny" data-message-index="${message.messageIndex}"${disabled}>支持拉黑</button>`;
-  }
-  if (chat.blacklistMode === 'admin' && canEditAdminDeny(chat)) {
-    return `<button type="button" data-action="add-sender-deny" data-message-index="${message.messageIndex}">拉黑sender</button>`;
-  }
-  return '';
+  if (!canShowAvatarDenyMenu(chat, message)) return '';
+  return `<button type="button" data-action="add-sender-deny" data-conversation-id="${message.conversationId}" data-message-index="${message.messageIndex}">拉黑sender</button>`;
+}
+
+function canShowAvatarDenyMenu(chat, message) {
+  return Boolean(chat && !message.mine && message.senderAddress && message.senderGroupId && canEditAdminDeny(chat));
 }
 
 function renderStatus() {
@@ -1172,6 +1194,8 @@ function renderGroupDetails() {
       ${groupAbout}
       <dt>当前身份</dt>
       <dd>senderGroupId #${state.senderGroupId}</dd>
+      <dt>canPostStatus</dt>
+      <dd>${escapeHtml(status.reasonCode)}</dd>
       ${statusRows}
     </dl>
     <div class="close-row status-actions">
@@ -1184,8 +1208,9 @@ function renderGroupDetails() {
 
 function renderComposerChips() {
   const chips = [];
-  if (state.quotedMessageIndex) {
-    const quoted = messageByIndex(state.quotedMessageIndex);
+  const quotedMessageIndex = activeQuotedMessageIndex();
+  if (quotedMessageIndex) {
+    const quoted = messageByIndex(quotedMessageIndex, state.activeConversationId);
     const quotedName = quoted ? nftProfile(quoted.senderGroupId).name : '消息';
     chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
   }
@@ -1194,23 +1219,12 @@ function renderComposerChips() {
   composerChips.innerHTML = chips.join('');
 }
 
-function renderMorePanel() {
-  document.getElementById('more-panel-content').innerHTML = `
-    <div class="panel-grid">
-      <button class="panel-button" type="button" data-action="add-mention" data-sender-group-id="1029">@${escapeHtml(nftProfile(1029).name)}</button>
-      <button class="panel-button" type="button" data-action="add-mention-all">@全部</button>
-    </div>
-    <div class="close-row"><button type="button" class="sheet-button" data-action="close-more">关闭</button></div>
-  `;
-}
-
 function render() {
   renderHeader();
   renderBottomNav();
   renderWorkspace();
   renderStatus();
   renderComposerChips();
-  renderMorePanel();
 }
 
 function chatById(chatId) {
@@ -1271,6 +1285,7 @@ function selectChat(chatId) {
   state.activeExemptMenuKey = null;
   state.adminGroupQuery = '';
   state.adminGroupQueryResult = '';
+  state.activeAvatarMenuKey = null;
   state.syncHint = `已选择 chatGroupId #${chat.groupId}`;
   render();
 }
@@ -1302,6 +1317,7 @@ function openConversation(conversationId) {
   if (chat) state.activeChatId = chat.groupId;
   state.view = 'chat';
   state.activeMenuIndex = null;
+  state.activeAvatarMenuKey = null;
   state.activeGroupMenuId = null;
   state.pageReturnStack = [];
   render();
@@ -1688,32 +1704,8 @@ function voteGovTarget(targetType, target, stance) {
   render();
 }
 
-function voteSenderDenyFromMessage(messageIndex) {
-  const message = messageByIndex(messageIndex);
-  const chat = message && chatById(message.conversationId);
-  if (!chat || chat.blacklistMode !== 'gov' || chat.voteWeight <= 0) return;
-
-  const targetAddress = message.senderAddress;
-  const targetSenderGroupId = String(message.senderGroupId);
-  const addressTarget = ensureGovTarget(chat, 'address', targetAddress);
-  const groupTarget = ensureGovTarget(chat, 'nft', targetSenderGroupId);
-  const addressChanged = applyGovVote(addressTarget, 'support', chat.voteWeight);
-  const groupChanged = applyGovVote(groupTarget, 'support', chat.voteWeight);
-  const changes = Number(addressChanged) + Number(groupChanged);
-
-  if (changes > 0) {
-    chat.govDeny.stateVersion += 1;
-    state.syncHint =
-      `voteDenySenderBySenderGroupId(${targetSenderGroupId}) 已模拟，合约解析地址 ${targetAddress}`;
-  } else {
-    state.syncHint = `VoteUnchanged：sender ${targetAddress} / NFT #${targetSenderGroupId}`;
-  }
-  state.activeMenuIndex = null;
-  render();
-}
-
-function addSenderDenyFromMessage(messageIndex) {
-  const message = messageByIndex(messageIndex);
+function addSenderDenyFromMessage(messageIndex, conversationId = state.activeConversationId) {
+  const message = messageByIndex(messageIndex, conversationId);
   const chat = message && chatById(message.conversationId);
   if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
 
@@ -1737,6 +1729,7 @@ function addSenderDenyFromMessage(messageIndex) {
     state.syncHint = `sender ${targetAddress} / NFT #${targetSenderGroupId} 已在黑名单`;
   }
   state.activeMenuIndex = null;
+  state.activeAvatarMenuKey = null;
   render();
 }
 
@@ -1960,7 +1953,9 @@ function sendMessage() {
     return;
   }
 
-  const nextIndex = Math.max(0, ...state.messages.map((message) => message.messageIndex)) + 1;
+  const visibleMessages = messagesForConversation(state.activeConversationId);
+  const nextIndex = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageIndex)) + 1 : 0;
+  const quotedMessageIndex = activeQuotedMessageIndex() || 0;
   state.messages.push({
     conversationId: state.activeConversationId,
     senderGroupId: state.senderGroupId,
@@ -1970,12 +1965,12 @@ function sendMessage() {
     content,
     mentions: draftMentions.mentions,
     mentionAll: draftMentions.mentionAll,
-    quotedMessageIndex: state.quotedMessageIndex || 0,
+    quotedMessageIndex,
     mine: true,
   });
   if (chat) chat.lastMessageIndex = nextIndex;
   state.syncHint = `MessagePost 发现 messageIndex #${nextIndex}，正文已通过 messages 补拉。`;
-  state.quotedMessageIndex = null;
+  clearActiveQuote();
   state.mentions = [];
   state.mentionAll = false;
   input.value = '';
@@ -1983,7 +1978,7 @@ function sendMessage() {
 }
 
 function quoteMessage(messageIndex) {
-  state.quotedMessageIndex = Number(messageIndex);
+  state.quotedMessagesByChatGroupId[String(state.activeConversationId)] = Number(messageIndex);
   state.activeMenuIndex = null;
   render();
 }
@@ -2029,27 +2024,28 @@ function addMention(senderGroupId) {
 function selectMessage(messageIndex) {
   const index = Number(messageIndex);
   state.activeMenuIndex = state.activeMenuIndex === index ? null : index;
+  state.activeAvatarMenuKey = null;
   render();
 }
 
-function addMentionAll() {
-  state.mentionAll = true;
-  insertComposerToken('@全部');
+function toggleAvatarMenu(messageIndex, conversationId = state.activeConversationId) {
+  if (suppressAvatarClick) {
+    suppressAvatarClick = false;
+    return;
+  }
+
+  const message = messageByIndex(messageIndex, conversationId);
+  const chat = message && chatById(message.conversationId);
+  if (!message || !canShowAvatarDenyMenu(chat, message)) {
+    state.activeAvatarMenuKey = null;
+    render();
+    return;
+  }
+
+  const key = messageMenuKey(message);
+  state.activeAvatarMenuKey = state.activeAvatarMenuKey === key ? null : key;
+  state.activeMenuIndex = null;
   render();
-}
-
-function setIndexMode(mode) {
-  state.indexMode = mode;
-  state.syncHint = `当前查看 ${mode} 索引；事件缺口时按区间补拉。`;
-  render();
-}
-
-function openMorePanel() {
-  document.getElementById('more-panel').hidden = false;
-}
-
-function closeMorePanel() {
-  document.getElementById('more-panel').hidden = true;
 }
 
 function clearAvatarPress() {
@@ -2069,6 +2065,7 @@ document.addEventListener('pointerdown', (event) => {
     timer: setTimeout(() => {
       const senderGroupId = avatarPressState?.senderGroupId;
       avatarPressState = null;
+      suppressAvatarClick = true;
       if (senderGroupId) addMention(senderGroupId);
     }, avatarLongPressMs),
   };
@@ -2090,6 +2087,7 @@ document.addEventListener('click', (event) => {
   const target = event.target.closest('[data-action]');
   if (!target) return;
   const action = target.dataset.action;
+  if (action !== 'toggle-avatar-menu') suppressAvatarClick = false;
 
   if (action === 'set-bottom-tab') setBottomTab(target.dataset.tab);
   if (action === 'go-back') goBack();
@@ -2140,20 +2138,16 @@ document.addEventListener('click', (event) => {
   if (action === 'query-self') querySelf();
   if (action === 'query-blacklist') queryBlacklist(target.dataset.input);
   if (action === 'close-gov-voters') closeGovVoterSheet();
-  if (action === 'open-more') openMorePanel();
-  if (action === 'close-more') closeMorePanel();
+  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageIndex, target.dataset.conversationId);
   if (action === 'select-message') selectMessage(target.dataset.messageIndex);
   if (action === 'quote-message') quoteMessage(target.dataset.messageIndex);
   if (action === 'copy-message') copyMessage(target.dataset.messageIndex);
   if (action === 'add-mention') addMention(target.dataset.senderGroupId);
-  if (action === 'add-mention-all') addMentionAll();
-  if (action === 'vote-sender-deny') voteSenderDenyFromMessage(target.dataset.messageIndex);
-  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex);
+  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex, target.dataset.conversationId);
   if (action === 'clear-quote') {
-    state.quotedMessageIndex = null;
+    clearActiveQuote();
     render();
   }
-  if (action === 'set-index-mode') setIndexMode(target.dataset.indexMode);
 });
 
 document.getElementById('send-button').addEventListener('click', sendMessage);

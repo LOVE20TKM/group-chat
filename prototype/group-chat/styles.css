@@ -69,10 +69,8 @@ button:disabled {
 
 .icon-button,
 .wallet-button,
-.round-button,
 .send-button,
 .sheet-button,
-.panel-button,
 .bottom-nav-item,
 .filter-tab,
 .picker-button,
@@ -936,7 +934,7 @@ button:disabled {
 
 .composer-row {
   display: grid;
-  grid-template-columns: 1fr 34px 54px;
+  grid-template-columns: minmax(0, 1fr) 54px;
   gap: 7px;
   align-items: center;
 }
@@ -968,7 +966,6 @@ button:disabled {
   font-size: 16px;
 }
 
-.round-button,
 .send-button {
   height: 36px;
   border-radius: 6px;
@@ -984,8 +981,7 @@ button:disabled {
   font-weight: 600;
 }
 
-.sheet-button,
-.panel-button {
+.sheet-button {
   min-height: 36px;
   border: 1px solid var(--greyscale-200);
   border-radius: 8px;
@@ -995,8 +991,7 @@ button:disabled {
   font-size: 12px;
 }
 
-.sheet-button.active,
-.panel-button.active {
+.sheet-button.active {
   border-color: var(--primary);
   color: var(--primary);
   background: #ecfdf5;
@@ -1035,8 +1030,7 @@ button:disabled {
   font-weight: 700;
 }
 
-.status-sheet,
-.more-panel {
+.status-sheet {
   position: fixed;
   left: 0;
   right: 0;
@@ -1066,13 +1060,6 @@ button:disabled {
 .status-card dd {
   margin: 2px 0 8px;
   overflow-wrap: anywhere;
-}
-
-.panel-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 0 10px 12px;
 }
 
 .close-row {

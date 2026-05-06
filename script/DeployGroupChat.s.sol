@@ -40,15 +40,15 @@ contract DeployGroupChat is ScriptBase {
             groupJoin: vm.envAddress("GROUP_JOIN_ADDRESS"),
             beforePostPlugin: vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
             afterPostPlugin: vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
-            originBlocks: vm.envOr("ORIGIN_BLOCKS", uint256(0)),
-            phaseBlocks: vm.envOr("PHASE_BLOCKS", uint256(30126))
+            originBlocks: vm.envUint("ORIGIN_BLOCKS"),
+            phaseBlocks: vm.envUint("PHASE_BLOCKS")
         });
 
         vm.startBroadcast();
         DeployedAddresses memory deployed = _deploy(config);
         vm.stopBroadcast();
 
-        string memory network = vm.envOr("network", string("anvil"));
+        string memory network = vm.envString("network");
         string memory dir = string.concat("script/network/", network);
         vm.createDir(dir, true);
         _writeAddressFile(dir, config, deployed);
@@ -127,18 +127,12 @@ contract DeployGroupChat is ScriptBase {
         content = string.concat(
             content,
             _addressLine("tokenActionGovGroupChatManagerAddress", deployed.tokenActionGovGroupChatManager),
-            _addressLine("tokenActionGroupChatManagerAddress", deployed.tokenActionGroupChatManager),
-            _uintLine("originBlocks", config.originBlocks),
-            _uintLine("phaseBlocks", config.phaseBlocks)
+            _addressLine("tokenActionGroupChatManagerAddress", deployed.tokenActionGroupChatManager)
         );
         return content;
     }
 
     function _addressLine(string memory key, address value) internal pure returns (string memory) {
-        return string.concat(key, "=", vm.toString(value), "\n");
-    }
-
-    function _uintLine(string memory key, uint256 value) internal pure returns (string memory) {
         return string.concat(key, "=", vm.toString(value), "\n");
     }
 }
