@@ -77,7 +77,7 @@ Source：
 部署：
 
 - 固定部署 `AdminDenySource`、`GovVotedDenySource`、`GroupJoinScopeSource`。
-- 地址文件必须包含全部部署产物字段。
+- 地址文件只包含当前仓库部署产物字段；上游依赖地址不写入 `address.group.chat.params`。
 
 ## 当前验证命令
 

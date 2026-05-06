@@ -14,8 +14,17 @@ if [ -z "$RPC_URL" ]; then
     source 00_init.sh $network
 fi
 
-if [ -z "$groupChatAddress" ] || [ -z "$tokenGroupChatManagerAddress" ]; then
-    source $network_dir/address.group.chat.params
+if [ -f "$network_dir/address.group.chat.params" ] && { \
+    [ -z "$groupChatAddress" ] || \
+    [ -z "$adminDenySourceAddress" ] || \
+    [ -z "$groupChatDenySourceAddress" ] || \
+    [ -z "$groupJoinScopeSourceAddress" ] || \
+    [ -z "$tokenGroupChatManagerAddress" ] || \
+    [ -z "$tokenGovGroupChatManagerAddress" ] || \
+    [ -z "$tokenActionGovGroupChatManagerAddress" ] || \
+    [ -z "$tokenActionGroupChatManagerAddress" ]; \
+}; then
+    source "$network_dir/address.group.chat.params"
 fi
 
 if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
@@ -26,6 +35,16 @@ fi
 if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddress" ]; then
     GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
+fi
+
+if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ] && [ -n "$groupChatDenySourceAddress" ]; then
+    GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
+    export GROUP_CHAT_DENY_SOURCE_ADDRESS
+fi
+
+if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ] && [ -n "$adminDenySourceAddress" ]; then
+    ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
+    export ADMIN_DENY_SOURCE_ADDRESS
 fi
 
 if [ -z "$LOVE20_GROUP_ADDRESS" ]; then

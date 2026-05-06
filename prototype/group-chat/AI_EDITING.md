@@ -15,7 +15,7 @@
 新增群聊：
 1. 在 `prototype-data.js` 的 `initialState.chats` 增加 chat。
 2. 若是行动群，同步 `initialState.actions` 的 `actionChatId/actionGovChatId`。
-3. 若要预置消息，在 `initialState.messages` 增加 `conversationId = groupId` 的消息。
+3. 若要预置消息，在 `initialState.messages` 增加 `chatGroupId = groupId` 的消息。
 4. 运行 `node prototype/group-chat/smoke-test.mjs`。
 
 修改文案或样例协议状态：
@@ -41,7 +41,7 @@
 ## 数据结构约束
 
 - `groupId` 必须唯一。
-- `message.conversationId` 必须指向已存在的 `chat.groupId`。
+- `message.chatGroupId` 必须指向已存在的 `chat.groupId`。
 - `action.actionChatId` 和 `action.actionGovChatId` 必须指向已存在的 chat。
 - `blacklistMode = "gov"` 必须有 `govDeny`。
 - `blacklistMode = "admin"` 必须有 `adminDeny`。

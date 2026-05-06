@@ -31,13 +31,7 @@ LOVE20 `GroupNFT` 群聊协议仓库。
   - `GroupChat.sol`
   - `managers/`
 - `test/`
-  - `GroupChatLifecycle.t.sol`
-  - `GroupChatMeta.t.sol`
-  - `GroupChatDelegate.t.sol`
-  - `GroupChatMessages.t.sol`
-  - `GroupChatPlugins.t.sol`
-  - `GroupChatManager.t.sol`
-  - `GroupChatTypedManagers.t.sol`
+  - 详见 [测试矩阵](./docs/tests.md)
 - `script/`
   - `DeployGroupChat.s.sol`
   - `ScriptBase.sol`
@@ -54,7 +48,7 @@ forge test
 
 - [GroupChat 手机优先原型](./prototype/group-chat/index.html)
 - 交互仿微信聊天布局，样式参考 `interface-test`
-- 模拟 `canPostStatus`、`ruleSlots`、引用、mentions、mentionAll、消息索引和 `MessagePost` 同步提示
+- 模拟 `canPostStatus`、`ruleSlots`、引用、mentions、mentionAll、`messageIndex` 和 `MessagePost` 同步提示
 
 原型 smoke test：
 
@@ -100,7 +94,7 @@ python3 -m http.server 8012
 
 ```bash
 cd script/deploy
-source ./00_init.sh anvil
+source ./00_init.sh thinkium70001_public_test
 forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 ```
 
@@ -116,13 +110,12 @@ shell 一键部署：
 
 ```bash
 cd script/deploy
-source ./one_click_deploy.sh anvil
+source ./one_click_deploy.sh thinkium70001_public_test
 ```
 
 部署结果字段以 [部署说明](./docs/deployment.md) 为准。
 
 当前已补模板网络：
 
-- `anvil`
 - `thinkium70001_public`
 - `thinkium70001_public_test`

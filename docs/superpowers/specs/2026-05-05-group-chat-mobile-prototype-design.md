@@ -8,7 +8,7 @@
 
 1. 用户进入某个 `GroupNFT` 对应的 chat。
 2. 前端显示微信式聊天界面。
-3. 用户选择或使用默认 `senderGroupId`。
+3. 前端使用当前地址的 `defaultGroupId` 作为发言 NFT。
 4. 前端展示 `canPostStatus`、`scopeSource`、`denySource` 等链上状态。
 5. 用户读取消息、引用消息、提及身份、发送公开链上消息。
 6. 桌面端同一路由保持手机优先预览，不额外引入宽屏分栏。
@@ -29,9 +29,9 @@
 - 聊天列表入口与当前 chat 头部。
 - 消息流：普通消息、自己消息、引用消息、mentions、mentionAll 标识。
 - 底部输入栏：内容输入、引用 chip、发送按钮；`@姓名` 与 `@全部` 由输入框文本自动解析。
-- 长按消息菜单：引用、提及、复制 `messageIndex`。
+- 点击消息菜单：`messageIndex > 0` 可引用，`messageIndex == 0` 仅可复制正文。
 - 顶部 `...` 群菜单：详情、黑名单、豁免名单、管理入口。
-- 不可发言状态：显示标准错误 selector 对应中文原因。
+- 不可发言状态：显示产品化错误名 / reasonCode 对应中文原因。
 - 桌面自适应：居中手机壳预览，保持同一移动端交互。
 
 ### 不包含
@@ -48,11 +48,11 @@
 | --- | --- |
 | chat 身份 | `1 NFT = 1 Chat`，`chatGroupId == GroupNFT.tokenId` |
 | 头部状态 | `chatInfo(groupId)`：`active`、`owner`、`configVersion` |
-| 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)` |
+| 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderGroupId` |
 | 发送消息 | `post` / `postByDefaultSender` |
 | 可发言判断 | `canPostStatus(chatGroupId, senderGroupId, senderAddress)` |
-| 错误原因 | `ChatNotActive`、`SenderNotGroupOwner`、`ScopeRejected`、`DenyRejected` 等 selector |
-| 引用 | `quotedMessageIndex`，`0` 表示无引用 |
+| 错误原因 | `ChatNotActive`、`SenderNotGroupOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
+| 引用 | `quotedMessageIndex`，`0` 表示无引用；`quotedMessageIndex > 0` 且不能指向 `messageIndex == 0` |
 | 提及 | `mentions uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，只记录声明语义 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
@@ -73,13 +73,12 @@
    - 灰色背景。
    - 他人消息左侧头像，白色气泡。
    - 自己消息右侧头像，secondary 浅色气泡。
-   - 每条消息显示 `senderGroupId`、`messageIndex`、必要时显示 `round`。
    - 引用消息在气泡内用小引用块展示。
 
 3. 状态条
    - 靠近输入区显示同步提示和模拟交易反馈。
    - 示例：`MessagePost 发现 messageIndex #80，正文已通过 messages 补拉。`
-   - 发言资格失败时由不可发言输入区展示标准 selector 对应中文原因。
+   - 发言资格失败时由不可发言输入区展示产品化错误名 / reasonCode 对应中文原因。
 
 4. 输入区
    - 引用 chip 显示在输入框上方。
@@ -91,7 +90,7 @@
    - 发送按钮触发模拟 `post`。
 
 5. `...` 群菜单与详情页
-   - 详情页展示当前 `senderGroupId` 与不可发言原因。
+   - 详情页展示当前 `defaultGroupId` 与不可发言原因。
    - 管理页展示 `scopeSource` / `denySource` / plugin。
    - 黑名单页展示治理禁言或管理员禁言状态。
 
@@ -108,8 +107,8 @@
 - 正常可发言。
 - `ScopeRejected`：无发言资格。
 - `DenyRejected`：被黑名单拒绝。
-- `SenderNotGroupOwner`：当前钱包不是 `senderGroupId` owner。
-- 引用某条消息后发送。
+- `SenderNotGroupOwner`：当前钱包不是 `defaultGroupId` owner。
+- 引用 `messageIndex > 0` 的消息后发送。
 - 输入框自动解析 mention 与 mentionAll。
 - 从 `MessagePost` 发现缺口后补拉区间的提示。
 
@@ -122,7 +121,7 @@
 - `MessageBubble`：气泡、引用、mention 标记、长按菜单。
 - `Composer`：输入栏、引用 chip、自动解析 `@姓名` / `@全部`、发送按钮。
 - `GroupMenu`：详情、黑名单、豁免名单、管理入口。
-- `GroupDetails`：当前身份、`canPostStatus` 和错误原因。
+- `GroupDetails`：当前 `defaultGroupId`、`canPostStatus` 和错误原因。
 - `MockProtocolState`：原型用 mock 数据和状态切换。
 
 ## 测试与验收
@@ -131,7 +130,7 @@
   - 文本不溢出。
   - 输入栏不遮挡消息。
   - 顶部 `...` 可打开群菜单。
-  - 长按菜单或点击菜单可完成引用。
+  - 点击 `messageIndex > 0` 的消息菜单可完成引用。
   - 发送后新消息出现在消息流。
 
 - 桌面宽度约 `1280px` 下：
@@ -141,7 +140,7 @@
 
 - 协议覆盖：
   - `canPostStatus` reasonCode 能在 UI 中解释。
-  - `mentions` 上限和去重有前端提示。
+  - `mentions` 去重有前端提示；超过 `32` 时阻止发送并提示 `TooManyMentions`。
   - `quotedMessageIndex` 为 `0` 与非 `0` 两种状态可见。
   - `MessagePost` 事件不是正文真源的同步策略在 UI 中有提示。
 

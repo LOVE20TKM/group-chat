@@ -25,13 +25,17 @@ function activeChat() {
   return state.chats.find((chat) => chat.groupId === state.activeChatId);
 }
 
-function activeConversation() {
-  const chat = state.chats.find((item) => String(item.groupId) === String(state.activeConversationId));
+function activeChatEntry() {
+  const chat = state.chats.find((item) => String(item.groupId) === String(state.activeChatGroupId));
   return chat ? { kind: 'group', item: chat } : null;
 }
 
 function nftProfile(senderGroupId) {
   return state.nftProfiles[senderGroupId] || { name: '群成员', badge: '人' };
+}
+
+function currentDefaultGroupId() {
+  return state.defaultGroupId;
 }
 
 function resolveNftInput(value, mode = 'name') {
@@ -63,24 +67,28 @@ function resolveOptionalKnownNftInput(value, mode = 'name') {
   return resolveKnownNftInput(raw, mode);
 }
 
-function messagesForConversation(conversationId = state.activeConversationId) {
-  return state.messages.filter((message) => message.conversationId === String(conversationId));
+function messagesForChat(chatGroupId = state.activeChatGroupId) {
+  return state.messages.filter((message) => message.chatGroupId === String(chatGroupId));
 }
 
-function messageByIndex(messageIndex, conversationId = state.activeConversationId) {
-  return messagesForConversation(conversationId).find((message) => message.messageIndex === Number(messageIndex));
+function messageByIndex(messageIndex, chatGroupId = state.activeChatGroupId) {
+  return messagesForChat(chatGroupId).find((message) => message.messageIndex === Number(messageIndex));
 }
 
 function messageMenuKey(message) {
-  return `${message.conversationId}:${message.messageIndex}`;
+  return `${message.chatGroupId}:${message.messageIndex}`;
 }
 
 function activeQuotedMessageIndex() {
-  return state.quotedMessagesByChatGroupId[String(state.activeConversationId)] || null;
+  return state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] || null;
+}
+
+function canQuoteMessage(message) {
+  return Number(message?.messageIndex) > 0;
 }
 
 function clearActiveQuote() {
-  delete state.quotedMessagesByChatGroupId[String(state.activeConversationId)];
+  delete state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)];
 }
 
 function chatDisplayName(chat) {
@@ -221,7 +229,7 @@ function canEditRules(chat) {
 }
 
 function isAdminDenyOperator(chat) {
-  return Boolean(chat?.adminDeny?.adminGroupIds.includes(String(state.senderGroupId)));
+  return Boolean(chat?.adminDeny?.adminGroupIds.includes(String(currentDefaultGroupId())));
 }
 
 function canEditAdminDeny(chat) {
@@ -271,21 +279,21 @@ function currentSenderDenied(chat) {
   if (!chat || chat.blacklistMode === 'none') return false;
   if (chat.blacklistMode === 'gov') {
     const addressDenied = chat.govDeny.addressTargets.some((item) => item.target === state.account && targetDenied(item));
-    const groupDenied = chat.govDeny.groupTargets.some((item) => item.target === String(state.senderGroupId) && targetDenied(item));
+    const groupDenied = chat.govDeny.groupTargets.some((item) => item.target === String(currentDefaultGroupId()) && targetDenied(item));
     return addressDenied || groupDenied;
   }
 
   const deny = chat.adminDeny;
-  const groupExempt = deny.senderGroupIdExemptList.includes(String(state.senderGroupId));
+  const groupExempt = deny.senderGroupIdExemptList.includes(String(currentDefaultGroupId()));
   if (groupExempt) return false;
-  return deny.addressDenyList.includes(state.account) || deny.senderGroupIdDenyList.includes(String(state.senderGroupId));
+  return deny.addressDenyList.includes(state.account) || deny.senderGroupIdDenyList.includes(String(currentDefaultGroupId()));
 }
 
 function chatStatus(chat) {
   if (!chat) return { allowed: false, reasonCode: 'ChatNotSelected', label: '未选择群聊' };
   if (!chat.active) return { allowed: false, reasonCode: 'ChatNotActive', label: '未激活' };
-  if (chat.senderOwnerMatches === false) {
-    return { allowed: false, reasonCode: 'SenderNotGroupOwner', label: '不是身份 owner' };
+  if (chat.defaultGroupOwnerMatches === false) {
+    return { allowed: false, reasonCode: 'SenderNotGroupOwner', label: '不是 defaultGroupId owner' };
   }
   if (!chat.scopeAllowed) return { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' };
   if (currentSenderDenied(chat)) return { allowed: false, reasonCode: 'DenyRejected', label: '命中黑名单' };
@@ -328,7 +336,7 @@ function renderWorkspace() {
   const composerBlocked = document.getElementById('composer-blocked');
   const statusStrip = document.getElementById('status-strip');
   const chatView = state.bottomTab === 'chat' && state.view === 'chat';
-  const active = activeConversation();
+  const active = activeChatEntry();
   const chat = active && active.kind === 'group' ? active.item : null;
   const status = chatStatus(chat);
   const canCompose = chatView && status.allowed;
@@ -398,8 +406,8 @@ function renderConversationRows() {
 
 function renderConversationRow(entry) {
   const chat = entry.item;
-  const rowAction = chat.active ? 'open-conversation' : 'open-activation';
-  const rowTarget = chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  const rowAction = chat.active ? 'open-chat' : 'open-activation';
+  const rowTarget = chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
 
   return `
     <article class="conversation-row group-row" data-action="${rowAction}" ${rowTarget}>
@@ -456,8 +464,8 @@ function renderActivationSection() {
 }
 
 function renderActivationCard(chat) {
-  const mainAction = chat.active ? 'open-conversation' : 'open-activation-form';
-  const mainTarget = chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  const mainAction = chat.active ? 'open-chat' : 'open-activation-form';
+  const mainTarget = chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
   return `
     <article class="type-card">
       <div class="card-topline">
@@ -492,8 +500,8 @@ function renderActionActivation(action) {
 }
 
 function renderMiniActivate(chat) {
-  const mainAction = chat.active ? 'open-conversation' : 'open-activation-form';
-  const mainTarget = chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  const mainAction = chat.active ? 'open-chat' : 'open-activation-form';
+  const mainTarget = chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
   return `
     <div class="mini-card">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
@@ -513,7 +521,7 @@ function renderChainActivation(chat) {
       </div>
       <div class="muted">一个代币社区可有多个链群服务者管理群</div>
       <div class="inline-actions">
-        <button type="button" data-action="${chat.active ? 'open-conversation' : 'open-activation-form'}" ${chat.active ? `data-conversation-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`}>${chat.active ? '进入' : '配置'}</button>
+        <button type="button" data-action="${chat.active ? 'open-chat' : 'open-activation-form'}" ${chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`}>${chat.active ? '进入' : '配置'}</button>
         ${chat.active && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.groupId}">群管理</button>` : ''}
         ${chat.active ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">黑名单</button>` : ''}
       </div>
@@ -1051,9 +1059,9 @@ function renderExemptRowMenu(chat, row) {
 }
 
 function renderMessages() {
-  const active = activeConversation();
-  const conversationId = state.activeConversationId;
-  const visibleMessages = messagesForConversation(conversationId);
+  const active = activeChatEntry();
+  const chatGroupId = state.activeChatGroupId;
+  const visibleMessages = messagesForChat(chatGroupId);
   const chat = active ? active.item : null;
   const groupTools = chat ? renderChatTools(chat) : '';
   const roundLabel = chat ? `<div class="round-divider">Round ${chat.round}</div>` : '';
@@ -1098,43 +1106,46 @@ function renderCannotPost(chat, status) {
 function postBlockReason(chat, status) {
   if (!chat) return '还没有选中群聊。';
   if (status.reasonCode === 'ChatNotActive') return '这个群聊还没有激活，链上暂时没有可用的发言规则。';
-  if (status.reasonCode === 'SenderNotGroupOwner') return '当前钱包不是 senderGroupId 的 owner，合约会返回 SenderNotGroupOwner。';
+  if (status.reasonCode === 'SenderNotGroupOwner') return '当前钱包不是 defaultGroupId 的 owner，合约会返回 SenderNotGroupOwner。';
   if (status.reasonCode === 'DenyRejected') return '发言资格已通过，但 denySource 拦截了当前地址或当前 NFT。请检查黑名单和豁免名单。';
   if (status.reasonCode === 'ScopeRejected') return scopeSourceReason(chat);
-  return '当前身份暂时不满足这个群聊的发言条件。';
+  return '当前 defaultGroupId 暂时不满足这个群聊的发言条件。';
 }
 
 function scopeSourceReason(chat) {
   const source = chat.ruleSlots?.scopeSource || chat.params?.scopeSource || 'scopeSource';
   const messages = {
-    TokenGroupChatManager: 'scopeSource 会检查当前 NFT 是否属于这个代币的大群范围；当前身份不在范围内。',
-    TokenGovGroupChatManager: 'scopeSource 会检查当前 NFT 是否有这个代币治理群的发言资格；当前身份不满足。',
-    TokenActionGroupChatManager: 'scopeSource 会检查当前 NFT 是否属于这个行动群的参与范围；当前身份不在范围内。',
-    TokenActionGovGroupChatManager: 'scopeSource 会检查当前 NFT 是否有这个行动治理群的发言资格；当前身份不满足。',
+    TokenGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否属于这个代币的大群范围；当前 defaultGroupId 不在范围内。',
+    TokenGovGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否有这个代币治理群的发言资格；当前 defaultGroupId 不满足。',
+    TokenActionGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否属于这个行动群的参与范围；当前 defaultGroupId 不在范围内。',
+    TokenActionGovGroupChatManager: 'scopeSource 会检查当前 defaultGroupId 是否有这个行动治理群的发言资格；当前 defaultGroupId 不满足。',
     GroupJoinScopeSource: 'scopeSource 会检查当前地址是否在该链群下参与至少一个代币社区行动；当前地址不满足。',
   };
-  return messages[source] || `${source} 判断当前 NFT 没有这个群聊的发言资格。`;
+  return messages[source] || `${source} 判断当前 defaultGroupId 没有这个群聊的发言资格。`;
 }
 
 function renderMessage(chat, message) {
   const mine = message.mine ? ' mine' : '';
   const profile = nftProfile(message.senderGroupId);
-  const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex, message.conversationId) : null;
+  const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex, message.chatGroupId) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderGroupId).name)}</div>` : '';
   const avatarMenu = state.activeAvatarMenuKey === messageMenuKey(message)
     ? `<div class="message-actions avatar-actions">${renderSenderDenyAction(chat, message)}</div>`
     : '';
+  const quoteAction = canQuoteMessage(message)
+    ? `<button type="button" data-action="quote-message" data-message-index="${message.messageIndex}">引用</button>`
+    : '';
   const actions = state.activeMenuIndex === message.messageIndex
     ? `
       <div class="message-actions">
-        <button type="button" data-action="quote-message" data-message-index="${message.messageIndex}">引用</button>
+        ${quoteAction}
         <button type="button" data-action="copy-message" data-message-index="${message.messageIndex}">复制</button>
       </div>
     `
     : '';
   return `
     <article class="message-row${mine}" data-action="select-message" data-message-index="${message.messageIndex}">
-      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-conversation-id="${message.conversationId}" data-message-index="${message.messageIndex}" data-sender-group-id="${message.senderGroupId || state.senderGroupId}">${escapeHtml(profile.badge)}</div>
+      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-chat-group-id="${message.chatGroupId}" data-message-index="${message.messageIndex}" data-sender-group-id="${message.senderGroupId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
         <div class="message-meta">${escapeHtml(profile.name)}</div>
         <div class="message-bubble${mine}">${quote}${escapeHtml(message.content)}</div>
@@ -1147,7 +1158,7 @@ function renderMessage(chat, message) {
 
 function renderSenderDenyAction(chat, message) {
   if (!canShowAvatarDenyMenu(chat, message)) return '';
-  return `<button type="button" data-action="add-sender-deny" data-conversation-id="${message.conversationId}" data-message-index="${message.messageIndex}">拉黑sender</button>`;
+  return `<button type="button" data-action="add-sender-deny" data-chat-group-id="${message.chatGroupId}" data-message-index="${message.messageIndex}">拉黑sender</button>`;
 }
 
 function canShowAvatarDenyMenu(chat, message) {
@@ -1164,7 +1175,7 @@ function renderStatus() {
 }
 
 function renderGroupDetails() {
-  const active = activeConversation();
+  const active = activeChatEntry();
   const chat = active ? active.item : activeChat();
   const status = chatStatus(chat);
   const className = status.allowed ? 'status-ok' : 'status-bad';
@@ -1192,8 +1203,8 @@ function renderGroupDetails() {
       </div>
     <dl class="status-card">
       ${groupAbout}
-      <dt>当前身份</dt>
-      <dd>senderGroupId #${state.senderGroupId}</dd>
+      <dt>当前 defaultGroupId</dt>
+      <dd>defaultGroupId #${currentDefaultGroupId()}</dd>
       <dt>canPostStatus</dt>
       <dd>${escapeHtml(status.reasonCode)}</dd>
       ${statusRows}
@@ -1210,7 +1221,7 @@ function renderComposerChips() {
   const chips = [];
   const quotedMessageIndex = activeQuotedMessageIndex();
   if (quotedMessageIndex) {
-    const quoted = messageByIndex(quotedMessageIndex, state.activeConversationId);
+    const quoted = messageByIndex(quotedMessageIndex, state.activeChatGroupId);
     const quotedName = quoted ? nftProfile(quoted.senderGroupId).name : '消息';
     chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
   }
@@ -1249,7 +1260,7 @@ function goBack() {
   if (previous) {
     state.bottomTab = previous.bottomTab;
     state.view = previous.view;
-    state.activeConversationId = previous.activeConversationId;
+    state.activeChatGroupId = previous.activeChatGroupId;
     state.activeChatId = previous.activeChatId;
     state.activeGroupMenuId = null;
   } else if (state.bottomTab !== 'chat') {
@@ -1269,7 +1280,7 @@ function rememberPageReturn() {
   state.pageReturnStack.push({
     bottomTab: state.bottomTab,
     view: state.view,
-    activeConversationId: state.activeConversationId,
+    activeChatGroupId: state.activeChatGroupId,
     activeChatId: state.activeChatId,
   });
 }
@@ -1278,7 +1289,7 @@ function selectChat(chatId) {
   const chat = chatById(chatId);
   if (!chat) return;
   state.activeChatId = chat.groupId;
-  state.activeConversationId = String(chat.groupId);
+  state.activeChatGroupId = String(chat.groupId);
   state.blacklistQueryResult = '';
   state.blacklistPage = 1;
   state.activeBlacklistMenuKey = null;
@@ -1303,7 +1314,7 @@ function openActivationForm(chatId) {
   const chat = chatById(chatId);
   if (chat) {
     state.activeChatId = chat.groupId;
-    state.activeConversationId = String(chat.groupId);
+    state.activeChatGroupId = String(chat.groupId);
     state.activeToken = chat.token;
     state.activationType = activationTypeForChat(chat);
   }
@@ -1311,9 +1322,9 @@ function openActivationForm(chatId) {
   render();
 }
 
-function openConversation(conversationId) {
-  state.activeConversationId = String(conversationId);
-  const chat = chatById(conversationId);
+function openChat(chatGroupId) {
+  state.activeChatGroupId = String(chatGroupId);
+  const chat = chatById(chatGroupId);
   if (chat) state.activeChatId = chat.groupId;
   state.view = 'chat';
   state.activeMenuIndex = null;
@@ -1445,7 +1456,7 @@ function activateChat(chatId) {
   chat.active = true;
   chat.lastMessageIndex = 0;
   state.activeChatId = chat.groupId;
-  state.activeConversationId = String(chat.groupId);
+  state.activeChatGroupId = String(chat.groupId);
   state.view = 'chat';
   state.syncHint = `${activationPreview(chat, draft)} 已模拟提交。`;
   render();
@@ -1575,8 +1586,8 @@ function setNftInputMode(mode) {
 
 function queryAdminSelf() {
   state.adminGroupQuery = state.adminGroupQueryType === 'name'
-    ? nftProfile(state.senderGroupId).name
-    : String(state.senderGroupId);
+    ? nftProfile(currentDefaultGroupId()).name
+    : String(currentDefaultGroupId());
   queryAdminGroupValue(state.adminGroupQuery, true);
 }
 
@@ -1704,9 +1715,9 @@ function voteGovTarget(targetType, target, stance) {
   render();
 }
 
-function addSenderDenyFromMessage(messageIndex, conversationId = state.activeConversationId) {
-  const message = messageByIndex(messageIndex, conversationId);
-  const chat = message && chatById(message.conversationId);
+function addSenderDenyFromMessage(messageIndex, chatGroupId = state.activeChatGroupId) {
+  const message = messageByIndex(messageIndex, chatGroupId);
+  const chat = message && chatById(message.chatGroupId);
   if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
 
   const targetAddress = message.senderAddress;
@@ -1861,7 +1872,7 @@ function revalidateGovVote(targetType, target, inputId) {
 function querySelf() {
   const query = state.blacklistQueryType === 'address'
     ? state.account
-    : state.nftInputMode === 'name' ? nftProfile(state.senderGroupId).name : String(state.senderGroupId);
+    : state.nftInputMode === 'name' ? nftProfile(currentDefaultGroupId()).name : String(currentDefaultGroupId());
   state.blacklistQuery = query;
   queryBlacklistValue(query);
 }
@@ -1926,39 +1937,62 @@ function insertComposerToken(token) {
 
 function parseComposerMentions(content) {
   const selected = new Set(state.mentions.map(String));
+  let duplicateCount = 0;
   for (const [senderGroupId, profile] of Object.entries(state.nftProfiles)) {
-    if (content.includes(`@${profile.name}`)) selected.add(senderGroupId);
+    const token = `@${profile.name}`;
+    const count = tokenOccurrences(content, token);
+    if (count > 0) selected.add(senderGroupId);
+    if (count > 1) duplicateCount += count - 1;
   }
-  const mentions = [];
+  const matchedMentions = [];
   for (const senderGroupId of selected) {
-    if (mentions.length >= 32) break;
-    if (content.includes(mentionTokenFor(senderGroupId))) mentions.push(Number(senderGroupId));
+    if (content.includes(mentionTokenFor(senderGroupId))) matchedMentions.push(Number(senderGroupId));
   }
+  const overLimitCount = Math.max(0, matchedMentions.length - 32);
   return {
-    mentions,
+    mentions: matchedMentions,
     mentionAll: content.includes('@全部'),
+    duplicateCount,
+    overLimitCount,
   };
+}
+
+function tokenOccurrences(content, token) {
+  return content.split(token).length - 1;
+}
+
+function mentionValidationHint(draftMentions) {
+  const notices = [];
+  if (draftMentions.duplicateCount > 0) notices.push(`已去重 ${draftMentions.duplicateCount} 个重复 @`);
+  if (draftMentions.overLimitCount > 0) notices.push(`超过 32 个，请删除 ${draftMentions.overLimitCount} 个`);
+  return notices.length ? `mentions ${notices.join('；')}。` : '';
 }
 
 function sendMessage() {
   const input = document.getElementById('composer-input');
   const content = input.value.trim();
   const draftMentions = parseComposerMentions(content);
-  const active = activeConversation();
+  const active = activeChatEntry();
   const chat = active && active.kind === 'group' ? active.item : null;
   const status = chatStatus(chat);
   if (!content || !status.allowed) {
-    state.syncHint = status.allowed ? 'ContentEmpty：空消息会被合约拒绝。' : `${status.reasonCode}：当前身份不能发言。`;
+    state.syncHint = status.allowed ? 'ContentEmpty：空消息会被合约拒绝。' : `${status.reasonCode}：当前 defaultGroupId 不能发言。`;
+    render();
+    return;
+  }
+  if (draftMentions.overLimitCount > 0) {
+    state.syncHint =
+      `TooManyMentions：mentions 最多 32 个，当前 ${draftMentions.mentions.length} 个；请删除 ${draftMentions.overLimitCount} 个 @ 后再发送。`;
     render();
     return;
   }
 
-  const visibleMessages = messagesForConversation(state.activeConversationId);
+  const visibleMessages = messagesForChat(state.activeChatGroupId);
   const nextIndex = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageIndex)) + 1 : 0;
   const quotedMessageIndex = activeQuotedMessageIndex() || 0;
   state.messages.push({
-    conversationId: state.activeConversationId,
-    senderGroupId: state.senderGroupId,
+    chatGroupId: state.activeChatGroupId,
+    senderGroupId: currentDefaultGroupId(),
     senderAddress: state.account,
     round: chat ? chat.round : 0,
     messageIndex: nextIndex,
@@ -1969,7 +2003,8 @@ function sendMessage() {
     mine: true,
   });
   if (chat) chat.lastMessageIndex = nextIndex;
-  state.syncHint = `MessagePost 发现 messageIndex #${nextIndex}，正文已通过 messages 补拉。`;
+  const mentionHint = mentionValidationHint(draftMentions);
+  state.syncHint = `MessagePost 发现 messageIndex #${nextIndex}，正文已通过 messages 补拉。${mentionHint ? ` ${mentionHint}` : ''}`;
   clearActiveQuote();
   state.mentions = [];
   state.mentionAll = false;
@@ -1978,7 +2013,9 @@ function sendMessage() {
 }
 
 function quoteMessage(messageIndex) {
-  state.quotedMessagesByChatGroupId[String(state.activeConversationId)] = Number(messageIndex);
+  const message = messageByIndex(messageIndex);
+  if (!canQuoteMessage(message)) return;
+  state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] = Number(messageIndex);
   state.activeMenuIndex = null;
   render();
 }
@@ -2028,14 +2065,14 @@ function selectMessage(messageIndex) {
   render();
 }
 
-function toggleAvatarMenu(messageIndex, conversationId = state.activeConversationId) {
+function toggleAvatarMenu(messageIndex, chatGroupId = state.activeChatGroupId) {
   if (suppressAvatarClick) {
     suppressAvatarClick = false;
     return;
   }
 
-  const message = messageByIndex(messageIndex, conversationId);
-  const chat = message && chatById(message.conversationId);
+  const message = messageByIndex(messageIndex, chatGroupId);
+  const chat = message && chatById(message.chatGroupId);
   if (!message || !canShowAvatarDenyMenu(chat, message)) {
     state.activeAvatarMenuKey = null;
     render();
@@ -2111,7 +2148,7 @@ document.addEventListener('click', (event) => {
   if (action === 'select-chat') selectChat(target.dataset.chatId);
   if (action === 'open-activation') openActivation(target.dataset.chatId);
   if (action === 'open-activation-form') openActivationForm(target.dataset.chatId);
-  if (action === 'open-conversation') openConversation(target.dataset.conversationId);
+  if (action === 'open-chat') openChat(target.dataset.chatGroupId);
   if (action === 'activate-chat') activateChat(target.dataset.chatId);
   if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
   if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.chatId);
@@ -2138,12 +2175,12 @@ document.addEventListener('click', (event) => {
   if (action === 'query-self') querySelf();
   if (action === 'query-blacklist') queryBlacklist(target.dataset.input);
   if (action === 'close-gov-voters') closeGovVoterSheet();
-  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageIndex, target.dataset.conversationId);
+  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageIndex, target.dataset.chatGroupId);
   if (action === 'select-message') selectMessage(target.dataset.messageIndex);
   if (action === 'quote-message') quoteMessage(target.dataset.messageIndex);
   if (action === 'copy-message') copyMessage(target.dataset.messageIndex);
   if (action === 'add-mention') addMention(target.dataset.senderGroupId);
-  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex, target.dataset.conversationId);
+  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex, target.dataset.chatGroupId);
   if (action === 'clear-quote') {
     clearActiveQuote();
     render();

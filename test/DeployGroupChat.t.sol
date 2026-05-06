@@ -100,7 +100,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN(), address(protocol));
     }
 
-    function testT141_addressFileContentIncludesOnlyDeployedAddressFields() public view {
+    function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {
         DeployGroupChat.DeployConfig memory config = DeployGroupChat.DeployConfig({
             groupDefaults: address(groupDefaults),
             extensionCenter: address(protocol),
@@ -123,19 +123,19 @@ contract DeployGroupChatTest is TestBase {
 
         string memory content = deployer.addressFileContentForTest(config, deployed);
 
-        _assertContains(content, "groupDefaultsAddress=");
-        _assertContains(content, "extensionCenterAddress=");
-        _assertContains(content, "groupJoinAddress=");
         _assertContains(content, "adminDenySourceAddress=");
         _assertContains(content, "groupChatDenySourceAddress=");
         _assertContains(content, "groupJoinScopeSourceAddress=");
-        _assertContains(content, "groupChatBeforePostPluginAddress=");
-        _assertContains(content, "groupChatAfterPostPluginAddress=");
         _assertContains(content, "groupChatAddress=");
         _assertContains(content, "tokenGroupChatManagerAddress=");
         _assertContains(content, "tokenGovGroupChatManagerAddress=");
         _assertContains(content, "tokenActionGovGroupChatManagerAddress=");
         _assertContains(content, "tokenActionGroupChatManagerAddress=");
+        _assertNotContains(content, "groupDefaultsAddress=");
+        _assertNotContains(content, "extensionCenterAddress=");
+        _assertNotContains(content, "groupJoinAddress=");
+        _assertNotContains(content, "groupChatBeforePostPluginAddress=");
+        _assertNotContains(content, "groupChatAfterPostPluginAddress=");
         _assertNotContains(content, "originBlocks=");
         _assertNotContains(content, "phaseBlocks=");
     }

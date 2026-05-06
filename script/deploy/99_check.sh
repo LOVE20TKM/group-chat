@@ -4,15 +4,89 @@ echo "========================================="
 echo "Verifying GroupChat Configuration"
 echo "========================================="
 
-if [ -z "$tokenGroupChatManagerAddress" ] && [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ]; then
-    source $network_dir/address.group.chat.params
+if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && { \
+    [ -z "$groupChatAddress" ] || \
+    [ -z "$adminDenySourceAddress" ] || \
+    [ -z "$groupChatDenySourceAddress" ] || \
+    [ -z "$groupJoinScopeSourceAddress" ] || \
+    [ -z "$tokenGroupChatManagerAddress" ] || \
+    [ -z "$tokenGovGroupChatManagerAddress" ] || \
+    [ -z "$tokenActionGovGroupChatManagerAddress" ] || \
+    [ -z "$tokenActionGroupChatManagerAddress" ]; \
+}; then
+    source "$network_dir/address.group.chat.params"
+fi
+
+if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.params" ]; then
+    source "$network_dir/address.group.params"
+fi
+
+if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.defaults.params" ]; then
+    source "$network_dir/address.group.defaults.params"
 fi
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/group.chat.params" ]; then
-    source $network_dir/group.chat.params
+    source "$network_dir/group.chat.params"
 else
     echo -e "\033[31mError:\033[0m group.chat.params not found; run 00_init.sh <network> before 99_check.sh"
     return 1
+fi
+
+if [ -n "$groupAddress" ]; then
+    LOVE20_GROUP_ADDRESS=$groupAddress
+    export LOVE20_GROUP_ADDRESS
+fi
+
+if [ -n "$groupDefaultsAddress" ]; then
+    GROUP_DEFAULTS_ADDRESS=$groupDefaultsAddress
+    export GROUP_DEFAULTS_ADDRESS
+fi
+
+if [ -n "$extensionCenterAddress" ]; then
+    EXTENSION_CENTER_ADDRESS=$extensionCenterAddress
+    export EXTENSION_CENTER_ADDRESS
+fi
+
+if [ -n "$groupJoinAddress" ]; then
+    GROUP_JOIN_ADDRESS=$groupJoinAddress
+    export GROUP_JOIN_ADDRESS
+fi
+
+if [ -n "$groupChatDenySourceAddress" ]; then
+    GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
+    export GROUP_CHAT_DENY_SOURCE_ADDRESS
+fi
+
+if [ -n "$groupJoinScopeSourceAddress" ]; then
+    GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
+    export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
+fi
+
+if [ -n "$adminDenySourceAddress" ]; then
+    ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
+    export ADMIN_DENY_SOURCE_ADDRESS
+fi
+
+if [ -n "$groupChatBeforePostPluginAddress" ]; then
+    GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS=$groupChatBeforePostPluginAddress
+    export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
+fi
+
+if [ -n "$groupChatAfterPostPluginAddress" ]; then
+    GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$groupChatAfterPostPluginAddress
+    export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
+fi
+
+zero_address=0x0000000000000000000000000000000000000000
+
+if [ -z "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" ]; then
+    GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS=$zero_address
+    export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
+fi
+
+if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
+    GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$zero_address
+    export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 fi
 
 if [ -z "$groupChatAddress" ]; then
@@ -53,29 +127,14 @@ if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
-    GROUP_JOIN_ADDRESS=$groupJoinAddress
-    export GROUP_JOIN_ADDRESS
-fi
-
 if [ -z "$GROUP_JOIN_ADDRESS" ]; then
     echo -e "\033[31m✗\033[0m GROUP_JOIN_ADDRESS not set"
     ((missing_params++))
 fi
 
-if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddress" ]; then
-    GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
-    export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
-fi
-
 if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ]; then
     echo -e "\033[31m✗\033[0m GROUP_JOIN_SCOPE_SOURCE_ADDRESS not set"
     ((missing_params++))
-fi
-
-if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ] && [ -n "$adminDenySourceAddress" ]; then
-    ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
-    export ADMIN_DENY_SOURCE_ADDRESS
 fi
 
 if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ]; then
@@ -115,7 +174,7 @@ fi
 
 if [ $missing_params -gt 0 ]; then
     echo -e "\033[31mError:\033[0m $missing_params initialization parameter(s) missing"
-    echo "Please ensure all parameters are loaded from group.chat.params / address.group.defaults.params"
+    echo "Please ensure all parameters are loaded from group.chat.params / address.group.defaults.params / address.group.chat.params"
     return 1
 fi
 

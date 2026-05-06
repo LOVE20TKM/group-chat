@@ -43,18 +43,7 @@
 
 ## 测试拆分
 
-- `GroupChatLifecycle.t.sol`
-  - 构造、激活、关闭、重开
-- `GroupChatMeta.t.sol`
-  - `meta`、`configVersion`、`ChatActivate` 差异事件
-- `GroupChatDelegate.t.sol`
-  - `delegateGroupId` 与 NFT 转让恢复
-- `GroupChatMessages.t.sol`
-  - 发消息、分页、round、sender 维度读取
-- `GroupChatPlugins.t.sol`
-  - `beforePost` / `afterPost` / 重入 / 关闭态插件配置写
-- `GroupChatDefaultSender.t.sol`
-  - 默认身份注册表 / `postByDefaultSender`
+测试文件和行为边界见 [tests.md](./tests.md)。
 
 ## 部署脚本
 
@@ -88,7 +77,7 @@
 
 ```bash
 cd script/deploy
-source ./00_init.sh anvil
+source ./00_init.sh thinkium70001_public_test
 forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 ```
 
@@ -103,14 +92,10 @@ shell 一键部署时：
 - `GroupChat` 自身初始化参数与 Manager 依赖从 `group.chat.params` 读取
 - 四个 typed Manager 固定挂本次部署的 `GovVotedDenySource`
 
-部署完成后会写入 `script/network/<network>/address.group.chat.params`，字段定义见 [deployment.md](./deployment.md)。
+部署完成后会写入 `script/network/<network>/address.group.chat.params`，只记录当前仓库本次部署产物；字段定义见 [deployment.md](./deployment.md)。
 
 网络模板：
 
-- [script/network/anvil/group.chat.params](../script/network/anvil/group.chat.params)
-- [script/network/anvil/address.group.params](../script/network/anvil/address.group.params)
-- [script/network/anvil/network.params](../script/network/anvil/network.params)
-- [script/network/anvil/.account.example](../script/network/anvil/.account.example)
 - [script/network/thinkium70001_public/group.chat.params](../script/network/thinkium70001_public/group.chat.params)
 - [script/network/thinkium70001_public/address.group.params](../script/network/thinkium70001_public/address.group.params)
 - [script/network/thinkium70001_public/address.group.defaults.params](../script/network/thinkium70001_public/address.group.defaults.params)

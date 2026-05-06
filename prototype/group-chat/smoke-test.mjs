@@ -15,8 +15,27 @@ const html = readFileSync(join(root, 'index.html'), 'utf8');
 const css = readFileSync(join(root, 'styles.css'), 'utf8');
 const data = readFileSync(join(root, 'prototype-data.js'), 'utf8');
 const js = readFileSync(join(root, 'app.js'), 'utf8');
+const aiEditing = readFileSync(join(root, 'AI_EDITING.md'), 'utf8');
 const prototypeSource = html + data + js;
 const renderStatusMatch = js.match(/function renderStatus\(\) \{([\s\S]*?)\n\}/);
+
+function extractFunctionSource(source, name) {
+  const start = source.indexOf(`function ${name}(`);
+  if (start === -1) throw new Error(`Missing function ${name}`);
+
+  const bodyStart = source.indexOf('{', start);
+  let depth = 0;
+  for (let index = bodyStart; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) return source.slice(start, index + 1);
+    }
+  }
+
+  throw new Error(`Unclosed function ${name}`);
+}
 
 if (!renderStatusMatch) {
   throw new Error('Missing renderStatus');
@@ -44,6 +63,29 @@ if (js.includes('...state.messages.map((message) => message.messageIndex)')) {
 
 if (data.includes('indexMode') || js.includes('setIndexMode') || js.includes('set-index-mode')) {
   throw new Error('Index mode switch is not part of the current prototype interaction');
+}
+
+if (js.includes('state.senderGroupId')) {
+  throw new Error('Current account posting identity must use defaultGroupId');
+}
+
+if (data.includes('senderOwnerMatches') || js.includes('senderOwnerMatches') || js.includes('senderGroupId 的 owner')) {
+  throw new Error('Prototype must describe current-account posting ownership as defaultGroupId');
+}
+
+if (
+  prototypeSource.includes('conversationId') ||
+  prototypeSource.includes('activeConversationId') ||
+  prototypeSource.includes('data-conversation-id') ||
+  aiEditing.includes('conversationId') ||
+  aiEditing.includes('activeConversationId') ||
+  aiEditing.includes('data-conversation-id')
+) {
+  throw new Error('Prototype data and handlers must use chatGroupId, not conversationId');
+}
+
+if (!js.includes('function canQuoteMessage(') || !js.includes('canQuoteMessage(message)')) {
+  throw new Error('Prototype must hide quote actions for messageIndex 0');
 }
 
 if (data.includes('quotedMessageIndex: null') || js.includes('state.quotedMessageIndex')) {
@@ -147,13 +189,17 @@ const requiredAppJs = [
   'canShowAvatarDenyMenu',
   'SenderNotGroupOwner',
   'ChatNotActive',
-  'messagesForConversation',
+  'messagesForChat',
   'quotedMessagesByChatGroupId',
   'activeQuotedMessageIndex',
   'clearActiveQuote',
+  'canQuoteMessage',
   'avatarLongPressMs',
   'insertComposerToken',
   'parseComposerMentions',
+  'mentionValidationHint',
+  'duplicateCount',
+  'overLimitCount',
   'openGovVoters',
   '查看voter列表',
   'voterList',
@@ -208,6 +254,7 @@ for (const needle of requiredAppJs) {
 
 const requiredDataJs = [
   '爱聊',
+  'defaultGroupId',
   'bottomTabs',
   'TokenGroupChatManager',
   'TokenGovGroupChatManager',
@@ -233,6 +280,9 @@ if (!prototypeData || !prototypeData.initialState) {
 }
 
 const { initialState } = prototypeData;
+if (initialState.senderGroupId !== undefined || initialState.defaultGroupId === undefined) {
+  throw new Error('initialState must use defaultGroupId for the current account posting identity');
+}
 if (!Array.isArray(initialState.chats) || !initialState.chats.length) {
   throw new Error('initialState.chats must be a non-empty array');
 }
@@ -257,18 +307,24 @@ for (const action of initialState.actions) {
 }
 
 for (const message of initialState.messages) {
-  if (!chatIds.has(Number(message.conversationId))) {
-    throw new Error(`Message ${message.messageIndex} points to missing conversationId ${message.conversationId}`);
+  if (!chatIds.has(Number(message.chatGroupId))) {
+    throw new Error(`Message ${message.messageIndex} points to missing chatGroupId ${message.chatGroupId}`);
   }
 }
 
-const messageIndexesByConversation = new Map();
+const visibleZeroQuoteConversation = initialState.messages.some((message) => message.messageIndex === 0)
+  && initialState.messages.some((message) => message.messageIndex > 0);
+if (!visibleZeroQuoteConversation) {
+  throw new Error('Prototype fixture must include a visible messageIndex 0 example');
+}
+
+const messageIndexesByChat = new Map();
 for (const message of initialState.messages) {
-  const key = String(message.conversationId);
-  if (!messageIndexesByConversation.has(key)) messageIndexesByConversation.set(key, new Set());
-  const indexes = messageIndexesByConversation.get(key);
+  const key = String(message.chatGroupId);
+  if (!messageIndexesByChat.has(key)) messageIndexesByChat.set(key, new Set());
+  const indexes = messageIndexesByChat.get(key);
   if (indexes.has(message.messageIndex)) {
-    throw new Error(`Duplicate messageIndex ${message.messageIndex} in conversation ${key}`);
+    throw new Error(`Duplicate messageIndex ${message.messageIndex} in chatGroupId ${key}`);
   }
   indexes.add(message.messageIndex);
 }
@@ -302,6 +358,127 @@ for (const needle of requiredProtocolCopy) {
   if (!prototypeSource.includes(needle)) {
     throw new Error(`Missing protocol copy: ${needle}`);
   }
+}
+
+const mentionParserHarness = new Function(
+  'state',
+  [
+    extractFunctionSource(js, 'nftProfile'),
+    extractFunctionSource(js, 'mentionTokenFor'),
+    extractFunctionSource(js, 'parseComposerMentions'),
+    extractFunctionSource(js, 'tokenOccurrences'),
+    extractFunctionSource(js, 'mentionValidationHint'),
+    'return { parseComposerMentions, mentionValidationHint };',
+  ].join('\n'),
+);
+
+const mentionTestState = {
+  mentions: [],
+  nftProfiles: Object.fromEntries(
+    Array.from({ length: 34 }, (_, index) => {
+      const id = String(7000 + index);
+      const name = `成员${String(index + 1).padStart(2, '0')}`;
+      return [id, { name, badge: '测' }];
+    }),
+  ),
+};
+const { parseComposerMentions, mentionValidationHint } = mentionParserHarness(mentionTestState);
+const overLimitContent = Object.values(mentionTestState.nftProfiles)
+  .map((profile) => `@${profile.name}`)
+  .join(' ');
+const overLimitDraft = parseComposerMentions(overLimitContent);
+if (overLimitDraft.mentions.length !== 34 || overLimitDraft.overLimitCount !== 2) {
+  throw new Error('Mention parser must keep over-limit mentions so sending can be blocked');
+}
+const overLimitHint = mentionValidationHint(overLimitDraft);
+if (!overLimitHint.includes('超过 32') || !overLimitHint.includes('请删除 2') || overLimitHint.includes('截断')) {
+  throw new Error('Mention validation hint must explain that overflow blocks sending');
+}
+
+const duplicateDraft = parseComposerMentions('@成员01 @成员01');
+if (duplicateDraft.mentions.length !== 1 || duplicateDraft.duplicateCount !== 1) {
+  throw new Error('Mention parser must dedupe repeated @ tokens and report duplicate count');
+}
+if (!mentionValidationHint(duplicateDraft).includes('已去重 1')) {
+  throw new Error('Mention validation hint must explain duplicate dedupe');
+}
+
+const sendHarness = new Function(
+  'state',
+  'document',
+  'render',
+  [
+    extractFunctionSource(js, 'nftProfile'),
+    extractFunctionSource(js, 'mentionTokenFor'),
+    extractFunctionSource(js, 'parseComposerMentions'),
+    extractFunctionSource(js, 'tokenOccurrences'),
+    extractFunctionSource(js, 'mentionValidationHint'),
+    extractFunctionSource(js, 'messagesForChat'),
+    extractFunctionSource(js, 'currentDefaultGroupId'),
+    'function activeChatEntry() { return { kind: "group", item: state.chat }; }',
+    'function chatStatus() { return { allowed: true, reasonCode: "0x00000000" }; }',
+    'function activeQuotedMessageIndex() { return 0; }',
+    'function clearActiveQuote() {}',
+    extractFunctionSource(js, 'sendMessage'),
+    'return { sendMessage };',
+  ].join('\n'),
+);
+
+const sendState = {
+  account: '0x8b...91',
+  defaultGroupId: 9007,
+  activeChatGroupId: '1024',
+  messages: [],
+  mentions: [],
+  mentionAll: false,
+  syncHint: '',
+  chat: { round: 42 },
+  nftProfiles: mentionTestState.nftProfiles,
+};
+const sendInput = { value: overLimitContent };
+const sendDocument = {
+  getElementById(id) {
+    if (id === 'composer-input') return sendInput;
+    throw new Error(`Unexpected document lookup: ${id}`);
+  },
+};
+sendHarness(sendState, sendDocument, () => {}).sendMessage();
+if (sendState.messages.length !== 0 || !sendState.syncHint.includes('TooManyMentions')) {
+  throw new Error('sendMessage must block over-limit mentions instead of truncating and sending');
+}
+
+const quoteHarness = new Function(
+  'state',
+  'render',
+  [
+    extractFunctionSource(js, 'messagesForChat'),
+    extractFunctionSource(js, 'messageByIndex'),
+    extractFunctionSource(js, 'canQuoteMessage'),
+    extractFunctionSource(js, 'quoteMessage'),
+    'return { canQuoteMessage, quoteMessage };',
+  ].join('\n'),
+);
+
+const quoteTestState = {
+  activeChatGroupId: '1024',
+  activeMenuIndex: 0,
+  quotedMessagesByChatGroupId: {},
+  messages: [
+    { chatGroupId: '1024', messageIndex: 0 },
+    { chatGroupId: '1024', messageIndex: 1 },
+  ],
+};
+const { canQuoteMessage, quoteMessage } = quoteHarness(quoteTestState, () => {});
+if (canQuoteMessage(quoteTestState.messages[0]) || !canQuoteMessage(quoteTestState.messages[1])) {
+  throw new Error('canQuoteMessage must reject messageIndex 0 and allow positive messageIndex');
+}
+quoteMessage(0);
+if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== undefined) {
+  throw new Error('quoteMessage must ignore messageIndex 0');
+}
+quoteMessage(1);
+if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== 1) {
+  throw new Error('quoteMessage must store positive messageIndex quotes');
 }
 
 console.log('LOVE20 Chat prototype smoke test passed');

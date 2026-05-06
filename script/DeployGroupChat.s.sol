@@ -103,23 +103,18 @@ contract DeployGroupChat is ScriptBase {
         vm.writeFile(addressFile, _addressFileContent(config, deployed));
     }
 
-    function _addressFileContent(DeployConfig memory config, DeployedAddresses memory deployed)
+    function _addressFileContent(DeployConfig memory, DeployedAddresses memory deployed)
         internal
         pure
         returns (string memory)
     {
         string memory content = string.concat(
-            _addressLine("groupDefaultsAddress", config.groupDefaults),
-            _addressLine("extensionCenterAddress", config.extensionCenter),
-            _addressLine("groupJoinAddress", config.groupJoin),
             _addressLine("adminDenySourceAddress", deployed.adminDenySource),
             _addressLine("groupChatDenySourceAddress", deployed.groupChatDenySource),
             _addressLine("groupJoinScopeSourceAddress", deployed.groupJoinScopeSource)
         );
         content = string.concat(
             content,
-            _addressLine("groupChatBeforePostPluginAddress", config.beforePostPlugin),
-            _addressLine("groupChatAfterPostPluginAddress", config.afterPostPlugin),
             _addressLine("groupChatAddress", deployed.groupChat),
             _addressLine("tokenGroupChatManagerAddress", deployed.tokenGroupChatManager),
             _addressLine("tokenGovGroupChatManagerAddress", deployed.tokenGovGroupChatManager)

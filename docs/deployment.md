@@ -33,6 +33,8 @@ source ./one_click_deploy.sh <network>
 - `ORIGIN_BLOCKS`
 - `PHASE_BLOCKS`：必须大于 `0`
 - `network`
+- `KEYSTORE_ACCOUNT`：写在 `script/network/<network>/.account`
+- `ACCOUNT_ADDRESS`：写在 `script/network/<network>/.account`
 
 ## 可选参数
 
@@ -54,24 +56,22 @@ source ./one_click_deploy.sh <network>
 每个网络至少包含：
 
 - `script/network/<network>/network.params`
+- `script/network/<network>/.account`
 - `script/network/<network>/group.chat.params`
 - `script/network/<network>/address.group.params`
 - `script/network/<network>/address.group.defaults.params`
+
+`.account` 为本地运行必需文件，必须包含 `KEYSTORE_ACCOUNT` 与 `ACCOUNT_ADDRESS`；可从同目录 `.account.example` 复制生成，真实 `.account` 不提交。
 
 部署结果写入：
 
 - `script/network/<network>/address.group.chat.params`
 
-结果字段：
+结果字段只包含当前仓库本次部署产物；上游依赖地址继续从 `address.group.params`、`address.group.defaults.params` 与 `group.chat.params` 读取。
 
-- `groupDefaultsAddress`
-- `extensionCenterAddress`
-- `groupJoinAddress`
 - `adminDenySourceAddress`
 - `groupChatDenySourceAddress`
 - `groupJoinScopeSourceAddress`
-- `groupChatBeforePostPluginAddress`
-- `groupChatAfterPostPluginAddress`
 - `groupChatAddress`
 - `tokenGroupChatManagerAddress`
 - `tokenGovGroupChatManagerAddress`
@@ -103,7 +103,7 @@ EXTENSION_CENTER_ADDRESS
 ## Check
 
 子脚本默认由 `one_click_deploy.sh` 调用；单独运行前必须先执行 `source ./00_init.sh <network>`。
-`99_check.sh` 会重新读取 `script/network/<network>/group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与配置文件值比对；不一致即视为部署失败，该合约实例不得继续使用。
+`99_check.sh` 会重新读取 `script/network/<network>/address.group.chat.params`、`address.group.params`、`address.group.defaults.params` 与 `group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与配置文件值比对；不一致即视为部署失败，该合约实例不得继续使用。
 
 `script/deploy/99_check.sh` 会检查：
 
