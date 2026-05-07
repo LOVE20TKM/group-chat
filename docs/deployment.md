@@ -30,6 +30,7 @@ source ./one_click_deploy.sh <network>
 - `GROUP_DEFAULTS_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
+- `GROUP_CHAT_ACTION_RECENT_ROUNDS`
 - `ORIGIN_BLOCKS`
 - `PHASE_BLOCKS`：必须大于 `0`
 - `network`

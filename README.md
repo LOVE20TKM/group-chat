@@ -2,7 +2,7 @@
 
 LOVE20 `GroupNFT` 群聊协议仓库。
 
-目标：`1 NFT = 1 Chat`，公开链上、完全去中心化、可扩展。
+目标：`1 NFT = 1 Chat`，公开链上，支持去中心化与 owner-admin 管理型群聊，可扩展。
 
 ## 文档
 
@@ -86,6 +86,8 @@ python3 -m http.server 8012
 - `GROUP_JOIN_ADDRESS`
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`（当前配置为 `3`）
 - `network`
+- `KEYSTORE_ACCOUNT`：写在 `script/network/<network>/.account`
+- `ACCOUNT_ADDRESS`：写在 `script/network/<network>/.account`
 
 可选环境变量：
 

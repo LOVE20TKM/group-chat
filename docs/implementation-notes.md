@@ -10,7 +10,7 @@
 - 上游注册表接口：[IGroupDefaults.sol](../../group/src/interfaces/IGroupDefaults.sol)
 - 测试入口：`test/*.t.sol`
 
-当前已实现并覆盖测试的核心能力：
+当前本仓库已实现并覆盖测试的核心能力：
 
 - `activateChat` / `deactivateChat`
 - `chatInfo`
@@ -30,7 +30,7 @@
 - `messagesByMentionAllCount` / `messagesByMentionAll` / `messageIdsByMentionAll`
 - `senderIdsCount` / `senderIds`
 - `roundsCount` / `rounds` / `roundInfo` / `roundInfos`
-- `GroupDefaults`
+- 对上游 `GroupDefaults` 的默认发言身份接入
 
 ## 当前目录
 
@@ -69,6 +69,7 @@
 - `GROUP_JOIN_ADDRESS`
 - `ORIGIN_BLOCKS`
 - `PHASE_BLOCKS`（必须大于 `0`）
+- `GROUP_CHAT_ACTION_RECENT_ROUNDS`
 - `network`
 
 可选变量：
