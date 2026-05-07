@@ -9,8 +9,8 @@ interface IAfterPostPlugin {
         string calldata content,
         uint256[] calldata mentions,
         bool mentionAll,
-        uint256 quotedMessageIndex,
-        uint256 messageIndex,
+        uint256 quotedMessageId,
+        uint256 messageId,
         uint256 blockNumber,
         uint256 timestamp
     ) external;

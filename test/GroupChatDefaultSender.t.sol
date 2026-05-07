@@ -24,7 +24,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         vm.prank(senderOwner);
         _postByDefaultSender(chatGroupId, "default-post");
 
-        IGroupChatStructs.Message memory fetched = chat.message(chatGroupId, 0);
+        IGroupChatStructs.Message memory fetched = chat.message(chatGroupId, 1);
         assertEq(fetched.senderGroupId, senderGroupId);
         assertEq(fetched.senderAddress, senderOwner);
         assertEq(fetched.content, "default-post");

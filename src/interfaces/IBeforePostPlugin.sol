@@ -9,6 +9,6 @@ interface IBeforePostPlugin {
         string calldata content,
         uint256[] calldata mentions,
         bool mentionAll,
-        uint256 quotedMessageIndex
+        uint256 quotedMessageId
     ) external;
 }

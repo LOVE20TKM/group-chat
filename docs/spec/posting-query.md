@@ -46,7 +46,7 @@ afterPostPlugin.afterPost
 - `content`
 - `mentions`
 - `mentionAll`
-- `quotedMessageIndex`
+- `quotedMessageId`
 - `beforePostPlugin`
 
 `canPostStatus(...)` reasonCode：
@@ -70,6 +70,14 @@ DenySourceFailed.selector          denySource 调用失败
 - 消息只能新增，不能编辑或删除。
 - `MessagePost` 事件不带完整正文，正文以 view 读取为准。
 
+## 消息 ID
+
+- 每条消息的 `messageId` 只在当前 `chatGroupId` 内唯一。
+- `messageId` 从 `1` 开始连续递增。
+- `0` 永远不分配给消息，只保留给“无引用”。
+- `messageId = messageIndex + 1`，其中 `messageIndex` 只表示合约内部数组下标。
+- `message(chatGroupId, messageId)` 的 `messageId` 必须是 `1..messagesCount(chatGroupId)`。
+
 ## Mentions
 
 - `mentions` 是 `uint256[]`。
@@ -81,9 +89,8 @@ DenySourceFailed.selector          denySource 调用失败
 
 ## 引用
 
-- `quotedMessageIndex == 0` 表示无引用。
-- `quotedMessageIndex > 0` 必须指向当前 chat 内已存在消息。
-- 协议不支持引用 `messageIndex == 0`。
+- `quotedMessageId == 0` 表示无引用。
+- `quotedMessageId > 0` 必须指向当前 chat 内已存在的 `messageId`。
 - 引用合法性在 source / plugin 调用前校验。
 
 ## 默认发言身份
@@ -126,9 +133,9 @@ DenySourceFailed.selector          denySource 调用失败
 
 轻量索引：
 
-- `messageIndexesBySender`
-- `messageIndexesByMention`
-- `messageIndexesByMentionAll`
+- `messageIdsBySender`
+- `messageIdsByMention`
+- `messageIdsByMentionAll`
 
 列表：
 
@@ -139,6 +146,7 @@ DenySourceFailed.selector          denySource 调用失败
 
 - `MessagePost` 只作为发现信号。
 - 正文以 `message(...)` 或 `messages(...)` 为准。
-- 前端维护每个 `chatGroupId` 的最新 `messageIndex`。
-- 若事件中的 `messageIndex` 出现缺口，按区间补拉。
+- 前端维护每个 `chatGroupId` 的最新 `messageId`。
+- 若事件中的 `messageId == latestMessageId + 1`，可用 `message(chatGroupId, messageId)` 回查。
+- 若事件中的 `messageId > latestMessageId + 1`，用 `messages(chatGroupId, latestMessageId, messageId - latestMessageId, false)` 补拉缺口。
 - 配置变化以 `configVersion` 和 `ruleSlots` / `metaEntries` 重拉为准。

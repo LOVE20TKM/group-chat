@@ -78,9 +78,9 @@ abstract contract GroupChatFixture is TestBase {
         uint256 chatGroupId_,
         uint256 senderGroupId_,
         string memory content,
-        uint256 quotedMessageIndex
+        uint256 quotedMessageId
     ) internal {
-        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false, quotedMessageIndex);
+        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false, quotedMessageId);
     }
 
     function _postByDefaultSender(uint256 chatGroupId_, string memory content) internal {
@@ -121,8 +121,8 @@ abstract contract GroupChatFixture is TestBase {
         version = abi.decode(data, (uint256));
     }
 
-    function _decodeMessagePost(bytes memory data) internal pure returns (uint256 round, uint256 messageIndex) {
-        (round, messageIndex) = abi.decode(data, (uint256, uint256));
+    function _decodeMessagePost(bytes memory data) internal pure returns (uint256 round, uint256 messageId) {
+        (round, messageId) = abi.decode(data, (uint256, uint256));
     }
 
     function _decodeAfterPostFailedRound(bytes memory data) internal pure returns (uint256 round) {

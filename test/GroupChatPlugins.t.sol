@@ -362,9 +362,9 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(logs.length, 2);
         assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
         assertEq(logs[1].topics[0], AFTER_POST_PLUGIN_FAILED_SIG);
-        (uint256 round, uint256 messageIndex) = _decodeMessagePost(logs[0].data);
+        (uint256 round, uint256 messageId) = _decodeMessagePost(logs[0].data);
         assertEq(round, 0);
-        assertEq(messageIndex, 0);
+        assertEq(messageId, 1);
         assertEq(_decodeAfterPostFailedRound(logs[1].data), 0);
     }
 
@@ -483,7 +483,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(captured.length, 2);
         assertEq(captured[0], otherGroupId);
         assertEq(captured[1], delegateGroupId);
-        assertEq(beforePlugin.lastQuotedMessageIndex(), 0);
+        assertEq(beforePlugin.lastQuotedMessageId(), 0);
 
         assertEq(chat.messagesCount(chatGroupId), 1);
         assertTrue(chat.messages(chatGroupId, 0, 1, false)[0].mentionAll);
@@ -548,7 +548,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(senderOwner);
         chat.post(chatGroupId, senderGroupId, "quoted", mentions, true, 1);
 
-        assertEq(beforePlugin.lastQuotedMessageIndex(), 1);
+        assertEq(beforePlugin.lastQuotedMessageId(), 1);
 
         uint256[] memory beforeMentions = beforePlugin.lastMentions();
         assertEq(beforeMentions.length, 1);
@@ -559,8 +559,8 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(afterPlugin.lastSenderAddress(), senderOwner);
         assertEq(afterPlugin.lastContent(), "quoted");
         assertTrue(afterPlugin.lastMentionAll());
-        assertEq(afterPlugin.lastQuotedMessageIndex(), 1);
-        assertEq(afterPlugin.lastMessageIndex(), 2);
+        assertEq(afterPlugin.lastQuotedMessageId(), 1);
+        assertEq(afterPlugin.lastMessageId(), 3);
         assertEq(afterPlugin.lastBlockNumber(), block.number);
         assertEq(afterPlugin.lastTimestamp(), block.timestamp);
 

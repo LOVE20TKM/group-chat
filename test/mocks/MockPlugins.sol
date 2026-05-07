@@ -22,7 +22,7 @@ interface IGroupChatPluginView {
         string calldata content,
         uint256[] calldata mentions,
         bool mentionAll,
-        uint256 quotedMessageIndex
+        uint256 quotedMessageId
     ) external;
 
     function setMeta(
@@ -54,7 +54,7 @@ contract MockBeforePostCapturePlugin {
     address public lastSenderAddress;
     string public lastContent;
     bool public lastMentionAll;
-    uint256 public lastQuotedMessageIndex;
+    uint256 public lastQuotedMessageId;
     uint256[] internal _lastMentions;
 
     function beforePost(
@@ -64,14 +64,14 @@ contract MockBeforePostCapturePlugin {
         string calldata content,
         uint256[] calldata mentions,
         bool mentionAll,
-        uint256 quotedMessageIndex
+        uint256 quotedMessageId
     ) external {
         lastChatGroupId = chatGroupId;
         lastSenderGroupId = senderGroupId;
         lastSenderAddress = senderAddress;
         lastContent = content;
         lastMentionAll = mentionAll;
-        lastQuotedMessageIndex = quotedMessageIndex;
+        lastQuotedMessageId = quotedMessageId;
         delete _lastMentions;
         for (uint256 i = 0; i < mentions.length; i++) {
             _lastMentions.push(mentions[i]);
@@ -182,8 +182,8 @@ contract MockAfterPostCapturePlugin {
     address public lastSenderAddress;
     string public lastContent;
     bool public lastMentionAll;
-    uint256 public lastQuotedMessageIndex;
-    uint256 public lastMessageIndex;
+    uint256 public lastQuotedMessageId;
+    uint256 public lastMessageId;
     uint256 public lastBlockNumber;
     uint256 public lastTimestamp;
     uint256[] internal _lastMentions;
@@ -195,8 +195,8 @@ contract MockAfterPostCapturePlugin {
         string calldata content,
         uint256[] calldata mentions,
         bool mentionAll,
-        uint256 quotedMessageIndex,
-        uint256 messageIndex,
+        uint256 quotedMessageId,
+        uint256 messageId,
         uint256 blockNumber,
         uint256 timestamp
     ) external {
@@ -205,8 +205,8 @@ contract MockAfterPostCapturePlugin {
         lastSenderAddress = senderAddress;
         lastContent = content;
         lastMentionAll = mentionAll;
-        lastQuotedMessageIndex = quotedMessageIndex;
-        lastMessageIndex = messageIndex;
+        lastQuotedMessageId = quotedMessageId;
+        lastMessageId = messageId;
         lastBlockNumber = blockNumber;
         lastTimestamp = timestamp;
         delete _lastMentions;

@@ -21,8 +21,8 @@ function afterPost(
     string calldata content,
     uint256[] calldata mentions,
     bool mentionAll,
-    uint256 quotedMessageIndex,
-    uint256 messageIndex,
+    uint256 quotedMessageId,
+    uint256 messageId,
     uint256 blockNumber,
     uint256 timestamp
 ) external;
@@ -44,5 +44,5 @@ function afterPost(
 ## Review 重点
 
 - `MessagePost` 必须先发。
-- 插件失败必须可定位到 `chatGroupId`、`messageIndex`、`pluginAddress`。
+- 插件失败必须可定位到 `chatGroupId`、1-based `messageId`、`pluginAddress`。
 - 前端收到失败事件后回查 view 结果，不把事件当正文真源。

@@ -57,8 +57,8 @@ if (js.includes('mentions: [...state.mentions]') || js.includes('mentionAll: sta
   throw new Error('Sending must parse mentions from composer content');
 }
 
-if (js.includes('...state.messages.map((message) => message.messageIndex)')) {
-  throw new Error('messageIndex must be calculated per chatGroupId, not globally');
+if (js.includes('...state.messages.map((message) => message.messageId)')) {
+  throw new Error('messageId must be calculated per chatGroupId, not globally');
 }
 
 if (data.includes('indexMode') || js.includes('setIndexMode') || js.includes('set-index-mode')) {
@@ -85,10 +85,10 @@ if (
 }
 
 if (!js.includes('function canQuoteMessage(') || !js.includes('canQuoteMessage(message)')) {
-  throw new Error('Prototype must hide quote actions for messageIndex 0');
+  throw new Error('Prototype must centralize quote eligibility checks');
 }
 
-if (data.includes('quotedMessageIndex: null') || js.includes('state.quotedMessageIndex')) {
+if (data.includes('quotedMessageId: null') || js.includes('state.quotedMessageId')) {
   throw new Error('Composer quote state must be stored by chatGroupId');
 }
 
@@ -193,7 +193,7 @@ const requiredAppJs = [
   'messagesForChat',
   'renderMessageContent',
   'quotedMessagesByChatGroupId',
-  'activeQuotedMessageIndex',
+  'activeQuotedMessageId',
   'clearActiveQuote',
   'canQuoteMessage',
   'avatarLongPressMs',
@@ -241,7 +241,7 @@ const requiredAppJs = [
   'addDenyListsBySenderGroupIds',
   'simulateMessageGap',
   'simulate-message-gap',
-  'messages(${chatGroupId}, ${startIndex}, ${eventIndex - latestIndex}, false)',
+  'messages(${chatGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
   'data-action="add-sender-deny"',
   'revalidateGovVote',
   'canEditRules',
@@ -325,25 +325,25 @@ for (const action of initialState.actions) {
 
 for (const message of initialState.messages) {
   if (!chatIds.has(Number(message.chatGroupId))) {
-    throw new Error(`Message ${message.messageIndex} points to missing chatGroupId ${message.chatGroupId}`);
+    throw new Error(`Message ${message.messageId} points to missing chatGroupId ${message.chatGroupId}`);
   }
 }
 
-const visibleZeroQuoteConversation = initialState.messages.some((message) => message.messageIndex === 0)
-  && initialState.messages.some((message) => message.messageIndex > 0);
-if (!visibleZeroQuoteConversation) {
-  throw new Error('Prototype fixture must include a visible messageIndex 0 example');
+const hasInvalidMessageId = initialState.messages.some((message) => message.messageId === 0);
+const hasFirstMessageId = initialState.messages.some((message) => message.messageId === 1);
+if (hasInvalidMessageId || !hasFirstMessageId) {
+  throw new Error('Prototype fixture must use 1-based local message ids');
 }
 
-const messageIndexesByChat = new Map();
+const messageIdsByChat = new Map();
 for (const message of initialState.messages) {
   const key = String(message.chatGroupId);
-  if (!messageIndexesByChat.has(key)) messageIndexesByChat.set(key, new Set());
-  const indexes = messageIndexesByChat.get(key);
-  if (indexes.has(message.messageIndex)) {
-    throw new Error(`Duplicate messageIndex ${message.messageIndex} in chatGroupId ${key}`);
+  if (!messageIdsByChat.has(key)) messageIdsByChat.set(key, new Set());
+  const indexes = messageIdsByChat.get(key);
+  if (indexes.has(message.messageId)) {
+    throw new Error(`Duplicate messageId ${message.messageId} in chatGroupId ${key}`);
   }
-  indexes.add(message.messageIndex);
+  indexes.add(message.messageId);
 }
 
 const requiredProtocolCopy = [
@@ -435,7 +435,7 @@ const sendHarness = new Function(
     extractFunctionSource(js, 'currentDefaultGroupId'),
     'function activeChatEntry() { return { kind: "group", item: state.chat }; }',
     'function chatStatus() { return { allowed: true, reasonCode: "0x00000000" }; }',
-    'function activeQuotedMessageIndex() { return 0; }',
+    'function activeQuotedMessageId() { return 0; }',
     'function clearActiveQuote() {}',
     extractFunctionSource(js, 'sendMessage'),
     'return { sendMessage };',
@@ -470,7 +470,7 @@ const quoteHarness = new Function(
   'render',
   [
     extractFunctionSource(js, 'messagesForChat'),
-    extractFunctionSource(js, 'messageByIndex'),
+    extractFunctionSource(js, 'messageById'),
     extractFunctionSource(js, 'canQuoteMessage'),
     extractFunctionSource(js, 'quoteMessage'),
     'return { canQuoteMessage, quoteMessage };',
@@ -479,24 +479,24 @@ const quoteHarness = new Function(
 
 const quoteTestState = {
   activeChatGroupId: '1024',
-  activeMenuIndex: 0,
+  activeMenuMessageId: 0,
   quotedMessagesByChatGroupId: {},
   messages: [
-    { chatGroupId: '1024', messageIndex: 0 },
-    { chatGroupId: '1024', messageIndex: 1 },
+    { chatGroupId: '1024', messageId: 1 },
+    { chatGroupId: '1024', messageId: 2 },
   ],
 };
 const { canQuoteMessage, quoteMessage } = quoteHarness(quoteTestState, () => {});
-if (canQuoteMessage(quoteTestState.messages[0]) || !canQuoteMessage(quoteTestState.messages[1])) {
-  throw new Error('canQuoteMessage must reject messageIndex 0 and allow positive messageIndex');
+if (!canQuoteMessage(quoteTestState.messages[0]) || !canQuoteMessage(quoteTestState.messages[1])) {
+  throw new Error('canQuoteMessage must allow positive local message ids');
 }
 quoteMessage(0);
 if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== undefined) {
-  throw new Error('quoteMessage must ignore messageIndex 0');
+  throw new Error('quoteMessage must ignore missing messageId 0');
 }
 quoteMessage(1);
 if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== 1) {
-  throw new Error('quoteMessage must store positive messageIndex quotes');
+  throw new Error('quoteMessage must store positive messageId quotes');
 }
 
 const managerActivateHarness = new Function(

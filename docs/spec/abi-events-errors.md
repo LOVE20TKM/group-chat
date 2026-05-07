@@ -63,9 +63,9 @@ Query：
 - `messagesByMention`
 - `messagesByMentionAllCount`
 - `messagesByMentionAll`
-- `messageIndexesBySender`
-- `messageIndexesByMention`
-- `messageIndexesByMentionAll`
+- `messageIdsBySender`
+- `messageIdsByMention`
+- `messageIdsByMentionAll`
 - `senderGroupIds`
 - `roundsCount`
 - `rounds`
@@ -89,19 +89,19 @@ Query：
 - `senderGroupId`
 - `senderAddress`
 - `round`
-- `messageIndex`
+- `messageId`
 - `content`
 - `blockNumber`
 - `timestamp`
 - `mentions`
 - `mentionAll`
-- `quotedMessageIndex`
+- `quotedMessageId`：`0` 表示无引用，非零时指向当前 chat 内 1-based `messageId`
 
 `RoundSpan`：
 
 - `round`
-- `startIndex`
-- `endIndex`
+- `startMessageId`：该 round 首条消息的 `messageId`；空 round 返回 `0`
+- `endMessageId`：该 round 末尾后一位的 `messageId`；空 round 返回 `0`
 - `messageCount`
 
 `MetaEntry`：
@@ -181,8 +181,8 @@ Rule slot 错误：
 - `ContentTooLong`
 - `TooManyMentions`
 - `DuplicateMentionGroupId`
-- `InvalidQuotedMessageIndex`
-- `InvalidMessageIndex`
+- `InvalidQuotedMessageId`
+- `InvalidMessageId`
 
 默认身份错误：
 

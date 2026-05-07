@@ -7,7 +7,7 @@ BeforePostPlugin 处理资格和黑名单之外的发言前额外规则。
 - `beforePostPlugin = address(0)` 表示无额外发言前规则。
 - 非零地址必须有代码。
 - `beforePost(...)` revert 时，`post(...)` 整笔 revert。
-- revert 不得留下消息、事件或占用的 `messageIndex`。
+- revert 不得留下消息、事件或占用的 `messageId`。
 - 主协议不包装插件自定义错误。
 
 ## 接口
@@ -20,7 +20,7 @@ function beforePost(
     string calldata content,
     uint256[] calldata mentions,
     bool mentionAll,
-    uint256 quotedMessageIndex
+    uint256 quotedMessageId
 ) external;
 ```
 

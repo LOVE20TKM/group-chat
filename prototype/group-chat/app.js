@@ -80,20 +80,20 @@ function messagesForChat(chatGroupId = state.activeChatGroupId) {
   return state.messages.filter((message) => message.chatGroupId === String(chatGroupId));
 }
 
-function messageByIndex(messageIndex, chatGroupId = state.activeChatGroupId) {
-  return messagesForChat(chatGroupId).find((message) => message.messageIndex === Number(messageIndex));
+function messageById(messageId, chatGroupId = state.activeChatGroupId) {
+  return messagesForChat(chatGroupId).find((message) => message.messageId === Number(messageId));
 }
 
 function messageMenuKey(message) {
-  return `${message.chatGroupId}:${message.messageIndex}`;
+  return `${message.chatGroupId}:${message.messageId}`;
 }
 
-function activeQuotedMessageIndex() {
+function activeQuotedMessageId() {
   return state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] || null;
 }
 
 function canQuoteMessage(message) {
-  return Number(message?.messageIndex) > 0;
+  return Number(message?.messageId) > 0;
 }
 
 function clearActiveQuote() {
@@ -1139,26 +1139,26 @@ function scopeSourceReason(chat) {
 function renderMessage(chat, message) {
   const mine = message.mine ? ' mine' : '';
   const profile = nftProfile(message.senderGroupId);
-  const quoted = message.quotedMessageIndex ? messageByIndex(message.quotedMessageIndex, message.chatGroupId) : null;
+  const quoted = message.quotedMessageId ? messageById(message.quotedMessageId, message.chatGroupId) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderGroupId).name)}</div>` : '';
   const content = renderMessageContent(message);
   const avatarMenu = state.activeAvatarMenuKey === messageMenuKey(message)
     ? `<div class="message-actions avatar-actions">${renderSenderDenyAction(chat, message)}</div>`
     : '';
   const quoteAction = canQuoteMessage(message)
-    ? `<button type="button" data-action="quote-message" data-message-index="${message.messageIndex}">引用</button>`
+    ? `<button type="button" data-action="quote-message" data-message-id="${message.messageId}">引用</button>`
     : '';
-  const actions = state.activeMenuIndex === message.messageIndex
+  const actions = state.activeMenuMessageId === message.messageId
     ? `
       <div class="message-actions">
         ${quoteAction}
-        <button type="button" data-action="copy-message" data-message-index="${message.messageIndex}">复制</button>
+        <button type="button" data-action="copy-message" data-message-id="${message.messageId}">复制</button>
       </div>
     `
     : '';
   return `
-    <article class="message-row${mine}" data-action="select-message" data-message-index="${message.messageIndex}">
-      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-chat-group-id="${message.chatGroupId}" data-message-index="${message.messageIndex}" data-sender-group-id="${message.senderGroupId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
+    <article class="message-row${mine}" data-action="select-message" data-message-id="${message.messageId}">
+      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-chat-group-id="${message.chatGroupId}" data-message-id="${message.messageId}" data-sender-group-id="${message.senderGroupId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
         <div class="message-meta">${escapeHtml(profile.name)}</div>
         <div class="message-bubble${mine}">${quote}${content}</div>
@@ -1185,7 +1185,7 @@ function renderMessageContent(message) {
 
 function renderSenderDenyAction(chat, message) {
   if (!canShowAvatarDenyMenu(chat, message)) return '';
-  return `<button type="button" data-action="add-sender-deny" data-chat-group-id="${message.chatGroupId}" data-message-index="${message.messageIndex}">拉黑sender</button>`;
+  return `<button type="button" data-action="add-sender-deny" data-chat-group-id="${message.chatGroupId}" data-message-id="${message.messageId}">拉黑sender</button>`;
 }
 
 function canShowAvatarDenyMenu(chat, message) {
@@ -1246,9 +1246,9 @@ function renderGroupDetails() {
 
 function renderComposerChips() {
   const chips = [];
-  const quotedMessageIndex = activeQuotedMessageIndex();
-  if (quotedMessageIndex) {
-    const quoted = messageByIndex(quotedMessageIndex, state.activeChatGroupId);
+  const quotedMessageId = activeQuotedMessageId();
+  if (quotedMessageId) {
+    const quoted = messageById(quotedMessageId, state.activeChatGroupId);
     const quotedName = quoted ? nftProfile(quoted.senderGroupId).name : '消息';
     chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
   }
@@ -1354,7 +1354,7 @@ function openChat(chatGroupId) {
   const chat = chatById(chatGroupId);
   if (chat) state.activeChatId = chat.groupId;
   state.view = 'chat';
-  state.activeMenuIndex = null;
+  state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
   state.activeGroupMenuId = null;
   state.pageReturnStack = [];
@@ -1526,7 +1526,7 @@ function activateChat(chatId) {
   }
 
   chat.active = true;
-  chat.lastMessageIndex = 0;
+  chat.lastMessageId = 0;
   state.activeChatId = chat.groupId;
   state.activeChatGroupId = String(chat.groupId);
   state.view = 'chat';
@@ -1832,8 +1832,8 @@ function voteGovTarget(targetType, target, stance) {
   render();
 }
 
-function addSenderDenyFromMessage(messageIndex, chatGroupId = state.activeChatGroupId) {
-  const message = messageByIndex(messageIndex, chatGroupId);
+function addSenderDenyFromMessage(messageId, chatGroupId = state.activeChatGroupId) {
+  const message = messageById(messageId, chatGroupId);
   const chat = message && chatById(message.chatGroupId);
   if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
 
@@ -1861,7 +1861,7 @@ function addSenderDenyFromMessage(messageIndex, chatGroupId = state.activeChatGr
   } else {
     state.syncHint = `sender ${targetAddress} / NFT #${targetSenderGroupId} 已在黑名单`;
   }
-  state.activeMenuIndex = null;
+  state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
   render();
 }
@@ -1871,27 +1871,27 @@ function simulateMessageGap(chatId) {
   if (!chat) return;
   const chatGroupId = String(chat.groupId);
   const visibleMessages = messagesForChat(chatGroupId);
-  const latestIndex = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageIndex)) : -1;
-  const eventIndex = latestIndex + 3;
-  const startIndex = latestIndex + 1;
-  for (let messageIndex = startIndex; messageIndex <= eventIndex; messageIndex++) {
+  const latestMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) : 0;
+  const eventMessageId = latestMessageId + 3;
+  const startMessageId = latestMessageId + 1;
+  for (let messageId = startMessageId; messageId <= eventMessageId; messageId++) {
     state.messages.push({
       chatGroupId,
       senderGroupId: 9101,
       senderAddress: ownerOfGroupId(9101),
       round: chat.round,
-      messageIndex,
-      content: `外部消息 #${messageIndex} 已通过 messages 区间补拉。`,
+      messageId,
+      content: `外部消息 #${messageId} 已通过 messages 区间补拉。`,
       mentions: [],
       mentionAll: false,
-      quotedMessageIndex: 0,
+      quotedMessageId: 0,
       mine: false,
     });
   }
-  chat.lastMessageIndex = eventIndex;
+  chat.lastMessageId = eventMessageId;
   state.activeGroupMenuId = null;
   state.syncHint =
-    `MessagePost 发现 messageIndex #${eventIndex}，本地最新 #${latestIndex}，已通过 messages(${chatGroupId}, ${startIndex}, ${eventIndex - latestIndex}, false) 补拉 #${startIndex}-#${eventIndex}。`;
+    `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${chatGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;
   render();
 }
 
@@ -2139,23 +2139,23 @@ function sendMessage() {
   }
 
   const visibleMessages = messagesForChat(state.activeChatGroupId);
-  const nextIndex = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageIndex)) + 1 : 0;
-  const quotedMessageIndex = activeQuotedMessageIndex() || 0;
+  const nextMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) + 1 : 1;
+  const quotedMessageId = activeQuotedMessageId() || 0;
   state.messages.push({
     chatGroupId: state.activeChatGroupId,
     senderGroupId: currentDefaultGroupId(),
     senderAddress: state.account,
     round: chat ? chat.round : 0,
-    messageIndex: nextIndex,
+    messageId: nextMessageId,
     content,
     mentions: draftMentions.mentions,
     mentionAll: draftMentions.mentionAll,
-    quotedMessageIndex,
+    quotedMessageId,
     mine: true,
   });
-  if (chat) chat.lastMessageIndex = nextIndex;
+  if (chat) chat.lastMessageId = nextMessageId;
   const mentionHint = mentionValidationHint(draftMentions);
-  state.syncHint = `MessagePost 发现 messageIndex #${nextIndex}，正文已通过 messages 补拉。${mentionHint ? ` ${mentionHint}` : ''}`;
+  state.syncHint = `MessagePost 发现 messageId #${nextMessageId}，正文已通过 messages 补拉。${mentionHint ? ` ${mentionHint}` : ''}`;
   clearActiveQuote();
   state.mentions = [];
   state.mentionAll = false;
@@ -2163,18 +2163,18 @@ function sendMessage() {
   render();
 }
 
-function quoteMessage(messageIndex) {
-  const message = messageByIndex(messageIndex);
+function quoteMessage(messageId) {
+  const message = messageById(messageId);
   if (!canQuoteMessage(message)) return;
-  state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] = Number(messageIndex);
-  state.activeMenuIndex = null;
+  state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] = Number(messageId);
+  state.activeMenuMessageId = null;
   render();
 }
 
-async function copyMessage(messageIndex) {
-  const message = messageByIndex(messageIndex);
+async function copyMessage(messageId) {
+  const message = messageById(messageId);
   if (!message) return;
-  state.activeMenuIndex = null;
+  state.activeMenuMessageId = null;
   try {
     await writeClipboardText(message.content);
     state.syncHint = '已复制消息正文。';
@@ -2205,24 +2205,24 @@ function addMention(senderGroupId) {
   const groupId = Number(senderGroupId);
   if (!state.mentions.includes(groupId) && state.mentions.length < 32) state.mentions.push(groupId);
   insertComposerToken(mentionTokenFor(groupId));
-  state.activeMenuIndex = null;
+  state.activeMenuMessageId = null;
   render();
 }
 
-function selectMessage(messageIndex) {
-  const index = Number(messageIndex);
-  state.activeMenuIndex = state.activeMenuIndex === index ? null : index;
+function selectMessage(messageId) {
+  const index = Number(messageId);
+  state.activeMenuMessageId = state.activeMenuMessageId === index ? null : index;
   state.activeAvatarMenuKey = null;
   render();
 }
 
-function toggleAvatarMenu(messageIndex, chatGroupId = state.activeChatGroupId) {
+function toggleAvatarMenu(messageId, chatGroupId = state.activeChatGroupId) {
   if (suppressAvatarClick) {
     suppressAvatarClick = false;
     return;
   }
 
-  const message = messageByIndex(messageIndex, chatGroupId);
+  const message = messageById(messageId, chatGroupId);
   const chat = message && chatById(message.chatGroupId);
   if (!message || !canShowAvatarDenyMenu(chat, message)) {
     state.activeAvatarMenuKey = null;
@@ -2232,7 +2232,7 @@ function toggleAvatarMenu(messageIndex, chatGroupId = state.activeChatGroupId) {
 
   const key = messageMenuKey(message);
   state.activeAvatarMenuKey = state.activeAvatarMenuKey === key ? null : key;
-  state.activeMenuIndex = null;
+  state.activeMenuMessageId = null;
   render();
 }
 
@@ -2327,12 +2327,12 @@ document.addEventListener('click', (event) => {
   if (action === 'query-self') querySelf();
   if (action === 'query-blacklist') queryBlacklist(target.dataset.input);
   if (action === 'close-gov-voters') closeGovVoterSheet();
-  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageIndex, target.dataset.chatGroupId);
-  if (action === 'select-message') selectMessage(target.dataset.messageIndex);
-  if (action === 'quote-message') quoteMessage(target.dataset.messageIndex);
-  if (action === 'copy-message') copyMessage(target.dataset.messageIndex);
+  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageId, target.dataset.chatGroupId);
+  if (action === 'select-message') selectMessage(target.dataset.messageId);
+  if (action === 'quote-message') quoteMessage(target.dataset.messageId);
+  if (action === 'copy-message') copyMessage(target.dataset.messageId);
   if (action === 'add-mention') addMention(target.dataset.senderGroupId);
-  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageIndex, target.dataset.chatGroupId);
+  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageId, target.dataset.chatGroupId);
   if (action === 'clear-quote') {
     clearActiveQuote();
     render();
