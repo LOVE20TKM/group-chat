@@ -49,11 +49,11 @@ interface IAdminDenySource is IPostDenySource {
 
     event StateVersionChanged(uint256 indexed chatGroupId, uint256 stateVersion);
 
-    function GROUP_CHAT() external view returns (address);
+    function GROUP_CHAT_ADDRESS() external view returns (address);
 
-    function GROUP_DEFAULTS() external view returns (address);
+    function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 
-    function LOVE20_GROUP() external view returns (address);
+    function LOVE20_GROUP_ADDRESS() external view returns (address);
 
     function setAdmins(uint256 chatGroupId, uint256[] calldata adminGroupIds) external;
 

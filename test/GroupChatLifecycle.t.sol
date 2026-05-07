@@ -7,8 +7,8 @@ import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupChatLifecycleTest is GroupChatFixture {
     function testT001_constructorStoresConfigAndRoundNotStarted() public {
-        assertEq(chat.LOVE20_GROUP(), address(groupNft));
-        assertEq(chat.GROUP_DEFAULTS(), address(groupDefaults));
+        assertEq(chat.LOVE20_GROUP_ADDRESS(), address(groupNft));
+        assertEq(chat.GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(chat.originBlocks(), originBlocks);
         assertEq(chat.phaseBlocks(), phaseBlocks);
 

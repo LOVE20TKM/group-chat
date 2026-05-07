@@ -11,11 +11,11 @@ import {ActionInfo, ILOVE20Submit} from "../interfaces/external/ILOVE20Submit.so
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 
 contract TokenGroupChatManager is BaseGroupChatManager {
-    address public immutable STAKE;
-    address public immutable JOIN;
-    address public immutable VOTE;
-    address public immutable SUBMIT;
-    address public immutable EXTENSION_CENTER;
+    address public immutable STAKE_ADDRESS;
+    address public immutable JOIN_ADDRESS;
+    address public immutable VOTE_ADDRESS;
+    address public immutable SUBMIT_ADDRESS;
+    address public immutable EXTENSION_CENTER_ADDRESS;
 
     mapping(uint256 => address) public tokenOf;
     mapping(address => uint256) public chatGroupIdOfToken;
@@ -38,11 +38,11 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         _requireCode(vote);
         _requireCode(submit);
 
-        EXTENSION_CENTER = extensionCenter_;
-        STAKE = stake;
-        JOIN = join;
-        VOTE = vote;
-        SUBMIT = submit;
+        EXTENSION_CENTER_ADDRESS = extensionCenter_;
+        STAKE_ADDRESS = stake;
+        JOIN_ADDRESS = join;
+        VOTE_ADDRESS = vote;
+        SUBMIT_ADDRESS = submit;
     }
 
     function activate(address token) external returns (uint256 chatGroupId) {
@@ -77,7 +77,7 @@ contract TokenGroupChatManager is BaseGroupChatManager {
     }
 
     function _hasTokenActionParticipation(address token, address account) internal view returns (bool) {
-        return ILOVE20Join(JOIN).amountByAccount(token, account) != 0
+        return ILOVE20Join(JOIN_ADDRESS).amountByAccount(token, account) != 0
             || _hasCurrentRoundExtensionActionParticipation(token, account);
     }
 
@@ -86,12 +86,12 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         view
         returns (bool)
     {
-        uint256 round = ILOVE20Join(JOIN).currentRound();
-        uint256 count = ILOVE20Vote(VOTE).votedActionIdsCount(token, round);
+        uint256 round = ILOVE20Join(JOIN_ADDRESS).currentRound();
+        uint256 count = ILOVE20Vote(VOTE_ADDRESS).votedActionIdsCount(token, round);
 
         for (uint256 i = 0; i < count; i++) {
-            uint256 actionId = ILOVE20Vote(VOTE).votedActionIdsAtIndex(token, round, i);
-            ActionInfo memory info = ILOVE20Submit(SUBMIT).actionInfo(token, actionId);
+            uint256 actionId = ILOVE20Vote(VOTE_ADDRESS).votedActionIdsAtIndex(token, round, i);
+            ActionInfo memory info = ILOVE20Submit(SUBMIT_ADDRESS).actionInfo(token, actionId);
             address extension = info.body.whiteListAddress;
             if (extension.code.length == 0) {
                 continue;
@@ -108,7 +108,7 @@ contract TokenGroupChatManager is BaseGroupChatManager {
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {
-        return ILOVE20Stake(STAKE).validGovVotes(token, account);
+        return ILOVE20Stake(STAKE_ADDRESS).validGovVotes(token, account);
     }
 
 }

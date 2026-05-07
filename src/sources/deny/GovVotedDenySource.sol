@@ -41,7 +41,7 @@ contract GovVotedDenySource is IPostDenySource {
     event StateVersionChanged(uint256 indexed chatGroupId, uint256 stateVersion);
 
     address public immutable GROUP_ADDRESS;
-    address public immutable GROUP_DEFAULTS;
+    address public immutable GROUP_DEFAULTS_ADDRESS;
 
     struct VoteState {
         bool supportDeny;
@@ -72,7 +72,7 @@ contract GovVotedDenySource is IPostDenySource {
         if (groupAddress_.code.length == 0) revert GovVotedDenySourceAddressHasNoCode();
         if (groupDefaults_.code.length == 0) revert GovVotedDenySourceAddressHasNoCode();
         GROUP_ADDRESS = groupAddress_;
-        GROUP_DEFAULTS = groupDefaults_;
+        GROUP_DEFAULTS_ADDRESS = groupDefaults_;
     }
 
     function voteDenyAddress(uint256 chatGroupId, address targetAddress) external {
@@ -726,7 +726,7 @@ contract GovVotedDenySource is IPostDenySource {
 
     function _validDefaultGroupIdOf(address account) internal view returns (uint256 groupId) {
         if (account == address(0)) revert TargetAddressZero();
-        groupId = IGroupDefaults(GROUP_DEFAULTS).defaultGroupIdOf(account);
+        groupId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(account);
         if (groupId == 0 || _tryOwnerOf(groupId) != account) {
             return 0;
         }

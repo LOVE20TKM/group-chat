@@ -4,9 +4,9 @@ pragma solidity =0.8.17;
 import {IBaseGroupChatManager} from "./IBaseGroupChatManager.sol";
 
 interface ITokenGovGroupChatManager is IBaseGroupChatManager {
-    function STAKE() external view returns (address);
+    function STAKE_ADDRESS() external view returns (address);
 
-    function EXTENSION_CENTER() external view returns (address);
+    function EXTENSION_CENTER_ADDRESS() external view returns (address);
 
     function tokenOf(uint256 chatGroupId) external view returns (address);
 

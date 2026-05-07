@@ -11,8 +11,8 @@ contract TokenActionGovGroupChatManager is BaseGroupChatManager {
         uint256 actionId;
     }
 
-    address public immutable VOTE;
-    address public immutable EXTENSION_CENTER;
+    address public immutable VOTE_ADDRESS;
+    address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 
     mapping(uint256 => TokenActionGovChatParams) public paramsOf;
@@ -32,8 +32,8 @@ contract TokenActionGovGroupChatManager is BaseGroupChatManager {
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
         _requireCode(vote);
 
-        EXTENSION_CENTER = extensionCenter_;
-        VOTE = vote;
+        EXTENSION_CENTER_ADDRESS = extensionCenter_;
+        VOTE_ADDRESS = vote;
         RECENT_ROUNDS = recentRounds_;
     }
 
@@ -65,9 +65,9 @@ contract TokenActionGovGroupChatManager is BaseGroupChatManager {
     }
 
     function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {
-        uint256 round = ILOVE20Vote(VOTE).currentRound();
+        uint256 round = ILOVE20Vote(VOTE_ADDRESS).currentRound();
         for (uint256 i = 0; i < RECENT_ROUNDS; i++) {
-            if (ILOVE20Vote(VOTE).votesNumByAccountByActionId(token, round, account, actionId) != 0) {
+            if (ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(token, round, account, actionId) != 0) {
                 return true;
             }
             if (round == 0) {
@@ -85,7 +85,7 @@ contract TokenActionGovGroupChatManager is BaseGroupChatManager {
         view
         returns (uint256)
     {
-        return ILOVE20Vote(VOTE).votesNumByAccountByActionId(token, ILOVE20Vote(VOTE).currentRound(), account, actionId);
+        return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId);
     }
 
 }

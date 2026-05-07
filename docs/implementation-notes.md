@@ -92,7 +92,7 @@ shell 一键部署时：
 - 上游 `GroupJoin` 地址来自 `extension-group` 仓库，用于部署链群 `scopeSource`
 - `DeployGroupChat` 不部署 `GroupDefaults`，只读取 `GROUP_DEFAULTS_ADDRESS`
 - `DeployGroupChat` 会同时部署 `GroupChat`、`AdminDenySource`、`GovVotedDenySource`、`GroupJoinScopeSource` 与四个 typed Manager
-- `GroupChat` 构造时通过 `GroupDefaults.GROUP_ADDRESS()` 派生 `LOVE20_GROUP`
+- `GroupChat` 构造时通过 `GroupDefaults.GROUP_ADDRESS()` 派生 `LOVE20_GROUP_ADDRESS`
 - `GroupChat` 自身初始化参数与 Manager 依赖从 `group.chat.params` 读取
 - 四个 typed Manager 固定挂本次部署的 `GovVotedDenySource`
 

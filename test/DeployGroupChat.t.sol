@@ -74,32 +74,32 @@ contract DeployGroupChatTest is TestBase {
         assertTrue(deployed.tokenActionGovGroupChatManager.code.length != 0);
         assertTrue(deployed.tokenActionGroupChatManager.code.length != 0);
 
-        assertEq(IGroupChat(deployed.groupChat).GROUP_DEFAULTS(), address(groupDefaults));
-        assertEq(IGroupChat(deployed.groupChat).LOVE20_GROUP(), address(groupNft));
+        assertEq(IGroupChat(deployed.groupChat).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(IGroupChat(deployed.groupChat).LOVE20_GROUP_ADDRESS(), address(groupNft));
         assertEq(IGroupChat(deployed.groupChat).originBlocks(), 100);
         assertEq(IGroupChat(deployed.groupChat).phaseBlocks(), 25);
 
-        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_CHAT(), deployed.groupChat);
-        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS(), address(groupDefaults));
-        assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP(), address(groupNft));
+        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_CHAT_ADDRESS(), deployed.groupChat);
+        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_ADDRESS(), address(groupNft));
-        assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_DEFAULTS(), address(groupDefaults));
-        assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN(), address(groupJoin));
+        assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN_ADDRESS(), address(groupJoin));
 
         _assertManagerCommon(deployed.tokenGroupChatManager, deployed);
         _assertManagerCommon(deployed.tokenGovGroupChatManager, deployed);
         _assertManagerCommon(deployed.tokenActionGovGroupChatManager, deployed);
         _assertManagerCommon(deployed.tokenActionGroupChatManager, deployed);
 
-        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).STAKE(), address(protocol));
-        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).JOIN(), address(protocol));
-        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).VOTE(), address(protocol));
-        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).SUBMIT(), address(protocol));
-        assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).STAKE(), address(protocol));
-        assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE(), address(protocol));
+        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).STAKE_ADDRESS(), address(protocol));
+        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).JOIN_ADDRESS(), address(protocol));
+        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).VOTE_ADDRESS(), address(protocol));
+        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).SUBMIT_ADDRESS(), address(protocol));
+        assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).STAKE_ADDRESS(), address(protocol));
+        assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE_ADDRESS(), address(protocol));
         assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).RECENT_ROUNDS(), 3);
-        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).VOTE(), address(protocol));
-        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN(), address(protocol));
+        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).VOTE_ADDRESS(), address(protocol));
+        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).RECENT_ROUNDS(), 3);
     }
 
@@ -145,10 +145,10 @@ contract DeployGroupChatTest is TestBase {
     }
 
     function _assertManagerCommon(address manager, DeployGroupChat.DeployedAddresses memory deployed) internal view {
-        assertEq(BaseGroupChatManager(manager).GROUP_CHAT(), deployed.groupChat);
-        assertEq(BaseGroupChatManager(manager).DENY_SOURCE(), deployed.groupChatDenySource);
-        assertEq(BaseGroupChatManager(manager).BEFORE_POST_PLUGIN(), address(0));
-        assertEq(BaseGroupChatManager(manager).AFTER_POST_PLUGIN(), address(0));
+        assertEq(BaseGroupChatManager(manager).GROUP_CHAT_ADDRESS(), deployed.groupChat);
+        assertEq(BaseGroupChatManager(manager).DENY_SOURCE_ADDRESS(), deployed.groupChatDenySource);
+        assertEq(BaseGroupChatManager(manager).BEFORE_POST_PLUGIN_ADDRESS(), address(0));
+        assertEq(BaseGroupChatManager(manager).AFTER_POST_PLUGIN_ADDRESS(), address(0));
     }
 
     function _assertContains(string memory haystack, string memory needle) internal pure {

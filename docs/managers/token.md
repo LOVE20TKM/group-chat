@@ -24,9 +24,9 @@ function activate(address token) external returns (uint256 chatGroupId);
 - `tokenOf[chatGroupId] = token`
 - `chatGroupIdOfToken[token] = chatGroupId`
 - `GroupChat.scopeSource = address(this)`
-- `GroupChat.denySource = DENY_SOURCE`
-- `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN`
-- `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN`
+- `GroupChat.denySource = DENY_SOURCE_ADDRESS`
+- `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
+- `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN_ADDRESS`
 - `delegateGroupId = 0`
 
 ## 发言资格
@@ -50,10 +50,10 @@ denyVoteWeightOf(...) = ILOVE20Stake.validGovVotes(token, voter)
 
 从 `ExtensionCenter` 固定读取：
 
-- `STAKE`
-- `JOIN`
-- `VOTE`
-- `SUBMIT`
+- `STAKE_ADDRESS`
+- `JOIN_ADDRESS`
+- `VOTE_ADDRESS`
+- `SUBMIT_ADDRESS`
 
 ## 状态
 

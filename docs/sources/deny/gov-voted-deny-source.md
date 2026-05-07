@@ -31,7 +31,7 @@ GroupChat.denySource = GovVotedDenySource
 构造参数只固定外部依赖：
 
 - `GROUP_ADDRESS`
-- `GROUP_DEFAULTS`
+- `GROUP_DEFAULTS_ADDRESS`
 
 治理语义硬编码固定：
 
@@ -313,7 +313,7 @@ event StateVersionChanged(
 合约全局至少维护：
 
 - `address immutable GROUP_ADDRESS`
-- `address immutable GROUP_DEFAULTS`
+- `address immutable GROUP_DEFAULTS_ADDRESS`
 
 每个 `chatGroupId` 至少维护：
 

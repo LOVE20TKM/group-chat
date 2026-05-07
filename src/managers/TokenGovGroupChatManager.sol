@@ -6,8 +6,8 @@ import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 
 contract TokenGovGroupChatManager is BaseGroupChatManager {
-    address public immutable STAKE;
-    address public immutable EXTENSION_CENTER;
+    address public immutable STAKE_ADDRESS;
+    address public immutable EXTENSION_CENTER_ADDRESS;
 
     mapping(uint256 => address) public tokenOf;
     mapping(address => uint256) public chatGroupIdOfToken;
@@ -24,8 +24,8 @@ contract TokenGovGroupChatManager is BaseGroupChatManager {
         address stake = IExtensionCenter(extensionCenter_).stakeAddress();
         _requireCode(stake);
 
-        EXTENSION_CENTER = extensionCenter_;
-        STAKE = stake;
+        EXTENSION_CENTER_ADDRESS = extensionCenter_;
+        STAKE_ADDRESS = stake;
     }
 
     function activate(address token) external returns (uint256 chatGroupId) {
@@ -52,7 +52,7 @@ contract TokenGovGroupChatManager is BaseGroupChatManager {
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {
-        return ILOVE20Stake(STAKE).validGovVotes(token, account);
+        return ILOVE20Stake(STAKE_ADDRESS).validGovVotes(token, account);
     }
 
 }

@@ -17,12 +17,12 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
     error ManagerPaymentFailed();
     error ManagerApprovalFailed();
 
-    address public immutable GROUP_CHAT;
-    address public immutable LOVE20_GROUP;
+    address public immutable GROUP_CHAT_ADDRESS;
+    address public immutable LOVE20_GROUP_ADDRESS;
     uint256 public immutable MAX_GROUP_NAME_LENGTH;
-    address public immutable DENY_SOURCE;
-    address public immutable BEFORE_POST_PLUGIN;
-    address public immutable AFTER_POST_PLUGIN;
+    address public immutable DENY_SOURCE_ADDRESS;
+    address public immutable BEFORE_POST_PLUGIN_ADDRESS;
+    address public immutable AFTER_POST_PLUGIN_ADDRESS;
 
     bytes4 internal constant TEST_PREFIX = bytes4("Test");
     bytes internal constant FALLBACK_TOKEN_SYMBOL = "TOKEN";
@@ -37,15 +37,15 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         _requireOptionalCode(beforePostPlugin_);
         _requireOptionalCode(afterPostPlugin_);
 
-        address love20Group = IGroupChat(groupChat_).LOVE20_GROUP();
+        address love20Group = IGroupChat(groupChat_).LOVE20_GROUP_ADDRESS();
         _requireCode(love20Group);
 
-        GROUP_CHAT = groupChat_;
-        LOVE20_GROUP = love20Group;
+        GROUP_CHAT_ADDRESS = groupChat_;
+        LOVE20_GROUP_ADDRESS = love20Group;
         MAX_GROUP_NAME_LENGTH = ILOVE20Group(love20Group).MAX_GROUP_NAME_LENGTH();
-        DENY_SOURCE = denySource_;
-        BEFORE_POST_PLUGIN = beforePostPlugin_;
-        AFTER_POST_PLUGIN = afterPostPlugin_;
+        DENY_SOURCE_ADDRESS = denySource_;
+        BEFORE_POST_PLUGIN_ADDRESS = beforePostPlugin_;
+        AFTER_POST_PLUGIN_ADDRESS = afterPostPlugin_;
     }
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
@@ -54,7 +54,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
 
     function _mintManagedChatGroup(string memory groupNameStem) internal returns (uint256 chatGroupId) {
         string memory groupName = _nextGroupName(groupNameStem);
-        ILOVE20Group group = ILOVE20Group(LOVE20_GROUP);
+        ILOVE20Group group = ILOVE20Group(LOVE20_GROUP_ADDRESS);
 
         uint256 expectedMintCost = group.calculateMintCost(groupName);
         if (expectedMintCost != 0) {
@@ -62,7 +62,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
             if (!IERC20Payment(love20).transferFrom(msg.sender, address(this), expectedMintCost)) {
                 revert ManagerPaymentFailed();
             }
-            if (!IERC20Payment(love20).approve(LOVE20_GROUP, expectedMintCost)) {
+            if (!IERC20Payment(love20).approve(LOVE20_GROUP_ADDRESS, expectedMintCost)) {
                 revert ManagerApprovalFailed();
             }
         }
@@ -75,8 +75,8 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
     function _activateManagedChat(uint256 chatGroupId) internal {
         string[] memory metaKeys = new string[](0);
         bytes[] memory metaValues = new bytes[](0);
-        IGroupChat(GROUP_CHAT).activateChat(
-            chatGroupId, metaKeys, metaValues, address(this), DENY_SOURCE, BEFORE_POST_PLUGIN, AFTER_POST_PLUGIN, 0
+        IGroupChat(GROUP_CHAT_ADDRESS).activateChat(
+            chatGroupId, metaKeys, metaValues, address(this), DENY_SOURCE_ADDRESS, BEFORE_POST_PLUGIN_ADDRESS, AFTER_POST_PLUGIN_ADDRESS, 0
         );
     }
 
@@ -140,7 +140,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
             unchecked {
                 _mintNonce++;
             }
-            if (!ILOVE20Group(LOVE20_GROUP).isGroupNameUsed(groupName)) {
+            if (!ILOVE20Group(LOVE20_GROUP_ADDRESS).isGroupNameUsed(groupName)) {
                 return groupName;
             }
         }
@@ -166,7 +166,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
     }
 
     function _love20TokenRequiresTestPrefix() internal view returns (bool) {
-        address love20 = ILOVE20Group(LOVE20_GROUP).LOVE20_TOKEN_ADDRESS();
+        address love20 = ILOVE20Group(LOVE20_GROUP_ADDRESS).LOVE20_TOKEN_ADDRESS();
         if (love20.code.length == 0) {
             return false;
         }

@@ -6,8 +6,8 @@
 
 生命周期：
 
-- `LOVE20_GROUP`
-- `GROUP_DEFAULTS`
+- `LOVE20_GROUP_ADDRESS`
+- `GROUP_DEFAULTS_ADDRESS`
 - `originBlocks`
 - `phaseBlocks`
 - `MAX_CONTENT_LENGTH`
@@ -46,7 +46,7 @@ Posting：
 
 - `post`
 - `postByDefaultSender`
-- `GROUP_DEFAULTS`
+- `GROUP_DEFAULTS_ADDRESS`
 
 Query：
 

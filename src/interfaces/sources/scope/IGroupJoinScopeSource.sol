@@ -6,5 +6,5 @@ import {IPostScopeSource} from "../../IPostScopeSource.sol";
 interface IGroupJoinScopeSource is IPostScopeSource {
     error GroupJoinScopeSourceAddressHasNoCode();
 
-    function GROUP_JOIN() external view returns (address);
+    function GROUP_JOIN_ADDRESS() external view returns (address);
 }

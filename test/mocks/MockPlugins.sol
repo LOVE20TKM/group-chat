@@ -285,21 +285,21 @@ contract MockAfterPostSetMetaPlugin {
 contract MockManagedPlugin {
     error UnauthorizedPluginManager();
 
-    address public immutable CHAT;
+    address public immutable CHAT_ADDRESS;
     mapping(uint256 => bytes) public configValue;
 
     constructor(address chat_) {
-        CHAT = chat_;
+        CHAT_ADDRESS = chat_;
     }
 
     function configure(uint256 chatGroupId, bytes calldata value) external {
         IGroupChatPluginView.ChatInfo memory info =
-            IGroupChatPluginView(CHAT).chatInfo(chatGroupId);
+            IGroupChatPluginView(CHAT_ADDRESS).chatInfo(chatGroupId);
         uint256 delegateGroupId_ =
-            IGroupChatPluginView(CHAT).delegateGroupIdOf(chatGroupId);
+            IGroupChatPluginView(CHAT_ADDRESS).delegateGroupIdOf(chatGroupId);
         address delegateGroupOwner = delegateGroupId_ == 0
             ? address(0)
-            : IGroupChatPluginView(CHAT).chatInfo(delegateGroupId_).owner;
+            : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateGroupId_).owner;
         if (msg.sender != info.owner && msg.sender != delegateGroupOwner) {
             revert UnauthorizedPluginManager();
         }

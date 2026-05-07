@@ -144,9 +144,9 @@ interface IGroupChatEvents {
 }
 
 interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
-    function LOVE20_GROUP() external view returns (address);
+    function LOVE20_GROUP_ADDRESS() external view returns (address);
 
-    function GROUP_DEFAULTS() external view returns (address);
+    function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 
     function originBlocks() external view returns (uint256);
 

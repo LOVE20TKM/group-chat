@@ -4,9 +4,9 @@ pragma solidity =0.8.17;
 import {IBaseGroupChatManager} from "./IBaseGroupChatManager.sol";
 
 interface ITokenActionGovGroupChatManager is IBaseGroupChatManager {
-    function VOTE() external view returns (address);
+    function VOTE_ADDRESS() external view returns (address);
 
-    function EXTENSION_CENTER() external view returns (address);
+    function EXTENSION_CENTER_ADDRESS() external view returns (address);
 
     function RECENT_ROUNDS() external view returns (uint256);
 

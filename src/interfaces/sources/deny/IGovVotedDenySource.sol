@@ -39,7 +39,7 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function GROUP_ADDRESS() external view returns (address);
 
-    function GROUP_DEFAULTS() external view returns (address);
+    function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 
     function voteDenyAddress(uint256 chatGroupId, address targetAddress) external;
 

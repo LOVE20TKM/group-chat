@@ -30,9 +30,9 @@ function activate(
 - `paramsOf[chatGroupId].actionId = actionId`
 - `chatGroupIdOfAction[token][actionId] = chatGroupId`
 - `GroupChat.scopeSource = address(this)`
-- `GroupChat.denySource = DENY_SOURCE`
-- `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN`
-- `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN`
+- `GroupChat.denySource = DENY_SOURCE_ADDRESS`
+- `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
+- `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN_ADDRESS`
 - `delegateGroupId = 0`
 
 ## 发言资格
@@ -63,7 +63,7 @@ denyVoteWeightOf(...) =
 
 从 `ExtensionCenter` 固定读取：
 
-- `VOTE`
+- `VOTE_ADDRESS`
 
 ## 状态
 

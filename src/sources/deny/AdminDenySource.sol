@@ -54,9 +54,9 @@ contract AdminDenySource is IPostDenySource {
 
     uint8 internal constant _ROLE_OWNER = 1;
     uint8 internal constant _ROLE_DELEGATE = 2;
-    address public immutable GROUP_CHAT;
-    address public immutable GROUP_DEFAULTS;
-    address public immutable LOVE20_GROUP;
+    address public immutable GROUP_CHAT_ADDRESS;
+    address public immutable GROUP_DEFAULTS_ADDRESS;
+    address public immutable LOVE20_GROUP_ADDRESS;
 
     struct AddressSet {
         address[] values;
@@ -80,14 +80,14 @@ contract AdminDenySource is IPostDenySource {
 
     constructor(address groupChat_) {
         _requireCode(groupChat_);
-        address groupDefaults = IGroupChat(groupChat_).GROUP_DEFAULTS();
-        address love20Group = IGroupChat(groupChat_).LOVE20_GROUP();
+        address groupDefaults = IGroupChat(groupChat_).GROUP_DEFAULTS_ADDRESS();
+        address love20Group = IGroupChat(groupChat_).LOVE20_GROUP_ADDRESS();
         _requireCode(groupDefaults);
         _requireCode(love20Group);
 
-        GROUP_CHAT = groupChat_;
-        GROUP_DEFAULTS = groupDefaults;
-        LOVE20_GROUP = love20Group;
+        GROUP_CHAT_ADDRESS = groupChat_;
+        GROUP_DEFAULTS_ADDRESS = groupDefaults;
+        LOVE20_GROUP_ADDRESS = love20Group;
     }
 
     function setAdmins(uint256 chatGroupId, uint256[] calldata adminGroupIds) external {
@@ -387,12 +387,12 @@ contract AdminDenySource is IPostDenySource {
             return (_ROLE_OWNER, chatGroupId);
         }
 
-        uint256 delegateGroupId = IGroupChat(GROUP_CHAT).delegateGroupIdOf(chatGroupId);
+        uint256 delegateGroupId = IGroupChat(GROUP_CHAT_ADDRESS).delegateGroupIdOf(chatGroupId);
         if (delegateGroupId != 0 && msg.sender == _tryOwnerOf(delegateGroupId)) {
             return (_ROLE_DELEGATE, delegateGroupId);
         }
 
-        return (0, IGroupDefaults(GROUP_DEFAULTS).defaultGroupIdOf(msg.sender));
+        return (0, IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(msg.sender));
     }
 
     function _requireOwnerOrDelegate(uint8 role) internal pure {
@@ -469,7 +469,7 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(LOVE20_GROUP).ownerOf(groupId) returns (address resolved) {
+        try ILOVE20Group(LOVE20_GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
             return resolved;
         } catch {
             revert GroupNotExist();
@@ -477,7 +477,7 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _tryOwnerOf(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(LOVE20_GROUP).ownerOf(groupId) returns (address resolved) {
+        try ILOVE20Group(LOVE20_GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
             return resolved;
         } catch {
             return address(0);
@@ -485,7 +485,7 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _validDefaultGroupIdOf(address account) internal view returns (uint256 groupId) {
-        groupId = IGroupDefaults(GROUP_DEFAULTS).defaultGroupIdOf(account);
+        groupId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(account);
         if (groupId == 0 || _tryOwnerOf(groupId) != account) {
             return 0;
         }

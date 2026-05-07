@@ -12,9 +12,9 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         uint256 actionId;
     }
 
-    address public immutable VOTE;
-    address public immutable JOIN;
-    address public immutable EXTENSION_CENTER;
+    address public immutable VOTE_ADDRESS;
+    address public immutable JOIN_ADDRESS;
+    address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 
     mapping(uint256 => TokenActionChatParams) public paramsOf;
@@ -36,9 +36,9 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         _requireCode(vote);
         _requireCode(join);
 
-        EXTENSION_CENTER = extensionCenter_;
-        VOTE = vote;
-        JOIN = join;
+        EXTENSION_CENTER_ADDRESS = extensionCenter_;
+        VOTE_ADDRESS = vote;
+        JOIN_ADDRESS = join;
         RECENT_ROUNDS = recentRounds_;
     }
 
@@ -74,9 +74,9 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
     }
 
     function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {
-        uint256 round = ILOVE20Vote(VOTE).currentRound();
+        uint256 round = ILOVE20Vote(VOTE_ADDRESS).currentRound();
         for (uint256 i = 0; i < RECENT_ROUNDS; i++) {
-            if (ILOVE20Vote(VOTE).votesNumByAccountByActionId(token, round, account, actionId) != 0) {
+            if (ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(token, round, account, actionId) != 0) {
                 return true;
             }
             if (round == 0) {
@@ -90,8 +90,8 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
     }
 
     function _hasActionParticipation(address token, uint256 actionId, address account) internal view returns (bool) {
-        return ILOVE20Join(JOIN).amountByActionIdByAccount(token, actionId, account) != 0
-            || IExtensionCenter(EXTENSION_CENTER).isAccountJoined(token, actionId, account);
+        return ILOVE20Join(JOIN_ADDRESS).amountByActionIdByAccount(token, actionId, account) != 0
+            || IExtensionCenter(EXTENSION_CENTER_ADDRESS).isAccountJoined(token, actionId, account);
     }
 
     function _currentActionVoteWeight(address token, uint256 actionId, address account)
@@ -99,7 +99,7 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         view
         returns (uint256)
     {
-        return ILOVE20Vote(VOTE).votesNumByAccountByActionId(token, ILOVE20Vote(VOTE).currentRound(), account, actionId);
+        return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId);
     }
 
 }

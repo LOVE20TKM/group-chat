@@ -47,7 +47,7 @@ source ./one_click_deploy.sh <network>
 
 `DeployGroupChat` 固定部署 `AdminDenySource` 与 `GovVotedDenySource`。
 `DeployGroupChat` 固定部署 `GroupJoinScopeSource`，构造参数为 `GROUP_JOIN_ADDRESS`。
-四个 typed Manager 的 `DENY_SOURCE` 固定为本次部署的 `GovVotedDenySource`。
+四个 typed Manager 的 `DENY_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedDenySource`。
 `AdminDenySource` 作为中心化 / 链群等 owner-admin 管理型 deny source 产物写入地址文件，不自动挂到 typed Manager。
 `GroupJoinScopeSource` 作为链群服务者管理型群聊的 scope source 产物写入地址文件，不自动挂到 typed Manager。
 
@@ -113,14 +113,14 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 
 `script/deploy/99_check.sh` 会检查：
 
-- `GroupChat.GROUP_DEFAULTS`
-- `GroupChat.LOVE20_GROUP`
+- `GroupChat.GROUP_DEFAULTS_ADDRESS`
+- `GroupChat.LOVE20_GROUP_ADDRESS`
 - `originBlocks`
 - `phaseBlocks`
 - `AdminDenySource` 固定依赖
 - `GovVotedDenySource` 固定依赖
-- `GroupJoinScopeSource.GROUP_JOIN`
-- 四个 Manager 的 `GROUP_CHAT`
+- `GroupJoinScopeSource.GROUP_JOIN_ADDRESS`
+- 四个 Manager 的 `GROUP_CHAT_ADDRESS`
 - 四个 Manager 的固定规则槽
-- 四个 Manager 的 `EXTENSION_CENTER`
-- Manager 从 `ExtensionCenter` 读取到的 `STAKE` / `JOIN` / `VOTE` / `SUBMIT`
+- 四个 Manager 的 `EXTENSION_CENTER_ADDRESS`
+- Manager 从 `ExtensionCenter` 读取到的 `STAKE_ADDRESS` / `JOIN_ADDRESS` / `VOTE_ADDRESS` / `SUBMIT_ADDRESS`

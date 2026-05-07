@@ -61,7 +61,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.groupChat = address(groupChat);
         deployed.adminDenySource = address(new AdminDenySource(address(groupChat)));
         deployed.groupChatDenySource =
-            address(new GovVotedDenySource(groupChat.LOVE20_GROUP(), groupChat.GROUP_DEFAULTS()));
+            address(new GovVotedDenySource(groupChat.LOVE20_GROUP_ADDRESS(), groupChat.GROUP_DEFAULTS_ADDRESS()));
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(config.groupJoin));
 
         TokenGroupChatManager tokenGroupChatManager = new TokenGroupChatManager(

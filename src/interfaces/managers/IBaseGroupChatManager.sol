@@ -14,15 +14,15 @@ interface IBaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC
     error ManagerPaymentFailed();
     error ManagerApprovalFailed();
 
-    function GROUP_CHAT() external view returns (address);
+    function GROUP_CHAT_ADDRESS() external view returns (address);
 
-    function LOVE20_GROUP() external view returns (address);
+    function LOVE20_GROUP_ADDRESS() external view returns (address);
 
     function MAX_GROUP_NAME_LENGTH() external view returns (uint256);
 
-    function DENY_SOURCE() external view returns (address);
+    function DENY_SOURCE_ADDRESS() external view returns (address);
 
-    function BEFORE_POST_PLUGIN() external view returns (address);
+    function BEFORE_POST_PLUGIN_ADDRESS() external view returns (address);
 
-    function AFTER_POST_PLUGIN() external view returns (address);
+    function AFTER_POST_PLUGIN_ADDRESS() external view returns (address);
 }

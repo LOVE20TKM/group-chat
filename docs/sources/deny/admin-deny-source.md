@@ -83,7 +83,7 @@ owner / delegate 权限判定顺序：
 
 DenySource 合约全局至少维护：
 
-- `address immutable GROUP_CHAT`
+- `address immutable GROUP_CHAT_ADDRESS`
 
 每个 `chatGroupId` 作用域至少维护：
 
@@ -102,7 +102,7 @@ DenySource 合约全局至少维护：
 
 - 管理员集合、黑名单、豁免名单都必须按 `chatGroupId` 隔离
 - DenySource 不得保存 owner、delegate 或 admin 当前 owner 地址快照
-- DenySource 部署时固定 `GROUP_CHAT` 地址，后续不得修改
+- DenySource 部署时固定 `GROUP_CHAT_ADDRESS` 地址，后续不得修改
 - `setAdmins(...)` 输入必须去重
 - `setAdmins(...)` 允许传空数组，用于清空当前 `chatGroupId` 的管理员 NFT 集合
 - `setAdmins(...)` 传入的每个 `adminGroupId` 都必须对应当前存在的 `GroupNFT`
