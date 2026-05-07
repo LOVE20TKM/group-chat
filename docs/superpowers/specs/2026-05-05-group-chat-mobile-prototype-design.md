@@ -47,17 +47,17 @@
 | UI 能力 | 合约/文档依据 |
 | --- | --- |
 | chat 身份 | `1 NFT = 1 Chat`，`chatGroupId == GroupNFT.tokenId` |
-| 头部状态 | `chatInfo(groupId)`：`active`、`owner`、`configVersion` |
+| 头部状态 | `chatInfo(chatGroupId)`：`active`、`owner`、`configVersion` |
 | 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderId` |
 | 发送消息 | `post` / `postByDefaultSender` |
 | 可发言判断 | `canPostStatus(chatGroupId, senderId, senderAddress)` |
-| 错误原因 | `ChatNotActive`、`SenderNotGroupOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
+| 错误原因 | `ChatNotActive`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentions uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，只记录声明语义 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
-| 规则槽 | `ruleSlots(groupId)`：`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
+| 规则槽 | `ruleSlots(chatGroupId)`：`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
 
 ## 信息架构
 
@@ -106,7 +106,7 @@
 - 正常可发言。
 - `ScopeRejected`：无发言资格。
 - `DenyRejected`：被黑名单拒绝。
-- `SenderNotGroupOwner`：当前钱包不是 `defaultGroupId` owner。
+- `SenderAddressNotSenderIdOwner`：当前钱包不是 `defaultGroupId` owner。
 - 引用 `messageId > 0` 的消息后发送。
 - 输入框自动解析 mention 与 mentionAll。
 - 从 `MessagePost` 发现缺口后补拉区间的提示。

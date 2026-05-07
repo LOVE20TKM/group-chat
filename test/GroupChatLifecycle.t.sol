@@ -38,7 +38,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         _activateEmpty();
 
         IGroupChatStructs.ChatInfo memory info = chat.chatInfo(chatGroupId);
-        assertEq(info.groupId, chatGroupId);
+        assertEq(info.chatGroupId, chatGroupId);
         assertEq(info.owner, chatOwner);
         assertTrue(info.active);
         assertEq(info.configVersion, 1);
@@ -103,7 +103,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         values2[0] = bytes("v2");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), delegateGroupId);
+        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), delegateId);
 
         IGroupChatStructs.ChatInfo memory secondInfo = chat.chatInfo(chatGroupId);
         assertEq(secondInfo.firstActivatedOwner, firstInfo.firstActivatedOwner);
@@ -117,7 +117,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(fetched[0].content, "old-message");
         assertEq(fetched[0].mentions.length, 0);
         assertTrue(!fetched[0].mentionAll);
-        assertEq(chat.delegateGroupIdOf(chatGroupId), delegateGroupId);
+        assertEq(chat.delegateIdOf(chatGroupId), delegateId);
         assertEq(chat.chatGroupIdsCount(), 1);
         assertEq(chat.activeChatGroupIdsCount(), 1);
     }

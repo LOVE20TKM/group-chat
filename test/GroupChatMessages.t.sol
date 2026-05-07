@@ -50,7 +50,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(other);
-        vm.expectRevert(IGroupChatErrors.SenderNotGroupOwner.selector);
+        vm.expectRevert(IGroupChatErrors.SenderAddressNotSenderIdOwner.selector);
         _post(chatGroupId, senderId, "hello");
     }
 
@@ -58,11 +58,11 @@ contract GroupChatMessagesTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateGroupId);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
 
         vm.roll(originBlocks);
-        vm.prank(delegateGroupOwner);
-        vm.expectRevert(IGroupChatErrors.SenderNotGroupOwner.selector);
+        vm.prank(delegateIdOwner);
+        vm.expectRevert(IGroupChatErrors.SenderAddressNotSenderIdOwner.selector);
         _post(chatGroupId, senderId, "delegate-send");
 
         vm.prank(chatOwner);
@@ -73,7 +73,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         _post(chatGroupId, senderId, "closed");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateGroupId);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.ContentEmpty.selector);
@@ -102,7 +102,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         uint256[] memory mentions = new uint256[](2);
         mentions[0] = otherGroupId;
-        mentions[1] = delegateGroupId;
+        mentions[1] = delegateId;
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
@@ -112,16 +112,16 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(result.length, 1);
         assertEq(result[0].mentions.length, 2);
         assertEq(result[0].mentions[0], otherGroupId);
-        assertEq(result[0].mentions[1], delegateGroupId);
+        assertEq(result[0].mentions[1], delegateId);
         assertTrue(!result[0].mentionAll);
         assertEq(result[0].quotedMessageId, 0);
 
         assertEq(chat.messagesByMentionCount(chatGroupId, otherGroupId), 1);
-        assertEq(chat.messagesByMentionCount(chatGroupId, delegateGroupId), 1);
+        assertEq(chat.messagesByMentionCount(chatGroupId, delegateId), 1);
         assertEq(chat.messagesByMentionCount(chatGroupId, 999999), 0);
 
         IGroupChatStructs.Message[] memory byMention =
-            chat.messagesByMention(chatGroupId, delegateGroupId, 0, 10, false);
+            chat.messagesByMention(chatGroupId, delegateId, 0, 10, false);
         assertEq(byMention.length, 1);
         assertEq(byMention[0].messageId, 1);
         assertEq(byMention[0].mentions.length, 2);
@@ -136,7 +136,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
     function testT049_postRejectsDuplicateMentionsAndIndexesMentionAll() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateGroupId);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
 
         uint256[] memory duplicateMentions = new uint256[](2);
         duplicateMentions[0] = otherGroupId;
@@ -144,7 +144,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        vm.expectRevert(IGroupChatErrors.DuplicateMentionGroupId.selector);
+        vm.expectRevert(IGroupChatErrors.DuplicateMentionSenderId.selector);
         _postWithMentions(chatGroupId, senderId, "dup", duplicateMentions, false);
 
         vm.prank(senderOwner);

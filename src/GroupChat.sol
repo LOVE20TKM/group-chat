@@ -24,7 +24,7 @@ contract GroupChat is IGroupChat {
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
         uint256 firstActivatedTimestamp;
-        uint256 delegateGroupId;
+        uint256 delegateId;
         address delegateOwnerSnapshot;
         address scopeSource;
         address denySource;
@@ -82,19 +82,19 @@ contract GroupChat is IGroupChat {
     }
 
     function activateChat(
-        uint256 groupId,
+        uint256 chatGroupId,
         string[] calldata metaKeys_,
         bytes[] calldata metaValues_,
         address scopeSource_,
         address denySource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
-        uint256 delegateGroupId_
+        uint256 delegateId_
     ) external nonReentrant {
-        address owner = _ownerOfOrRevert(groupId);
+        address owner = _ownerOfOrRevert(chatGroupId);
         if (msg.sender != owner) revert NotChatOwner();
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (config.active) revert ChatAlreadyActive();
 
         bytes32[] memory metaHashes = _validateMetaInput(metaKeys_, metaValues_);
@@ -102,65 +102,65 @@ contract GroupChat is IGroupChat {
         _validatePluginAddress(denySource_);
         _validatePluginAddress(beforePostPlugin_);
         _validatePluginAddress(afterPostPlugin_);
-        _validateDelegateGroupId(groupId, delegateGroupId_);
+        _validateDelegateId(chatGroupId, delegateId_);
 
         uint256 newVersion = config.configVersion + 1;
-        uint256 prevDelegateGroupId = _delegateGroupIdOf(config, owner);
+        uint256 prevDelegateId = _delegateIdOf(config, owner);
 
         if (config.firstActivatedOwner == address(0)) {
             config.firstActivatedOwner = owner;
             config.firstActivatedBlockNumber = block.number;
             config.firstActivatedTimestamp = block.timestamp;
-            _chatGroupIds.push(groupId);
+            _chatGroupIds.push(chatGroupId);
         }
 
         config.active = true;
         config.configVersion = newVersion;
-        _addActiveChatGroupId(groupId);
+        _addActiveChatGroupId(chatGroupId);
 
-        _applyActivateMeta(groupId, metaKeys_, metaValues_, metaHashes, newVersion);
-        _applyActivateDelegateGroupId(groupId, config, owner, delegateGroupId_, newVersion, prevDelegateGroupId);
-        _applyActivateSource(groupId, config.scopeSource, scopeSource_, newVersion, true);
-        _applyActivateSource(groupId, config.denySource, denySource_, newVersion, false);
-        _applyActivatePlugin(groupId, config.beforePostPlugin, beforePostPlugin_, newVersion, true);
-        _applyActivatePlugin(groupId, config.afterPostPlugin, afterPostPlugin_, newVersion, false);
+        _applyActivateMeta(chatGroupId, metaKeys_, metaValues_, metaHashes, newVersion);
+        _applyActivateDelegateId(chatGroupId, config, owner, delegateId_, newVersion, prevDelegateId);
+        _applyActivateSource(chatGroupId, config.scopeSource, scopeSource_, newVersion, true);
+        _applyActivateSource(chatGroupId, config.denySource, denySource_, newVersion, false);
+        _applyActivatePlugin(chatGroupId, config.beforePostPlugin, beforePostPlugin_, newVersion, true);
+        _applyActivatePlugin(chatGroupId, config.afterPostPlugin, afterPostPlugin_, newVersion, false);
 
         config.scopeSource = scopeSource_;
         config.denySource = denySource_;
         config.beforePostPlugin = beforePostPlugin_;
         config.afterPostPlugin = afterPostPlugin_;
-        emit ChatActivate(groupId, owner, newVersion);
+        emit ChatActivate(chatGroupId, owner, newVersion);
     }
 
-    function deactivateChat(uint256 groupId) external nonReentrant {
-        address owner = _ownerOfOrRevert(groupId);
+    function deactivateChat(uint256 chatGroupId) external nonReentrant {
+        address owner = _ownerOfOrRevert(chatGroupId);
         if (msg.sender != owner) revert NotChatOwner();
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (!config.active) revert ChatAlreadyInactive();
 
         uint256 newVersion = config.configVersion + 1;
         config.active = false;
         config.configVersion = newVersion;
-        _removeActiveChatGroupId(groupId);
-        emit ChatDeactivate(groupId, owner, newVersion);
+        _removeActiveChatGroupId(chatGroupId);
+        emit ChatDeactivate(chatGroupId, owner, newVersion);
     }
 
-    function setMeta(uint256 groupId, string calldata key, bytes calldata value) external nonReentrant {
-        _requireOwnerOrDelegateAndActive(groupId);
+    function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external nonReentrant {
+        _requireOwnerOrDelegateAndActive(chatGroupId);
         _validateMetaKey(key);
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         bytes32 hash = _metaHash(key);
-        MetaState storage item = _metaStates[groupId][hash];
+        MetaState storage item = _metaStates[chatGroupId][hash];
 
         if (value.length == 0) {
             if (!item.exists) revert MetaKeyNotFound();
             bytes memory prevValue = item.value;
-            _removeMeta(groupId, hash);
+            _removeMeta(chatGroupId, hash);
             uint256 newVersion = config.configVersion + 1;
             config.configVersion = newVersion;
-            emit MetaSet(groupId, msg.sender, newVersion, key, "", prevValue);
+            emit MetaSet(chatGroupId, msg.sender, newVersion, key, "", prevValue);
             return;
         }
 
@@ -170,28 +170,28 @@ contract GroupChat is IGroupChat {
             item.value = value;
             uint256 newVersion = config.configVersion + 1;
             config.configVersion = newVersion;
-            emit MetaSet(groupId, msg.sender, newVersion, key, value, prevValue);
+            emit MetaSet(chatGroupId, msg.sender, newVersion, key, value, prevValue);
             return;
         }
 
-        _addMeta(groupId, key, value);
+        _addMeta(chatGroupId, key, value);
         uint256 newVersion2 = config.configVersion + 1;
         config.configVersion = newVersion2;
-        emit MetaSet(groupId, msg.sender, newVersion2, key, value, "");
+        emit MetaSet(chatGroupId, msg.sender, newVersion2, key, value, "");
     }
 
-    function setMetaBatch(uint256 groupId, string[] calldata keys, bytes[] calldata values) external nonReentrant {
-        _requireOwnerOrDelegateAndActive(groupId);
+    function setMetaBatch(uint256 chatGroupId, string[] calldata keys, bytes[] calldata values) external nonReentrant {
+        _requireOwnerOrDelegateAndActive(chatGroupId);
         if (keys.length != values.length) revert MetaArrayLengthMismatch();
         if (keys.length == 0) {
             return;
         }
 
         bytes32[] memory hashes = _validateMetaInput(keys, values);
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
 
         for (uint256 i = 0; i < keys.length; i++) {
-            MetaState storage item = _metaStates[groupId][hashes[i]];
+            MetaState storage item = _metaStates[chatGroupId][hashes[i]];
             if (values[i].length == 0) {
                 if (!item.exists) revert MetaKeyNotFound();
             } else if (item.exists && _bytesEqual(item.value, values[i])) {
@@ -203,49 +203,49 @@ contract GroupChat is IGroupChat {
         config.configVersion = newVersion;
 
         for (uint256 i = 0; i < keys.length; i++) {
-            MetaState storage item = _metaStates[groupId][hashes[i]];
+            MetaState storage item = _metaStates[chatGroupId][hashes[i]];
             if (values[i].length == 0) {
                 bytes memory prevValue = item.value;
-                _removeMeta(groupId, hashes[i]);
-                emit MetaSet(groupId, msg.sender, newVersion, keys[i], "", prevValue);
+                _removeMeta(chatGroupId, hashes[i]);
+                emit MetaSet(chatGroupId, msg.sender, newVersion, keys[i], "", prevValue);
             } else if (item.exists) {
                 bytes memory prevValue2 = item.value;
                 item.value = values[i];
-                emit MetaSet(groupId, msg.sender, newVersion, keys[i], values[i], prevValue2);
+                emit MetaSet(chatGroupId, msg.sender, newVersion, keys[i], values[i], prevValue2);
             } else {
-                _addMeta(groupId, keys[i], values[i]);
-                emit MetaSet(groupId, msg.sender, newVersion, keys[i], values[i], "");
+                _addMeta(chatGroupId, keys[i], values[i]);
+                emit MetaSet(chatGroupId, msg.sender, newVersion, keys[i], values[i], "");
             }
         }
     }
 
-    function setDelegateGroupId(uint256 groupId, uint256 delegateGroupId_) external nonReentrant {
-        address owner = _ownerOfOrRevert(groupId);
+    function setDelegateId(uint256 chatGroupId, uint256 delegateId_) external nonReentrant {
+        address owner = _ownerOfOrRevert(chatGroupId);
         if (msg.sender != owner) revert NotChatOwner();
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (!config.active) revert ChatNotActive();
-        _validateDelegateGroupId(groupId, delegateGroupId_);
+        _validateDelegateId(chatGroupId, delegateId_);
 
-        address targetSnapshot = delegateGroupId_ == 0 ? address(0) : owner;
-        if (config.delegateGroupId == delegateGroupId_ && config.delegateOwnerSnapshot == targetSnapshot) {
-            revert DelegateGroupIdUnchanged();
+        address targetSnapshot = delegateId_ == 0 ? address(0) : owner;
+        if (config.delegateId == delegateId_ && config.delegateOwnerSnapshot == targetSnapshot) {
+            revert DelegateIdUnchanged();
         }
 
-        uint256 prevDelegateGroupId = _delegateGroupIdOf(config, owner);
-        config.delegateGroupId = delegateGroupId_;
+        uint256 prevDelegateId = _delegateIdOf(config, owner);
+        config.delegateId = delegateId_;
         config.delegateOwnerSnapshot = targetSnapshot;
 
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit DelegateGroupIdSet(groupId, owner, delegateGroupId_, newVersion, prevDelegateGroupId);
+        emit DelegateIdSet(chatGroupId, owner, delegateId_, newVersion, prevDelegateId);
     }
 
-    function setScopeSource(uint256 groupId, address sourceAddress) external nonReentrant {
-        _requireOwnerOrDelegateAndActive(groupId);
+    function setScopeSource(uint256 chatGroupId, address sourceAddress) external nonReentrant {
+        _requireOwnerOrDelegateAndActive(chatGroupId);
         _validatePluginAddress(sourceAddress);
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (config.scopeSource == sourceAddress) revert PluginAddressUnchanged();
 
         address prevSourceAddress = config.scopeSource;
@@ -253,14 +253,14 @@ contract GroupChat is IGroupChat {
 
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit ScopeSourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+        emit ScopeSourceSet(chatGroupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
     }
 
-    function setDenySource(uint256 groupId, address sourceAddress) external nonReentrant {
-        _requireOwnerOrDelegateAndActive(groupId);
+    function setDenySource(uint256 chatGroupId, address sourceAddress) external nonReentrant {
+        _requireOwnerOrDelegateAndActive(chatGroupId);
         _validatePluginAddress(sourceAddress);
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (config.denySource == sourceAddress) revert PluginAddressUnchanged();
 
         address prevSourceAddress = config.denySource;
@@ -268,14 +268,14 @@ contract GroupChat is IGroupChat {
 
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit DenySourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+        emit DenySourceSet(chatGroupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
     }
 
-    function setBeforePostPlugin(uint256 groupId, address pluginAddress) external nonReentrant {
-        _requireOwnerOrDelegateAndActive(groupId);
+    function setBeforePostPlugin(uint256 chatGroupId, address pluginAddress) external nonReentrant {
+        _requireOwnerOrDelegateAndActive(chatGroupId);
         _validatePluginAddress(pluginAddress);
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (config.beforePostPlugin == pluginAddress) revert PluginAddressUnchanged();
 
         address prevPluginAddress = config.beforePostPlugin;
@@ -283,14 +283,14 @@ contract GroupChat is IGroupChat {
 
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit BeforePostPluginSet(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
+        emit BeforePostPluginSet(chatGroupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
     }
 
-    function setAfterPostPlugin(uint256 groupId, address pluginAddress) external nonReentrant {
-        _requireOwnerOrDelegateAndActive(groupId);
+    function setAfterPostPlugin(uint256 chatGroupId, address pluginAddress) external nonReentrant {
+        _requireOwnerOrDelegateAndActive(chatGroupId);
         _validatePluginAddress(pluginAddress);
 
-        ChatConfig storage config = _chatConfigs[groupId];
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         if (config.afterPostPlugin == pluginAddress) revert PluginAddressUnchanged();
 
         address prevPluginAddress = config.afterPostPlugin;
@@ -298,7 +298,7 @@ contract GroupChat is IGroupChat {
 
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit AfterPostPluginSet(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
+        emit AfterPostPluginSet(chatGroupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
     }
 
     function post(
@@ -337,7 +337,7 @@ contract GroupChat is IGroupChat {
         if (!config.active) revert ChatNotActive();
 
         address senderOwner = _ownerOfOrRevert(senderId);
-        if (msg.sender != senderOwner) revert SenderNotGroupOwner();
+        if (msg.sender != senderOwner) revert SenderAddressNotSenderIdOwner();
 
         uint256 contentLength = bytes(content).length;
         if (contentLength == 0) revert ContentEmpty();
@@ -386,11 +386,11 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function chatInfo(uint256 groupId) external view returns (ChatInfo memory) {
-        address owner = _ownerOfOrRevert(groupId);
-        ChatConfig storage config = _chatConfigs[groupId];
+    function chatInfo(uint256 chatGroupId) external view returns (ChatInfo memory) {
+        address owner = _ownerOfOrRevert(chatGroupId);
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         return ChatInfo({
-            groupId: groupId,
+            chatGroupId: chatGroupId,
             owner: owner,
             active: config.active,
             configVersion: config.configVersion,
@@ -400,56 +400,56 @@ contract GroupChat is IGroupChat {
         });
     }
 
-    function metaValue(uint256 groupId, string calldata key) external view returns (bytes memory) {
-        _requireExistingGroup(groupId);
-        return _metaStates[groupId][_metaHash(key)].value;
+    function metaValue(uint256 chatGroupId, string calldata key) external view returns (bytes memory) {
+        _requireExistingGroup(chatGroupId);
+        return _metaStates[chatGroupId][_metaHash(key)].value;
     }
 
-    function metaEntries(uint256 groupId, uint256 offset, uint256 limit, bool reverse)
+    function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (MetaEntry[] memory)
     {
-        _requireExistingGroup(groupId);
-        string[] storage keys = _metaKeys[groupId];
+        _requireExistingGroup(chatGroupId);
+        string[] storage keys = _metaKeys[chatGroupId];
         uint256 count = _pageCount(keys.length, offset, limit);
         MetaEntry[] memory result = new MetaEntry[](count);
 
         for (uint256 i = 0; i < count; i++) {
             uint256 idx = _pageIndex(keys.length, offset, i, reverse);
             string storage key = keys[idx];
-            result[i] = MetaEntry({key: key, value: _metaStates[groupId][_metaHash(key)].value});
+            result[i] = MetaEntry({key: key, value: _metaStates[chatGroupId][_metaHash(key)].value});
         }
 
         return result;
     }
 
-    function delegateGroupIdOf(uint256 groupId) external view returns (uint256) {
-        address owner = _ownerOfOrRevert(groupId);
-        return _delegateGroupIdOf(_chatConfigs[groupId], owner);
+    function delegateIdOf(uint256 chatGroupId) external view returns (uint256) {
+        address owner = _ownerOfOrRevert(chatGroupId);
+        return _delegateIdOf(_chatConfigs[chatGroupId], owner);
     }
 
-    function scopeSource(uint256 groupId) external view returns (address) {
-        _requireExistingGroup(groupId);
-        return _chatConfigs[groupId].scopeSource;
+    function scopeSource(uint256 chatGroupId) external view returns (address) {
+        _requireExistingGroup(chatGroupId);
+        return _chatConfigs[chatGroupId].scopeSource;
     }
 
-    function denySource(uint256 groupId) external view returns (address) {
-        _requireExistingGroup(groupId);
-        return _chatConfigs[groupId].denySource;
+    function denySource(uint256 chatGroupId) external view returns (address) {
+        _requireExistingGroup(chatGroupId);
+        return _chatConfigs[chatGroupId].denySource;
     }
 
-    function beforePostPlugin(uint256 groupId) external view returns (address) {
-        _requireExistingGroup(groupId);
-        return _chatConfigs[groupId].beforePostPlugin;
+    function beforePostPlugin(uint256 chatGroupId) external view returns (address) {
+        _requireExistingGroup(chatGroupId);
+        return _chatConfigs[chatGroupId].beforePostPlugin;
     }
 
-    function afterPostPlugin(uint256 groupId) external view returns (address) {
-        _requireExistingGroup(groupId);
-        return _chatConfigs[groupId].afterPostPlugin;
+    function afterPostPlugin(uint256 chatGroupId) external view returns (address) {
+        _requireExistingGroup(chatGroupId);
+        return _chatConfigs[chatGroupId].afterPostPlugin;
     }
 
-    function ruleSlots(uint256 groupId)
+    function ruleSlots(uint256 chatGroupId)
         external
         view
         returns (
@@ -459,8 +459,8 @@ contract GroupChat is IGroupChat {
             address afterPostPlugin_
         )
     {
-        _requireExistingGroup(groupId);
-        ChatConfig storage config = _chatConfigs[groupId];
+        _requireExistingGroup(chatGroupId);
+        ChatConfig storage config = _chatConfigs[chatGroupId];
         return (config.scopeSource, config.denySource, config.beforePostPlugin, config.afterPostPlugin);
     }
 
@@ -599,20 +599,20 @@ contract GroupChat is IGroupChat {
         return result;
     }
 
-    function messagesByMentionCount(uint256 chatGroupId, uint256 mentionedGroupId) external view returns (uint256) {
+    function messagesByMentionCount(uint256 chatGroupId, uint256 mentionedSenderId) external view returns (uint256) {
         _requireExistingGroup(chatGroupId);
-        return _mentionMessageIndexes[chatGroupId][mentionedGroupId].length;
+        return _mentionMessageIndexes[chatGroupId][mentionedSenderId].length;
     }
 
     function messagesByMention(
         uint256 chatGroupId,
-        uint256 mentionedGroupId,
+        uint256 mentionedSenderId,
         uint256 offset,
         uint256 limit,
         bool reverse
     ) external view returns (Message[] memory) {
         _requireExistingGroup(chatGroupId);
-        uint256[] storage indexes = _mentionMessageIndexes[chatGroupId][mentionedGroupId];
+        uint256[] storage indexes = _mentionMessageIndexes[chatGroupId][mentionedSenderId];
         uint256 count = _pageCount(indexes.length, offset, limit);
         Message[] memory result = new Message[](count);
 
@@ -626,13 +626,13 @@ contract GroupChat is IGroupChat {
 
     function messageIdsByMention(
         uint256 chatGroupId,
-        uint256 mentionedGroupId,
+        uint256 mentionedSenderId,
         uint256 offset,
         uint256 limit,
         bool reverse
     ) external view returns (uint256[] memory) {
         _requireExistingGroup(chatGroupId);
-        uint256[] storage indexes = _mentionMessageIndexes[chatGroupId][mentionedGroupId];
+        uint256[] storage indexes = _mentionMessageIndexes[chatGroupId][mentionedSenderId];
         uint256 count = _pageCount(indexes.length, offset, limit);
         uint256[] memory result = new uint256[](count);
 
@@ -788,22 +788,22 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _applyActivateDelegateGroupId(
+    function _applyActivateDelegateId(
         uint256 groupId,
         ChatConfig storage config,
         address owner,
-        uint256 delegateGroupId_,
+        uint256 delegateId_,
         uint256 newVersion,
-        uint256 prevDelegateGroupId
+        uint256 prevDelegateId
     ) internal {
-        address targetSnapshot = delegateGroupId_ == 0 ? address(0) : owner;
-        if (config.delegateGroupId == delegateGroupId_ && config.delegateOwnerSnapshot == targetSnapshot) {
+        address targetSnapshot = delegateId_ == 0 ? address(0) : owner;
+        if (config.delegateId == delegateId_ && config.delegateOwnerSnapshot == targetSnapshot) {
             return;
         }
 
-        config.delegateGroupId = delegateGroupId_;
+        config.delegateId = delegateId_;
         config.delegateOwnerSnapshot = targetSnapshot;
-        emit DelegateGroupIdSet(groupId, owner, delegateGroupId_, newVersion, prevDelegateGroupId);
+        emit DelegateIdSet(groupId, owner, delegateId_, newVersion, prevDelegateId);
     }
 
     function _applyActivateSource(
@@ -920,8 +920,8 @@ contract GroupChat is IGroupChat {
     function _requireOwnerOrDelegateAndActive(uint256 groupId) internal view {
         ChatConfig storage config = _chatConfigs[groupId];
         if (!config.active) revert ChatNotActive();
-        if (!_isOwnerOrDelegateGroupOwner(groupId, config, msg.sender)) {
-            revert NotChatOwnerOrDelegateGroupOwner();
+        if (!_isOwnerOrDelegateIdOwner(groupId, config, msg.sender)) {
+            revert NotChatOwnerOrDelegateIdOwner();
         }
     }
 
@@ -963,7 +963,7 @@ contract GroupChat is IGroupChat {
             return (false, GroupNotExist.selector);
         }
         if (senderAddress != senderOwner) {
-            return (false, SenderNotGroupOwner.selector);
+            return (false, SenderAddressNotSenderIdOwner.selector);
         }
 
         if (config.scopeSource != address(0)) {
@@ -1013,21 +1013,21 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _delegateGroupIdOf(ChatConfig storage config, address owner) internal view returns (uint256) {
+    function _delegateIdOf(ChatConfig storage config, address owner) internal view returns (uint256) {
         if (config.delegateOwnerSnapshot != owner) {
             return 0;
         }
-        return config.delegateGroupId;
+        return config.delegateId;
     }
 
-    function _validateDelegateGroupId(uint256 groupId, uint256 delegateGroupId_) internal view {
-        if (delegateGroupId_ == 0) {
+    function _validateDelegateId(uint256 groupId, uint256 delegateId_) internal view {
+        if (delegateId_ == 0) {
             return;
         }
-        if (delegateGroupId_ == groupId) {
-            revert DelegateGroupIdCannotBeChatGroupId();
+        if (delegateId_ == groupId) {
+            revert DelegateIdCannotBeChatGroupId();
         }
-        _ownerOfOrRevert(delegateGroupId_);
+        _ownerOfOrRevert(delegateId_);
     }
 
     function _validatePluginAddress(address pluginAddress) internal view {
@@ -1036,7 +1036,7 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _isOwnerOrDelegateGroupOwner(uint256 groupId, ChatConfig storage config, address operator)
+    function _isOwnerOrDelegateIdOwner(uint256 groupId, ChatConfig storage config, address operator)
         internal
         view
         returns (bool)
@@ -1046,12 +1046,12 @@ contract GroupChat is IGroupChat {
             return true;
         }
 
-        uint256 delegateGroupId_ = _delegateGroupIdOf(config, owner);
-        if (delegateGroupId_ == 0) {
+        uint256 delegateId_ = _delegateIdOf(config, owner);
+        if (delegateId_ == 0) {
             return false;
         }
 
-        return operator == _ownerOfOrRevert(delegateGroupId_);
+        return operator == _ownerOfOrRevert(delegateId_);
     }
 
     function _validateMetaInput(string[] calldata keys, bytes[] calldata values)
@@ -1079,7 +1079,7 @@ contract GroupChat is IGroupChat {
             _ownerOfOrRevert(mentions[i]);
             for (uint256 j = 0; j < i; j++) {
                 if (mentions[j] == mentions[i]) {
-                    revert DuplicateMentionGroupId();
+                    revert DuplicateMentionSenderId();
                 }
             }
         }
@@ -1110,9 +1110,9 @@ contract GroupChat is IGroupChat {
         message_.quotedMessageId = quotedMessageId;
 
         for (uint256 i = 0; i < mentions.length; i++) {
-            uint256 mentionedGroupId = mentions[i];
-            message_.mentions.push(mentionedGroupId);
-            _mentionMessageIndexes[chatGroupId][mentionedGroupId].push(messageIndex);
+            uint256 mentionedSenderId = mentions[i];
+            message_.mentions.push(mentionedSenderId);
+            _mentionMessageIndexes[chatGroupId][mentionedSenderId].push(messageIndex);
         }
         if (mentionAll) {
             _mentionAllMessageIndexes[chatGroupId].push(messageIndex);

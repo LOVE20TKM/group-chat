@@ -16,7 +16,7 @@
 - `chatInfo`
 - `metaValue` / `metaEntries`
 - `setMeta` / `setMetaBatch`
-- `setDelegateGroupId` / `delegateGroupIdOf`
+- `setDelegateId` / `delegateIdOf`
 - `setScopeSource` / `setDenySource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
 - `ruleSlots`

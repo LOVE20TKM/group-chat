@@ -604,7 +604,7 @@ button:disabled {
 .field-row input,
 .query-row input,
 .blacklist-controls input,
-.admin-group-controls input {
+.admin-id-controls input {
   min-width: 0;
   height: 36px;
   border: 1px solid var(--greyscale-200);
@@ -638,7 +638,7 @@ button:disabled {
   padding: 0 8px;
 }
 
-.admin-group-controls {
+.admin-id-controls {
   display: grid;
   gap: 7px;
   margin-top: 8px;

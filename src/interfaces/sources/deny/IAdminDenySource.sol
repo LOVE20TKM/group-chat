@@ -7,15 +7,15 @@ interface IAdminDenySource is IPostDenySource {
     error AdminDenySourceAddressHasNoCode();
     error UnauthorizedDenySourceManager();
     error GroupNotExist();
-    error DuplicateAdminGroupId();
+    error DuplicateAdminId();
     error TargetAddressZero();
     error TargetSenderIdZero();
 
     event AdminSet(
         uint256 indexed chatGroupId,
         address indexed operator,
-        uint256 indexed adminGroupId,
-        uint256 operatorGroupId,
+        uint256 indexed adminId,
+        uint256 operatorId,
         bool listed,
         uint256 stateVersion
     );
@@ -24,7 +24,7 @@ interface IAdminDenySource is IPostDenySource {
         uint256 indexed chatGroupId,
         address indexed operator,
         address indexed targetAddress,
-        uint256 operatorGroupId,
+        uint256 operatorId,
         bool listed,
         uint256 stateVersion
     );
@@ -33,7 +33,7 @@ interface IAdminDenySource is IPostDenySource {
         uint256 indexed chatGroupId,
         address indexed operator,
         uint256 indexed targetSenderId,
-        uint256 operatorGroupId,
+        uint256 operatorId,
         bool listed,
         uint256 stateVersion
     );
@@ -42,7 +42,7 @@ interface IAdminDenySource is IPostDenySource {
         uint256 indexed chatGroupId,
         address indexed operator,
         uint256 indexed targetSenderId,
-        uint256 operatorGroupId,
+        uint256 operatorId,
         bool listed,
         uint256 stateVersion
     );
@@ -55,7 +55,7 @@ interface IAdminDenySource is IPostDenySource {
 
     function LOVE20_GROUP_ADDRESS() external view returns (address);
 
-    function setAdmins(uint256 chatGroupId, uint256[] calldata adminGroupIds) external;
+    function setAdmins(uint256 chatGroupId, uint256[] calldata adminIdList) external;
 
     function addDenyListsBySenderIds(uint256 chatGroupId, uint256[] calldata targetSenderIds) external;
 
@@ -69,7 +69,7 @@ interface IAdminDenySource is IPostDenySource {
 
     function removeExemptListBySenderIds(uint256 chatGroupId, uint256[] calldata senderIds) external;
 
-    function isAdminGroup(uint256 chatGroupId, uint256 adminGroupId) external view returns (bool);
+    function isAdminId(uint256 chatGroupId, uint256 adminId) external view returns (bool);
 
     function isAddressDenied(uint256 chatGroupId, address account) external view returns (bool);
 
@@ -77,9 +77,9 @@ interface IAdminDenySource is IPostDenySource {
 
     function isSenderIdExempt(uint256 chatGroupId, uint256 senderId) external view returns (bool);
 
-    function adminGroupsCount(uint256 chatGroupId) external view returns (uint256);
+    function adminIdsCount(uint256 chatGroupId) external view returns (uint256);
 
-    function adminGroups(uint256 chatGroupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
+    function adminIds(uint256 chatGroupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
 
     function addressDenyListCount(uint256 chatGroupId) external view returns (uint256);
 

@@ -33,7 +33,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
             address(0),
             address(managedPlugin),
             address(0),
-            delegateGroupId
+            delegateId
         );
 
         vm.prank(chatOwner);
@@ -51,7 +51,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         managedPlugin.configure(chatGroupId, bytes("owner-ok"));
         assertEq(managedPlugin.configValue(chatGroupId), bytes("owner-ok"));
 
-        vm.prank(delegateGroupOwner);
+        vm.prank(delegateIdOwner);
         managedPlugin.configure(chatGroupId, bytes("delegate-ok"));
         assertEq(managedPlugin.configValue(chatGroupId), bytes("delegate-ok"));
     }
@@ -140,7 +140,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         (allowed, reasonCode) = chat.canPostStatus(chatGroupId, senderId, other);
         assertTrue(!allowed);
-        assertEq(reasonCode, IGroupChatErrors.SenderNotGroupOwner.selector);
+        assertEq(reasonCode, IGroupChatErrors.SenderAddressNotSenderIdOwner.selector);
 
         MockPostScopeFailSource failingScope = new MockPostScopeFailSource();
         vm.prank(chatOwner);
@@ -178,14 +178,14 @@ contract GroupChatPluginsTest is GroupChatFixture {
         _activateEmpty();
 
         vm.prank(other);
-        vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateGroupOwner.selector);
+        vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateIdOwner.selector);
         chat.setScopeSource(chatGroupId, address(scope1));
 
         vm.prank(chatOwner);
-        chat.setDelegateGroupId(chatGroupId, delegateGroupId);
+        chat.setDelegateId(chatGroupId, delegateId);
 
         vm.recordLogs();
-        vm.prank(delegateGroupOwner);
+        vm.prank(delegateIdOwner);
         chat.setScopeSource(chatGroupId, address(scope1));
         Vm.Log[] memory scopeLogs1 = vm.getRecordedLogs();
         (uint256 scopeVersion1, address prevScope1) = abi.decode(scopeLogs1[0].data, (uint256, address));
@@ -229,14 +229,14 @@ contract GroupChatPluginsTest is GroupChatFixture {
         _activateEmpty();
 
         vm.prank(other);
-        vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateGroupOwner.selector);
+        vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateIdOwner.selector);
         chat.setDenySource(chatGroupId, address(deny1));
 
         vm.prank(chatOwner);
-        chat.setDelegateGroupId(chatGroupId, delegateGroupId);
+        chat.setDelegateId(chatGroupId, delegateId);
 
         vm.recordLogs();
-        vm.prank(delegateGroupOwner);
+        vm.prank(delegateIdOwner);
         chat.setDenySource(chatGroupId, address(deny1));
         Vm.Log[] memory denyLogs1 = vm.getRecordedLogs();
         (uint256 denyVersion1, address prevDeny1) = abi.decode(denyLogs1[0].data, (uint256, address));
@@ -467,7 +467,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         uint256[] memory mentions = new uint256[](2);
         mentions[0] = otherGroupId;
-        mentions[1] = delegateGroupId;
+        mentions[1] = delegateId;
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
@@ -482,7 +482,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         uint256[] memory captured = beforePlugin.lastMentions();
         assertEq(captured.length, 2);
         assertEq(captured[0], otherGroupId);
-        assertEq(captured[1], delegateGroupId);
+        assertEq(captured[1], delegateId);
         assertEq(beforePlugin.lastQuotedMessageId(), 0);
 
         assertEq(chat.messagesCount(chatGroupId), 1);

@@ -104,7 +104,7 @@ contract GroupChatMetaTest is GroupChatFixture {
             address(0),
             address(beforePlugin),
             address(afterPlugin),
-            delegateGroupId
+            delegateId
         );
 
         vm.prank(chatOwner);
@@ -207,7 +207,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.setDelegateGroupId(chatGroupId, delegateGroupId);
+        chat.setDelegateId(chatGroupId, delegateId);
         Vm.Log[] memory logs1 = vm.getRecordedLogs();
 
         assertEq(logs1.length, 1);

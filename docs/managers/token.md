@@ -28,7 +28,7 @@ function activate(address token) external returns (uint256 chatGroupId);
 - `GroupChat.denySource = DENY_SOURCE_ADDRESS`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
 - `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN_ADDRESS`
-- `delegateGroupId = 0`
+- `delegateId = 0`
 
 ## 发言资格
 

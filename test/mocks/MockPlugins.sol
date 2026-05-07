@@ -3,7 +3,7 @@ pragma solidity =0.8.17;
 
 interface IGroupChatPluginView {
     struct ChatInfo {
-        uint256 groupId;
+        uint256 chatGroupId;
         address owner;
         bool active;
         uint256 configVersion;
@@ -12,9 +12,9 @@ interface IGroupChatPluginView {
         uint256 firstActivatedTimestamp;
     }
 
-    function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
+    function chatInfo(uint256 chatGroupId) external view returns (ChatInfo memory);
 
-    function delegateGroupIdOf(uint256 groupId) external view returns (uint256);
+    function delegateIdOf(uint256 chatGroupId) external view returns (uint256);
 
     function post(
         uint256 chatGroupId,
@@ -26,7 +26,7 @@ interface IGroupChatPluginView {
     ) external;
 
     function setMeta(
-        uint256 groupId,
+        uint256 chatGroupId,
         string calldata key,
         bytes calldata value
     ) external;
@@ -295,12 +295,12 @@ contract MockManagedPlugin {
     function configure(uint256 chatGroupId, bytes calldata value) external {
         IGroupChatPluginView.ChatInfo memory info =
             IGroupChatPluginView(CHAT_ADDRESS).chatInfo(chatGroupId);
-        uint256 delegateGroupId_ =
-            IGroupChatPluginView(CHAT_ADDRESS).delegateGroupIdOf(chatGroupId);
-        address delegateGroupOwner = delegateGroupId_ == 0
+        uint256 delegateId_ =
+            IGroupChatPluginView(CHAT_ADDRESS).delegateIdOf(chatGroupId);
+        address delegateIdOwner = delegateId_ == 0
             ? address(0)
-            : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateGroupId_).owner;
-        if (msg.sender != info.owner && msg.sender != delegateGroupOwner) {
+            : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateId_).owner;
+        if (msg.sender != info.owner && msg.sender != delegateIdOwner) {
             revert UnauthorizedPluginManager();
         }
         configValue[chatGroupId] = value;

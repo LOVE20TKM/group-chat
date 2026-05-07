@@ -3,7 +3,7 @@ pragma solidity =0.8.17;
 
 interface IGroupChatStructs {
     struct ChatInfo {
-        uint256 groupId;
+        uint256 chatGroupId;
         address owner;
         bool active;
         uint256 configVersion;
@@ -45,8 +45,8 @@ interface IGroupChatErrors {
     error ChatAlreadyInactive();
     error ChatNotActive();
     error NotChatOwner();
-    error NotChatOwnerOrDelegateGroupOwner();
-    error SenderNotGroupOwner();
+    error NotChatOwnerOrDelegateIdOwner();
+    error SenderAddressNotSenderIdOwner();
     error RoundNotStarted();
     error PhaseBlocksZero();
     error MetaKeyEmpty();
@@ -54,14 +54,14 @@ interface IGroupChatErrors {
     error DuplicateMetaKey();
     error MetaValueUnchanged();
     error MetaKeyNotFound();
-    error DelegateGroupIdCannotBeChatGroupId();
-    error DelegateGroupIdUnchanged();
+    error DelegateIdCannotBeChatGroupId();
+    error DelegateIdUnchanged();
     error PluginAddressHasNoCode();
     error PluginAddressUnchanged();
     error ContentEmpty();
     error ContentTooLong(uint256 length, uint256 maxLength);
     error TooManyMentions(uint256 length, uint256 maxLength);
-    error DuplicateMentionGroupId();
+    error DuplicateMentionSenderId();
     error InvalidQuotedMessageId();
     error InvalidMessageId();
     error DefaultGroupIdNotSet();
@@ -73,12 +73,12 @@ interface IGroupChatErrors {
 }
 
 interface IGroupChatEvents {
-    event ChatActivate(uint256 indexed groupId, address indexed owner, uint256 configVersion);
+    event ChatActivate(uint256 indexed chatGroupId, address indexed owner, uint256 configVersion);
 
-    event ChatDeactivate(uint256 indexed groupId, address indexed owner, uint256 configVersion);
+    event ChatDeactivate(uint256 indexed chatGroupId, address indexed owner, uint256 configVersion);
 
     event MetaSet(
-        uint256 indexed groupId,
+        uint256 indexed chatGroupId,
         address indexed operator,
         uint256 configVersion,
         string key,
@@ -86,16 +86,16 @@ interface IGroupChatEvents {
         bytes prevValue
     );
 
-    event DelegateGroupIdSet(
-        uint256 indexed groupId,
+    event DelegateIdSet(
+        uint256 indexed chatGroupId,
         address indexed owner,
-        uint256 indexed delegateGroupId,
+        uint256 indexed delegateId,
         uint256 configVersion,
-        uint256 prevDelegateGroupId
+        uint256 prevDelegateId
     );
 
     event ScopeSourceSet(
-        uint256 indexed groupId,
+        uint256 indexed chatGroupId,
         address indexed sourceAddress,
         address indexed operator,
         uint256 configVersion,
@@ -103,7 +103,7 @@ interface IGroupChatEvents {
     );
 
     event DenySourceSet(
-        uint256 indexed groupId,
+        uint256 indexed chatGroupId,
         address indexed sourceAddress,
         address indexed operator,
         uint256 configVersion,
@@ -111,7 +111,7 @@ interface IGroupChatEvents {
     );
 
     event BeforePostPluginSet(
-        uint256 indexed groupId,
+        uint256 indexed chatGroupId,
         address indexed pluginAddress,
         address indexed operator,
         uint256 configVersion,
@@ -119,7 +119,7 @@ interface IGroupChatEvents {
     );
 
     event AfterPostPluginSet(
-        uint256 indexed groupId,
+        uint256 indexed chatGroupId,
         address indexed pluginAddress,
         address indexed operator,
         uint256 configVersion,
@@ -157,31 +157,31 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
     function MAX_MENTIONS() external view returns (uint256);
 
     function activateChat(
-        uint256 groupId,
+        uint256 chatGroupId,
         string[] calldata metaKeys,
         bytes[] calldata metaValues,
         address scopeSource_,
         address denySource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
-        uint256 delegateGroupId_
+        uint256 delegateId_
     ) external;
 
-    function deactivateChat(uint256 groupId) external;
+    function deactivateChat(uint256 chatGroupId) external;
 
-    function setMeta(uint256 groupId, string calldata key, bytes calldata value) external;
+    function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external;
 
-    function setMetaBatch(uint256 groupId, string[] calldata keys, bytes[] calldata values) external;
+    function setMetaBatch(uint256 chatGroupId, string[] calldata keys, bytes[] calldata values) external;
 
-    function setDelegateGroupId(uint256 groupId, uint256 delegateGroupId_) external;
+    function setDelegateId(uint256 chatGroupId, uint256 delegateId_) external;
 
-    function setScopeSource(uint256 groupId, address sourceAddress) external;
+    function setScopeSource(uint256 chatGroupId, address sourceAddress) external;
 
-    function setDenySource(uint256 groupId, address sourceAddress) external;
+    function setDenySource(uint256 chatGroupId, address sourceAddress) external;
 
-    function setBeforePostPlugin(uint256 groupId, address pluginAddress) external;
+    function setBeforePostPlugin(uint256 chatGroupId, address pluginAddress) external;
 
-    function setAfterPostPlugin(uint256 groupId, address pluginAddress) external;
+    function setAfterPostPlugin(uint256 chatGroupId, address pluginAddress) external;
 
     function post(
         uint256 chatGroupId,
@@ -200,26 +200,26 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         uint256 quotedMessageId
     ) external;
 
-    function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
+    function chatInfo(uint256 chatGroupId) external view returns (ChatInfo memory);
 
-    function metaValue(uint256 groupId, string calldata key) external view returns (bytes memory);
+    function metaValue(uint256 chatGroupId, string calldata key) external view returns (bytes memory);
 
-    function metaEntries(uint256 groupId, uint256 offset, uint256 limit, bool reverse)
+    function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (MetaEntry[] memory);
 
-    function delegateGroupIdOf(uint256 groupId) external view returns (uint256);
+    function delegateIdOf(uint256 chatGroupId) external view returns (uint256);
 
-    function scopeSource(uint256 groupId) external view returns (address);
+    function scopeSource(uint256 chatGroupId) external view returns (address);
 
-    function denySource(uint256 groupId) external view returns (address);
+    function denySource(uint256 chatGroupId) external view returns (address);
 
-    function beforePostPlugin(uint256 groupId) external view returns (address);
+    function beforePostPlugin(uint256 chatGroupId) external view returns (address);
 
-    function afterPostPlugin(uint256 groupId) external view returns (address);
+    function afterPostPlugin(uint256 chatGroupId) external view returns (address);
 
-    function ruleSlots(uint256 groupId)
+    function ruleSlots(uint256 chatGroupId)
         external
         view
         returns (
@@ -275,11 +275,11 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         bool reverse
     ) external view returns (uint256[] memory);
 
-    function messagesByMentionCount(uint256 chatGroupId, uint256 mentionedGroupId) external view returns (uint256);
+    function messagesByMentionCount(uint256 chatGroupId, uint256 mentionedSenderId) external view returns (uint256);
 
     function messagesByMention(
         uint256 chatGroupId,
-        uint256 mentionedGroupId,
+        uint256 mentionedSenderId,
         uint256 offset,
         uint256 limit,
         bool reverse
@@ -287,7 +287,7 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
 
     function messageIdsByMention(
         uint256 chatGroupId,
-        uint256 mentionedGroupId,
+        uint256 mentionedSenderId,
         uint256 offset,
         uint256 limit,
         bool reverse

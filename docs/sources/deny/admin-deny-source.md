@@ -21,11 +21,11 @@
 | 名称 | 含义 |
 | --- | --- |
 | `chatGroupId` | 群聊所属身份 NFT，也是被保护的群聊 |
-| `operatorGroupId` | 管理员路径下，默认身份注册表 `defaultGroupIdOf(msg.sender)` 返回的当前默认身份 NFT |
-| `adminGroupId` | `chatGroupId` 作用域下管理员 NFT 集合中的一个管理员 NFT |
+| `operatorId` | 管理员路径下，默认身份注册表 `defaultGroupIdOf(msg.sender)` 返回的当前默认身份 NFT |
+| `adminId` | `chatGroupId` 作用域下管理员 NFT 集合中的一个管理员 NFT |
 | owner | `GroupNFT.ownerOf(chatGroupId)` 当前地址 |
-| delegate | `GroupChat.delegateGroupIdOf(chatGroupId)` 对应身份 NFT 的当前 owner |
-| admin | `operatorGroupId` 命中该 `chatGroupId` 配置的 `adminGroupIds` 中任一项 |
+| delegate | `GroupChat.delegateIdOf(chatGroupId)` 对应身份 NFT 的当前 owner |
+| admin | `operatorId` 命中该 `chatGroupId` 配置的 `adminIds` 中任一项 |
 
 ## 3. 核心规则
 
@@ -33,27 +33,27 @@
 - 不允许存在 DenySource 级全局管理员
 - 每个 `chatGroupId` 可独立配置管理员 NFT 集合，建议管理员数量不超过 `10`
 - owner / delegate 权限直接按 `msg.sender` 当前是否持有对应 NFT 判断
-- admin 权限以 `operatorGroupId = defaultGroupIdOf(msg.sender)` 作为权限主体
-- 为保持写接口简单，当前不额外提供显式传入 `operatorGroupId` 的双接口
+- admin 权限以 `operatorId = defaultGroupIdOf(msg.sender)` 作为权限主体
+- 为保持写接口简单，当前不额外提供显式传入 `operatorId` 的双接口
 - 走 admin 权限路径时，未设置默认身份 NFT，或默认身份 NFT 不具备 admin 权限时，必须拒绝
 - owner / delegate 可以配置管理员、管理豁免名单
 - admin 只能管理黑名单
 - owner / delegate 若也要管理黑名单，必须把自己当前默认身份 NFT 加入管理员集合
 - 豁免名单只豁免黑名单，不提供基础发言资格
-- 权限必须实时读取默认身份注册表、`ownerOf(chatGroupId)`、`delegateGroupIdOf(chatGroupId)` 与 delegate NFT 当前 owner，不得缓存权限地址或权限快照
+- 权限必须实时读取默认身份注册表、`ownerOf(chatGroupId)`、`delegateIdOf(chatGroupId)` 与 delegate NFT 当前 owner，不得缓存权限地址或权限快照
 - 管理员 NFT 集合变更不影响既有黑名单与豁免名单内容
 
 owner / delegate 权限判定顺序：
 
 1. 若 `msg.sender == GroupNFT.ownerOf(chatGroupId)`，视为 owner 权限
-2. 否则读取 `delegateGroupId = GroupChat.delegateGroupIdOf(chatGroupId)`
-3. 若 `delegateGroupId != 0 && msg.sender == GroupNFT.ownerOf(delegateGroupId)`，视为 delegate 权限
+2. 否则读取 `delegateId = GroupChat.delegateIdOf(chatGroupId)`
+3. 若 `delegateId != 0 && msg.sender == GroupNFT.ownerOf(delegateId)`，视为 delegate 权限
 4. 否则拒绝
 
 黑名单写接口只走 admin 权限路径：
 
-1. 读取 `operatorGroupId = GroupDefaults.defaultGroupIdOf(msg.sender)`
-2. 若 `operatorGroupId != 0 && adminGroupListed[chatGroupId][operatorGroupId] == true`，允许修改黑名单
+1. 读取 `operatorId = GroupDefaults.defaultGroupIdOf(msg.sender)`
+2. 若 `operatorId != 0 && adminIdListed[chatGroupId][operatorId] == true`，允许修改黑名单
 3. 否则拒绝
 
 因此：
@@ -87,11 +87,11 @@ DenySource 合约全局至少维护：
 
 每个 `chatGroupId` 作用域至少维护：
 
-- `mapping(uint256 => bool) adminGroupListed`
+- `mapping(uint256 => bool) adminIdListed`
 - `mapping(address => bool) addressDenied`
 - `mapping(uint256 => bool) senderIdDenied`
 - `mapping(uint256 => bool) senderIdExempt`
-- `uint256[] adminGroupIds`
+- `uint256[] adminIds`
 - `address[] addressDenyList`
 - `uint256[] senderIdDenyList`
 - `uint256[] senderIdExemptList`
@@ -105,25 +105,25 @@ DenySource 合约全局至少维护：
 - DenySource 部署时固定 `GROUP_CHAT_ADDRESS` 地址，后续不得修改
 - `setAdmins(...)` 输入必须去重
 - `setAdmins(...)` 允许传空数组，用于清空当前 `chatGroupId` 的管理员 NFT 集合
-- `setAdmins(...)` 传入的每个 `adminGroupId` 都必须对应当前存在的 `GroupNFT`
+- `setAdmins(...)` 传入的每个 `adminId` 都必须对应当前存在的 `GroupNFT`
 - 可枚举集合必须去重，且支持分页查询
 - 删除可使用 `swap & pop`，分页返回顺序不作协议承诺
 
 ## 5. 最小接口
 
-- `setAdmins(uint256 chatGroupId, uint256[] adminGroupIds)`
+- `setAdmins(uint256 chatGroupId, uint256[] adminIds)`
 - `addDenyListsBySenderIds(uint256 chatGroupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时加入地址与 NFT 黑名单
 - `removeDenyListsBySenderIds(uint256 chatGroupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时移除地址与 NFT 黑名单
 - `addDenyListsBySenderAddresses(uint256 chatGroupId, address[] targetAddresses)`：逐个加入地址黑名单；若地址有有效默认 NFT，同时加入 NFT 黑名单
 - `removeDenyListsBySenderAddresses(uint256 chatGroupId, address[] targetAddresses)`：逐个移除地址黑名单；若地址有有效默认 NFT，同时移除 NFT 黑名单
 - `addExemptListBySenderIds(uint256 chatGroupId, uint256[] senderIds)`
 - `removeExemptListBySenderIds(uint256 chatGroupId, uint256[] senderIds)`
-- `isAdminGroup(uint256 chatGroupId, uint256 adminGroupId)`
+- `isAdminId(uint256 chatGroupId, uint256 adminId)`
 - `isAddressDenied(uint256 chatGroupId, address account)`
 - `isSenderIdDenied(uint256 chatGroupId, uint256 senderId)`
 - `isSenderIdExempt(uint256 chatGroupId, uint256 senderId)`
-- `adminGroupsCount(uint256 chatGroupId)`
-- `adminGroups(uint256 chatGroupId, uint256 offset, uint256 limit)`
+- `adminIdsCount(uint256 chatGroupId)`
+- `adminIds(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `addressDenyListCount(uint256 chatGroupId)`
 - `addressDenyList(uint256 chatGroupId, uint256 offset, uint256 limit)`
 - `senderIdDenyListCount(uint256 chatGroupId)`
@@ -147,8 +147,8 @@ DenySource 合约全局至少维护：
 
 - `chatGroupId`
 - `operator`
-- `operatorGroupId`
-- `adminGroupId`，如适用
+- `operatorId`
+- `adminId`，如适用
 - `targetAddress` 或 `targetSenderId`
 - `listed`
 - `stateVersion`，如适用
@@ -182,9 +182,9 @@ event StateVersionChanged(
 - 非 admin 不能修改黑名单
 - owner / delegate 想修改黑名单时，必须通过默认身份 NFT 命中管理员集合
 - `setAdmins([])` 必须允许
-- `setAdmins(...)` 传入不存在的 `adminGroupId` 时必须拒绝
+- `setAdmins(...)` 传入不存在的 `adminId` 时必须拒绝
 - 黑名单、豁免名单需支持单查和分页读列表
 - 命中豁免名单时只跳过黑名单，不跳过基础发言资格
 - 管理员 NFT 集合变更不得影响既有黑名单或豁免名单
-- NFT 转让、默认身份 NFT 变化或 `delegateGroupId` 变化后，旧权限必须立即失效
+- NFT 转让、默认身份 NFT 变化或 `delegateId` 变化后，旧权限必须立即失效
 - 所有关键状态都可链上查询并由事件追踪

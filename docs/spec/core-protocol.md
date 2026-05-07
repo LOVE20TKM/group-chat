@@ -7,7 +7,7 @@
 - `GroupNFT` 身份与控制权
 - chat 激活 / 关闭
 - `meta`
-- `delegateGroupId`
+- `delegateId`
 - 四个规则槽位
 - 消息落链
 - round 与分页索引
@@ -40,7 +40,7 @@
 
 - `active`
 - `meta`
-- `delegateGroupId` 原始存储配置
+- `delegateId` 原始存储配置
 - `scopeSource`
 - `denySource`
 - `beforePostPlugin`
@@ -51,7 +51,7 @@
 - 当前 `owner`
 - 消息
 - `firstActivated*`
-- 派生后的有效 `delegateGroupId`
+- 派生后的有效 `delegateId`
 
 ## 生命周期
 
@@ -74,12 +74,12 @@
 
 ## DelegateGroup
 
-- `delegateGroupId` 只能代管，不能代替发言。
-- 当前可代管地址是 `delegateGroupId` 的当前 owner。
+- `delegateId` 只能代管，不能代替发言。
+- 当前可代管地址是 `delegateId` 的当前 owner。
 - delegate 仅在 `delegateOwnerSnapshot == ownerOf(groupId)` 时有效。
 - NFT 转给新 owner 后旧 delegate 失效；转回同一 owner 后自动恢复。
 - delegate 不能执行 `activateChat` / `deactivateChat`。
-- `delegateGroupId == groupId` 必须 revert。
+- `delegateId == groupId` 必须 revert。
 
 ## Rule Slots
 

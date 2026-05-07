@@ -22,11 +22,11 @@ function escapeHtml(value) {
 }
 
 function activeChat() {
-  return state.chats.find((chat) => chat.groupId === state.activeChatId);
+  return state.chats.find((chat) => chat.chatGroupId === state.activeChatId);
 }
 
 function activeChatEntry() {
-  const chat = state.chats.find((item) => String(item.groupId) === String(state.activeChatGroupId));
+  const chat = state.chats.find((item) => String(item.chatGroupId) === String(state.activeChatGroupId));
   return chat ? { kind: 'group', item: chat } : null;
 }
 
@@ -38,13 +38,13 @@ function currentDefaultGroupId() {
   return state.defaultGroupId;
 }
 
-function ownerOfGroupId(groupId) {
-  return state.groupOwners?.[String(groupId)] || '';
+function ownerOfGroupId(chatGroupId) {
+  return state.groupOwners?.[String(chatGroupId)] || '';
 }
 
 function validDefaultGroupIdOf(address) {
-  const groupId = state.defaultGroupIdsByAddress?.[address];
-  return groupId && ownerOfGroupId(groupId) === address ? groupId : '';
+  const chatGroupId = state.defaultGroupIdsByAddress?.[address];
+  return chatGroupId && ownerOfGroupId(chatGroupId) === address ? chatGroupId : '';
 }
 
 function resolveNftInput(value, mode = 'name') {
@@ -105,7 +105,7 @@ function chatDisplayName(chat) {
   if (chat.type === 'token-gov') return `治理群 ${chatTokenSymbol(chat)}`;
   if (chat.type === 'action') return `行动大群 #${chat.actionId}-${actionTitle(chat)}`;
   if (chat.type === 'action-gov') return `行动治理群 #${chat.actionId}-${actionTitle(chat)}`;
-  if (chat.type === 'chain-service') return `链群#${chat.groupId}-${chat.chainName || chat.shortTitle}`;
+  if (chat.type === 'chain-service') return `链群#${chat.chatGroupId}-${chat.chainName || chat.shortTitle}`;
   return chat.title;
 }
 
@@ -138,7 +138,7 @@ function activationTypeForChat(chat) {
 }
 
 function activationDraftFor(chat) {
-  const key = String(chat.groupId);
+  const key = String(chat.chatGroupId);
   if (!state.activationDrafts[key]) {
     state.activationDrafts[key] = {
       ...chat.params,
@@ -148,7 +148,7 @@ function activationDraftFor(chat) {
       denySource: chat.ruleSlots.denySource,
       beforePostPlugin: chat.ruleSlots.beforePostPlugin,
       afterPostPlugin: chat.ruleSlots.afterPostPlugin,
-      delegateGroupId: chat.ruleSlots.delegateGroupId,
+      delegateId: chat.ruleSlots.delegateId,
     };
   }
   return state.activationDrafts[key];
@@ -165,7 +165,7 @@ function activationFieldLabel(field) {
     denySource: 'denySource',
     beforePostPlugin: 'beforePostPlugin',
     afterPostPlugin: 'afterPostPlugin',
-    delegateGroupId: 'delegateGroupId',
+    delegateId: 'delegateId',
   };
   return labels[field] || field;
 }
@@ -200,7 +200,7 @@ function captureActivationDraft(chat) {
     draft[input.dataset.activationField] = input.value.trim();
   });
   if (chat.model === 'chain-service') {
-    draft.chatGroupId = draft.chatGroupId || String(chat.groupId);
+    draft.chatGroupId = draft.chatGroupId || String(chat.chatGroupId);
   }
   return draft;
 }
@@ -209,19 +209,19 @@ function activationBlocker(chat, draft) {
   if (!chat) return '请选择群聊';
   if (chat.active) return '该群聊已激活';
   if (chat.model === 'chain-service') {
-    if (Number(draft.chatGroupId) !== chat.groupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
+    if (Number(draft.chatGroupId) !== chat.chatGroupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
     if (chat.role !== 'owner') return '只有 chatGroupId 当前 owner 可以直接激活';
-    const delegateGroupId = resolveOptionalKnownNftInput(draft.delegateGroupId, state.nftInputMode);
-    if (!delegateGroupId) return `未找到 NFT：${draft.delegateGroupId}`;
-    if (Number(delegateGroupId || 0) === chat.groupId) return 'delegateGroupId 不能等于 chatGroupId';
+    const delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
+    if (!delegateId) return `未找到 NFT：${draft.delegateId}`;
+    if (Number(delegateId || 0) === chat.chatGroupId) return 'delegateId 不能等于 chatGroupId';
   }
   return '';
 }
 
 function activationPreview(chat, draft) {
   if (chat.model === 'chain-service') {
-    const delegateGroupId = resolveOptionalKnownNftInput(draft.delegateGroupId, state.nftInputMode);
-    return `activateChat(${draft.chatGroupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${delegateGroupId})`;
+    const delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
+    return `activateChat(${draft.chatGroupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${delegateId})`;
   }
   const values = Object.keys(chat.params).map((key) => draft[key]).join(', ');
   return `${chat.manager}.activate(${values})`;
@@ -240,7 +240,7 @@ function canEditRules(chat) {
 }
 
 function isAdminDenyOperator(chat) {
-  return Boolean(chat?.adminDeny?.adminGroupIds.includes(String(currentDefaultGroupId())));
+  return Boolean(chat?.adminDeny?.adminIds.includes(String(currentDefaultGroupId())));
 }
 
 function canEditAdminDeny(chat) {
@@ -269,7 +269,7 @@ function blacklistRowKey(targetType, target) {
 
 function govTargets(chat, targetType) {
   targetType = normalizeBlacklistTargetType(targetType);
-  return targetType === 'address' ? chat.govDeny.addressTargets : chat.govDeny.groupTargets;
+  return targetType === 'address' ? chat.govDeny.addressTargets : chat.govDeny.senderIdTargets;
 }
 
 function findGovTarget(chat, targetType, target) {
@@ -290,7 +290,7 @@ function currentSenderDenied(chat) {
   if (!chat || chat.blacklistMode === 'none') return false;
   if (chat.blacklistMode === 'gov') {
     const addressDenied = chat.govDeny.addressTargets.some((item) => item.target === state.account && targetDenied(item));
-    const groupDenied = chat.govDeny.groupTargets.some((item) => item.target === String(currentDefaultGroupId()) && targetDenied(item));
+    const groupDenied = chat.govDeny.senderIdTargets.some((item) => item.target === String(currentDefaultGroupId()) && targetDenied(item));
     return addressDenied || groupDenied;
   }
 
@@ -304,7 +304,7 @@ function chatStatus(chat) {
   if (!chat) return { allowed: false, reasonCode: 'ChatNotSelected', label: '未选择群聊' };
   if (!chat.active) return { allowed: false, reasonCode: 'ChatNotActive', label: '未激活' };
   if (chat.defaultGroupOwnerMatches === false) {
-    return { allowed: false, reasonCode: 'SenderNotGroupOwner', label: '不是 defaultGroupId owner' };
+    return { allowed: false, reasonCode: 'SenderAddressNotSenderIdOwner', label: '不是 defaultGroupId owner' };
   }
   if (!chat.scopeAllowed) return { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' };
   if (currentSenderDenied(chat)) return { allowed: false, reasonCode: 'DenyRejected', label: '命中黑名单' };
@@ -418,7 +418,7 @@ function renderConversationRows() {
 function renderConversationRow(entry) {
   const chat = entry.item;
   const rowAction = chat.active ? 'open-chat' : 'open-activation';
-  const rowTarget = chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  const rowTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
 
   return `
     <article class="conversation-row group-row" data-action="${rowAction}" ${rowTarget}>
@@ -476,7 +476,7 @@ function renderActivationSection() {
 
 function renderActivationCard(chat) {
   const mainAction = chat.active ? 'open-chat' : 'open-activation-form';
-  const mainTarget = chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  const mainTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
   return `
     <article class="type-card">
       <div class="card-topline">
@@ -487,7 +487,7 @@ function renderActivationCard(chat) {
       <div class="kv-grid">${renderParams(chat.params)}</div>
       <div class="card-actions">
         <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.active ? '进入' : '配置入参'}</button>
-        <button class="sheet-button" type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}" ${chat.active ? '' : 'disabled'}>黑名单</button>
+        <button class="sheet-button" type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}" ${chat.active ? '' : 'disabled'}>黑名单</button>
       </div>
     </article>
   `;
@@ -512,7 +512,7 @@ function renderActionActivation(action) {
 
 function renderMiniActivate(chat) {
   const mainAction = chat.active ? 'open-chat' : 'open-activation-form';
-  const mainTarget = chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`;
+  const mainTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
   return `
     <div class="mini-card">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
@@ -532,9 +532,9 @@ function renderChainActivation(chat) {
       </div>
       <div class="muted">一个代币社区可有多个链群服务者管理群</div>
       <div class="inline-actions">
-        <button type="button" data-action="${chat.active ? 'open-chat' : 'open-activation-form'}" ${chat.active ? `data-chat-group-id="${chat.groupId}"` : `data-chat-id="${chat.groupId}"`}>${chat.active ? '进入' : '配置'}</button>
-        ${chat.active && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.groupId}">群管理</button>` : ''}
-        ${chat.active ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">黑名单</button>` : ''}
+        <button type="button" data-action="${chat.active ? 'open-chat' : 'open-activation-form'}" ${chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`}>${chat.active ? '进入' : '配置'}</button>
+        ${chat.active && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.chatGroupId}">群管理</button>` : ''}
+        ${chat.active ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">黑名单</button>` : ''}
       </div>
     </article>
   `;
@@ -563,7 +563,7 @@ function renderActivationForm() {
       </div>
       ${blocker ? `<div class="notice-row">${escapeHtml(blocker)}</div>` : ''}
       <div class="card-actions">
-        <button class="sheet-button primary" type="button" data-action="activate-chat" data-chat-id="${chat.groupId}" ${blocker ? 'disabled' : ''}>提交激活</button>
+        <button class="sheet-button primary" type="button" data-action="activate-chat" data-chat-id="${chat.chatGroupId}" ${blocker ? 'disabled' : ''}>提交激活</button>
         <button class="sheet-button" type="button" data-action="set-view" data-view="activate">返回列表</button>
       </div>
     </section>
@@ -594,16 +594,16 @@ function renderDirectActivationFields(chat, draft) {
       ${renderActivationChoice('denySource', draft.denySource)}
       ${renderActivationChoice('beforePostPlugin', draft.beforePostPlugin)}
       ${renderActivationChoice('afterPostPlugin', draft.afterPostPlugin)}
-      ${renderActivationTextInput('delegateGroupId', draft.delegateGroupId)}
+      ${renderActivationTextInput('delegateId', draft.delegateId)}
     </section>
   `;
 }
 
 function renderActivationTextInput(field, value, readonly = false) {
   const id = `activation-${field}-input`;
-  const placeholder = field === 'delegateGroupId' ? (state.nftInputMode === 'name' ? '输入 NFT 名称' : '输入 NFT 编号') : '';
-  const inputMode = field === 'delegateGroupId' ? (state.nftInputMode === 'id' ? 'numeric' : 'text') : activationInputMode(field);
-  const selector = field === 'delegateGroupId' ? `
+  const placeholder = field === 'delegateId' ? (state.nftInputMode === 'name' ? '输入 NFT 名称' : '输入 NFT 编号') : '';
+  const inputMode = field === 'delegateId' ? (state.nftInputMode === 'id' ? 'numeric' : 'text') : activationInputMode(field);
+  const selector = field === 'delegateId' ? `
       <div class="filter-tabs admin-query-tabs">
         <button class="filter-tab${state.nftInputMode === 'name' ? ' active' : ''}" type="button" data-action="set-nft-input-mode" data-mode="name">按名称</button>
         <button class="filter-tab${state.nftInputMode === 'id' ? ' active' : ''}" type="button" data-action="set-nft-input-mode" data-mode="id">按编号</button>
@@ -655,7 +655,7 @@ function renderDecentralizedManagement(chat) {
       <div class="rule-table">${renderRuleRows(chat)}</div>
       <div class="notice-row">去中心化群聊激活后不提供关闭、重配规则槽、改 token/action 的入口。</div>
       <div class="card-actions single-action">
-        <button class="sheet-button primary" type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">治理黑名单</button>
+        <button class="sheet-button primary" type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">治理黑名单</button>
       </div>
     </section>
   `;
@@ -673,9 +673,9 @@ function renderChainServiceManagement(chat) {
     </section>
     <section class="workspace-band">
       <h2>管理员 NFT</h2>
-      ${renderAdminGroupControls(chat)}
-      ${state.adminGroupQueryResult ? `<div class="query-result">${escapeHtml(state.adminGroupQueryResult)}</div>` : ''}
-      ${renderAdminList(chat.adminDeny.adminGroupIds, 'adminGroupIds', canEditRules(chat))}
+      ${renderAdminIdControls(chat)}
+      ${state.adminIdQueryResult ? `<div class="query-result">${escapeHtml(state.adminIdQueryResult)}</div>` : ''}
+      ${renderAdminList(chat.adminDeny.adminIds, 'adminIds', canEditRules(chat))}
     </section>
   ` : '';
 
@@ -707,14 +707,14 @@ function renderRuleInput(chat, slot) {
 }
 
 function renderDelegateInput(chat) {
-  const value = chat.ruleSlots.delegateGroupId || '0';
+  const value = chat.ruleSlots.delegateId || '0';
   const placeholder = state.nftInputMode === 'name' ? '输入代理 NFT 名称' : '输入代理 NFT 编号';
   const inputMode = state.nftInputMode === 'id' ? 'numeric' : 'text';
   return `
     <div class="delegate-panel">
       <div class="card-topline">
         <strong>代理 NFT</strong>
-        <span>delegateGroupId</span>
+        <span>delegateId</span>
       </div>
       <div class="query-result">${escapeHtml(delegateDisplay(value))}</div>
       <div class="filter-tabs admin-query-tabs">
@@ -722,8 +722,8 @@ function renderDelegateInput(chat) {
         <button class="filter-tab${state.nftInputMode === 'id' ? ' active' : ''}" type="button" data-action="set-nft-input-mode" data-mode="id">按编号</button>
       </div>
       <div class="query-row delegate-query-row">
-        <input id="delegateGroupId-input" value="" inputmode="${inputMode}" placeholder="${placeholder}">
-        <button class="sheet-button primary" type="button" data-action="set-rule-slot" data-slot="delegateGroupId" data-input="delegateGroupId-input">确认</button>
+        <input id="delegateId-input" value="" inputmode="${inputMode}" placeholder="${placeholder}">
+        <button class="sheet-button primary" type="button" data-action="set-rule-slot" data-slot="delegateId" data-input="delegateId-input">确认</button>
       </div>
       <div class="muted">输入 0 表示不设置代理。</div>
       ${state.delegateQueryResult ? `<div class="query-result">${escapeHtml(state.delegateQueryResult)}</div>` : ''}
@@ -750,20 +750,20 @@ function renderRuleChoice(chat, slot, options) {
   `;
 }
 
-function renderAdminGroupControls(chat) {
-  const placeholder = state.adminGroupQueryType === 'name' ? '输入 NFT 名称' : '输入 NFT 编号';
-  const inputMode = state.adminGroupQueryType === 'name' ? 'text' : 'numeric';
+function renderAdminIdControls(chat) {
+  const placeholder = state.adminIdQueryType === 'name' ? '输入 NFT 名称' : '输入 NFT 编号';
+  const inputMode = state.adminIdQueryType === 'name' ? 'text' : 'numeric';
   return `
-    <div class="admin-group-controls">
+    <div class="admin-id-controls">
       <div class="filter-tabs admin-query-tabs">
-        <button class="filter-tab${state.adminGroupQueryType === 'name' ? ' active' : ''}" type="button" data-action="set-admin-query-type" data-query-type="name">按名称</button>
-        <button class="filter-tab${state.adminGroupQueryType === 'id' ? ' active' : ''}" type="button" data-action="set-admin-query-type" data-query-type="id">按编号</button>
+        <button class="filter-tab${state.adminIdQueryType === 'name' ? ' active' : ''}" type="button" data-action="set-admin-query-type" data-query-type="name">按名称</button>
+        <button class="filter-tab${state.adminIdQueryType === 'id' ? ' active' : ''}" type="button" data-action="set-admin-query-type" data-query-type="id">按编号</button>
       </div>
-      <input id="admin-group-input" value="${escapeHtml(state.adminGroupQuery)}" placeholder="${placeholder}" inputmode="${inputMode}">
+      <input id="admin-id-input" value="${escapeHtml(state.adminIdQuery)}" placeholder="${placeholder}" inputmode="${inputMode}">
       <div class="admin-action-row">
         <button class="sheet-button" type="button" data-action="query-admin-self">查自己</button>
-        <button class="sheet-button" type="button" data-action="query-admin-group" data-input="admin-group-input">查询</button>
-        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="adminGroupIds" data-input="admin-group-input" ${canEditRules(chat) ? '' : 'disabled'}>加入名单</button>
+        <button class="sheet-button" type="button" data-action="query-admin-id" data-input="admin-id-input">查询</button>
+        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="adminIds" data-input="admin-id-input" ${canEditRules(chat) ? '' : 'disabled'}>加入名单</button>
       </div>
     </div>
   `;
@@ -793,7 +793,7 @@ function renderRuleRows(chat) {
 }
 
 function ruleSlotDisplay(key, value) {
-  if (key !== 'delegateGroupId' || value === '0') return value;
+  if (key !== 'delegateId' || value === '0') return value;
   return delegateDisplay(value);
 }
 
@@ -806,7 +806,7 @@ function renderGroupPicker() {
   const groups = state.chats.filter((chat) => chat.active);
   return `
     <div class="chat-picker" aria-label="选择群聊">
-      ${groups.map((chat) => `<button class="picker-button${chat.groupId === state.activeChatId ? ' active' : ''}" type="button" data-action="select-chat" data-chat-id="${chat.groupId}">${escapeHtml(chat.shortTitle)}</button>`).join('')}
+      ${groups.map((chat) => `<button class="picker-button${chat.chatGroupId === state.activeChatId ? ' active' : ''}" type="button" data-action="select-chat" data-chat-id="${chat.chatGroupId}">${escapeHtml(chat.shortTitle)}</button>`).join('')}
     </div>
   `;
 }
@@ -895,7 +895,7 @@ function blacklistRows(chat) {
           detail: `支持 ${item.support} / 反对 ${item.oppose}`,
         };
       }),
-      ...chat.govDeny.groupTargets.map((item) => {
+      ...chat.govDeny.senderIdTargets.map((item) => {
         const denied = targetDenied(item);
         return {
           type: 'nft',
@@ -1082,17 +1082,17 @@ function renderMessages() {
 
 function renderChatTools(chat) {
   const exemptMenuItem = chat.adminDeny
-    ? `<button type="button" data-action="open-exempt" data-chat-id="${chat.groupId}">豁免名单</button>`
+    ? `<button type="button" data-action="open-exempt" data-chat-id="${chat.chatGroupId}">豁免名单</button>`
     : '';
   const blacklistLabel = '黑名单';
   const manageMenuItem = canEditRules(chat)
-    ? `<button type="button" data-action="open-manage" data-chat-id="${chat.groupId}">管理</button>`
+    ? `<button type="button" data-action="open-manage" data-chat-id="${chat.chatGroupId}">管理</button>`
     : '<button type="button" disabled title="仅 NFT 拥有者或代理可以进">管理</button>';
-  const menu = state.activeGroupMenuId === chat.groupId ? `
+  const menu = state.activeGroupMenuId === chat.chatGroupId ? `
     <div class="chat-menu">
-      <button type="button" data-action="open-details" data-chat-id="${chat.groupId}">详情</button>
-      <button type="button" data-action="simulate-message-gap" data-chat-id="${chat.groupId}">模拟缺口</button>
-      <button type="button" data-action="open-blacklist" data-chat-id="${chat.groupId}">${blacklistLabel}</button>
+      <button type="button" data-action="open-details" data-chat-id="${chat.chatGroupId}">详情</button>
+      <button type="button" data-action="simulate-message-gap" data-chat-id="${chat.chatGroupId}">模拟缺口</button>
+      <button type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">${blacklistLabel}</button>
       ${exemptMenuItem}
       ${manageMenuItem}
     </div>
@@ -1100,7 +1100,7 @@ function renderChatTools(chat) {
   return `
     <div class="chat-tools">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
-      <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-chat-id="${chat.groupId}" aria-label="群聊菜单">...</button>
+      <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-chat-id="${chat.chatGroupId}" aria-label="群聊菜单">...</button>
       ${menu}
     </div>
   `;
@@ -1118,7 +1118,7 @@ function renderCannotPost(chat, status) {
 function postBlockReason(chat, status) {
   if (!chat) return '还没有选中群聊。';
   if (status.reasonCode === 'ChatNotActive') return '这个群聊还没有激活，链上暂时没有可用的发言规则。';
-  if (status.reasonCode === 'SenderNotGroupOwner') return '当前钱包不是 defaultGroupId 的 owner，合约会返回 SenderNotGroupOwner。';
+  if (status.reasonCode === 'SenderAddressNotSenderIdOwner') return '当前钱包不是 defaultGroupId 的 owner，合约会返回 SenderAddressNotSenderIdOwner。';
   if (status.reasonCode === 'DenyRejected') return '发言资格已通过，但 denySource 拦截了当前地址或当前 NFT。请检查黑名单和豁免名单。';
   if (status.reasonCode === 'ScopeRejected') return scopeSourceReason(chat);
   return '当前地址暂时不满足这个群聊的发言条件。';
@@ -1215,7 +1215,7 @@ function renderGroupDetails() {
       <dt>群聊</dt>
       <dd>${escapeHtml(chatDisplayName(chat))}</dd>
       <dt>chatGroupId</dt>
-      <dd>#${chat.groupId}</dd>
+      <dd>#${chat.chatGroupId}</dd>
       <dt>类型</dt>
       <dd>${escapeHtml(chat.typeLabel)}</dd>
   ` : `
@@ -1237,8 +1237,8 @@ function renderGroupDetails() {
       ${statusRows}
     </dl>
     <div class="close-row status-actions">
-      ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-chat-id="${chat.groupId}">管理</button>` : ''}
-      ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-chat-id="${chat.groupId}">黑名单</button>` : ''}
+      ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-chat-id="${chat.chatGroupId}">管理</button>` : ''}
+      ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">黑名单</button>` : ''}
     </div>
     </section>
   `;
@@ -1266,7 +1266,7 @@ function render() {
 }
 
 function chatById(chatId) {
-  return state.chats.find((chat) => chat.groupId === Number(chatId));
+  return state.chats.find((chat) => chat.chatGroupId === Number(chatId));
 }
 
 function setBottomTab(tab) {
@@ -1315,16 +1315,16 @@ function rememberPageReturn() {
 function selectChat(chatId) {
   const chat = chatById(chatId);
   if (!chat) return;
-  state.activeChatId = chat.groupId;
-  state.activeChatGroupId = String(chat.groupId);
+  state.activeChatId = chat.chatGroupId;
+  state.activeChatGroupId = String(chat.chatGroupId);
   state.blacklistQueryResult = '';
   state.blacklistPage = 1;
   state.activeBlacklistMenuKey = null;
   state.activeExemptMenuKey = null;
-  state.adminGroupQuery = '';
-  state.adminGroupQueryResult = '';
+  state.adminIdQuery = '';
+  state.adminIdQueryResult = '';
   state.activeAvatarMenuKey = null;
-  state.syncHint = `已选择 chatGroupId #${chat.groupId}`;
+  state.syncHint = `已选择 chatGroupId #${chat.chatGroupId}`;
   render();
 }
 
@@ -1340,8 +1340,8 @@ function openActivation(chatId) {
 function openActivationForm(chatId) {
   const chat = chatById(chatId);
   if (chat) {
-    state.activeChatId = chat.groupId;
-    state.activeChatGroupId = String(chat.groupId);
+    state.activeChatId = chat.chatGroupId;
+    state.activeChatGroupId = String(chat.chatGroupId);
     state.activeToken = chat.token;
     state.activationType = activationTypeForChat(chat);
   }
@@ -1352,7 +1352,7 @@ function openActivationForm(chatId) {
 function openChat(chatGroupId) {
   state.activeChatGroupId = String(chatGroupId);
   const chat = chatById(chatGroupId);
-  if (chat) state.activeChatId = chat.groupId;
+  if (chat) state.activeChatId = chat.chatGroupId;
   state.view = 'chat';
   state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
@@ -1370,7 +1370,7 @@ function openManage(chatId) {
     return;
   }
   rememberPageReturn();
-  selectChat(chat.groupId);
+  selectChat(chat.chatGroupId);
   state.view = 'manage';
   render();
 }
@@ -1394,7 +1394,7 @@ function openExempt(chatId) {
     return;
   }
   rememberPageReturn();
-  selectChat(chat.groupId);
+  selectChat(chat.chatGroupId);
   state.view = 'exempt';
   state.blacklistQueryType = 'nft';
   state.blacklistPage = 1;
@@ -1406,14 +1406,14 @@ function openDetails(chatId) {
   state.activeGroupMenuId = null;
   if (!chat) return;
   rememberPageReturn();
-  selectChat(chat.groupId);
+  selectChat(chat.chatGroupId);
   state.view = 'details';
   render();
 }
 
 function toggleChatMenu(chatId) {
-  const groupId = Number(chatId);
-  state.activeGroupMenuId = state.activeGroupMenuId === groupId ? null : groupId;
+  const chatGroupId = Number(chatId);
+  state.activeGroupMenuId = state.activeGroupMenuId === chatGroupId ? null : chatGroupId;
   render();
 }
 
@@ -1447,14 +1447,14 @@ function toggleExemptMenu(targetType, target) {
 }
 
 function nextManagedChatGroupId() {
-  return state.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
+  return state.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.chatGroupId) || 0), 0) + 1;
 }
 
 function syncManagedChatGroupId(chat, nextGroupId) {
-  const prevGroupId = Number(chat.groupId);
+  const prevGroupId = Number(chat.chatGroupId);
   if (prevGroupId === nextGroupId) return;
 
-  chat.groupId = nextGroupId;
+  chat.chatGroupId = nextGroupId;
 
   if (chat.type === 'action' || chat.type === 'action-gov') {
     const action = state.actions.find((item) => item.token === chat.token && item.actionId === chat.actionId);
@@ -1506,9 +1506,9 @@ function activateChat(chatId) {
     chat.ruleSlots.denySource = draft.denySource || 'address(0)';
     chat.ruleSlots.beforePostPlugin = draft.beforePostPlugin || 'address(0)';
     chat.ruleSlots.afterPostPlugin = draft.afterPostPlugin || 'address(0)';
-    chat.ruleSlots.delegateGroupId = resolveOptionalKnownNftInput(draft.delegateGroupId, state.nftInputMode);
+    chat.ruleSlots.delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
     chat.params = {
-      chatGroupId: String(chat.groupId),
+      chatGroupId: String(chat.chatGroupId),
       scopeSource: chat.ruleSlots.scopeSource,
       denySource: chat.ruleSlots.denySource,
     };
@@ -1527,12 +1527,12 @@ function activateChat(chatId) {
 
   chat.active = true;
   chat.lastMessageId = 0;
-  state.activeChatId = chat.groupId;
-  state.activeChatGroupId = String(chat.groupId);
+  state.activeChatId = chat.chatGroupId;
+  state.activeChatGroupId = String(chat.chatGroupId);
   state.view = 'chat';
   state.syncHint = chat.model === 'chain-service'
     ? `${activationPreview(chat, draft)} 已模拟提交。`
-    : `${activationPreview(chat, draft)} => chatGroupId ${chat.groupId} 已模拟提交。`;
+    : `${activationPreview(chat, draft)} => chatGroupId ${chat.chatGroupId} 已模拟提交。`;
   render();
 }
 
@@ -1549,7 +1549,7 @@ function setRuleSlot(slot, inputId) {
   const input = document.getElementById(inputId);
   let value = input.value.trim();
   if (!chat || !canEditRules(chat)) return;
-  if (slot === 'delegateGroupId') {
+  if (slot === 'delegateId') {
     if (!value) {
       state.delegateQueryResult = '请输入代理 NFT 名称或编号；输入 0 表示不设置代理。';
       render();
@@ -1563,7 +1563,7 @@ function setRuleSlot(slot, inputId) {
       render();
       return;
     }
-    if (value !== '0' && Number(value) === chat.groupId) {
+    if (value !== '0' && Number(value) === chat.chatGroupId) {
       state.delegateQueryResult = '代理 NFT 不能等于当前群聊 NFT。';
       render();
       return;
@@ -1596,12 +1596,12 @@ function addAdminList(listName, inputId) {
   const value = input.value.trim();
   if (!chat || !chat.adminDeny || !value) return;
   if (listName.includes('Exempt') && !canEditExempt(chat)) return;
-  if (!listName.includes('Exempt') && listName !== 'adminGroupIds' && !canEditAdminDeny(chat)) return;
-  if (listName === 'adminGroupIds' && !canEditRules(chat)) return;
-  const nftList = ['adminGroupIds', 'senderIdDenyList', 'senderIdExemptList'].includes(listName);
-  const targetValue = nftList ? resolveNftInput(value, listName === 'adminGroupIds' ? state.adminGroupQueryType : state.nftInputMode) : value;
+  if (!listName.includes('Exempt') && listName !== 'adminIds' && !canEditAdminDeny(chat)) return;
+  if (listName === 'adminIds' && !canEditRules(chat)) return;
+  const nftList = ['adminIds', 'senderIdDenyList', 'senderIdExemptList'].includes(listName);
+  const targetValue = nftList ? resolveNftInput(value, listName === 'adminIds' ? state.adminIdQueryType : state.nftInputMode) : value;
   if (!targetValue) {
-    if (listName === 'adminGroupIds') state.adminGroupQueryResult = `未找到 NFT：${value}`;
+    if (listName === 'adminIds') state.adminIdQueryResult = `未找到 NFT：${value}`;
     else state.syncHint = `未找到 NFT：${value}`;
     render();
     return;
@@ -1654,19 +1654,19 @@ function addAdminList(listName, inputId) {
     chat.adminDeny.stateVersion += 1;
     state.syncHint = `${listName} 新增 ${targetValue}`;
   }
-  if (listName === 'adminGroupIds') {
-    state.adminGroupQuery = value;
-    queryAdminGroupValue(value, false);
+  if (listName === 'adminIds') {
+    state.adminIdQuery = value;
+    queryAdminIdValue(value, false);
     render();
     return;
   }
   render();
 }
 
-function setAdminGroupQueryType(queryType) {
-  state.adminGroupQueryType = queryType === 'id' ? 'id' : 'name';
-  state.adminGroupQuery = '';
-  state.adminGroupQueryResult = '';
+function setAdminIdQueryType(queryType) {
+  state.adminIdQueryType = queryType === 'id' ? 'id' : 'name';
+  state.adminIdQuery = '';
+  state.adminIdQueryResult = '';
   render();
 }
 
@@ -1682,43 +1682,43 @@ function setNftInputMode(mode) {
 }
 
 function queryAdminSelf() {
-  state.adminGroupQuery = state.adminGroupQueryType === 'name'
+  state.adminIdQuery = state.adminIdQueryType === 'name'
     ? nftProfile(currentDefaultGroupId()).name
     : String(currentDefaultGroupId());
-  queryAdminGroupValue(state.adminGroupQuery, true);
+  queryAdminIdValue(state.adminIdQuery, true);
 }
 
-function queryAdminGroup(inputId) {
+function queryAdminId(inputId) {
   const input = document.getElementById(inputId);
-  state.adminGroupQuery = input.value.trim();
-  queryAdminGroupValue(state.adminGroupQuery, true);
+  state.adminIdQuery = input.value.trim();
+  queryAdminIdValue(state.adminIdQuery, true);
 }
 
-function queryAdminGroupValue(value, shouldRender) {
+function queryAdminIdValue(value, shouldRender) {
   const chat = activeChat();
   if (!chat || !chat.adminDeny || !value) return;
-  const groupId = resolveNftInput(value, state.adminGroupQueryType);
-  if (!groupId) {
-    state.adminGroupQueryResult = `未找到 NFT：${value}`;
+  const chatGroupId = resolveNftInput(value, state.adminIdQueryType);
+  if (!chatGroupId) {
+    state.adminIdQueryResult = `未找到 NFT：${value}`;
     if (shouldRender) render();
     return;
   }
-  const inList = chat.adminDeny.adminGroupIds.includes(groupId);
-  const profile = nftProfile(groupId);
-  state.adminGroupQueryResult = `NFT #${groupId} · ${profile.name} · ${inList ? '已在管理员名单' : '不在管理员名单'}`;
+  const inList = chat.adminDeny.adminIds.includes(chatGroupId);
+  const profile = nftProfile(chatGroupId);
+  state.adminIdQueryResult = `NFT #${chatGroupId} · ${profile.name} · ${inList ? '已在管理员名单' : '不在管理员名单'}`;
   if (shouldRender) render();
 }
 
-function resolveAdminGroupQuery(value) {
-  return resolveNftInput(value, state.adminGroupQueryType);
+function resolveAdminIdQuery(value) {
+  return resolveNftInput(value, state.adminIdQueryType);
 }
 
 function removeAdminList(listName, value) {
   const chat = activeChat();
   if (!chat || !chat.adminDeny) return;
   if (listName.includes('Exempt') && !canEditExempt(chat)) return;
-  if (!listName.includes('Exempt') && listName !== 'adminGroupIds' && !canEditAdminDeny(chat)) return;
-  if (listName === 'adminGroupIds' && !canEditRules(chat)) return;
+  if (!listName.includes('Exempt') && listName !== 'adminIds' && !canEditAdminDeny(chat)) return;
+  if (listName === 'adminIds' && !canEditRules(chat)) return;
   if (listName === 'senderIdDenyList') {
     const profileAddress = ownerOfGroupId(value);
     if (!profileAddress) {
@@ -1869,7 +1869,7 @@ function addSenderDenyFromMessage(messageId, chatGroupId = state.activeChatGroup
 function simulateMessageGap(chatId) {
   const chat = chatById(chatId);
   if (!chat) return;
-  const chatGroupId = String(chat.groupId);
+  const chatGroupId = String(chat.chatGroupId);
   const visibleMessages = messagesForChat(chatGroupId);
   const latestMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) : 0;
   const eventMessageId = latestMessageId + 3;
@@ -2202,9 +2202,9 @@ async function writeClipboardText(text) {
 }
 
 function addMention(senderId) {
-  const groupId = Number(senderId);
-  if (!state.mentions.includes(groupId) && state.mentions.length < 32) state.mentions.push(groupId);
-  insertComposerToken(mentionTokenFor(groupId));
+  const chatGroupId = Number(senderId);
+  if (!state.mentions.includes(chatGroupId) && state.mentions.length < 32) state.mentions.push(chatGroupId);
+  insertComposerToken(mentionTokenFor(chatGroupId));
   state.activeMenuMessageId = null;
   render();
 }
@@ -2312,10 +2312,10 @@ document.addEventListener('click', (event) => {
   if (action === 'set-rule-slot-option') setRuleSlotOption(target.dataset.slot, target.dataset.value);
   if (action === 'admin-list-add') addAdminList(target.dataset.list, target.dataset.input);
   if (action === 'admin-list-remove') removeAdminList(target.dataset.list, target.dataset.value);
-  if (action === 'set-admin-query-type') setAdminGroupQueryType(target.dataset.queryType);
+  if (action === 'set-admin-query-type') setAdminIdQueryType(target.dataset.queryType);
   if (action === 'set-nft-input-mode') setNftInputMode(target.dataset.mode);
   if (action === 'query-admin-self') queryAdminSelf();
-  if (action === 'query-admin-group') queryAdminGroup(target.dataset.input);
+  if (action === 'query-admin-id') queryAdminId(target.dataset.input);
   if (action === 'gov-add-target') addGovTarget(target.dataset.targetType, target.dataset.input);
   if (action === 'gov-vote') voteGovTarget(target.dataset.targetType, target.dataset.target, target.dataset.stance);
   if (action === 'open-gov-voters') openGovVoters(target.dataset.targetType, target.dataset.target);

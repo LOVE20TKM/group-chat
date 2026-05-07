@@ -15,17 +15,17 @@ abstract contract GroupChatFixture is TestBase {
     address internal chatOwner = address(0xA11CE);
     address internal senderOwner = address(0xB0B);
     address internal other = address(0xCAFE);
-    address internal delegateGroupOwner = address(0xD36E6A7E);
+    address internal delegateIdOwner = address(0xD36E6A7E);
 
     uint256 internal chatGroupId;
     uint256 internal senderId;
     uint256 internal otherGroupId;
-    uint256 internal delegateGroupId;
+    uint256 internal delegateId;
     uint256 internal originBlocks;
     uint256 internal phaseBlocks = 100;
     bytes32 internal constant META_SET_SIG = keccak256("MetaSet(uint256,address,uint256,string,bytes,bytes)");
     bytes32 internal constant DELEGATE_GROUP_ID_SET_SIG =
-        keccak256("DelegateGroupIdSet(uint256,address,uint256,uint256,uint256)");
+        keccak256("DelegateIdSet(uint256,address,uint256,uint256,uint256)");
     bytes32 internal constant SCOPE_SOURCE_SET_SIG = keccak256("ScopeSourceSet(uint256,address,address,uint256,address)");
     bytes32 internal constant DENY_SOURCE_SET_SIG = keccak256("DenySourceSet(uint256,address,address,uint256,address)");
     bytes32 internal constant BEFORE_POST_PLUGIN_SET_SIG =
@@ -44,7 +44,7 @@ abstract contract GroupChatFixture is TestBase {
         chatGroupId = groupNft.mint(chatOwner);
         senderId = groupNft.mint(senderOwner);
         otherGroupId = groupNft.mint(other);
-        delegateGroupId = groupNft.mint(delegateGroupOwner);
+        delegateId = groupNft.mint(delegateIdOwner);
 
         originBlocks = block.number + 50;
         groupDefaults = new MockGroupDefaults(address(groupNft));

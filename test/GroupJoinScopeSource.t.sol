@@ -9,12 +9,12 @@ import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 contract MockGroupJoinGlobal {
     mapping(uint256 => mapping(address => uint256)) public counts;
 
-    function setTokenAddressCount(uint256 groupId, address account, uint256 count) external {
-        counts[groupId][account] = count;
+    function setTokenAddressCount(uint256 chatGroupId, address account, uint256 count) external {
+        counts[chatGroupId][account] = count;
     }
 
-    function gTokenAddressesByGroupIdByAccountCount(uint256 groupId, address account) external view returns (uint256) {
-        return counts[groupId][account];
+    function gTokenAddressesByGroupIdByAccountCount(uint256 chatGroupId, address account) external view returns (uint256) {
+        return counts[chatGroupId][account];
     }
 }
 

@@ -9,7 +9,7 @@ Manager 用于去中心化群聊。
 - 铸造并持有对应 `GroupNFT`。
 - 通过 `activate(...)` 激活对应类型的 chat。
 - 激活时一次性写入 `scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin`。
-- 激活时 `delegateGroupId = 0`。
+- 激活时 `delegateId = 0`。
 - 作为该 chat 的 `scopeSource`。
 - 作为治理黑名单的 `IDenyVoteWeightSource`。
 

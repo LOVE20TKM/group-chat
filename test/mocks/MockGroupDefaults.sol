@@ -13,14 +13,14 @@ contract MockGroupDefaults is IGroupDefaults {
         GROUP_ADDRESS = groupAddress_;
     }
 
-    function setDefaultGroupId(uint256 groupId) external {
-        address senderOwner = _ownerOfOrRevert(groupId);
-        if (msg.sender != senderOwner) revert SenderNotGroupOwner();
-        if (_defaultGroupIds[msg.sender] == groupId) {
-            revert DefaultGroupIdAlreadySet(groupId);
+    function setDefaultGroupId(uint256 chatGroupId) external {
+        address senderOwner = _ownerOfOrRevert(chatGroupId);
+        if (msg.sender != senderOwner) revert SenderAddressNotSenderIdOwner();
+        if (_defaultGroupIds[msg.sender] == chatGroupId) {
+            revert DefaultGroupIdAlreadySet(chatGroupId);
         }
-        _defaultGroupIds[msg.sender] = groupId;
-        emit SetDefaultGroupId(msg.sender, groupId);
+        _defaultGroupIds[msg.sender] = chatGroupId;
+        emit SetDefaultGroupId(msg.sender, chatGroupId);
     }
 
     function clearDefaultGroupId() external {
@@ -48,22 +48,22 @@ contract MockGroupDefaults is IGroupDefaults {
         }
     }
 
-    function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+    function _ownerOfOrRevert(uint256 chatGroupId) internal view returns (address owner) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(chatGroupId) returns (address resolved) {
             return resolved;
         } catch {
             revert GroupNotExist();
         }
     }
 
-    function _effectiveDefaultGroupId(address account) internal view returns (uint256 groupId) {
-        groupId = _defaultGroupIds[account];
-        if (groupId == 0) {
+    function _effectiveDefaultGroupId(address account) internal view returns (uint256 chatGroupId) {
+        chatGroupId = _defaultGroupIds[account];
+        if (chatGroupId == 0) {
             return 0;
         }
-        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address owner) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(chatGroupId) returns (address owner) {
             if (owner == account) {
-                return groupId;
+                return chatGroupId;
             }
         } catch {}
         return 0;

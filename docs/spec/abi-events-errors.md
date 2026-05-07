@@ -25,8 +25,8 @@ Meta：
 
 Delegate：
 
-- `setDelegateGroupId`
-- `delegateGroupIdOf`
+- `setDelegateId`
+- `delegateIdOf`
 
 Rule slots：
 
@@ -120,7 +120,7 @@ Query：
 - `ChatActivate`
 - `ChatDeactivate`
 - `MetaSet`
-- `DelegateGroupIdSet`
+- `DelegateIdSet`
 - `ScopeSourceSet`
 - `DenySourceSet`
 - `BeforePostPluginSet`
@@ -152,8 +152,8 @@ Query：
 - `ChatAlreadyInactive`
 - `ChatNotActive`
 - `NotChatOwner`
-- `NotChatOwnerOrDelegateGroupOwner`
-- `SenderNotGroupOwner`
+- `NotChatOwnerOrDelegateIdOwner`
+- `SenderAddressNotSenderIdOwner`
 - `RoundNotStarted`
 - `PhaseBlocksZero`
 
@@ -167,8 +167,8 @@ Meta 错误：
 
 Delegate 错误：
 
-- `DelegateGroupIdCannotBeChatGroupId`
-- `DelegateGroupIdUnchanged`
+- `DelegateIdCannotBeChatGroupId`
+- `DelegateIdUnchanged`
 
 Rule slot 错误：
 
@@ -184,7 +184,7 @@ Rule slot 错误：
 - `ContentEmpty`
 - `ContentTooLong`
 - `TooManyMentions`
-- `DuplicateMentionGroupId`
+- `DuplicateMentionSenderId`
 - `InvalidQuotedMessageId`
 - `InvalidMessageId`
 

@@ -188,7 +188,7 @@ const requiredAppJs = [
   'activeAvatarMenuKey',
   'toggleAvatarMenu',
   'canShowAvatarDenyMenu',
-  'SenderNotGroupOwner',
+  'SenderAddressNotSenderIdOwner',
   'ChatNotActive',
   'messagesForChat',
   'renderMessageContent',
@@ -219,13 +219,13 @@ const requiredAppJs = [
   'delegateQueryResult',
   'resolveOptionalKnownNftInput',
   'managementNotice',
-  'renderAdminGroupControls',
-  'setAdminGroupQueryType',
-  'resolveAdminGroupQuery',
+  'renderAdminIdControls',
+  'setAdminIdQueryType',
+  'resolveAdminIdQuery',
   '按名称',
   '按编号',
   'queryAdminSelf',
-  'queryAdminGroup',
+  'queryAdminId',
   'ruleSlotDisplay',
   'admin-nft-row',
   'renderBlacklistControls',
@@ -301,19 +301,19 @@ if (!Array.isArray(initialState.messages)) {
 
 const chatIds = new Set();
 for (const chat of initialState.chats) {
-  if (chatIds.has(chat.groupId)) throw new Error(`Duplicate chat groupId: ${chat.groupId}`);
-  chatIds.add(chat.groupId);
-  for (const field of ['groupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'ruleSlots']) {
-    if (chat[field] === undefined) throw new Error(`Chat ${chat.groupId} missing ${field}`);
+  if (chatIds.has(chat.chatGroupId)) throw new Error(`Duplicate chat chatGroupId: ${chat.chatGroupId}`);
+  chatIds.add(chat.chatGroupId);
+  for (const field of ['chatGroupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'ruleSlots']) {
+    if (chat[field] === undefined) throw new Error(`Chat ${chat.chatGroupId} missing ${field}`);
   }
-  if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.groupId} missing govDeny`);
-  if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
+  if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.chatGroupId} missing govDeny`);
+  if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.chatGroupId} missing adminDeny`);
   if (chat.params?.token !== undefined) {
     if (!/^0x[a-fA-F0-9]{40}$/.test(chat.params.token)) {
-      throw new Error(`Chat ${chat.groupId} params.token must be a token contract address`);
+      throw new Error(`Chat ${chat.chatGroupId} params.token must be a token contract address`);
     }
     if (chat.tokenAddress !== chat.params.token) {
-      throw new Error(`Chat ${chat.groupId} tokenAddress must match params.token`);
+      throw new Error(`Chat ${chat.chatGroupId} tokenAddress must match params.token`);
     }
   }
 }
@@ -353,7 +353,7 @@ const requiredProtocolCopy = [
   'denySource',
   'beforePostPlugin',
   'afterPostPlugin',
-  'delegateGroupId',
+  'delegateId',
   'stateVersion',
   'addressDenyList',
   'senderIdDenyList',
@@ -367,7 +367,7 @@ const requiredProtocolCopy = [
   '治理群 ${chatTokenSymbol(chat)}',
   '行动大群',
   '行动治理群',
-  '链群#${chat.groupId}',
+  '链群#${chat.chatGroupId}',
   '春节公益铸造',
   '雪松节点',
 ];
@@ -499,6 +499,50 @@ if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== 1) {
   throw new Error('quoteMessage must store positive messageId quotes');
 }
 
+const chatMenuHarness = new Function(
+  'state',
+  'render',
+  [
+    extractFunctionSource(js, 'toggleChatMenu'),
+    'return { toggleChatMenu };',
+  ].join('\n'),
+);
+
+const chatMenuState = { activeGroupMenuId: null };
+let chatMenuRenderCount = 0;
+const { toggleChatMenu } = chatMenuHarness(chatMenuState, () => { chatMenuRenderCount += 1; });
+toggleChatMenu('1301');
+if (chatMenuState.activeGroupMenuId !== 1301 || chatMenuRenderCount !== 1) {
+  throw new Error('toggleChatMenu must open the menu for the requested chatGroupId');
+}
+toggleChatMenu('1301');
+if (chatMenuState.activeGroupMenuId !== null || chatMenuRenderCount !== 2) {
+  throw new Error('toggleChatMenu must close the active chatGroupId menu');
+}
+
+const adminIdQueryHarness = new Function(
+  'state',
+  'render',
+  [
+    extractFunctionSource(js, 'activeChat'),
+    extractFunctionSource(js, 'nftProfile'),
+    extractFunctionSource(js, 'resolveNftInput'),
+    extractFunctionSource(js, 'queryAdminIdValue'),
+    'return { queryAdminIdValue };',
+  ].join('\n'),
+);
+
+const adminIdQueryState = JSON.parse(JSON.stringify(initialState));
+adminIdQueryState.activeChatId = 1301;
+adminIdQueryState.adminIdQueryType = 'name';
+let adminIdQueryRenderCount = 0;
+adminIdQueryHarness(adminIdQueryState, () => { adminIdQueryRenderCount += 1; }).queryAdminIdValue('链群管理员', true);
+if (!adminIdQueryState.adminIdQueryResult.includes('NFT #1310')
+  || !adminIdQueryState.adminIdQueryResult.includes('已在管理员名单')
+  || adminIdQueryRenderCount !== 1) {
+  throw new Error('queryAdminIdValue must render the resolved admin NFT status');
+}
+
 const managerActivateHarness = new Function(
   'state',
   'render',
@@ -506,7 +550,7 @@ const managerActivateHarness = new Function(
     extractFunctionSource(js, 'chatById'),
     extractFunctionSource(js, 'nextManagedChatGroupId'),
     extractFunctionSource(js, 'syncManagedChatGroupId'),
-    'function captureActivationDraft(chat) { return state.activationDrafts[String(chat.groupId)] || { ...chat.params }; }',
+    'function captureActivationDraft(chat) { return state.activationDrafts[String(chat.chatGroupId)] || { ...chat.params }; }',
     'function activationBlocker() { return ""; }',
     'function activationPreview(chat, draft) { const values = Object.keys(chat.params).map((key) => draft[key]).join(", "); return `${chat.manager}.activate(${values})`; }',
     'function resolveOptionalKnownNftInput(value) { return value; }',
@@ -517,7 +561,7 @@ const managerActivateHarness = new Function(
 
 const managerActivationState = JSON.parse(JSON.stringify(initialState));
 const expectedMintedChatGroupId =
-  managerActivationState.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
+  managerActivationState.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.chatGroupId) || 0), 0) + 1;
 managerActivateHarness(managerActivationState, () => {}).activateChat(1189);
 
 const activatedActionGovChat = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && chat.actionId === '77');
@@ -525,8 +569,8 @@ const linkedAction = managerActivationState.actions.find((action) => action.toke
 if (!activatedActionGovChat || !activatedActionGovChat.active) {
   throw new Error('Manager activation must mark the chat active');
 }
-if (activatedActionGovChat.groupId !== expectedMintedChatGroupId) {
-  throw new Error('Manager activation must replace the placeholder groupId with the minted chatGroupId');
+if (activatedActionGovChat.chatGroupId !== expectedMintedChatGroupId) {
+  throw new Error('Manager activation must replace the placeholder chatGroupId with the minted chatGroupId');
 }
 if (managerActivationState.activeChatId !== expectedMintedChatGroupId
   || managerActivationState.activeChatGroupId !== String(expectedMintedChatGroupId)) {

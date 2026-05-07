@@ -20,7 +20,7 @@ contract GroupChatManagerTest is GroupChatFixture {
         assertEq(chat.chatInfo(chatGroupId).owner, address(manager));
 
         assertTrue(chat.chatInfo(chatGroupId).active);
-        assertEq(chat.delegateGroupIdOf(chatGroupId), 0);
+        assertEq(chat.delegateIdOf(chatGroupId), 0);
 
         (address scopeSlot, address denySlot, address beforeSlot, address afterSlot) = chat.ruleSlots(chatGroupId);
         assertEq(scopeSlot, address(manager));
@@ -59,7 +59,7 @@ contract GroupChatManagerTest is GroupChatFixture {
             address(manager), abi.encodeWithSignature("setAfterPostPlugin(uint256,address)", chatGroupId, other)
         );
         _expectUnknownSelector(
-            address(manager), abi.encodeWithSignature("setDelegateGroupId(uint256,uint256)", chatGroupId, 0)
+            address(manager), abi.encodeWithSignature("setDelegateId(uint256,uint256)", chatGroupId, 0)
         );
     }
 

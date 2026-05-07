@@ -41,11 +41,11 @@
 ## 数据结构约束
 
 - `groupId` 必须唯一。
-- `message.chatGroupId` 必须指向已存在的 `chat.groupId`。
+- `message.chatGroupId` 必须指向已存在的 `chat.chatGroupId`。
 - `action.actionChatId` 和 `action.actionGovChatId` 必须指向已存在的 chat。
 - `blacklistMode = "gov"` 必须有 `govDeny`。
 - `blacklistMode = "admin"` 必须有 `adminDeny`。
-- `ruleSlots` 至少保留 `scopeSource/denySource/beforePostPlugin/afterPostPlugin/delegateGroupId`。
+- `ruleSlots` 至少保留 `scopeSource/denySource/beforePostPlugin/afterPostPlugin/delegateId`。
 
 ## 验收
 

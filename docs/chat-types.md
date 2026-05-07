@@ -25,7 +25,7 @@
 - `denySource`
 - `beforePostPlugin`
 - `afterPostPlugin`
-- `delegateGroupId = 0`
+- `delegateId = 0`
 
 激活后，Manager 不暴露关闭、重配规则槽或修改发言资格参数的通用入口。
 
@@ -91,7 +91,7 @@
 控制权来自：
 
 - `GroupNFT.ownerOf(chatGroupId)` 当前 owner
-- `delegateGroupId` 的有效 owner
+- `delegateId` 的有效 owner
 
 推荐配置：
 
@@ -142,7 +142,7 @@ activateChat(
     adminDenySource,
     beforePostPlugin,
     afterPostPlugin,
-    delegateGroupId
+    delegateId
 )
 ```
 
@@ -155,7 +155,7 @@ activateChat(
 
 owner 可通过主协议更新：
 
-- `setDelegateGroupId(...)`
+- `setDelegateId(...)`
 
 这和四种 Manager 型去中心化群聊不同：链群服务者管理型群聊保留 owner / delegate 的人工管理能力。
 

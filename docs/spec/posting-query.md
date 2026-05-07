@@ -60,7 +60,7 @@ afterPostPlugin.afterPost
 0x00000000                         OK
 ChatNotActive.selector             chat 未激活
 GroupNotExist.selector             chatGroupId 或 senderId 不存在
-SenderNotGroupOwner.selector       senderAddress 不是 senderId 当前 owner
+SenderAddressNotSenderIdOwner.selector       senderAddress 不是 senderId 当前 owner
 ScopeRejected.selector             scopeSource 判定无资格
 DenyRejected.selector              denySource 判定被拒绝
 ScopeSourceFailed.selector         scopeSource 调用失败
@@ -87,7 +87,7 @@ DenySourceFailed.selector          denySource 调用失败
 
 - `mentions` 是 `uint256[]`。
 - 上限固定为 `32`。
-- 每个 `mentionedGroupId` 必须存在。
+- 每个 `mentionedSenderId` 必须存在。
 - 不允许重复。
 - 允许提及自己。
 - `mentionAll` 只记录声明语义，主协议不做许可判断。
