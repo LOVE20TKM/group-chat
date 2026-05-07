@@ -134,6 +134,10 @@ interface IGroupChatEvents {
         uint256 messageId
     );
 
+    event MessageMention(uint256 indexed chatGroupId, uint256 indexed mentionedSenderId, uint256 messageId);
+
+    event MessageMentionAll(uint256 indexed chatGroupId, uint256 messageId);
+
     event AfterPostPluginFailed(
         uint256 indexed chatGroupId,
         uint256 indexed messageId,
@@ -325,4 +329,6 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         returns (RoundSpan[] memory);
 
     function roundInfo(uint256 chatGroupId, uint256 round) external view returns (RoundSpan memory);
+
+    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds) external view returns (RoundSpan[] memory);
 }

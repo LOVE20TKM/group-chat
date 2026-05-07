@@ -131,7 +131,7 @@ DenySourceFailed.selector          denySource 调用失败
 消息查询维度：
 
 - 全量：`messages`
-- 按 round：`messagesByRound`
+- 按 round：`roundInfo` / `roundInfos` / `rounds` 返回连续 `messageId` 区间；`messagesByRound` 是直接取消息的便利接口
 - 按 sender：`messagesBySender`
 - 按 mention：`messagesByMention`
 - 按 mentionAll：`messagesByMentionAll`
@@ -147,6 +147,11 @@ DenySourceFailed.selector          denySource 调用失败
 - `senderIds`
 - `rounds`
 
+批量 round 区间：
+
+- `roundInfos(chatGroupId, roundIds)` 按入参顺序返回 `RoundSpan[]`。
+- 不存在或无消息的 round 返回 `round = 入参`、`startMessageId = 0`、`endMessageId = 0`、`messageCount = 0`。
+
 群发现：
 
 - `chatGroupIdsCount` / `chatGroupIds`：所有曾首次激活过的 `chatGroupId`，按首次激活顺序分页。
@@ -155,6 +160,7 @@ DenySourceFailed.selector          denySource 调用失败
 ## 同步策略
 
 - `MessagePost` 只作为发现信号。
+- `MessageMention` / `MessageMentionAll` 只作为链下通知索引信号。
 - 正文以 `message(...)` 或 `messages(...)` 为准。
 - 前端维护每个 `chatGroupId` 的最新 `messageId`。
 - 若事件中的 `messageId == latestMessageId + 1`，可用 `message(chatGroupId, messageId)` 回查。

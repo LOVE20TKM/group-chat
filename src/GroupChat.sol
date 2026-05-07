@@ -367,6 +367,12 @@ contract GroupChat is IGroupChat {
         _recordRound(chatGroupId, round, messageIndex);
 
         emit MessagePost(chatGroupId, senderId, msg.sender, round, messageIndex + 1);
+        for (uint256 i = 0; i < mentions.length; i++) {
+            emit MessageMention(chatGroupId, mentions[i], messageIndex + 1);
+        }
+        if (mentionAll) {
+            emit MessageMentionAll(chatGroupId, messageIndex + 1);
+        }
 
         if (config.afterPostPlugin != address(0)) {
             try IAfterPostPlugin(config.afterPostPlugin).afterPost(
@@ -737,11 +743,22 @@ contract GroupChat is IGroupChat {
 
     function roundInfo(uint256 chatGroupId, uint256 round) external view returns (RoundSpan memory) {
         _requireExistingGroup(chatGroupId);
-        RoundState storage state = _roundStates[chatGroupId][round];
-        if (!state.exists) {
-            return RoundSpan(round, 0, 0, 0);
+        return _roundSpanOrEmpty(chatGroupId, round);
+    }
+
+    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds)
+        external
+        view
+        returns (RoundSpan[] memory)
+    {
+        _requireExistingGroup(chatGroupId);
+        RoundSpan[] memory result = new RoundSpan[](roundIds.length);
+
+        for (uint256 i = 0; i < roundIds.length; i++) {
+            result[i] = _roundSpanOrEmpty(chatGroupId, roundIds[i]);
         }
-        return _roundSpan(chatGroupId, round);
+
+        return result;
     }
 
     function _applyActivateMeta(
@@ -1147,6 +1164,14 @@ contract GroupChat is IGroupChat {
             endMessageId: state.endIndex + 1,
             messageCount: state.endIndex - state.startIndex
         });
+    }
+
+    function _roundSpanOrEmpty(uint256 chatGroupId, uint256 round) internal view returns (RoundSpan memory) {
+        RoundState storage state = _roundStates[chatGroupId][round];
+        if (!state.exists) {
+            return RoundSpan(round, 0, 0, 0);
+        }
+        return _roundSpan(chatGroupId, round);
     }
 
     function _copyMessage(Message storage source) internal view returns (Message memory result) {

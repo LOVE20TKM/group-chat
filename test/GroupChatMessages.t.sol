@@ -105,8 +105,21 @@ contract GroupChatMessagesTest is GroupChatFixture {
         mentions[1] = delegateId;
 
         vm.roll(originBlocks);
+        vm.recordLogs();
         vm.prank(senderOwner);
         _postWithMentions(chatGroupId, senderId, "hello @two", mentions, false);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        assertEq(logs.length, 3);
+        assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
+        assertEq(logs[1].topics[0], MESSAGE_MENTION_SIG);
+        assertEq(logs[1].topics[1], bytes32(chatGroupId));
+        assertEq(logs[1].topics[2], bytes32(otherGroupId));
+        assertEq(_decodeMessageId(logs[1].data), 1);
+        assertEq(logs[2].topics[0], MESSAGE_MENTION_SIG);
+        assertEq(logs[2].topics[1], bytes32(chatGroupId));
+        assertEq(logs[2].topics[2], bytes32(delegateId));
+        assertEq(_decodeMessageId(logs[2].data), 1);
 
         IGroupChatStructs.Message[] memory result = chat.messages(chatGroupId, 0, 1, false);
         assertEq(result.length, 1);
@@ -148,7 +161,15 @@ contract GroupChatMessagesTest is GroupChatFixture {
         _postWithMentions(chatGroupId, senderId, "dup", duplicateMentions, false);
 
         vm.prank(senderOwner);
+        vm.recordLogs();
         _postWithMentions(chatGroupId, senderId, "@all-0", _emptyMentions(), true);
+        Vm.Log[] memory mentionAllLogs = vm.getRecordedLogs();
+
+        assertEq(mentionAllLogs.length, 2);
+        assertEq(mentionAllLogs[0].topics[0], MESSAGE_POST_SIG);
+        assertEq(mentionAllLogs[1].topics[0], MESSAGE_MENTION_ALL_SIG);
+        assertEq(mentionAllLogs[1].topics[1], bytes32(chatGroupId));
+        assertEq(_decodeMessageId(mentionAllLogs[1].data), 1);
 
         vm.prank(other);
         _post(chatGroupId, otherGroupId, "plain");
@@ -209,6 +230,26 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(round1.startMessageId, 3);
         assertEq(round1.endMessageId, 4);
         assertEq(round1.messageCount, 1);
+
+        uint256[] memory roundIds = new uint256[](3);
+        roundIds[0] = 1;
+        roundIds[1] = 99;
+        roundIds[2] = 0;
+
+        IGroupChatStructs.RoundSpan[] memory batch = chat.roundInfos(chatGroupId, roundIds);
+        assertEq(batch.length, 3);
+        assertEq(batch[0].round, 1);
+        assertEq(batch[0].startMessageId, 3);
+        assertEq(batch[0].endMessageId, 4);
+        assertEq(batch[0].messageCount, 1);
+        assertEq(batch[1].round, 99);
+        assertEq(batch[1].startMessageId, 0);
+        assertEq(batch[1].endMessageId, 0);
+        assertEq(batch[1].messageCount, 0);
+        assertEq(batch[2].round, 0);
+        assertEq(batch[2].startMessageId, 1);
+        assertEq(batch[2].endMessageId, 3);
+        assertEq(batch[2].messageCount, 2);
     }
 
     function testT051T052T053T054T055_roundAndPaginationBoundaries() public {

@@ -241,7 +241,7 @@ button:disabled {
 }
 
 .conversation-row.group-row {
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
 }
 
@@ -250,13 +250,42 @@ button:disabled {
 }
 
 .conversation-title {
-  min-height: 36px;
+  min-height: 20px;
   display: flex;
   align-items: center;
   color: var(--greyscale-900);
   font-size: 15px;
   font-weight: 700;
   overflow-wrap: anywhere;
+}
+
+.conversation-badges {
+  min-height: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.conversation-badge {
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.conversation-badge.mention-me {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.conversation-badge.mention-all {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .conversation-main small,

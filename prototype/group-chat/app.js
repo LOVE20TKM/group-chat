@@ -84,6 +84,28 @@ function messageById(messageId, chatGroupId = state.activeChatGroupId) {
   return messagesForChat(chatGroupId).find((message) => message.messageId === Number(messageId));
 }
 
+function unreadMessagesForChat(chatGroupId) {
+  const lastRead = Number(state.readCursorsByChatGroupId?.[String(chatGroupId)] || 0);
+  return messagesForChat(chatGroupId).filter((message) => !message.mine && message.messageId > lastRead);
+}
+
+function markChatRead(chatGroupId) {
+  const key = String(chatGroupId);
+  if (!state.readCursorsByChatGroupId) state.readCursorsByChatGroupId = {};
+  const latestMessageId = messagesForChat(key).reduce((latest, message) => Math.max(latest, Number(message.messageId) || 0), 0);
+  state.readCursorsByChatGroupId[key] = latestMessageId;
+}
+
+function conversationStatus(chat) {
+  const unread = unreadMessagesForChat(chat.chatGroupId);
+  const mySenderId = Number(currentDefaultGroupId());
+  return {
+    unreadCount: unread.length,
+    hasMentionMe: unread.some((message) => (message.mentions || []).map(Number).includes(mySenderId)),
+    hasMentionAll: unread.some((message) => message.mentionAll),
+  };
+}
+
 function messageMenuKey(message) {
   return `${message.chatGroupId}:${message.messageId}`;
 }
@@ -419,13 +441,20 @@ function renderConversationRow(entry) {
   const chat = entry.item;
   const rowAction = chat.active ? 'open-chat' : 'open-activation';
   const rowTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const status = conversationStatus(chat);
+  const badges = [];
+  if (status.hasMentionMe) badges.push('<span class="conversation-badge mention-me">@我</span>');
+  if (status.hasMentionAll) badges.push('<span class="conversation-badge mention-all">@全部</span>');
+  const unread = status.unreadCount > 0 ? `<span class="unread">${status.unreadCount}</span>` : '';
 
   return `
     <article class="conversation-row group-row" data-action="${rowAction}" ${rowTarget}>
       <div class="avatar group group-icon group-icon-${chat.type}">${chatIconLabel(chat)}</div>
       <div class="conversation-main">
         <div class="conversation-title">${escapeHtml(chatDisplayName(chat))}</div>
+        ${badges.length ? `<div class="conversation-badges">${badges.join('')}</div>` : ''}
       </div>
+      ${unread}
     </article>
   `;
 }
@@ -1353,6 +1382,7 @@ function openChat(chatGroupId) {
   state.activeChatGroupId = String(chatGroupId);
   const chat = chatById(chatGroupId);
   if (chat) state.activeChatId = chat.chatGroupId;
+  markChatRead(chatGroupId);
   state.view = 'chat';
   state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
@@ -1889,6 +1919,7 @@ function simulateMessageGap(chatId) {
     });
   }
   chat.lastMessageId = eventMessageId;
+  if (String(state.activeChatGroupId) === chatGroupId) markChatRead(chatGroupId);
   state.activeGroupMenuId = null;
   state.syncHint =
     `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${chatGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;

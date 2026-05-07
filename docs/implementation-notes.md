@@ -25,11 +25,11 @@
 - `postByDefaultSender`
 - `messagesCount` / `messages`
 - `messagesByRoundCount` / `messagesByRound`
-- `messagesBySenderCount` / `messagesBySender` / `messageIndexesBySender`
-- `messagesByMentionCount` / `messagesByMention` / `messageIndexesByMention`
-- `messagesByMentionAllCount` / `messagesByMentionAll` / `messageIndexesByMentionAll`
+- `messagesBySenderCount` / `messagesBySender` / `messageIdsBySender`
+- `messagesByMentionCount` / `messagesByMention` / `messageIdsByMention`
+- `messagesByMentionAllCount` / `messagesByMentionAll` / `messageIdsByMentionAll`
 - `senderIdsCount` / `senderIds`
-- `roundsCount` / `rounds` / `roundInfo`
+- `roundsCount` / `rounds` / `roundInfo` / `roundInfos`
 - `GroupDefaults`
 
 ## 当前目录

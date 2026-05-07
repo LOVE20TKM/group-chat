@@ -34,6 +34,8 @@ abstract contract GroupChatFixture is TestBase {
         keccak256("AfterPostPluginSet(uint256,address,address,uint256,address)");
     bytes32 internal constant CHAT_ACTIVATE_SIG = keccak256("ChatActivate(uint256,address,uint256)");
     bytes32 internal constant MESSAGE_POST_SIG = keccak256("MessagePost(uint256,uint256,address,uint256,uint256)");
+    bytes32 internal constant MESSAGE_MENTION_SIG = keccak256("MessageMention(uint256,uint256,uint256)");
+    bytes32 internal constant MESSAGE_MENTION_ALL_SIG = keccak256("MessageMentionAll(uint256,uint256)");
     bytes32 internal constant AFTER_POST_PLUGIN_FAILED_SIG =
         keccak256("AfterPostPluginFailed(uint256,uint256,address,uint256,bytes)");
     bytes32 internal constant DEFAULT_GROUP_ID_SET_SIG = keccak256("SetDefaultGroupId(address,uint256)");
@@ -123,6 +125,10 @@ abstract contract GroupChatFixture is TestBase {
 
     function _decodeMessagePost(bytes memory data) internal pure returns (uint256 round, uint256 messageId) {
         (round, messageId) = abi.decode(data, (uint256, uint256));
+    }
+
+    function _decodeMessageId(bytes memory data) internal pure returns (uint256 messageId) {
+        messageId = abi.decode(data, (uint256));
     }
 
     function _decodeAfterPostFailedRound(bytes memory data) internal pure returns (uint256 round) {

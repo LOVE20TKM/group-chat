@@ -74,12 +74,13 @@ Query：
 - `roundsCount`
 - `rounds`
 - `roundInfo`
+- `roundInfos`
 
 ## 结构体
 
 `ChatInfo`：
 
-- `groupId`
+- `chatGroupId`
 - `owner`
 - `active`
 - `configVersion`
@@ -129,6 +130,8 @@ Query：
 消息事件：
 
 - `MessagePost`
+- `MessageMention(uint256 indexed chatGroupId, uint256 indexed mentionedSenderId, uint256 messageId)`
+- `MessageMentionAll(uint256 indexed chatGroupId, uint256 messageId)`
 - `AfterPostPluginFailed`
 
 默认身份注册表事件：
@@ -141,6 +144,7 @@ Query：
 - 同一笔配置写的所有差异事件必须携带同一个新 `configVersion`。
 - `ChatActivate` 在同笔交易内所有配置差异事件之后发出。
 - `MessagePost` 必须先于 `afterPostPlugin` 调用。
+- `MessageMention` / `MessageMentionAll` 是链下通知索引信号，必须在 `MessagePost` 之后、`afterPostPlugin` 之前发出。
 - `afterPostPlugin` 失败只发 `AfterPostPluginFailed`，不回滚消息。
 
 ## 错误

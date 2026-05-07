@@ -28,7 +28,7 @@
 
 `ChatInfo` 至少包含：
 
-- `groupId`
+- `chatGroupId`
 - `owner`
 - `active`
 - `configVersion`
