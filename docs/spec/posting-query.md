@@ -142,6 +142,11 @@ DenySourceFailed.selector          denySource 调用失败
 - `senderGroupIds`
 - `rounds`
 
+群发现：
+
+- `chatGroupIdsCount` / `chatGroupIds`：所有曾首次激活过的 `chatGroupId`，按首次激活顺序分页。
+- `activeChatGroupIdsCount` / `activeChatGroupIds`：当前 `active` 的 `chatGroupId` 集合；关闭会移除，重开会重新加入 active 集合。
+
 ## 同步策略
 
 - `MessagePost` 只作为发现信号。

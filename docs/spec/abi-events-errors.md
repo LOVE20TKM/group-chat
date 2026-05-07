@@ -56,6 +56,8 @@ Query：
 - `messagesByRoundCount`
 - `messagesBySenderCount`
 - `senderGroupIdsCount`
+- `chatGroupIdsCount`
+- `activeChatGroupIdsCount`
 - `messages`
 - `messagesByRound`
 - `messagesBySender`
@@ -67,6 +69,8 @@ Query：
 - `messageIdsByMention`
 - `messageIdsByMentionAll`
 - `senderGroupIds`
+- `chatGroupIds`
+- `activeChatGroupIds`
 - `roundsCount`
 - `rounds`
 - `roundInfo`

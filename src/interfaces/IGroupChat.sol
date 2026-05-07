@@ -248,6 +248,10 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
 
     function senderGroupIdsCount(uint256 chatGroupId) external view returns (uint256);
 
+    function chatGroupIdsCount() external view returns (uint256);
+
+    function activeChatGroupIdsCount() external view returns (uint256);
+
     function messages(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
@@ -302,6 +306,13 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         returns (uint256[] memory);
 
     function senderGroupIds(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory);
+
+    function chatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory);
+
+    function activeChatGroupIds(uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (uint256[] memory);

@@ -45,6 +45,17 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(info.firstActivatedOwner, chatOwner);
         assertEq(info.firstActivatedBlockNumber, block.number);
         assertEq(info.firstActivatedTimestamp, block.timestamp);
+
+        assertEq(chat.chatGroupIdsCount(), 1);
+        assertEq(chat.activeChatGroupIdsCount(), 1);
+
+        uint256[] memory allChats = chat.chatGroupIds(0, 10, false);
+        assertEq(allChats.length, 1);
+        assertEq(allChats[0], chatGroupId);
+
+        uint256[] memory activeChats = chat.activeChatGroupIds(0, 10, false);
+        assertEq(activeChats.length, 1);
+        assertEq(activeChats[0], chatGroupId);
     }
 
     function testT012T014_activateAndDeactivateCannotRepeat() public {
@@ -59,6 +70,9 @@ contract GroupChatLifecycleTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
+
+        assertEq(chat.chatGroupIdsCount(), 1);
+        assertEq(chat.activeChatGroupIdsCount(), 0);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.ChatAlreadyInactive.selector);
@@ -104,5 +118,56 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(fetched[0].mentions.length, 0);
         assertTrue(!fetched[0].mentionAll);
         assertEq(chat.delegateGroupIdOf(chatGroupId), delegateGroupId);
+        assertEq(chat.chatGroupIdsCount(), 1);
+        assertEq(chat.activeChatGroupIdsCount(), 1);
+    }
+
+    function testT016_groupDiscoveryIndexesTrackAllAndActiveChats() public {
+        (string[] memory keys, bytes[] memory values) = _emptyMeta();
+
+        assertEq(chat.chatGroupIdsCount(), 0);
+        assertEq(chat.activeChatGroupIdsCount(), 0);
+
+        vm.prank(chatOwner);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
+
+        vm.prank(senderOwner);
+        chat.activateChat(senderGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
+
+        uint256[] memory allChats = chat.chatGroupIds(0, 10, false);
+        assertEq(allChats.length, 2);
+        assertEq(allChats[0], chatGroupId);
+        assertEq(allChats[1], senderGroupId);
+
+        uint256[] memory allChatsReverse = chat.chatGroupIds(0, 10, true);
+        assertEq(allChatsReverse.length, 2);
+        assertEq(allChatsReverse[0], senderGroupId);
+        assertEq(allChatsReverse[1], chatGroupId);
+
+        uint256[] memory activeChats = chat.activeChatGroupIds(0, 10, false);
+        assertEq(activeChats.length, 2);
+        assertEq(activeChats[0], chatGroupId);
+        assertEq(activeChats[1], senderGroupId);
+
+        vm.prank(chatOwner);
+        chat.deactivateChat(chatGroupId);
+
+        assertEq(chat.chatGroupIdsCount(), 2);
+        assertEq(chat.activeChatGroupIdsCount(), 1);
+
+        uint256[] memory activeAfterDeactivate = chat.activeChatGroupIds(0, 10, false);
+        assertEq(activeAfterDeactivate.length, 1);
+        assertEq(activeAfterDeactivate[0], senderGroupId);
+
+        vm.prank(chatOwner);
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
+
+        assertEq(chat.chatGroupIdsCount(), 2);
+        assertEq(chat.activeChatGroupIdsCount(), 2);
+
+        uint256[] memory allAfterReactivate = chat.chatGroupIds(0, 10, false);
+        assertEq(allAfterReactivate.length, 2);
+        assertEq(allAfterReactivate[0], chatGroupId);
+        assertEq(allAfterReactivate[1], senderGroupId);
     }
 }

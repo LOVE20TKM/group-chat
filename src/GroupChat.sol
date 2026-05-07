@@ -57,6 +57,9 @@ contract GroupChat is IGroupChat {
     mapping(uint256 => mapping(uint256 => bool)) internal _senderTracked;
     mapping(uint256 => mapping(uint256 => RoundState)) internal _roundStates;
     mapping(uint256 => uint256[]) internal _roundListByChat;
+    uint256[] internal _chatGroupIds;
+    uint256[] internal _activeChatGroupIds;
+    mapping(uint256 => uint256) internal _activeChatGroupIdIndexPlusOne;
 
     uint256 internal _entered;
 
@@ -108,10 +111,12 @@ contract GroupChat is IGroupChat {
             config.firstActivatedOwner = owner;
             config.firstActivatedBlockNumber = block.number;
             config.firstActivatedTimestamp = block.timestamp;
+            _chatGroupIds.push(groupId);
         }
 
         config.active = true;
         config.configVersion = newVersion;
+        _addActiveChatGroupId(groupId);
 
         _applyActivateMeta(groupId, metaKeys_, metaValues_, metaHashes, newVersion);
         _applyActivateDelegateGroupId(groupId, config, owner, delegateGroupId_, newVersion, prevDelegateGroupId);
@@ -137,6 +142,7 @@ contract GroupChat is IGroupChat {
         uint256 newVersion = config.configVersion + 1;
         config.active = false;
         config.configVersion = newVersion;
+        _removeActiveChatGroupId(groupId);
         emit ChatDeactivate(groupId, owner, newVersion);
     }
 
@@ -508,6 +514,14 @@ contract GroupChat is IGroupChat {
         return _senderGroupIdsByChat[chatGroupId].length;
     }
 
+    function chatGroupIdsCount() external view returns (uint256) {
+        return _chatGroupIds.length;
+    }
+
+    function activeChatGroupIdsCount() external view returns (uint256) {
+        return _activeChatGroupIds.length;
+    }
+
     function messages(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
@@ -686,6 +700,18 @@ contract GroupChat is IGroupChat {
         return result;
     }
 
+    function chatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory) {
+        return _uint256Page(_chatGroupIds, offset, limit, reverse);
+    }
+
+    function activeChatGroupIds(uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return _uint256Page(_activeChatGroupIds, offset, limit, reverse);
+    }
+
     function roundsCount(uint256 chatGroupId) external view returns (uint256) {
         _requireExistingGroup(chatGroupId);
         return _roundListByChat[chatGroupId].length;
@@ -830,6 +856,32 @@ contract GroupChat is IGroupChat {
         state.endIndex = messageIndex + 1;
     }
 
+    function _addActiveChatGroupId(uint256 groupId) internal {
+        if (_activeChatGroupIdIndexPlusOne[groupId] != 0) {
+            return;
+        }
+        _activeChatGroupIds.push(groupId);
+        _activeChatGroupIdIndexPlusOne[groupId] = _activeChatGroupIds.length;
+    }
+
+    function _removeActiveChatGroupId(uint256 groupId) internal {
+        uint256 indexPlusOne = _activeChatGroupIdIndexPlusOne[groupId];
+        if (indexPlusOne == 0) {
+            return;
+        }
+
+        uint256 index = indexPlusOne - 1;
+        uint256 lastIndex = _activeChatGroupIds.length - 1;
+        if (index != lastIndex) {
+            uint256 lastGroupId = _activeChatGroupIds[lastIndex];
+            _activeChatGroupIds[index] = lastGroupId;
+            _activeChatGroupIdIndexPlusOne[lastGroupId] = indexPlusOne;
+        }
+
+        _activeChatGroupIds.pop();
+        delete _activeChatGroupIdIndexPlusOne[groupId];
+    }
+
     function _addMeta(uint256 groupId, string memory key, bytes memory value) internal {
         bytes32 hash = _metaHash(key);
         _metaStates[groupId][hash] = MetaState({exists: true, index: _metaKeys[groupId].length, key: key, value: value});
@@ -848,6 +900,21 @@ contract GroupChat is IGroupChat {
 
         keys.pop();
         delete _metaStates[groupId][hash];
+    }
+
+    function _uint256Page(uint256[] storage source, uint256 offset, uint256 limit, bool reverse)
+        internal
+        view
+        returns (uint256[] memory)
+    {
+        uint256 count = _pageCount(source.length, offset, limit);
+        uint256[] memory result = new uint256[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = source[_pageIndex(source.length, offset, i, reverse)];
+        }
+
+        return result;
     }
 
     function _requireOwnerOrDelegateAndActive(uint256 groupId) internal view {
