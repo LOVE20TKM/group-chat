@@ -20,7 +20,7 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) > 0
 
 ## 2. 边界
 
-- 不检查 `senderGroupId`；主协议已保证 `senderAddress` 是 `senderGroupId` 当前 owner。
+- 不检查 `senderId`；主协议已保证 `senderAddress` 是 `senderId` 当前 owner。
 - 不处理黑名单；黑名单应挂 `AdminDenySource`。
 - 不处理链群服务者管理权限；管理权限仍由 `GroupChat` owner / delegate 与 `AdminDenySource` 处理。
 - 不区分具体 token / action；只判断当前是否属于该链群。
@@ -45,9 +45,9 @@ GroupChat.denySource = AdminDenySource
 ```solidity
 function canPost(
     uint256 chatGroupId,
-    uint256 senderGroupId,
+    uint256 senderId,
     address senderAddress
 ) external view returns (bool);
 ```
 
-`senderGroupId` 被忽略。
+`senderId` 被忽略。

@@ -14,7 +14,7 @@ ScopeSource 判断“某身份 / 地址本来是否有资格发言”。
 ```solidity
 function canPost(
     uint256 chatGroupId,
-    uint256 senderGroupId,
+    uint256 senderId,
     address senderAddress
 ) external view returns (bool);
 ```

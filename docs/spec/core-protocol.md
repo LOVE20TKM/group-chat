@@ -17,7 +17,9 @@
 ## 核心原则
 
 - `1 NFT = 1 Chat`：`groupId` 直接等于 `GroupNFT.tokenId`。
-- 身份是 `senderGroupId`，地址只是当前 owner 签名器。
+- 身份是 `senderId`，地址只是当前 owner 签名器。
+- 协议命名里 `senderId` 永远表示发言身份 NFT 的 `tokenId`，不是地址。
+- 凡是地址语义必须显式写成 `senderAddress`、`targetAddress`、`owner`。
 - `owner` 永远实时读 `GroupNFT.ownerOf(groupId)`，不缓存。
 - 消息只增不改。
 - 业务扩展通过 `meta`、source、plugin 外置。

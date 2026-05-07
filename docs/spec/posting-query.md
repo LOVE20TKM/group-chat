@@ -5,14 +5,19 @@
 发消息必须同时指定：
 
 - `chatGroupId`：消息落到哪个 chat
-- `senderGroupId`：用哪个 `GroupNFT` 身份发言
+- `senderId`：用哪个 `GroupNFT` 身份发言
+
+命名约定：
+
+- `senderId` 永远表示发言身份 NFT 的 `tokenId`
+- 地址语义必须显式命名为 `senderAddress`
 
 要求：
 
-- `msg.sender` 必须是 `senderGroupId` 当前 owner。
-- `senderGroupId` 可与 `chatGroupId` 不同。
-- `senderGroupId` 自己的 chat 不要求已激活。
-- delegate 不能冒充 `senderGroupId` 发言。
+- `msg.sender` 必须是 `senderId` 当前 owner。
+- `senderId` 可与 `chatGroupId` 不同。
+- `senderId` 自己的 chat 不要求已激活。
+- delegate 不能冒充 `senderId` 发言。
 
 ## 发言校验
 
@@ -21,8 +26,8 @@
 ```text
 chatGroupId exists
 chat active
-senderGroupId exists
-senderAddress owns senderGroupId
+senderId exists
+senderAddress owns senderId
 content / mentions / quote core validation
 currentRound
 scopeSource.canPost
@@ -36,7 +41,7 @@ afterPostPlugin.afterPost
 
 - chatGroupId exists
 - active
-- senderGroupId exists
+- senderId exists
 - sender owner
 - `scopeSource`
 - `denySource`
@@ -54,8 +59,8 @@ afterPostPlugin.afterPost
 ```text
 0x00000000                         OK
 ChatNotActive.selector             chat 未激活
-GroupNotExist.selector             chatGroupId 或 senderGroupId 不存在
-SenderNotGroupOwner.selector       senderAddress 不是 senderGroupId 当前 owner
+GroupNotExist.selector             chatGroupId 或 senderId 不存在
+SenderNotGroupOwner.selector       senderAddress 不是 senderId 当前 owner
 ScopeRejected.selector             scopeSource 判定无资格
 DenyRejected.selector              denySource 判定被拒绝
 ScopeSourceFailed.selector         scopeSource 调用失败
@@ -139,7 +144,7 @@ DenySourceFailed.selector          denySource 调用失败
 
 列表：
 
-- `senderGroupIds`
+- `senderIds`
 - `rounds`
 
 群发现：

@@ -92,7 +92,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        _post(chatGroupId, senderGroupId, "old-message");
+        _post(chatGroupId, senderId, "old-message");
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
@@ -132,22 +132,22 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
 
         vm.prank(senderOwner);
-        chat.activateChat(senderGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(senderId, keys, values, address(0), address(0), address(0), address(0), 0);
 
         uint256[] memory allChats = chat.chatGroupIds(0, 10, false);
         assertEq(allChats.length, 2);
         assertEq(allChats[0], chatGroupId);
-        assertEq(allChats[1], senderGroupId);
+        assertEq(allChats[1], senderId);
 
         uint256[] memory allChatsReverse = chat.chatGroupIds(0, 10, true);
         assertEq(allChatsReverse.length, 2);
-        assertEq(allChatsReverse[0], senderGroupId);
+        assertEq(allChatsReverse[0], senderId);
         assertEq(allChatsReverse[1], chatGroupId);
 
         uint256[] memory activeChats = chat.activeChatGroupIds(0, 10, false);
         assertEq(activeChats.length, 2);
         assertEq(activeChats[0], chatGroupId);
-        assertEq(activeChats[1], senderGroupId);
+        assertEq(activeChats[1], senderId);
 
         vm.prank(chatOwner);
         chat.deactivateChat(chatGroupId);
@@ -157,7 +157,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
 
         uint256[] memory activeAfterDeactivate = chat.activeChatGroupIds(0, 10, false);
         assertEq(activeAfterDeactivate.length, 1);
-        assertEq(activeAfterDeactivate[0], senderGroupId);
+        assertEq(activeAfterDeactivate[0], senderId);
 
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
@@ -168,6 +168,6 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         uint256[] memory allAfterReactivate = chat.chatGroupIds(0, 10, false);
         assertEq(allAfterReactivate.length, 2);
         assertEq(allAfterReactivate[0], chatGroupId);
-        assertEq(allAfterReactivate[1], senderGroupId);
+        assertEq(allAfterReactivate[1], senderId);
     }
 }

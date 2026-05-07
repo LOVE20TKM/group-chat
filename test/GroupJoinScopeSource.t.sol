@@ -38,26 +38,26 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys, values, address(scope), address(0), address(0), address(0), 0);
 
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderGroupId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.ScopeRejected.selector);
 
         groupJoin.setTokenAddressCount(chatGroupId, senderOwner, 1);
 
-        (allowed, reasonCode) = chat.canPostStatus(chatGroupId, senderGroupId, senderOwner);
+        (allowed, reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
         assertTrue(allowed);
         assertEq(reasonCode, bytes4(0));
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        _post(chatGroupId, senderGroupId, "joined-group");
+        _post(chatGroupId, senderId, "joined-group");
         assertEq(chat.messagesCount(chatGroupId), 1);
 
         groupJoin.setTokenAddressCount(chatGroupId, senderOwner, 0);
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.ScopeRejected.selector);
-        _post(chatGroupId, senderGroupId, "exited-group");
+        _post(chatGroupId, senderId, "exited-group");
     }
 
     function testT132_groupJoinScopeCombinesWithAdminDenySource() public {
@@ -76,16 +76,16 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(chatGroupId);
 
         vm.prank(chatOwner);
-        deny.addDenyListsBySenderGroupIds(chatGroupId, _uints(senderGroupId));
+        deny.addDenyListsBySenderIds(chatGroupId, _uints(senderId));
 
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderGroupId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
 
         vm.prank(chatOwner);
-        deny.addExemptListBySenderGroupIds(chatGroupId, _uints(senderGroupId));
+        deny.addExemptListBySenderIds(chatGroupId, _uints(senderId));
 
-        assertTrue(chat.canPost(chatGroupId, senderGroupId, senderOwner));
+        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
     }
 
     function _uints(uint256 value) internal pure returns (uint256[] memory values) {

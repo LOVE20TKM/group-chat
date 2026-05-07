@@ -13,30 +13,30 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(senderOwner);
-        groupDefaults.setDefaultGroupId(senderGroupId);
+        groupDefaults.setDefaultGroupId(senderId);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 1);
         assertEq(logs[0].topics[0], DEFAULT_GROUP_ID_SET_SIG);
-        assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderGroupId);
+        assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderId);
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
         _postByDefaultSender(chatGroupId, "default-post");
 
         IGroupChatStructs.Message memory fetched = chat.message(chatGroupId, 1);
-        assertEq(fetched.senderGroupId, senderGroupId);
+        assertEq(fetched.senderId, senderId);
         assertEq(fetched.senderAddress, senderOwner);
         assertEq(fetched.content, "default-post");
     }
 
     function testT088_defaultSenderInvalidatesOnTransferAndAutoRestores() public {
         vm.prank(senderOwner);
-        groupDefaults.setDefaultGroupId(senderGroupId);
-        assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderGroupId);
+        groupDefaults.setDefaultGroupId(senderId);
+        assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderId);
 
         vm.prank(senderOwner);
-        groupNft.transferFrom(senderOwner, other, senderGroupId);
+        groupNft.transferFrom(senderOwner, other, senderId);
         assertEq(groupDefaults.defaultGroupIdOf(senderOwner), 0);
 
         _activateEmpty();
@@ -46,16 +46,16 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         _postByDefaultSender(chatGroupId, "stale");
 
         vm.prank(other);
-        groupNft.transferFrom(other, senderOwner, senderGroupId);
-        assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderGroupId);
+        groupNft.transferFrom(other, senderOwner, senderId);
+        assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderId);
     }
 
     function testT089_clearDefaultSenderUsesStoredValueEvenWhenInvalid() public {
         vm.prank(senderOwner);
-        groupDefaults.setDefaultGroupId(senderGroupId);
+        groupDefaults.setDefaultGroupId(senderId);
 
         vm.prank(senderOwner);
-        groupNft.transferFrom(senderOwner, other, senderGroupId);
+        groupNft.transferFrom(senderOwner, other, senderId);
         assertEq(groupDefaults.defaultGroupIdOf(senderOwner), 0);
 
         vm.recordLogs();
@@ -68,7 +68,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         assertEq(groupDefaults.defaultGroupIdOf(senderOwner), 0);
 
         vm.prank(other);
-        groupNft.transferFrom(other, senderOwner, senderGroupId);
+        groupNft.transferFrom(other, senderOwner, senderId);
         assertEq(groupDefaults.defaultGroupIdOf(senderOwner), 0);
     }
 
@@ -78,15 +78,15 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         groupDefaults.clearDefaultGroupId();
 
         vm.prank(senderOwner);
-        groupDefaults.setDefaultGroupId(senderGroupId);
+        groupDefaults.setDefaultGroupId(senderId);
 
         vm.prank(senderOwner);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IGroupDefaultsErrors.DefaultGroupIdAlreadySet.selector,
-                senderGroupId
+                senderId
             )
         );
-        groupDefaults.setDefaultGroupId(senderGroupId);
+        groupDefaults.setDefaultGroupId(senderId);
     }
 }

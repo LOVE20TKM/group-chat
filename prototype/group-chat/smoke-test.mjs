@@ -65,11 +65,11 @@ if (data.includes('indexMode') || js.includes('setIndexMode') || js.includes('se
   throw new Error('Index mode switch is not part of the current prototype interaction');
 }
 
-if (js.includes('state.senderGroupId')) {
+if (js.includes('state.senderId')) {
   throw new Error('Current account posting identity must use defaultGroupId');
 }
 
-if (data.includes('senderOwnerMatches') || js.includes('senderOwnerMatches') || js.includes('senderGroupId 的 owner')) {
+if (data.includes('senderOwnerMatches') || js.includes('senderOwnerMatches') || js.includes('senderId 的 owner')) {
   throw new Error('Prototype must describe current-account posting ownership as defaultGroupId');
 }
 
@@ -238,7 +238,7 @@ const requiredAppJs = [
   'ownerOfGroupId',
   'validDefaultGroupIdOf',
   'addSenderDenyFromMessage',
-  'addDenyListsBySenderGroupIds',
+  'addDenyListsBySenderIds',
   'simulateMessageGap',
   'simulate-message-gap',
   'messages(${chatGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
@@ -289,7 +289,7 @@ if (!prototypeData || !prototypeData.initialState) {
 }
 
 const { initialState } = prototypeData;
-if (initialState.senderGroupId !== undefined || initialState.defaultGroupId === undefined) {
+if (initialState.senderId !== undefined || initialState.defaultGroupId === undefined) {
   throw new Error('initialState must use defaultGroupId for the current account posting identity');
 }
 if (!Array.isArray(initialState.chats) || !initialState.chats.length) {
@@ -348,7 +348,7 @@ for (const message of initialState.messages) {
 
 const requiredProtocolCopy = [
   'ruleSlots',
-  'senderGroupId',
+  'senderId',
   'scopeSource',
   'denySource',
   'beforePostPlugin',
@@ -356,8 +356,8 @@ const requiredProtocolCopy = [
   'delegateGroupId',
   'stateVersion',
   'addressDenyList',
-  'senderGroupIdDenyList',
-  'senderGroupIdExemptList',
+  'senderIdDenyList',
+  'senderIdExemptList',
   'voteWeight',
   'tokenAddress',
   'revalidate',

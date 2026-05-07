@@ -15,7 +15,7 @@ BeforePostPlugin 处理资格和黑名单之外的发言前额外规则。
 ```solidity
 function beforePost(
     uint256 chatGroupId,
-    uint256 senderGroupId,
+    uint256 senderId,
     address senderAddress,
     string calldata content,
     uint256[] calldata mentions,

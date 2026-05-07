@@ -16,7 +16,7 @@ AfterPostPlugin 处理消息落链后的观察型扩展。
 ```solidity
 function afterPost(
     uint256 chatGroupId,
-    uint256 senderGroupId,
+    uint256 senderId,
     address senderAddress,
     string calldata content,
     uint256[] calldata mentions,

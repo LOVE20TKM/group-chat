@@ -18,7 +18,7 @@ abstract contract GroupChatFixture is TestBase {
     address internal delegateGroupOwner = address(0xD36E6A7E);
 
     uint256 internal chatGroupId;
-    uint256 internal senderGroupId;
+    uint256 internal senderId;
     uint256 internal otherGroupId;
     uint256 internal delegateGroupId;
     uint256 internal originBlocks;
@@ -42,7 +42,7 @@ abstract contract GroupChatFixture is TestBase {
     function setUp() public virtual {
         groupNft = new MockLOVE20Group();
         chatGroupId = groupNft.mint(chatOwner);
-        senderGroupId = groupNft.mint(senderOwner);
+        senderId = groupNft.mint(senderOwner);
         otherGroupId = groupNft.mint(other);
         delegateGroupId = groupNft.mint(delegateGroupOwner);
 
@@ -60,27 +60,27 @@ abstract contract GroupChatFixture is TestBase {
         mentions = new uint256[](0);
     }
 
-    function _post(uint256 chatGroupId_, uint256 senderGroupId_, string memory content) internal {
-        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false, 0);
+    function _post(uint256 chatGroupId_, uint256 senderId_, string memory content) internal {
+        chat.post(chatGroupId_, senderId_, content, _emptyMentions(), false, 0);
     }
 
     function _postWithMentions(
         uint256 chatGroupId_,
-        uint256 senderGroupId_,
+        uint256 senderId_,
         string memory content,
         uint256[] memory mentions,
         bool mentionAll
     ) internal {
-        chat.post(chatGroupId_, senderGroupId_, content, mentions, mentionAll, 0);
+        chat.post(chatGroupId_, senderId_, content, mentions, mentionAll, 0);
     }
 
     function _postWithQuote(
         uint256 chatGroupId_,
-        uint256 senderGroupId_,
+        uint256 senderId_,
         string memory content,
         uint256 quotedMessageId
     ) internal {
-        chat.post(chatGroupId_, senderGroupId_, content, _emptyMentions(), false, quotedMessageId);
+        chat.post(chatGroupId_, senderId_, content, _emptyMentions(), false, quotedMessageId);
     }
 
     function _postByDefaultSender(uint256 chatGroupId_, string memory content) internal {

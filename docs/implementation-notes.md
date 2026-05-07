@@ -28,7 +28,7 @@
 - `messagesBySenderCount` / `messagesBySender` / `messageIndexesBySender`
 - `messagesByMentionCount` / `messagesByMention` / `messageIndexesByMention`
 - `messagesByMentionAllCount` / `messagesByMentionAll` / `messageIndexesByMentionAll`
-- `senderGroupIdsCount` / `senderGroupIds`
+- `senderIdsCount` / `senderIds`
 - `roundsCount` / `rounds` / `roundInfo`
 - `GroupDefaults`
 

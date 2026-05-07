@@ -8,7 +8,7 @@ interface IGovVotedDenySource is IPostDenySource {
     error DenyVoteWeightSourceUnavailable();
     error GroupNotExist();
     error TargetAddressZero();
-    error TargetSenderGroupIdZero();
+    error TargetSenderIdZero();
     error VoteWeightZero();
     error VoteUnchanged();
     error VoteNotFound();
@@ -24,9 +24,9 @@ interface IGovVotedDenySource is IPostDenySource {
         uint256 stateVersion
     );
 
-    event SenderGroupIdDenyVoteSet(
+    event SenderIdDenyVoteSet(
         uint256 indexed chatGroupId,
-        uint256 indexed targetSenderGroupId,
+        uint256 indexed targetSenderId,
         address indexed voter,
         bool supportDeny,
         uint256 settledWeight,
@@ -49,22 +49,22 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function revalidateDenyAddressVote(uint256 chatGroupId, address targetAddress, address voter) external;
 
-    function voteDenySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external;
+    function voteDenySenderId(uint256 chatGroupId, uint256 targetSenderId) external;
 
-    function opposeDenySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external;
+    function opposeDenySenderId(uint256 chatGroupId, uint256 targetSenderId) external;
 
-    function clearDenySenderGroupIdVote(uint256 chatGroupId, uint256 targetSenderGroupId) external;
+    function clearDenySenderIdVote(uint256 chatGroupId, uint256 targetSenderId) external;
 
-    function revalidateDenySenderGroupIdVote(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
+    function revalidateDenySenderIdVote(uint256 chatGroupId, uint256 targetSenderId, address voter)
         external;
 
-    function voteDenySenderBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external;
+    function voteDenySenderBySenderId(uint256 chatGroupId, uint256 targetSenderId) external;
 
-    function opposeDenySenderBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external;
+    function opposeDenySenderBySenderId(uint256 chatGroupId, uint256 targetSenderId) external;
 
-    function clearDenySenderVoteBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId) external;
+    function clearDenySenderVoteBySenderId(uint256 chatGroupId, uint256 targetSenderId) external;
 
-    function revalidateDenySenderVoteBySenderGroupId(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
+    function revalidateDenySenderVoteBySenderId(uint256 chatGroupId, uint256 targetSenderId, address voter)
         external;
 
     function voteDenySenderBySenderAddress(uint256 chatGroupId, address targetAddress) external;
@@ -81,7 +81,7 @@ interface IGovVotedDenySource is IPostDenySource {
         view
         returns (bool supportDeny, uint256 settledWeight);
 
-    function senderGroupIdDenyVoteOf(uint256 chatGroupId, uint256 targetSenderGroupId, address voter)
+    function senderIdDenyVoteOf(uint256 chatGroupId, uint256 targetSenderId, address voter)
         external
         view
         returns (bool supportDeny, uint256 settledWeight);
@@ -91,7 +91,7 @@ interface IGovVotedDenySource is IPostDenySource {
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
 
-    function senderGroupIdDenyTallyOf(uint256 chatGroupId, uint256 targetSenderGroupId)
+    function senderIdDenyTallyOf(uint256 chatGroupId, uint256 targetSenderId)
         external
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
@@ -108,13 +108,13 @@ interface IGovVotedDenySource is IPostDenySource {
             uint256[] memory voterCounts
         );
 
-    function senderGroupIdDenyTargetsCount(uint256 chatGroupId) external view returns (uint256);
+    function senderIdDenyTargetsCount(uint256 chatGroupId) external view returns (uint256);
 
-    function senderGroupIdDenyTargets(uint256 chatGroupId, uint256 offset, uint256 limit)
+    function senderIdDenyTargets(uint256 chatGroupId, uint256 offset, uint256 limit)
         external
         view
         returns (
-            uint256[] memory targetSenderGroupIds,
+            uint256[] memory targetSenderIds,
             uint256[] memory supportWeights,
             uint256[] memory opposeWeights,
             uint256[] memory voterCounts
@@ -127,12 +127,12 @@ interface IGovVotedDenySource is IPostDenySource {
         view
         returns (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights);
 
-    function senderGroupIdDenyVotersCount(uint256 chatGroupId, uint256 targetSenderGroupId)
+    function senderIdDenyVotersCount(uint256 chatGroupId, uint256 targetSenderId)
         external
         view
         returns (uint256);
 
-    function senderGroupIdDenyVoters(uint256 chatGroupId, uint256 targetSenderGroupId, uint256 offset, uint256 limit)
+    function senderIdDenyVoters(uint256 chatGroupId, uint256 targetSenderId, uint256 offset, uint256 limit)
         external
         view
         returns (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights);

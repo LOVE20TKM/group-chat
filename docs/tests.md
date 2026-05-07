@@ -40,7 +40,7 @@ Delegate：
 
 发言：
 
-- `senderGroupId` owner 才能发。
+- `senderId` owner 才能发。
 - 默认允许跨群发言。
 - 空内容、超长内容、非法 quote、重复 mentions、超限 mentions 必须 revert。
 - `postByDefaultSender` 复用默认身份。

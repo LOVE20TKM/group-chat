@@ -18,7 +18,7 @@ interface IGroupChatPluginView {
 
     function post(
         uint256 chatGroupId,
-        uint256 senderGroupId,
+        uint256 senderId,
         string calldata content,
         uint256[] calldata mentions,
         bool mentionAll,
@@ -50,7 +50,7 @@ contract MockBeforePostRejectPlugin {
 
 contract MockBeforePostCapturePlugin {
     uint256 public lastChatGroupId;
-    uint256 public lastSenderGroupId;
+    uint256 public lastSenderId;
     address public lastSenderAddress;
     string public lastContent;
     bool public lastMentionAll;
@@ -59,7 +59,7 @@ contract MockBeforePostCapturePlugin {
 
     function beforePost(
         uint256 chatGroupId,
-        uint256 senderGroupId,
+        uint256 senderId,
         address senderAddress,
         string calldata content,
         uint256[] calldata mentions,
@@ -67,7 +67,7 @@ contract MockBeforePostCapturePlugin {
         uint256 quotedMessageId
     ) external {
         lastChatGroupId = chatGroupId;
-        lastSenderGroupId = senderGroupId;
+        lastSenderId = senderId;
         lastSenderAddress = senderAddress;
         lastContent = content;
         lastMentionAll = mentionAll;
@@ -178,7 +178,7 @@ contract MockAfterPostFailPlugin {
 
 contract MockAfterPostCapturePlugin {
     uint256 public lastChatGroupId;
-    uint256 public lastSenderGroupId;
+    uint256 public lastSenderId;
     address public lastSenderAddress;
     string public lastContent;
     bool public lastMentionAll;
@@ -190,7 +190,7 @@ contract MockAfterPostCapturePlugin {
 
     function afterPost(
         uint256 chatGroupId,
-        uint256 senderGroupId,
+        uint256 senderId,
         address senderAddress,
         string calldata content,
         uint256[] calldata mentions,
@@ -201,7 +201,7 @@ contract MockAfterPostCapturePlugin {
         uint256 timestamp
     ) external {
         lastChatGroupId = chatGroupId;
-        lastSenderGroupId = senderGroupId;
+        lastSenderId = senderId;
         lastSenderAddress = senderAddress;
         lastContent = content;
         lastMentionAll = mentionAll;
@@ -223,16 +223,16 @@ contract MockAfterPostCapturePlugin {
 contract MockAfterPostReenterPlugin {
     IGroupChatPluginView internal immutable _chat;
     uint256 internal immutable _reenterChatGroupId;
-    uint256 internal immutable _reenterSenderGroupId;
+    uint256 internal immutable _reenterSenderId;
 
     constructor(
         address chat_,
         uint256 reenterChatGroupId_,
-        uint256 reenterSenderGroupId_
+        uint256 reenterSenderId_
     ) {
         _chat = IGroupChatPluginView(chat_);
         _reenterChatGroupId = reenterChatGroupId_;
-        _reenterSenderGroupId = reenterSenderGroupId_;
+        _reenterSenderId = reenterSenderId_;
     }
 
     function afterPost(
@@ -250,7 +250,7 @@ contract MockAfterPostReenterPlugin {
         uint256[] memory mentions = new uint256[](0);
         _chat.post(
             _reenterChatGroupId,
-            _reenterSenderGroupId,
+            _reenterSenderId,
             "reenter",
             mentions,
             false,
