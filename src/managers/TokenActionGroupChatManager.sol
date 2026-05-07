@@ -19,6 +19,7 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
 
     mapping(uint256 => TokenActionChatParams) public paramsOf;
     mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
+    mapping(address => uint256[]) internal _activatedActionIdsByToken;
 
     constructor(
         address groupChat_,
@@ -51,7 +52,40 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         params.token = token;
         params.actionId = actionId;
         chatGroupIdOfAction[token][actionId] = chatGroupId;
+        _activatedActionIdsByToken[token].push(actionId);
         _activateManagedChat(chatGroupId);
+    }
+
+    function activatedActionsCount(address token) external view returns (uint256) {
+        return _activatedActionIdsByToken[token].length;
+    }
+
+    function activatedActions(address token, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory actionIds, uint256[] memory chatGroupIds)
+    {
+        uint256[] storage source = _activatedActionIdsByToken[token];
+        uint256 count = _pageCount(source.length, offset, limit);
+        actionIds = new uint256[](count);
+        chatGroupIds = new uint256[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            uint256 actionId = source[_pageIndex(source.length, offset, i, reverse)];
+            actionIds[i] = actionId;
+            chatGroupIds[i] = chatGroupIdOfAction[token][actionId];
+        }
+    }
+
+    function chatGroupIdsOfActions(address token, uint256[] calldata actionIds)
+        external
+        view
+        returns (uint256[] memory chatGroupIds)
+    {
+        chatGroupIds = new uint256[](actionIds.length);
+        for (uint256 i = 0; i < actionIds.length; i++) {
+            chatGroupIds[i] = chatGroupIdOfAction[token][actionIds[i]];
+        }
     }
 
     function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {

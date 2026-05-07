@@ -80,6 +80,25 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         );
     }
 
+    function _pageCount(uint256 total, uint256 offset, uint256 limit) internal pure returns (uint256) {
+        if (offset >= total) {
+            return 0;
+        }
+        uint256 remaining = total - offset;
+        return remaining < limit ? remaining : limit;
+    }
+
+    function _pageIndex(uint256 total, uint256 offset, uint256 localIndex, bool reverse)
+        internal
+        pure
+        returns (uint256)
+    {
+        if (reverse) {
+            return total - 1 - offset - localIndex;
+        }
+        return offset + localIndex;
+    }
+
     function _requireCode(address target) internal view {
         if (target.code.length == 0) revert ManagerAddressHasNoCode();
     }

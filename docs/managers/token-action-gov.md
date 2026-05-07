@@ -29,6 +29,7 @@ function activate(
 - `paramsOf[chatGroupId].token = token`
 - `paramsOf[chatGroupId].actionId = actionId`
 - `chatGroupIdOfAction[token][actionId] = chatGroupId`
+- `_activatedActionIdsByToken[token].push(actionId)`
 - `GroupChat.scopeSource = address(this)`
 - `GroupChat.denySource = DENY_SOURCE_ADDRESS`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
@@ -75,10 +76,17 @@ struct TokenActionGovChatParams {
 
 mapping(uint256 => TokenActionGovChatParams) public paramsOf;
 mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
+mapping(address => uint256[]) internal _activatedActionIdsByToken;
 uint256 public immutable RECENT_ROUNDS;
 ```
 
 `paramsOf(chatGroupId).token == address(0)` 表示未激活。
+
+## 列表查询
+
+- `activatedActionsCount(token)`
+- `activatedActions(token, offset, limit, reverse)`：返回 `actionIds`、`chatGroupIds`
+- `chatGroupIdsOfActions(token, actionIds)`：按输入顺序等长返回 `chatGroupId`，未激活返回 `0`
 
 ## Review 重点
 

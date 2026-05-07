@@ -20,6 +20,12 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
 
         assertEq(manager.tokenOf(chatGroupId), token);
         assertEq(manager.chatGroupIdOfToken(token), chatGroupId);
+        assertEq(manager.activatedTokensCount(), 1);
+        (address[] memory tokens, uint256[] memory tokenChatGroupIds) = manager.activatedTokens(0, 10, false);
+        assertEq(tokens.length, 1);
+        assertEq(tokens[0], token);
+        assertEq(tokenChatGroupIds.length, 1);
+        assertEq(tokenChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_token_LOVE20_");
 
         assertTrue(!chat.canPost(chatGroupId, senderGroupId, senderOwner));
@@ -57,6 +63,12 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
 
         assertEq(manager.tokenOf(chatGroupId), token);
         assertEq(manager.chatGroupIdOfToken(token), chatGroupId);
+        assertEq(manager.activatedTokensCount(), 1);
+        (address[] memory tokens, uint256[] memory tokenChatGroupIds) = manager.activatedTokens(0, 10, false);
+        assertEq(tokens.length, 1);
+        assertEq(tokens[0], token);
+        assertEq(tokenChatGroupIds.length, 1);
+        assertEq(tokenChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_token_gov_LOVE20_");
 
         assertTrue(!chat.canPost(chatGroupId, senderGroupId, senderOwner));
@@ -81,6 +93,13 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionId, 42);
         assertEq(manager.RECENT_ROUNDS(), 3);
         assertEq(manager.chatGroupIdOfAction(token, 42), chatGroupId);
+        assertEq(manager.activatedActionsCount(token), 1);
+        (uint256[] memory actionIds, uint256[] memory actionChatGroupIds) =
+            manager.activatedActions(token, 0, 10, false);
+        assertEq(actionIds.length, 1);
+        assertEq(actionIds[0], 42);
+        assertEq(actionChatGroupIds.length, 1);
+        assertEq(actionChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_action_gov_LOVE20_42_");
 
         assertTrue(!chat.canPost(chatGroupId, senderGroupId, senderOwner));
@@ -88,6 +107,23 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertTrue(chat.canPost(chatGroupId, senderGroupId, senderOwner));
         protocol.setActionVotes(token, 7, senderOwner, 42, 5);
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderGroupId), 5);
+
+        uint256 secondChatGroupId = manager.activate(token, 43);
+        uint256[] memory queryActionIds = new uint256[](3);
+        queryActionIds[0] = 43;
+        queryActionIds[1] = 44;
+        queryActionIds[2] = 42;
+        uint256[] memory chatGroupIds = manager.chatGroupIdsOfActions(token, queryActionIds);
+        assertEq(chatGroupIds.length, 3);
+        assertEq(chatGroupIds[0], secondChatGroupId);
+        assertEq(chatGroupIds[1], 0);
+        assertEq(chatGroupIds[2], chatGroupId);
+
+        (actionIds, actionChatGroupIds) = manager.activatedActions(token, 0, 1, true);
+        assertEq(actionIds.length, 1);
+        assertEq(actionIds[0], 43);
+        assertEq(actionChatGroupIds.length, 1);
+        assertEq(actionChatGroupIds[0], secondChatGroupId);
     }
 
     function testT113_tokenActionManagerStoresParamsAndAllowsVoteOrParticipation() public {
@@ -103,6 +139,13 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionId, 88);
         assertEq(manager.RECENT_ROUNDS(), 3);
         assertEq(manager.chatGroupIdOfAction(token, 88), chatGroupId);
+        assertEq(manager.activatedActionsCount(token), 1);
+        (uint256[] memory actionIds, uint256[] memory actionChatGroupIds) =
+            manager.activatedActions(token, 0, 10, false);
+        assertEq(actionIds.length, 1);
+        assertEq(actionIds[0], 88);
+        assertEq(actionChatGroupIds.length, 1);
+        assertEq(actionChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_action_LOVE20_88_");
 
         assertTrue(!chat.canPost(chatGroupId, senderGroupId, senderOwner));
@@ -116,6 +159,66 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertTrue(chat.canPost(chatGroupId, senderGroupId, senderOwner));
         protocol.setActionVotes(token, 10, senderOwner, 88, 11);
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderGroupId), 11);
+
+        uint256 secondChatGroupId = manager.activate(token, 89);
+        uint256[] memory queryActionIds = new uint256[](3);
+        queryActionIds[0] = 89;
+        queryActionIds[1] = 90;
+        queryActionIds[2] = 88;
+        uint256[] memory chatGroupIds = manager.chatGroupIdsOfActions(token, queryActionIds);
+        assertEq(chatGroupIds.length, 3);
+        assertEq(chatGroupIds[0], secondChatGroupId);
+        assertEq(chatGroupIds[1], 0);
+        assertEq(chatGroupIds[2], chatGroupId);
+
+        (actionIds, actionChatGroupIds) = manager.activatedActions(token, 0, 1, true);
+        assertEq(actionIds.length, 1);
+        assertEq(actionIds[0], 89);
+        assertEq(actionChatGroupIds.length, 1);
+        assertEq(actionChatGroupIds[0], secondChatGroupId);
+    }
+
+    function testT116_tokenManagersPageActivatedTokens() public {
+        MockLOVE20Protocols protocol = new MockLOVE20Protocols();
+        MockLOVE20Protocols secondProtocol = new MockLOVE20Protocols();
+        address token = address(protocol);
+        address secondToken = address(secondProtocol);
+
+        TokenGroupChatManager manager =
+            new TokenGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        manager.activate(token);
+        uint256 secondChatGroupId = manager.activate(secondToken);
+
+        assertEq(manager.activatedTokensCount(), 2);
+        (address[] memory tokens, uint256[] memory tokenChatGroupIds) = manager.activatedTokens(0, 10, false);
+        assertEq(tokens.length, 2);
+        assertEq(tokens[0], token);
+        assertEq(tokens[1], secondToken);
+        assertEq(tokenChatGroupIds.length, 2);
+        assertEq(tokenChatGroupIds[0], manager.chatGroupIdOfToken(token));
+        assertEq(tokenChatGroupIds[1], secondChatGroupId);
+
+        (tokens, tokenChatGroupIds) = manager.activatedTokens(0, 1, true);
+        assertEq(tokens.length, 1);
+        assertEq(tokens[0], secondToken);
+        assertEq(tokenChatGroupIds.length, 1);
+        assertEq(tokenChatGroupIds[0], secondChatGroupId);
+
+        (tokens, tokenChatGroupIds) = manager.activatedTokens(2, 10, false);
+        assertEq(tokens.length, 0);
+        assertEq(tokenChatGroupIds.length, 0);
+
+        TokenGovGroupChatManager govManager =
+            new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        govManager.activate(token);
+        secondChatGroupId = govManager.activate(secondToken);
+
+        assertEq(govManager.activatedTokensCount(), 2);
+        (tokens, tokenChatGroupIds) = govManager.activatedTokens(1, 10, false);
+        assertEq(tokens.length, 1);
+        assertEq(tokens[0], secondToken);
+        assertEq(tokenChatGroupIds.length, 1);
+        assertEq(tokenChatGroupIds[0], secondChatGroupId);
     }
 
     function testT114_typedManagerProtocolDependenciesRequireCode() public {

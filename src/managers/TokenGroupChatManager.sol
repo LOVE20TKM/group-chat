@@ -19,6 +19,7 @@ contract TokenGroupChatManager is BaseGroupChatManager {
 
     mapping(uint256 => address) public tokenOf;
     mapping(address => uint256) public chatGroupIdOfToken;
+    address[] internal _activatedTokens;
 
     constructor(
         address groupChat_,
@@ -52,7 +53,28 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         chatGroupId = _mintManagedChatGroup(_tokenGroupNameStem("mgr_token_", token));
         tokenOf[chatGroupId] = token;
         chatGroupIdOfToken[token] = chatGroupId;
+        _activatedTokens.push(token);
         _activateManagedChat(chatGroupId);
+    }
+
+    function activatedTokensCount() external view returns (uint256) {
+        return _activatedTokens.length;
+    }
+
+    function activatedTokens(uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (address[] memory tokens, uint256[] memory chatGroupIds)
+    {
+        uint256 count = _pageCount(_activatedTokens.length, offset, limit);
+        tokens = new address[](count);
+        chatGroupIds = new uint256[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            address token = _activatedTokens[_pageIndex(_activatedTokens.length, offset, i, reverse)];
+            tokens[i] = token;
+            chatGroupIds[i] = chatGroupIdOfToken[token];
+        }
     }
 
     function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {

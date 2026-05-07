@@ -14,5 +14,17 @@ interface ITokenActionGovGroupChatManager is IBaseGroupChatManager {
 
     function chatGroupIdOfAction(address token, uint256 actionId) external view returns (uint256);
 
+    function activatedActionsCount(address token) external view returns (uint256);
+
+    function activatedActions(address token, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory actionIds, uint256[] memory chatGroupIds);
+
+    function chatGroupIdsOfActions(address token, uint256[] calldata actionIds)
+        external
+        view
+        returns (uint256[] memory chatGroupIds);
+
     function activate(address token, uint256 actionId) external returns (uint256 chatGroupId);
 }

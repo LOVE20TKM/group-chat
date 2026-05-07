@@ -23,6 +23,7 @@ function activate(address token) external returns (uint256 chatGroupId);
 
 - `tokenOf[chatGroupId] = token`
 - `chatGroupIdOfToken[token] = chatGroupId`
+- `_activatedTokens.push(token)`
 - `GroupChat.scopeSource = address(this)`
 - `GroupChat.denySource = DENY_SOURCE_ADDRESS`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
@@ -59,7 +60,13 @@ denyVoteWeightOf(...) = ILOVE20Stake.validGovVotes(token, voter)
 
 - `mapping(uint256 => address) public tokenOf`
 - `mapping(address => uint256) public chatGroupIdOfToken`
+- `address[] internal _activatedTokens`
 - `tokenOf(chatGroupId) == address(0)` 表示未激活
+
+## 列表查询
+
+- `activatedTokensCount()`
+- `activatedTokens(offset, limit, reverse)`：返回 `tokens`、`chatGroupIds`
 
 ## Review 重点
 
