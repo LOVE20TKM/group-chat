@@ -498,7 +498,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
 ],
 
   inboxFilters: [
-  { id: 'all', label: '与我有关' },
+  { id: 'all', label: '推荐' },
   { id: 'group', label: '群聊' },
   { id: 'managed', label: '我的' },
 ],
