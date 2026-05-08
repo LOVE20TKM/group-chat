@@ -20,7 +20,7 @@ import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 import {Vm} from "./utils/TestBase.sol";
 
 contract GroupChatPluginsTest is GroupChatFixture {
-    function testT013T074_closedChatBlocksMainWritesButAllowsPluginInternalConfig() public {
+    function testT013T074_stoppedChatBlocksPostingButAllowsConfigWrites() public {
         MockManagedPlugin managedPlugin = new MockManagedPlugin(address(chat));
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
@@ -30,15 +30,20 @@ contract GroupChatPluginsTest is GroupChatFixture {
         );
 
         vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
+        chat.setPostingAllowed(chatGroupId, false);
+
+        vm.roll(originBlocks);
+        vm.prank(senderOwner);
+        vm.expectRevert(IGroupChatErrors.PostingNotAllowed.selector);
+        _post(chatGroupId, senderId, "stopped");
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.ChatNotActive.selector);
         chat.setMeta(chatGroupId, "k", bytes("v"));
+        assertEq(chat.metaValue(chatGroupId, "k"), bytes("v"));
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.ChatNotActive.selector);
         chat.setBeforePostPlugin(chatGroupId, address(0));
+        assertEq(chat.beforePostPlugin(chatGroupId), address(0));
 
         vm.prank(chatOwner);
         managedPlugin.configure(chatGroupId, bytes("owner-ok"));
@@ -119,7 +124,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
     function testT070C_canPostStatusReturnsCoreAndSourceFailureReasons() public {
         (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
-        assertEq(reasonCode, IGroupChatErrors.ChatNotActive.selector);
+        assertEq(reasonCode, IGroupChatErrors.ChatNotActivated.selector);
 
         (allowed, reasonCode) = chat.canPostStatus(999999, senderId, senderOwner);
         assertTrue(!allowed);
@@ -164,7 +169,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         _post(chatGroupId, senderId, "deny-boom");
     }
 
-    function testT070D_scopeSetterPermissionsNoopClosedStateAndEvents() public {
+    function testT070D_scopeSetterPermissionsNoopStoppedStateAndEvents() public {
         MockPostScopeSource scope1 = new MockPostScopeSource();
         MockPostScopeSource scope2 = new MockPostScopeSource();
 
@@ -208,14 +213,14 @@ contract GroupChatPluginsTest is GroupChatFixture {
         chat.setScopeSource(chatGroupId, address(0));
 
         vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
+        chat.setPostingAllowed(chatGroupId, false);
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.ChatNotActive.selector);
         chat.setScopeSource(chatGroupId, address(scope1));
+        assertEq(chat.scopeSource(chatGroupId), address(scope1));
     }
 
-    function testT070E_denySetterPermissionsNoopClosedStateAndEvents() public {
+    function testT070E_denySetterPermissionsNoopStoppedStateAndEvents() public {
         MockPostDenySource deny1 = new MockPostDenySource();
         MockPostDenySource deny2 = new MockPostDenySource();
 
@@ -259,11 +264,11 @@ contract GroupChatPluginsTest is GroupChatFixture {
         chat.setDenySource(chatGroupId, address(0));
 
         vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
+        chat.setPostingAllowed(chatGroupId, false);
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.ChatNotActive.selector);
         chat.setDenySource(chatGroupId, address(deny1));
+        assertEq(chat.denySource(chatGroupId), address(deny1));
     }
 
     function testT070F_activateChatEmitsSourceSlotDiffEvents() public {
@@ -284,25 +289,26 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(_decodeVersionAndAddress(activateLogs[1].data), 1);
         assertEq(_decodeChatActivateVersion(activateLogs[2].data), 1);
 
+        vm.recordLogs();
         vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
+        chat.setScopeSource(chatGroupId, address(0));
+        Vm.Log[] memory scopeLogs = vm.getRecordedLogs();
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
-        Vm.Log[] memory reactivateLogs = vm.getRecordedLogs();
+        chat.setDenySource(chatGroupId, address(0));
+        Vm.Log[] memory denyLogs = vm.getRecordedLogs();
 
-        assertEq(reactivateLogs.length, 3);
-        assertEq(reactivateLogs[0].topics[0], SCOPE_SOURCE_SET_SIG);
-        assertEq(reactivateLogs[1].topics[0], DENY_SOURCE_SET_SIG);
-        assertEq(reactivateLogs[2].topics[0], CHAT_ACTIVATE_SIG);
-        (uint256 scopeVersion, address prevScope) = abi.decode(reactivateLogs[0].data, (uint256, address));
-        (uint256 denyVersion, address prevDeny) = abi.decode(reactivateLogs[1].data, (uint256, address));
-        assertEq(scopeVersion, 3);
+        assertEq(scopeLogs.length, 1);
+        assertEq(scopeLogs[0].topics[0], SCOPE_SOURCE_SET_SIG);
+        assertEq(denyLogs.length, 1);
+        assertEq(denyLogs[0].topics[0], DENY_SOURCE_SET_SIG);
+        (uint256 scopeVersion, address prevScope) = abi.decode(scopeLogs[0].data, (uint256, address));
+        (uint256 denyVersion, address prevDeny) = abi.decode(denyLogs[0].data, (uint256, address));
+        assertEq(scopeVersion, 2);
         assertEq(denyVersion, 3);
         assertEq(prevScope, address(scope));
         assertEq(prevDeny, address(deny));
-        assertEq(_decodeChatActivateVersion(reactivateLogs[2].data), 3);
     }
 
     function testT071_beforePostRejectRevertsWholePost() public {

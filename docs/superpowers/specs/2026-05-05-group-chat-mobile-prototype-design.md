@@ -47,11 +47,11 @@
 | UI 能力 | 合约/文档依据 |
 | --- | --- |
 | chat 身份 | `1 NFT = 1 Chat`，`chatGroupId == GroupNFT.tokenId` |
-| 头部状态 | `chatInfo(chatGroupId)`：`active`、`owner`、`configVersion` |
+| 头部状态 | `chatInfo(chatGroupId)`：`activated`、`postingAllowed`、`owner`、`configVersion` |
 | 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderId` |
 | 发送消息 | `post` / `postByDefaultSender` |
 | 可发言判断 | `canPostStatus(chatGroupId, senderId, senderAddress)` |
-| 错误原因 | `ChatNotActive`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
+| 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，只记录声明语义 |

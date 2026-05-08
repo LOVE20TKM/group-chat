@@ -191,7 +191,8 @@ const requiredAppJs = [
   'toggleAvatarMenu',
   'canShowAvatarDenyMenu',
   'SenderAddressNotSenderIdOwner',
-  'ChatNotActive',
+  'ChatNotActivated',
+  'PostingNotAllowed',
   'messagesForChat',
   'renderMessageContent',
   'quotedMessagesByChatGroupId',
@@ -570,8 +571,8 @@ managerActivateHarness(managerActivationState, () => {}).activateChat(1189);
 
 const activatedActionGovChat = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && chat.actionId === '77');
 const linkedAction = managerActivationState.actions.find((action) => action.token === 'LOVE20A' && action.actionId === '77');
-if (!activatedActionGovChat || !activatedActionGovChat.active) {
-  throw new Error('Manager activation must mark the chat active');
+if (!activatedActionGovChat || !activatedActionGovChat.activated || !activatedActionGovChat.postingAllowed) {
+  throw new Error('Manager activation must mark the chat activated and postingAllowed');
 }
 if (activatedActionGovChat.chatGroupId !== expectedMintedChatGroupId) {
   throw new Error('Manager activation must replace the placeholder chatGroupId with the minted chatGroupId');

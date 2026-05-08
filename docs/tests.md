@@ -4,7 +4,7 @@
 
 ## 文件对应
 
-- `test/GroupChatLifecycle.t.sol`：部署、激活、关闭、首次激活快照
+- `test/GroupChatLifecycle.t.sol`：部署、激活、发言开关、首次激活快照
 - `test/GroupChatMeta.t.sol`：meta、批量写、`configVersion`
 - `test/GroupChatDelegate.t.sol`：delegate、NFT 转让失效 / 恢复
 - `test/GroupChatMessages.t.sol`：发言、mentionedSenderIds、mention 通知事件、quote、round、分页、sender 索引
@@ -21,10 +21,10 @@
 
 生命周期：
 
-- 非 owner 不能激活 / 关闭。
-- 重复激活 / 重复关闭必须 revert。
-- 关闭不清空历史配置和消息。
-- 重新激活按入参覆盖 live 配置。
+- 非 owner 不能激活。
+- 重复激活必须 revert。
+- 停止发言只影响发消息，不清空历史配置和消息。
+- 停止发言后仍可更新 live 配置。
 
 Meta：
 
@@ -35,7 +35,7 @@ Meta：
 Delegate：
 
 - owner 可设置和清空 delegate。
-- delegate 不能激活、关闭或代替发言。
+- delegate 不能激活或代替发言。
 - NFT 转出后旧 delegate 失效，转回后恢复。
 
 发言：
@@ -64,7 +64,7 @@ Delegate：
 Manager：
 
 - 构造依赖必须有代码。
-- 激活后不可关闭、不可重配规则槽。
+- 激活后不可通过 Manager 停止发言、不可重配规则槽。
 - 不暴露通用 call / delegatecall / execute 后门。
 - 重复 `activate` 必须 revert。
 

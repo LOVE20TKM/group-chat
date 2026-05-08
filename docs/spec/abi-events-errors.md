@@ -13,7 +13,7 @@
 - `MAX_CONTENT_LENGTH`
 - `MAX_MENTIONED_SENDER_IDS`
 - `activateChat`
-- `deactivateChat`
+- `setPostingAllowed`
 - `chatInfo`
 
 Meta：
@@ -57,7 +57,6 @@ Query：
 - `messagesBySenderCount`
 - `senderIdsCount`
 - `chatGroupIdsCount`
-- `activeChatGroupIdsCount`
 - `messages`
 - `messagesByRound`
 - `messagesBySender`
@@ -70,7 +69,6 @@ Query：
 - `messageIdsByMentionAll`
 - `senderIds`
 - `chatGroupIds`
-- `activeChatGroupIds`
 - `roundsCount`
 - `rounds`
 - `roundInfo`
@@ -82,7 +80,8 @@ Query：
 
 - `chatGroupId`
 - `owner`
-- `active`
+- `activated`
+- `postingAllowed`
 - `configVersion`
 - `firstActivatedOwner`
 - `firstActivatedBlockNumber`
@@ -119,7 +118,7 @@ Query：
 配置事件：
 
 - `ChatActivate`
-- `ChatDeactivate`
+- `PostingAllowedSet`
 - `MetaSet`
 - `DelegateIdSet`
 - `ScopeSourceSet`
@@ -152,9 +151,10 @@ Query：
 核心错误：
 
 - `GroupNotExist`
-- `ChatAlreadyActive`
-- `ChatAlreadyInactive`
-- `ChatNotActive`
+- `ChatAlreadyActivated`
+- `ChatNotActivated`
+- `PostingNotAllowed`
+- `PostingAllowedUnchanged`
 - `NotChatOwner`
 - `NotChatOwnerOrDelegateIdOwner`
 - `SenderAddressNotSenderIdOwner`

@@ -66,14 +66,14 @@ contract GroupChatMessagesTest is GroupChatFixture {
         _post(chatGroupId, senderId, "delegate-send");
 
         vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
+        chat.setPostingAllowed(chatGroupId, false);
 
         vm.prank(senderOwner);
-        vm.expectRevert(IGroupChatErrors.ChatNotActive.selector);
-        _post(chatGroupId, senderId, "closed");
+        vm.expectRevert(IGroupChatErrors.PostingNotAllowed.selector);
+        _post(chatGroupId, senderId, "stopped");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
+        chat.setPostingAllowed(chatGroupId, true);
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.ContentEmpty.selector);

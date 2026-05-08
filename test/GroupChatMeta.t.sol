@@ -80,7 +80,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         chat.setMetaBatch(chatGroupId, batchKeys, batchValues);
     }
 
-    function testT028T082_activateChatRewritesMetaWithDeleteBeforeUpdateAndChatActivateLast() public {
+    function testT028T082_activateChatWritesInitialMetaAndChatActivateLast() public {
         MockBeforePostRejectPlugin beforePlugin = new MockBeforePostRejectPlugin();
         MockAfterPostFailPlugin afterPlugin = new MockAfterPostFailPlugin();
 
@@ -91,63 +91,45 @@ contract GroupChatMetaTest is GroupChatFixture {
         keys1[1] = "b";
         values1[1] = bytes("2");
 
+        vm.recordLogs();
         vm.prank(chatOwner);
         chat.activateChat(
             chatGroupId, keys1, values1, address(0), address(0), address(beforePlugin), address(afterPlugin), delegateId
         );
-
-        vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
-
-        string[] memory keys2 = new string[](2);
-        bytes[] memory values2 = new bytes[](2);
-        keys2[0] = "b";
-        values2[0] = bytes("22");
-        keys2[1] = "c";
-        values2[1] = bytes("3");
-
-        vm.recordLogs();
-        vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), 0);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 3);
+        assertEq(chat.chatInfo(chatGroupId).configVersion, 1);
 
         IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entries.length, 2);
-        assertEq(entries[0].key, "b");
-        assertEq(entries[0].value, bytes("22"));
-        assertEq(entries[1].key, "c");
-        assertEq(entries[1].value, bytes("3"));
+        assertEq(entries[0].key, "a");
+        assertEq(entries[0].value, bytes("1"));
+        assertEq(entries[1].key, "b");
+        assertEq(entries[1].value, bytes("2"));
 
-        assertEq(logs.length, 7);
+        assertEq(logs.length, 6);
         assertEq(logs[0].topics[0], META_SET_SIG);
-        assertEq(_decodeMetaConfigVersion(logs[0].data), 3);
+        assertEq(_decodeMetaConfigVersion(logs[0].data), 1);
         assertEq(_decodeMetaKey(logs[0].data), "a");
-        assertEq(_decodeMetaValue(logs[0].data), bytes(""));
-        assertEq(_decodeMetaPrevValue(logs[0].data), bytes("1"));
+        assertEq(_decodeMetaValue(logs[0].data), bytes("1"));
+        assertEq(_decodeMetaPrevValue(logs[0].data), bytes(""));
 
         assertEq(logs[1].topics[0], META_SET_SIG);
         assertEq(_decodeMetaKey(logs[1].data), "b");
-        assertEq(_decodeMetaValue(logs[1].data), bytes("22"));
-        assertEq(_decodeMetaPrevValue(logs[1].data), bytes("2"));
+        assertEq(_decodeMetaValue(logs[1].data), bytes("2"));
+        assertEq(_decodeMetaPrevValue(logs[1].data), bytes(""));
 
-        assertEq(logs[2].topics[0], META_SET_SIG);
-        assertEq(_decodeMetaKey(logs[2].data), "c");
-        assertEq(_decodeMetaValue(logs[2].data), bytes("3"));
-        assertEq(_decodeMetaPrevValue(logs[2].data), bytes(""));
-
-        assertEq(logs[3].topics[0], DELEGATE_GROUP_ID_SET_SIG);
-        assertEq(_decodeVersionAndUint256(logs[3].data), 3);
-        assertEq(logs[4].topics[0], BEFORE_POST_PLUGIN_SET_SIG);
-        assertEq(_decodeVersionAndAddress(logs[4].data), 3);
-        assertEq(logs[5].topics[0], AFTER_POST_PLUGIN_SET_SIG);
-        assertEq(_decodeVersionAndAddress(logs[5].data), 3);
-        assertEq(logs[6].topics[0], CHAT_ACTIVATE_SIG);
-        assertEq(_decodeChatActivateVersion(logs[6].data), 3);
+        assertEq(logs[2].topics[0], DELEGATE_GROUP_ID_SET_SIG);
+        assertEq(_decodeVersionAndUint256(logs[2].data), 1);
+        assertEq(logs[3].topics[0], BEFORE_POST_PLUGIN_SET_SIG);
+        assertEq(_decodeVersionAndAddress(logs[3].data), 1);
+        assertEq(logs[4].topics[0], AFTER_POST_PLUGIN_SET_SIG);
+        assertEq(_decodeVersionAndAddress(logs[4].data), 1);
+        assertEq(logs[5].topics[0], CHAT_ACTIVATE_SIG);
+        assertEq(_decodeChatActivateVersion(logs[5].data), 1);
     }
 
-    function testT029_activateChatTreatsExplicitEmptyMetaAsDeletion() public {
+    function testT029_setMetaBatchTreatsExplicitEmptyMetaAsDeletion() public {
         string[] memory keys1 = new string[](2);
         bytes[] memory values1 = new bytes[](2);
         keys1[0] = "a";
@@ -158,19 +140,14 @@ contract GroupChatMetaTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
 
-        vm.prank(chatOwner);
-        chat.deactivateChat(chatGroupId);
-
-        string[] memory keys2 = new string[](2);
-        bytes[] memory values2 = new bytes[](2);
+        string[] memory keys2 = new string[](1);
+        bytes[] memory values2 = new bytes[](1);
         keys2[0] = "a";
-        keys2[1] = "b";
         values2[0] = bytes("");
-        values2[1] = bytes("2");
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), 0);
+        chat.setMetaBatch(chatGroupId, keys2, values2);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
@@ -179,14 +156,12 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(entries[0].value, bytes("2"));
         assertEq(chat.metaValue(chatGroupId, "a"), bytes(""));
 
-        assertEq(logs.length, 2);
+        assertEq(logs.length, 1);
         assertEq(logs[0].topics[0], META_SET_SIG);
-        assertEq(_decodeMetaConfigVersion(logs[0].data), 3);
+        assertEq(_decodeMetaConfigVersion(logs[0].data), 2);
         assertEq(_decodeMetaKey(logs[0].data), "a");
         assertEq(_decodeMetaValue(logs[0].data), bytes(""));
         assertEq(_decodeMetaPrevValue(logs[0].data), bytes("1"));
-        assertEq(logs[1].topics[0], CHAT_ACTIVATE_SIG);
-        assertEq(_decodeChatActivateVersion(logs[1].data), 3);
     }
 
     function testT080T081_versionsStayConsistentAcrossConfigWrites() public {

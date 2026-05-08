@@ -27,7 +27,7 @@ Manager 用于去中心化群聊。
 ## 共同约束
 
 - 构造依赖必须是已部署合约地址。
-- 激活后不得关闭 chat。
+- 激活后 Manager 不暴露停止发言入口。
 - 激活后不得重配规则槽。
 - 激活后不得修改 token / action 等发言资格参数；action 类的 `recentRounds` 由构造函数固定。
 - 不得暴露通用 `call` / `delegatecall` / `execute` 后门。

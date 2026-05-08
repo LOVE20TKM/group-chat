@@ -20,7 +20,8 @@ contract GroupChatManagerTest is GroupChatFixture {
         chatGroupId = manager.activateMockManagedChat();
         assertEq(chat.chatInfo(chatGroupId).owner, address(manager));
 
-        assertTrue(chat.chatInfo(chatGroupId).active);
+        assertTrue(chat.chatInfo(chatGroupId).activated);
+        assertTrue(chat.chatInfo(chatGroupId).postingAllowed);
         assertEq(chat.delegateIdOf(chatGroupId), 0);
 
         (address scopeSlot, address denySlot, address beforeSlot, address afterSlot) = chat.ruleSlots(chatGroupId);
@@ -33,20 +34,22 @@ contract GroupChatManagerTest is GroupChatFixture {
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 1);
     }
 
-    function testT101_managerOwnerCannotCloseChatThroughGroupChat() public {
+    function testT101_managerOwnerCannotStopPostingThroughGroupChat() public {
         MockGroupChatManager manager = new MockGroupChatManager(address(chat), address(0), address(0), address(0));
 
         chatGroupId = manager.activateMockManagedChat();
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.NotChatOwner.selector);
-        chat.deactivateChat(chatGroupId);
+        vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateIdOwner.selector);
+        chat.setPostingAllowed(chatGroupId, false);
     }
 
     function testT102_managerDoesNotExposeReconfigureEntrypoints() public {
         MockGroupChatManager manager = new MockGroupChatManager(address(chat), address(0), address(0), address(0));
 
-        _expectUnknownSelector(address(manager), abi.encodeWithSignature("deactivateChat(uint256)", chatGroupId));
+        _expectUnknownSelector(
+            address(manager), abi.encodeWithSignature("setPostingAllowed(uint256,bool)", chatGroupId, false)
+        );
         _expectUnknownSelector(
             address(manager), abi.encodeWithSignature("setScopeSource(uint256,address)", chatGroupId, other)
         );

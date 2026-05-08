@@ -5,7 +5,7 @@
 `GroupChat` 只负责公开链上群聊的最小状态：
 
 - `GroupNFT` 身份与控制权
-- chat 激活 / 关闭
+- chat 激活 / 发言开关
 - `meta`
 - `delegateId`
 - 四个规则槽位
@@ -30,7 +30,8 @@
 
 - `chatGroupId`
 - `owner`
-- `active`
+- `activated`
+- `postingAllowed`
 - `configVersion`
 - `firstActivatedOwner`
 - `firstActivatedBlockNumber`
@@ -38,7 +39,8 @@
 
 `configVersion` 覆盖 live 配置：
 
-- `active`
+- `activated`
+- `postingAllowed`
 - `meta`
 - `delegateId` 原始存储配置
 - `scopeSource`
@@ -55,13 +57,12 @@
 
 ## 生命周期
 
-- 仅当前 owner 可 `activateChat` / `deactivateChat`。
-- `active=true` 时重复激活必须 revert。
-- `active=false` 时重复关闭必须 revert。
-- 首次激活写入 `firstActivated*`，之后不得改写。
-- 关闭不清空 `meta`、delegate、source、plugin 或历史消息。
-- 关闭态禁止管理写和发消息，唯一 live 配置入口是重新 `activateChat`。
-- 已挂载 source / plugin 的内部配置是否允许在关闭态写入，由对应模块自己决定。
+- 仅当前 owner 可 `activateChat`。
+- `activated=true` 时重复激活必须 revert。
+- 激活写入 `firstActivated*`，之后不可重新激活覆盖。
+- 激活默认 `postingAllowed=true`。
+- owner 或有效 delegate 可 `setPostingAllowed`。
+- `postingAllowed=false` 只禁止发消息，不禁止 `meta`、delegate、source、plugin 管理写。
 
 ## Meta
 
@@ -78,7 +79,7 @@
 - 当前可代管地址是 `delegateId` 的当前 owner。
 - delegate 仅在 `delegateOwnerSnapshot == ownerOf(groupId)` 时有效。
 - NFT 转给新 owner 后旧 delegate 失效；转回同一 owner 后自动恢复。
-- delegate 不能执行 `activateChat` / `deactivateChat`。
+- delegate 不能执行 `activateChat`，可以执行 `setPostingAllowed`。
 - `delegateId == groupId` 必须 revert。
 
 ## Rule Slots

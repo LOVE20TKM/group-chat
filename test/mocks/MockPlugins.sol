@@ -5,7 +5,8 @@ interface IGroupChatPluginView {
     struct ChatInfo {
         uint256 chatGroupId;
         address owner;
-        bool active;
+        bool activated;
+        bool postingAllowed;
         uint256 configVersion;
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;

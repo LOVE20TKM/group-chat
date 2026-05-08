@@ -229,7 +229,7 @@ function captureActivationDraft(chat) {
 
 function activationBlocker(chat, draft) {
   if (!chat) return '请选择群聊';
-  if (chat.active) return '该群聊已激活';
+  if (chat.activated) return '该群聊已激活';
   if (chat.model === 'chain-service') {
     if (Number(draft.chatGroupId) !== chat.chatGroupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
     if (chat.role !== 'owner') return '只有 chatGroupId 当前 owner 可以直接激活';
@@ -324,7 +324,8 @@ function currentSenderDenied(chat) {
 
 function chatStatus(chat) {
   if (!chat) return { allowed: false, reasonCode: 'ChatNotSelected', label: '未选择群聊' };
-  if (!chat.active) return { allowed: false, reasonCode: 'ChatNotActive', label: '未激活' };
+  if (!chat.activated) return { allowed: false, reasonCode: 'ChatNotActivated', label: '未激活' };
+  if (!chat.postingAllowed) return { allowed: false, reasonCode: 'PostingNotAllowed', label: '已停止发言' };
   if (chat.defaultGroupOwnerMatches === false) {
     return { allowed: false, reasonCode: 'SenderAddressNotSenderIdOwner', label: '不是 defaultGroupId owner' };
   }
@@ -426,9 +427,9 @@ function renderInbox() {
 function inboxConversations() {
   const groups = state.chats.map((item) => ({ kind: 'group', item }));
 
-  if (state.inboxFilter === 'group') return groups.filter((entry) => entry.item.active);
-  if (state.inboxFilter === 'managed') return groups.filter((entry) => entry.item.active && myChainServiceRole(entry.item));
-  return groups.filter((entry) => entry.item.active);
+  if (state.inboxFilter === 'group') return groups.filter((entry) => entry.item.activated);
+  if (state.inboxFilter === 'managed') return groups.filter((entry) => entry.item.activated && myChainServiceRole(entry.item));
+  return groups.filter((entry) => entry.item.activated);
 }
 
 function renderConversationRows() {
@@ -439,8 +440,8 @@ function renderConversationRows() {
 
 function renderConversationRow(entry) {
   const chat = entry.item;
-  const rowAction = chat.active ? 'open-chat' : 'open-activation';
-  const rowTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const rowAction = chat.activated ? 'open-chat' : 'open-activation';
+  const rowTarget = chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
   const status = conversationStatus(chat);
   const badges = [];
   if (status.hasMentionMe) badges.push('<span class="conversation-badge mention-me">@我</span>');
@@ -504,19 +505,19 @@ function renderActivationSection() {
 }
 
 function renderActivationCard(chat) {
-  const mainAction = chat.active ? 'open-chat' : 'open-activation-form';
-  const mainTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
+  const mainTarget = chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
   return `
     <article class="type-card">
       <div class="card-topline">
         <strong>${escapeHtml(chatDisplayName(chat))}</strong>
-        <span class="pill ${chat.active ? 'pill-ok' : 'pill-warn'}">${chat.active ? '已激活' : '待激活'}</span>
+        <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? '已激活' : '待激活'}</span>
       </div>
       <div class="muted">${escapeHtml(chat.manager)} · ${escapeHtml(chat.activationCall)}</div>
       <div class="kv-grid">${renderParams(chat.params)}</div>
       <div class="card-actions">
-        <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.active ? '进入' : '配置入参'}</button>
-        <button class="sheet-button" type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}" ${chat.active ? '' : 'disabled'}>黑名单</button>
+        <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.activated ? '进入' : '配置入参'}</button>
+        <button class="sheet-button" type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}" ${chat.activated ? '' : 'disabled'}>黑名单</button>
       </div>
     </article>
   `;
@@ -540,13 +541,13 @@ function renderActionActivation(action) {
 }
 
 function renderMiniActivate(chat) {
-  const mainAction = chat.active ? 'open-chat' : 'open-activation-form';
-  const mainTarget = chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
+  const mainTarget = chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
   return `
     <div class="mini-card">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
-      <button class="sheet-button${chat.active ? '' : ' primary'}" type="button" data-action="${mainAction}" ${mainTarget}>
-        ${chat.active ? '进入' : '配置'}
+      <button class="sheet-button${chat.activated ? '' : ' primary'}" type="button" data-action="${mainAction}" ${mainTarget}>
+        ${chat.activated ? '进入' : '配置'}
       </button>
     </div>
   `;
@@ -557,13 +558,13 @@ function renderChainActivation(chat) {
     <article class="action-row">
       <div class="card-topline">
         <strong>${escapeHtml(chatDisplayName(chat))}</strong>
-        <span class="pill ${chat.active ? 'pill-ok' : 'pill-warn'}">${chat.active ? chat.role : '待激活'}</span>
+        <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? chat.role : '待激活'}</span>
       </div>
       <div class="muted">一个代币社区可有多个链群服务者管理群</div>
       <div class="inline-actions">
-        <button type="button" data-action="${chat.active ? 'open-chat' : 'open-activation-form'}" ${chat.active ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`}>${chat.active ? '进入' : '配置'}</button>
-        ${chat.active && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.chatGroupId}">群管理</button>` : ''}
-        ${chat.active ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">黑名单</button>` : ''}
+        <button type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" ${chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`}>${chat.activated ? '进入' : '配置'}</button>
+        ${chat.activated && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.chatGroupId}">群管理</button>` : ''}
+        ${chat.activated ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">黑名单</button>` : ''}
       </div>
     </article>
   `;
@@ -582,7 +583,7 @@ function renderActivationForm() {
     <section class="workspace-band activation-form">
       <div class="screen-heading">
         <h1>${escapeHtml(chatDisplayName(chat))}</h1>
-        <span class="pill ${chat.active ? 'pill-ok' : 'pill-warn'}">${chat.active ? '已激活' : '待激活'}</span>
+        <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? '已激活' : '待激活'}</span>
       </div>
       <div class="kv-grid">${renderParams(chat.params)}</div>
       ${fields}
@@ -832,7 +833,7 @@ function delegateDisplay(value) {
 }
 
 function renderGroupPicker() {
-  const groups = state.chats.filter((chat) => chat.active);
+  const groups = state.chats.filter((chat) => chat.activated);
   return `
     <div class="chat-picker" aria-label="选择群聊">
       ${groups.map((chat) => `<button class="picker-button${chat.chatGroupId === state.activeChatId ? ' active' : ''}" type="button" data-action="select-chat" data-chat-id="${chat.chatGroupId}">${escapeHtml(chat.shortTitle)}</button>`).join('')}
@@ -1146,7 +1147,8 @@ function renderCannotPost(chat, status) {
 
 function postBlockReason(chat, status) {
   if (!chat) return '还没有选中群聊。';
-  if (status.reasonCode === 'ChatNotActive') return '这个群聊还没有激活，链上暂时没有可用的发言规则。';
+  if (status.reasonCode === 'ChatNotActivated') return '这个群聊还没有激活，链上暂时没有可用的发言规则。';
+  if (status.reasonCode === 'PostingNotAllowed') return '这个群聊已激活，但 postingAllowed=false，当前不能发消息。';
   if (status.reasonCode === 'SenderAddressNotSenderIdOwner') return '当前钱包不是 defaultGroupId 的 owner，合约会返回 SenderAddressNotSenderIdOwner。';
   if (status.reasonCode === 'DenyRejected') return '发言资格已通过，但 denySource 拦截了当前地址或当前 NFT。请检查黑名单和豁免名单。';
   if (status.reasonCode === 'ScopeRejected') return scopeSourceReason(chat);
@@ -1247,6 +1249,10 @@ function renderGroupDetails() {
       <dd>#${chat.chatGroupId}</dd>
       <dt>类型</dt>
       <dd>${escapeHtml(chat.typeLabel)}</dd>
+      <dt>activated</dt>
+      <dd>${chat.activated ? 'true' : 'false'}</dd>
+      <dt>postingAllowed</dt>
+      <dd>${chat.postingAllowed ? 'true' : 'false'}</dd>
   ` : `
       <dt>入口</dt>
       <dd>底导航 爱聊 / LOVE20 Chat</dd>
@@ -1522,7 +1528,7 @@ function syncManagedChatGroupId(chat, nextGroupId) {
 
 function activateChat(chatId) {
   const chat = chatById(chatId);
-  if (!chat || chat.active) return;
+  if (!chat || chat.activated) return;
   const draft = captureActivationDraft(chat);
   const blocker = activationBlocker(chat, draft);
   if (blocker) {
@@ -1555,7 +1561,8 @@ function activateChat(chatId) {
     syncManagedChatGroupId(chat, nextManagedChatGroupId());
   }
 
-  chat.active = true;
+  chat.activated = true;
+  chat.postingAllowed = true;
   chat.lastMessageId = 0;
   state.activeChatId = chat.chatGroupId;
   state.activeChatGroupId = String(chat.chatGroupId);

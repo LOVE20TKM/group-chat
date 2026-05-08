@@ -12,7 +12,7 @@
 
 当前本仓库已实现并覆盖测试的核心能力：
 
-- `activateChat` / `deactivateChat`
+- `activateChat` / `setPostingAllowed`
 - `chatInfo`
 - `metaValue` / `metaEntries`
 - `setMeta` / `setMetaBatch`

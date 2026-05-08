@@ -5,7 +5,8 @@ interface IGroupChatStructs {
     struct ChatInfo {
         uint256 chatGroupId;
         address owner;
-        bool active;
+        bool activated;
+        bool postingAllowed;
         uint256 configVersion;
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
@@ -41,9 +42,10 @@ interface IGroupChatStructs {
 
 interface IGroupChatErrors {
     error GroupNotExist();
-    error ChatAlreadyActive();
-    error ChatAlreadyInactive();
-    error ChatNotActive();
+    error ChatAlreadyActivated();
+    error ChatNotActivated();
+    error PostingNotAllowed();
+    error PostingAllowedUnchanged();
     error NotChatOwner();
     error NotChatOwnerOrDelegateIdOwner();
     error SenderAddressNotSenderIdOwner();
@@ -75,7 +77,9 @@ interface IGroupChatErrors {
 interface IGroupChatEvents {
     event ChatActivate(uint256 indexed chatGroupId, address indexed owner, uint256 configVersion);
 
-    event ChatDeactivate(uint256 indexed chatGroupId, address indexed owner, uint256 configVersion);
+    event PostingAllowedSet(
+        uint256 indexed chatGroupId, address indexed operator, uint256 configVersion, bool postingAllowed
+    );
 
     event MetaSet(
         uint256 indexed chatGroupId,
@@ -171,7 +175,7 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         uint256 delegateId_
     ) external;
 
-    function deactivateChat(uint256 chatGroupId) external;
+    function setPostingAllowed(uint256 chatGroupId, bool postingAllowed) external;
 
     function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external;
 
@@ -249,8 +253,6 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
 
     function chatGroupIdsCount() external view returns (uint256);
 
-    function activeChatGroupIdsCount() external view returns (uint256);
-
     function messages(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
@@ -307,8 +309,6 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         returns (uint256[] memory);
 
     function chatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory);
-
-    function activeChatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory);
 
     function roundsCount(uint256 chatGroupId) external view returns (uint256);
 

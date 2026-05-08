@@ -25,7 +25,8 @@
 
 ```text
 chatGroupId exists
-chat active
+chat activated
+posting allowed
 senderId exists
 senderAddress owns senderId
 content / mentionedSenderIds / quote core validation
@@ -40,7 +41,8 @@ afterPostPlugin.afterPost
 `canPost(...)` 只做无内容预检查：
 
 - chatGroupId exists
-- active
+- activated
+- postingAllowed
 - senderId exists
 - sender owner
 - `scopeSource`
@@ -58,7 +60,8 @@ afterPostPlugin.afterPost
 
 ```text
 0x00000000                         OK
-ChatNotActive.selector             chat 未激活
+ChatNotActivated.selector          chat 未激活
+PostingNotAllowed.selector         chat 已停止发言
 GroupNotExist.selector             chatGroupId 或 senderId 不存在
 SenderAddressNotSenderIdOwner.selector       senderAddress 不是 senderId 当前 owner
 ScopeRejected.selector             scopeSource 判定无资格
@@ -155,7 +158,6 @@ DenySourceFailed.selector          denySource 调用失败
 群发现：
 
 - `chatGroupIdsCount` / `chatGroupIds`：所有曾首次激活过的 `chatGroupId`，按首次激活顺序分页。
-- `activeChatGroupIdsCount` / `activeChatGroupIds`：当前 `active` 的 `chatGroupId` 集合；关闭会移除，重开会重新加入 active 集合。
 
 ## 同步策略
 

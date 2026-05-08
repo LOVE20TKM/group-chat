@@ -24,7 +24,7 @@ function canPost(
 - 主协议不存 source 的 `configData`。
 - source 自己按 `chatGroupId` 隔离状态。
 - source 内部配置权限应实时锚定 chat owner / 有效 delegate。
-- 关闭态是否允许 source 内部配置写，由 source 自己决定。
+- 主协议停止发言不影响 source 内部配置写；source 自己按权限控制。
 
 ## 当前实现
 
