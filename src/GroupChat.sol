@@ -35,7 +35,6 @@ contract GroupChat is IGroupChat {
     struct MetaState {
         bool exists;
         uint256 index;
-        string key;
         bytes value;
     }
 
@@ -43,7 +42,6 @@ contract GroupChat is IGroupChat {
         bool exists;
         uint256 startIndex;
         uint256 endIndex;
-        uint256 listIndex;
     }
 
     mapping(uint256 => ChatConfig) internal _chatConfigs;
@@ -865,7 +863,6 @@ contract GroupChat is IGroupChat {
             state.exists = true;
             state.startIndex = messageIndex;
             state.endIndex = messageIndex;
-            state.listIndex = _roundListByChat[chatGroupId].length;
             _roundListByChat[chatGroupId].push(round);
             return;
         }
@@ -901,7 +898,7 @@ contract GroupChat is IGroupChat {
 
     function _addMeta(uint256 groupId, string memory key, bytes memory value) internal {
         bytes32 hash = _metaHash(key);
-        _metaStates[groupId][hash] = MetaState({exists: true, index: _metaKeys[groupId].length, key: key, value: value});
+        _metaStates[groupId][hash] = MetaState({exists: true, index: _metaKeys[groupId].length, value: value});
         _metaKeys[groupId].push(key);
     }
 
