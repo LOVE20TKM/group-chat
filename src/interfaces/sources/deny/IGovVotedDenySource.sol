@@ -79,17 +79,7 @@ interface IGovVotedDenySource is IPostDenySource {
         view
         returns (bool supportDeny, uint256 settledWeight);
 
-    function senderIdDenyVoteOf(uint256 chatGroupId, uint256 targetSenderId, address voter)
-        external
-        view
-        returns (bool supportDeny, uint256 settledWeight);
-
     function addressDenyTallyOf(uint256 chatGroupId, address targetAddress)
-        external
-        view
-        returns (uint256 supportWeight, uint256 opposeWeight);
-
-    function senderIdDenyTallyOf(uint256 chatGroupId, uint256 targetSenderId)
         external
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
@@ -106,6 +96,23 @@ interface IGovVotedDenySource is IPostDenySource {
             uint256[] memory voterCounts
         );
 
+    function addressDenyVotersCount(uint256 chatGroupId, address targetAddress) external view returns (uint256);
+
+    function addressDenyVoters(uint256 chatGroupId, address targetAddress, uint256 offset, uint256 limit)
+        external
+        view
+        returns (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights);
+
+    function senderIdDenyVoteOf(uint256 chatGroupId, uint256 targetSenderId, address voter)
+        external
+        view
+        returns (bool supportDeny, uint256 settledWeight);
+
+    function senderIdDenyTallyOf(uint256 chatGroupId, uint256 targetSenderId)
+        external
+        view
+        returns (uint256 supportWeight, uint256 opposeWeight);
+
     function senderIdDenyTargetsCount(uint256 chatGroupId) external view returns (uint256);
 
     function senderIdDenyTargets(uint256 chatGroupId, uint256 offset, uint256 limit)
@@ -117,13 +124,6 @@ interface IGovVotedDenySource is IPostDenySource {
             uint256[] memory opposeWeights,
             uint256[] memory voterCounts
         );
-
-    function addressDenyVotersCount(uint256 chatGroupId, address targetAddress) external view returns (uint256);
-
-    function addressDenyVoters(uint256 chatGroupId, address targetAddress, uint256 offset, uint256 limit)
-        external
-        view
-        returns (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights);
 
     function senderIdDenyVotersCount(uint256 chatGroupId, uint256 targetSenderId) external view returns (uint256);
 

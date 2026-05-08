@@ -8,6 +8,8 @@ interface ITokenGovGroupChatManager is IBaseGroupChatManager {
 
     function EXTENSION_CENTER_ADDRESS() external view returns (address);
 
+    function activate(address token) external returns (uint256 chatGroupId);
+
     function tokenOf(uint256 chatGroupId) external view returns (address);
 
     function chatGroupIdOfToken(address token) external view returns (uint256);
@@ -18,6 +20,4 @@ interface ITokenGovGroupChatManager is IBaseGroupChatManager {
         external
         view
         returns (address[] memory tokens, uint256[] memory chatGroupIds);
-
-    function activate(address token) external returns (uint256 chatGroupId);
 }

@@ -234,29 +234,23 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         view
         returns (bool allowed, bytes4 reasonCode);
 
-    function currentRound() external view returns (uint256);
-
     function messagesCount(uint256 chatGroupId) external view returns (uint256);
-
-    function message(uint256 chatGroupId, uint256 messageId) external view returns (Message memory);
-
-    function messagesByRoundCount(uint256 chatGroupId, uint256 round) external view returns (uint256);
-
-    function messagesBySenderCount(uint256 chatGroupId, uint256 senderId) external view returns (uint256);
-
-    function senderIdsCount(uint256 chatGroupId) external view returns (uint256);
-
-    function chatGroupIdsCount() external view returns (uint256);
 
     function messages(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (Message[] memory);
 
+    function message(uint256 chatGroupId, uint256 messageId) external view returns (Message memory);
+
+    function messagesByRoundCount(uint256 chatGroupId, uint256 round) external view returns (uint256);
+
     function messagesByRound(uint256 chatGroupId, uint256 round, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (Message[] memory);
+
+    function messagesBySenderCount(uint256 chatGroupId, uint256 senderId) external view returns (uint256);
 
     function messagesBySender(uint256 chatGroupId, uint256 senderId, uint256 offset, uint256 limit, bool reverse)
         external
@@ -298,12 +292,18 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         view
         returns (uint256[] memory);
 
+    function senderIdsCount(uint256 chatGroupId) external view returns (uint256);
+
     function senderIds(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (uint256[] memory);
 
+    function chatGroupIdsCount() external view returns (uint256);
+
     function chatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory);
+
+    function currentRound() external view returns (uint256);
 
     function roundsCount(uint256 chatGroupId) external view returns (uint256);
 

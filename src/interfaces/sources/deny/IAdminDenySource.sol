@@ -57,29 +57,17 @@ interface IAdminDenySource is IPostDenySource {
 
     function setAdmins(uint256 chatGroupId, uint256[] calldata adminIdList) external;
 
-    function addDenyListsBySenderIds(uint256 chatGroupId, uint256[] calldata targetSenderIds) external;
+    function isAdminId(uint256 chatGroupId, uint256 adminId) external view returns (bool);
 
-    function removeDenyListsBySenderIds(uint256 chatGroupId, uint256[] calldata targetSenderIds) external;
+    function adminIdsCount(uint256 chatGroupId) external view returns (uint256);
+
+    function adminIds(uint256 chatGroupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
 
     function addDenyListsBySenderAddresses(uint256 chatGroupId, address[] calldata targetAddresses) external;
 
     function removeDenyListsBySenderAddresses(uint256 chatGroupId, address[] calldata targetAddresses) external;
 
-    function addExemptListBySenderIds(uint256 chatGroupId, uint256[] calldata senderIds) external;
-
-    function removeExemptListBySenderIds(uint256 chatGroupId, uint256[] calldata senderIds) external;
-
-    function isAdminId(uint256 chatGroupId, uint256 adminId) external view returns (bool);
-
     function isAddressDenied(uint256 chatGroupId, address account) external view returns (bool);
-
-    function isSenderIdDenied(uint256 chatGroupId, uint256 senderId) external view returns (bool);
-
-    function isSenderIdExempt(uint256 chatGroupId, uint256 senderId) external view returns (bool);
-
-    function adminIdsCount(uint256 chatGroupId) external view returns (uint256);
-
-    function adminIds(uint256 chatGroupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
 
     function addressDenyListCount(uint256 chatGroupId) external view returns (uint256);
 
@@ -88,12 +76,24 @@ interface IAdminDenySource is IPostDenySource {
         view
         returns (address[] memory);
 
+    function addDenyListsBySenderIds(uint256 chatGroupId, uint256[] calldata targetSenderIds) external;
+
+    function removeDenyListsBySenderIds(uint256 chatGroupId, uint256[] calldata targetSenderIds) external;
+
+    function isSenderIdDenied(uint256 chatGroupId, uint256 senderId) external view returns (bool);
+
     function senderIdDenyListCount(uint256 chatGroupId) external view returns (uint256);
 
     function senderIdDenyList(uint256 chatGroupId, uint256 offset, uint256 limit)
         external
         view
         returns (uint256[] memory);
+
+    function addExemptListBySenderIds(uint256 chatGroupId, uint256[] calldata senderIds) external;
+
+    function removeExemptListBySenderIds(uint256 chatGroupId, uint256[] calldata senderIds) external;
+
+    function isSenderIdExempt(uint256 chatGroupId, uint256 senderId) external view returns (bool);
 
     function senderIdExemptListCount(uint256 chatGroupId) external view returns (uint256);
 
