@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IDenyVoteWeightSource} from "../interfaces/IDenyVoteWeightSource.sol";
 import {IGroupChat} from "../interfaces/IGroupChat.sol";
-import {IPostScopeSource} from "../interfaces/IPostScopeSource.sol";
-
 import {IERC20Payment} from "../interfaces/external/IERC20Payment.sol";
 
 import {IERC20Symbol} from "../interfaces/external/IERC20Symbol.sol";
 import {IERC721Receiver} from "../interfaces/external/IERC721Receiver.sol";
 import {ILOVE20Group} from "../interfaces/external/ILOVE20Group.sol";
+import {IDenyVoteWeightSource} from "../interfaces/sources/IDenyVoteWeightSource.sol";
+import {IPostScopeSource} from "../interfaces/sources/IPostScopeSource.sol";
 
 abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();

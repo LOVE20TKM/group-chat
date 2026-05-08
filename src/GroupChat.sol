@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IAfterPostPlugin} from "./interfaces/IAfterPostPlugin.sol";
-import {IBeforePostPlugin} from "./interfaces/IBeforePostPlugin.sol";
 import {IGroupChat} from "./interfaces/IGroupChat.sol";
-
-import {IPostDenySource} from "./interfaces/IPostDenySource.sol";
-import {IPostScopeSource} from "./interfaces/IPostScopeSource.sol";
 import {IGroupDefaults} from "./interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "./interfaces/external/ILOVE20Group.sol";
+import {IAfterPostPlugin} from "./interfaces/plugins/IAfterPostPlugin.sol";
+import {IBeforePostPlugin} from "./interfaces/plugins/IBeforePostPlugin.sol";
+import {IPostDenySource} from "./interfaces/sources/IPostDenySource.sol";
+import {IPostScopeSource} from "./interfaces/sources/IPostScopeSource.sol";
 
 contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 16384;

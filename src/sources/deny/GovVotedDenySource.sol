@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IDenyVoteWeightSource} from "../../interfaces/IDenyVoteWeightSource.sol";
-
-import {IPostDenySource} from "../../interfaces/IPostDenySource.sol";
 import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
+import {IDenyVoteWeightSource} from "../../interfaces/sources/IDenyVoteWeightSource.sol";
+import {IPostDenySource} from "../../interfaces/sources/IPostDenySource.sol";
 
 contract GovVotedDenySource is IPostDenySource {
     error GovVotedDenySourceAddressHasNoCode();

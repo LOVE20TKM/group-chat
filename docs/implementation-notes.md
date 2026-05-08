@@ -37,6 +37,8 @@
   - 协议接口与实现
   - `interfaces/` 放本库协议接口与扩展点
   - `interfaces/external/` 放上游合约或通用标准的最小适配接口
+  - `interfaces/plugins/` 放发帖前后插件接口
+  - `interfaces/sources/` 放 ScopeSource / DenySource 接口
 - `test/`
   - 按主题拆分的 Foundry 测试
 - `script/`

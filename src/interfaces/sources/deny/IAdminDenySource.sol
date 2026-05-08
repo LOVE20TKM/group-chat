@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IPostDenySource} from "../../IPostDenySource.sol";
+import {IPostDenySource} from "../IPostDenySource.sol";
 
 interface IAdminDenySource is IPostDenySource {
     error AdminDenySourceAddressHasNoCode();

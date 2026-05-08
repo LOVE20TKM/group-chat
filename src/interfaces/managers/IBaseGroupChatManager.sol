@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IDenyVoteWeightSource} from "../IDenyVoteWeightSource.sol";
-import {IPostScopeSource} from "../IPostScopeSource.sol";
 import {IERC721Receiver} from "../external/IERC721Receiver.sol";
+import {IDenyVoteWeightSource} from "../sources/IDenyVoteWeightSource.sol";
+import {IPostScopeSource} from "../sources/IPostScopeSource.sol";
 
 interface IBaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();

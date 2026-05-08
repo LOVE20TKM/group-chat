@@ -30,6 +30,8 @@ LOVE20 `GroupNFT` 群聊协议仓库。
   - `interfaces/IGroupChat.sol`
   - `interfaces/`：本仓库协议接口与扩展点
   - `interfaces/external/`：上游合约或通用标准的最小适配接口
+  - `interfaces/plugins/`：发帖前后插件接口
+  - `interfaces/sources/`：ScopeSource / DenySource 接口
   - `GroupChat.sol`
   - `managers/`
 - `test/`

@@ -3,9 +3,9 @@ pragma solidity =0.8.17;
 
 import {IGroupChat} from "../../interfaces/IGroupChat.sol";
 
-import {IPostDenySource} from "../../interfaces/IPostDenySource.sol";
 import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
+import {IPostDenySource} from "../../interfaces/sources/IPostDenySource.sol";
 
 contract AdminDenySource is IPostDenySource {
     error AdminDenySourceAddressHasNoCode();
