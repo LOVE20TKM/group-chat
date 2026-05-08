@@ -39,7 +39,7 @@ ILOVE20Stake.validGovVotes(token, account) != 0
 ## 黑名单票权
 
 ```solidity
-denyVoteWeightOf(...) = ILOVE20Stake.validGovVotes(token, voter)
+denyVoteWeightOf(chatGroupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
 ```
 
 未激活时返回 `0`。

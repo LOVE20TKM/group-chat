@@ -67,8 +67,8 @@ GroupChat.denySource = GovVotedDenySource
 - `revalidateDeny*Vote` 后当前票权为 `0` 时，必须删除该 voter 对该目标的当前票。
 - 目标名单只包含当前至少有一个投票人的目标，不单独维护“已命中黑名单”派生列表。
 - 某目标最后一个投票人撤票或被重验证删除后，该目标必须从目标名单移除。
-- 地址目标读取票权时调用 `denyVoteWeightOf(chatGroupId, voter, targetAddress, 0)`。
-- `senderId` 目标读取票权时调用 `denyVoteWeightOf(chatGroupId, voter, address(0), targetSenderId)`。
+- 地址目标读取票权时调用 `denyVoteWeightOf(chatGroupId, voter)`。
+- `senderId` 目标读取票权时调用 `denyVoteWeightOf(chatGroupId, voter)`。
 
 ## 最小接口
 

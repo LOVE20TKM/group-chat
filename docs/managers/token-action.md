@@ -47,7 +47,7 @@ function activate(
 ## 黑名单票权
 
 ```solidity
-denyVoteWeightOf(...) =
+denyVoteWeightOf(chatGroupId, voter) =
     ILOVE20Vote.votesNumByAccountByActionId(
         token,
         ILOVE20Vote.currentRound(),

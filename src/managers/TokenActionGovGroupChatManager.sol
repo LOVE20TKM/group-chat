@@ -89,7 +89,7 @@ contract TokenActionGovGroupChatManager is BaseGroupChatManager {
         return token != address(0) && _hasRecentActionVote(token, params.actionId, senderAddress);
     }
 
-    function denyVoteWeightOf(uint256 chatGroupId, address voter, address, uint256) external view returns (uint256) {
+    function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
         TokenActionGovChatParams storage params = paramsOf[chatGroupId];
         address token = params.token;
         if (token == address(0)) {

@@ -38,7 +38,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setBalance(senderOwner, 0);
         protocol.setGovVotes(token, senderOwner, 9);
         assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
-        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 9);
+        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner), 9);
         protocol.setGovVotes(token, senderOwner, 0);
         protocol.setJoinedAmountByAccount(token, senderOwner, 1);
         assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
@@ -77,7 +77,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setGovVotes(token, senderOwner, 7);
         assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
-        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 7);
+        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner), 7);
     }
 
     function testT112_tokenActionGovManagerStoresParamsAndUsesRecentVotes() public {
@@ -109,7 +109,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setActionVotes(token, 5, senderOwner, 42, 1);
         assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 7, senderOwner, 42, 5);
-        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 5);
+        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner), 5);
 
         uint256 secondChatGroupId = manager.activate(token, 43);
         uint256[] memory queryActionIds = new uint256[](3);
@@ -161,7 +161,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setExtensionJoined(token, 88, senderOwner, true);
         assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 10, senderOwner, 88, 11);
-        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 11);
+        assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner), 11);
 
         uint256 secondChatGroupId = manager.activate(token, 89);
         uint256[] memory queryActionIds = new uint256[](3);

@@ -348,7 +348,7 @@ contract GovVotedDenySource is IPostDenySource {
             revert TargetAddressZero();
         }
         address source = _sourceOrRevert(chatGroupId);
-        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, targetAddress, 0);
+        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter);
         if (weight == 0) {
             revert VoteWeightZero();
         }
@@ -437,7 +437,7 @@ contract GovVotedDenySource is IPostDenySource {
             return (false, newVersion);
         }
 
-        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, targetAddress, 0);
+        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter);
         if (weight == vote.settledWeight) {
             return (true, newVersion);
         }
@@ -480,7 +480,7 @@ contract GovVotedDenySource is IPostDenySource {
             revert TargetSenderIdZero();
         }
         address source = _sourceOrRevert(chatGroupId);
-        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, address(0), targetSenderId);
+        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter);
         if (weight == 0) {
             revert VoteWeightZero();
         }
@@ -569,7 +569,7 @@ contract GovVotedDenySource is IPostDenySource {
             return (false, newVersion);
         }
 
-        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter, address(0), targetSenderId);
+        uint256 weight = _voteWeightOrRevert(source, chatGroupId, voter);
         if (weight == vote.settledWeight) {
             return (true, newVersion);
         }
@@ -769,16 +769,12 @@ contract GovVotedDenySource is IPostDenySource {
         }
     }
 
-    function _voteWeightOrRevert(
-        address source,
-        uint256 chatGroupId,
-        address voter,
-        address targetAddress,
-        uint256 targetSenderId
-    ) internal view returns (uint256 weight) {
-        try IDenyVoteWeightSource(source).denyVoteWeightOf(chatGroupId, voter, targetAddress, targetSenderId) returns (
-            uint256 resolved
-        ) {
+    function _voteWeightOrRevert(address source, uint256 chatGroupId, address voter)
+        internal
+        view
+        returns (uint256 weight)
+    {
+        try IDenyVoteWeightSource(source).denyVoteWeightOf(chatGroupId, voter) returns (uint256 resolved) {
             return resolved;
         } catch {
             revert DenyVoteWeightSourceUnavailable();

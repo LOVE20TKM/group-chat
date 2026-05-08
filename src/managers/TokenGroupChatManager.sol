@@ -80,7 +80,7 @@ contract TokenGroupChatManager is BaseGroupChatManager {
             );
     }
 
-    function denyVoteWeightOf(uint256 chatGroupId, address voter, address, uint256) external view returns (uint256) {
+    function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
         address token = tokenOf[chatGroupId];
         if (token == address(0)) {
             return 0;

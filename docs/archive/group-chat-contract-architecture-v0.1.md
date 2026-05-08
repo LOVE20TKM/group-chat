@@ -117,9 +117,7 @@ interface IBeforePostPlugin {
 interface IDenyVoteWeightSource {
     function denyVoteWeightOf(
         uint256 chatGroupId,
-        address voter,
-        address targetAddress,
-        uint256 targetSenderGroupId
+        address voter
     ) external view returns (uint256);
 }
 ```
