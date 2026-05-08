@@ -166,11 +166,11 @@ function activationDraftFor(chat) {
       ...chat.params,
       metaTitle: chatDisplayName(chat),
       metaDescription: chat.typeLabel,
-      scopeSource: chat.ruleSlots.scopeSource,
-      denySource: chat.ruleSlots.denySource,
-      beforePostPlugin: chat.ruleSlots.beforePostPlugin,
-      afterPostPlugin: chat.ruleSlots.afterPostPlugin,
-      delegateId: chat.ruleSlots.delegateId,
+      scopeSource: chat.chatInfo.scopeSource,
+      denySource: chat.chatInfo.denySource,
+      beforePostPlugin: chat.chatInfo.beforePostPlugin,
+      afterPostPlugin: chat.chatInfo.afterPostPlugin,
+      delegateId: chat.chatInfo.delegateId,
     };
   }
   return state.activationDrafts[key];
@@ -730,14 +730,14 @@ function renderRuleInput(chat, slot) {
   return `
     <div class="field-row">
       <label for="${id}">${slot}</label>
-      <input id="${id}" value="${escapeHtml(chat.ruleSlots[slot])}" inputmode="text">
+      <input id="${id}" value="${escapeHtml(chat.chatInfo[slot])}" inputmode="text">
       <button class="sheet-button" type="button" data-action="set-rule-slot" data-slot="${slot}" data-input="${id}">更新</button>
     </div>
   `;
 }
 
 function renderDelegateInput(chat) {
-  const value = chat.ruleSlots.delegateId || '0';
+  const value = chat.chatInfo.delegateId || '0';
   const placeholder = state.nftInputMode === 'name' ? '输入代理 NFT 名称' : '输入代理 NFT 编号';
   const inputMode = state.nftInputMode === 'id' ? 'numeric' : 'text';
   return `
@@ -773,7 +773,7 @@ function renderRuleChoice(chat, slot, options) {
       <label>${slot}</label>
       <div class="choice-group">
         ${options.map((option) => `
-          <button class="picker-button${chat.ruleSlots[slot] === option.value ? ' active' : ''}" type="button" data-action="set-rule-slot-option" data-slot="${slot}" data-value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</button>
+          <button class="picker-button${chat.chatInfo[slot] === option.value ? ' active' : ''}" type="button" data-action="set-rule-slot-option" data-slot="${slot}" data-value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</button>
         `).join('')}
       </div>
     </div>
@@ -817,7 +817,7 @@ function renderAdminList(items, listName, canRemove) {
 }
 
 function renderRuleRows(chat) {
-  return Object.entries(chat.ruleSlots)
+  return Object.entries(chat.chatInfo)
     .map(([key, value]) => `<div><span>${escapeHtml(key)}</span><strong>${escapeHtml(ruleSlotDisplay(key, value))}</strong></div>`)
     .join('');
 }
@@ -1156,7 +1156,7 @@ function postBlockReason(chat, status) {
 }
 
 function scopeSourceReason(chat) {
-  const source = chat.ruleSlots?.scopeSource || chat.params?.scopeSource || 'scopeSource';
+  const source = chat.chatInfo?.scopeSource || chat.params?.scopeSource || 'scopeSource';
   const messages = {
     TokenGroupChatManager: 'scopeSource 会检查当前地址是否属于这个代币的大群范围；当前地址不在范围内。',
     TokenGovGroupChatManager: 'scopeSource 会检查当前地址是否有这个代币治理群的发言资格；当前地址不满足。',
@@ -1538,15 +1538,15 @@ function activateChat(chatId) {
   }
 
   if (chat.model === 'chain-service') {
-    chat.ruleSlots.scopeSource = draft.scopeSource || 'address(0)';
-    chat.ruleSlots.denySource = draft.denySource || 'address(0)';
-    chat.ruleSlots.beforePostPlugin = draft.beforePostPlugin || 'address(0)';
-    chat.ruleSlots.afterPostPlugin = draft.afterPostPlugin || 'address(0)';
-    chat.ruleSlots.delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
+    chat.chatInfo.scopeSource = draft.scopeSource || 'address(0)';
+    chat.chatInfo.denySource = draft.denySource || 'address(0)';
+    chat.chatInfo.beforePostPlugin = draft.beforePostPlugin || 'address(0)';
+    chat.chatInfo.afterPostPlugin = draft.afterPostPlugin || 'address(0)';
+    chat.chatInfo.delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
     chat.params = {
       chatGroupId: String(chat.chatGroupId),
-      scopeSource: chat.ruleSlots.scopeSource,
-      denySource: chat.ruleSlots.denySource,
+      scopeSource: chat.chatInfo.scopeSource,
+      denySource: chat.chatInfo.denySource,
     };
     chat.meta = {
       title: draft.metaTitle,
@@ -1605,14 +1605,14 @@ function setRuleSlot(slot, inputId) {
       render();
       return;
     }
-    chat.ruleSlots[slot] = value;
+    chat.chatInfo[slot] = value;
     state.delegateQueryResult = value === '0' ? '已确认：不设置代理。' : `已确认：NFT #${value} · ${nftProfile(value).name}`;
     state.syncHint = `${slot} 已更新为 ${value}`;
     render();
     return;
   }
   if (!value) return;
-  chat.ruleSlots[slot] = value;
+  chat.chatInfo[slot] = value;
   state.syncHint = `${slot} 已更新为 ${value}`;
   render();
 }
@@ -1622,7 +1622,7 @@ function setRuleSlotOption(slot, value) {
   const options = ruleSlotOptions(slot);
   if (!chat || !options || !canEditRules(chat)) return;
   if (!options.some((option) => option.value === value)) return;
-  chat.ruleSlots[slot] = value;
+  chat.chatInfo[slot] = value;
   state.syncHint = `${slot} 已更新为 ${value}`;
   render();
 }

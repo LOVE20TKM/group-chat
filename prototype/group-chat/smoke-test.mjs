@@ -308,7 +308,7 @@ const chatIds = new Set();
 for (const chat of initialState.chats) {
   if (chatIds.has(chat.chatGroupId)) throw new Error(`Duplicate chat chatGroupId: ${chat.chatGroupId}`);
   chatIds.add(chat.chatGroupId);
-  for (const field of ['chatGroupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'ruleSlots']) {
+  for (const field of ['chatGroupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'chatInfo']) {
     if (chat[field] === undefined) throw new Error(`Chat ${chat.chatGroupId} missing ${field}`);
   }
   if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.chatGroupId} missing govDeny`);
@@ -352,7 +352,7 @@ for (const message of initialState.messages) {
 }
 
 const requiredProtocolCopy = [
-  'ruleSlots',
+  'chatInfo',
   'senderId',
   'scopeSource',
   'denySource',

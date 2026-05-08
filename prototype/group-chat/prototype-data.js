@@ -99,7 +99,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 18,
       voteWeightLabel: 'token 治理票',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -145,7 +145,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 18,
       voteWeightLabel: 'token 治理票',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenGovGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -176,7 +176,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: false,
       voteWeight: 9,
       voteWeightLabel: '当前行动轮投票数',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenActionGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -216,7 +216,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 9,
       voteWeightLabel: '当前行动轮投票数',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenActionGovGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -247,7 +247,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 0,
       voteWeightLabel: '当前行动轮投票数',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenActionGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -278,7 +278,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 0,
       voteWeightLabel: '当前行动轮投票数',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenActionGovGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -309,7 +309,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 0,
       voteWeightLabel: '当前行动轮投票数',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenActionGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -340,7 +340,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       voteWeight: 0,
       voteWeightLabel: '当前行动轮投票数',
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'TokenActionGovGroupChatManager',
         denySource: 'GovVotedDenySource',
         beforePostPlugin: 'address(0)',
@@ -370,7 +370,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       round: 42,
       lastMessageId: 12,
       scopeAllowed: true,
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
         denySource: 'AdminDenySource',
         beforePostPlugin: 'address(0)',
@@ -405,7 +405,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       round: 42,
       lastMessageId: 4,
       scopeAllowed: true,
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
         denySource: 'AdminDenySource',
         beforePostPlugin: 'address(0)',
@@ -440,7 +440,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       round: 42,
       lastMessageId: 0,
       scopeAllowed: true,
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
         denySource: 'AdminDenySource',
         beforePostPlugin: 'address(0)',
@@ -475,7 +475,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       round: 42,
       lastMessageId: 6,
       scopeAllowed: true,
-      ruleSlots: {
+      chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
         denySource: 'AdminDenySource',
         beforePostPlugin: 'address(0)',

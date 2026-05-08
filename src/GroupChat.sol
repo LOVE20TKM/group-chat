@@ -434,6 +434,11 @@ contract GroupChat is IGroupChat {
             activated: config.activated,
             postingAllowed: config.postingAllowed,
             configVersion: config.configVersion,
+            delegateId: _delegateIdOf(config, owner),
+            scopeSource: config.scopeSource,
+            denySource: config.denySource,
+            beforePostPlugin: config.beforePostPlugin,
+            afterPostPlugin: config.afterPostPlugin,
             firstActivatedOwner: config.firstActivatedOwner,
             firstActivatedBlockNumber: config.firstActivatedBlockNumber,
             firstActivatedTimestamp: config.firstActivatedTimestamp
@@ -492,16 +497,6 @@ contract GroupChat is IGroupChat {
     function afterPostPlugin(uint256 chatGroupId) external view returns (address) {
         _requireExistingGroup(chatGroupId);
         return _chatConfigs[chatGroupId].afterPostPlugin;
-    }
-
-    function ruleSlots(uint256 chatGroupId)
-        external
-        view
-        returns (address scopeSource_, address denySource_, address beforePostPlugin_, address afterPostPlugin_)
-    {
-        _requireExistingGroup(chatGroupId);
-        ChatConfig storage config = _chatConfigs[chatGroupId];
-        return (config.scopeSource, config.denySource, config.beforePostPlugin, config.afterPostPlugin);
     }
 
     function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress) external view returns (bool) {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
+import {IGroupChat, IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {
     MockAfterPostCapturePlugin,
     MockAfterPostFailPlugin,
@@ -71,11 +71,11 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys, values, address(scope), address(0), address(0), address(0), 0);
 
-        (address scopeSlot, address denySlot, address beforeSlot, address afterSlot) = chat.ruleSlots(chatGroupId);
-        assertEq(scopeSlot, address(scope));
-        assertEq(denySlot, address(0));
-        assertEq(beforeSlot, address(0));
-        assertEq(afterSlot, address(0));
+        IGroupChat.ChatInfo memory info = chat.chatInfo(chatGroupId);
+        assertEq(info.scopeSource, address(scope));
+        assertEq(info.denySource, address(0));
+        assertEq(info.beforePostPlugin, address(0));
+        assertEq(info.afterPostPlugin, address(0));
         assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
 
         scope.setAllowed(false);

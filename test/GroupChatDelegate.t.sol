@@ -11,15 +11,18 @@ contract GroupChatDelegateTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setDelegateId(chatGroupId, delegateId);
         assertEq(chat.delegateIdOf(chatGroupId), delegateId);
+        assertEq(chat.chatInfo(chatGroupId).delegateId, delegateId);
         assertEq(chat.chatInfo(chatGroupId).configVersion, 2);
 
         groupNft.transferFrom(chatOwner, other, chatGroupId);
         assertEq(chat.delegateIdOf(chatGroupId), 0);
+        assertEq(chat.chatInfo(chatGroupId).delegateId, 0);
         assertEq(chat.chatInfo(chatGroupId).owner, other);
         assertEq(chat.chatInfo(chatGroupId).configVersion, 2);
 
         groupNft.transferFrom(other, chatOwner, chatGroupId);
         assertEq(chat.delegateIdOf(chatGroupId), delegateId);
+        assertEq(chat.chatInfo(chatGroupId).delegateId, delegateId);
     }
 
     function testT031T032T033T036_delegateIdEdgeCases() public {
@@ -39,6 +42,7 @@ contract GroupChatDelegateTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setDelegateId(chatGroupId, 0);
         assertEq(chat.delegateIdOf(chatGroupId), 0);
+        assertEq(chat.chatInfo(chatGroupId).delegateId, 0);
 
         groupNft.transferFrom(chatOwner, other, chatGroupId);
         groupNft.transferFrom(other, chatOwner, chatGroupId);

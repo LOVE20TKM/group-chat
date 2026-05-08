@@ -119,6 +119,11 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         bool activated;
         bool postingAllowed;
         uint256 configVersion;
+        uint256 delegateId;
+        address scopeSource;
+        address denySource;
+        address beforePostPlugin;
+        address afterPostPlugin;
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
         uint256 firstActivatedTimestamp;
@@ -221,11 +226,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
     function beforePostPlugin(uint256 chatGroupId) external view returns (address);
 
     function afterPostPlugin(uint256 chatGroupId) external view returns (address);
-
-    function ruleSlots(uint256 chatGroupId)
-        external
-        view
-        returns (address scopeSource_, address denySource_, address beforePostPlugin_, address afterPostPlugin_);
 
     function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress) external view returns (bool);
 

@@ -39,7 +39,6 @@ Rule slots：
 - `denySource`
 - `beforePostPlugin`
 - `afterPostPlugin`
-- `ruleSlots`
 - `canPost`
 - `canPostStatus`
 
@@ -84,6 +83,11 @@ Query：
 - `activated`
 - `postingAllowed`
 - `configVersion`
+- `delegateId`
+- `scopeSource`
+- `denySource`
+- `beforePostPlugin`
+- `afterPostPlugin`
 - `firstActivatedOwner`
 - `firstActivatedBlockNumber`
 - `firstActivatedTimestamp`

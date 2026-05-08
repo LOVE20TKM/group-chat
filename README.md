@@ -50,7 +50,7 @@ forge test
 
 - [GroupChat 手机优先原型](./prototype/group-chat/index.html)
 - 交互仿微信聊天布局，样式参考 `interface-test`
-- 模拟 `canPostStatus`、`ruleSlots`、引用、mentionedSenderIds、mentionAll、1-based `messageId`、`MessagePost` 同步提示和通知标记
+- 模拟 `canPostStatus`、`chatInfo` 配置字段、引用、mentionedSenderIds、mentionAll、1-based `messageId`、`MessagePost` 同步提示和通知标记
 
 原型 smoke test：
 

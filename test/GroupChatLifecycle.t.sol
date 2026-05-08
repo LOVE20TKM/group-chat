@@ -44,6 +44,11 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertTrue(info.activated);
         assertTrue(info.postingAllowed);
         assertEq(info.configVersion, 1);
+        assertEq(info.delegateId, 0);
+        assertEq(info.scopeSource, address(0));
+        assertEq(info.denySource, address(0));
+        assertEq(info.beforePostPlugin, address(0));
+        assertEq(info.afterPostPlugin, address(0));
         assertEq(info.firstActivatedOwner, chatOwner);
         assertEq(info.firstActivatedBlockNumber, block.number);
         assertEq(info.firstActivatedTimestamp, block.timestamp);
@@ -111,6 +116,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(fetched[0].mentionedSenderIds.length, 0);
         assertTrue(!fetched[0].mentionAll);
         assertEq(chat.delegateIdOf(chatGroupId), delegateId);
+        assertEq(chat.chatInfo(chatGroupId).delegateId, delegateId);
         assertEq(chat.chatGroupIdsCount(), 1);
 
         vm.prank(senderOwner);

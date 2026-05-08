@@ -57,7 +57,7 @@
 | 全体提及 | `mentionAll`，只记录声明语义 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
-| 规则槽 | `ruleSlots(chatGroupId)`：`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
+| 规则槽 | `chatInfo(chatGroupId)`：`delegateId`、`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
 
 ## 信息架构
 

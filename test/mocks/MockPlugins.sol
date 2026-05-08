@@ -8,6 +8,11 @@ interface IGroupChatPluginView {
         bool activated;
         bool postingAllowed;
         uint256 configVersion;
+        uint256 delegateId;
+        address scopeSource;
+        address denySource;
+        address beforePostPlugin;
+        address afterPostPlugin;
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
         uint256 firstActivatedTimestamp;

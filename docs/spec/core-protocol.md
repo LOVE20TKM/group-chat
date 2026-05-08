@@ -33,6 +33,11 @@
 - `activated`
 - `postingAllowed`
 - `configVersion`
+- `delegateId`，当前有效值
+- `scopeSource`
+- `denySource`
+- `beforePostPlugin`
+- `afterPostPlugin`
 - `firstActivatedOwner`
 - `firstActivatedBlockNumber`
 - `firstActivatedTimestamp`

@@ -19,7 +19,6 @@
 - `setDelegateId` / `delegateIdOf`
 - `setScopeSource` / `setDenySource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
-- `ruleSlots`
 - `canPost` / `canPostStatus`
 - `post`
 - `postAsDefaultSender`

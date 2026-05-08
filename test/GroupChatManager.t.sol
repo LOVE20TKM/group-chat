@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
+import {IGroupChat, IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IERC721Receiver} from "../src/interfaces/external/IERC721Receiver.sol";
 import {BaseGroupChatManager} from "../src/managers/BaseGroupChatManager.sol";
 
@@ -11,7 +11,7 @@ import {MockBeforePostRejectPlugin, MockPostDenySource} from "./mocks/MockPlugin
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupChatManagerTest is GroupChatFixture {
-    function testT100_managerActivatesChatWithImmutableRuleSlotsAndNoDelegate() public {
+    function testT100_managerActivatesChatWithImmutableConfigAndNoDelegate() public {
         MockPostDenySource deny = new MockPostDenySource();
         MockBeforePostRejectPlugin beforePlugin = new MockBeforePostRejectPlugin();
         MockGroupChatManager manager =
@@ -23,12 +23,12 @@ contract GroupChatManagerTest is GroupChatFixture {
         assertTrue(chat.chatInfo(chatGroupId).activated);
         assertTrue(chat.chatInfo(chatGroupId).postingAllowed);
         assertEq(chat.delegateIdOf(chatGroupId), 0);
-
-        (address scopeSlot, address denySlot, address beforeSlot, address afterSlot) = chat.ruleSlots(chatGroupId);
-        assertEq(scopeSlot, address(manager));
-        assertEq(denySlot, address(deny));
-        assertEq(beforeSlot, address(beforePlugin));
-        assertEq(afterSlot, address(0));
+        IGroupChat.ChatInfo memory info = chat.chatInfo(chatGroupId);
+        assertEq(info.delegateId, 0);
+        assertEq(info.scopeSource, address(manager));
+        assertEq(info.denySource, address(deny));
+        assertEq(info.beforePostPlugin, address(beforePlugin));
+        assertEq(info.afterPostPlugin, address(0));
 
         assertTrue(manager.canPost(chatGroupId, senderId, senderOwner));
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 1);
