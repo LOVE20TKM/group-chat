@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupChatErrors, IGroupChatStructs} from "../src/interfaces/IGroupChat.sol";
+import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {MockAfterPostFailPlugin, MockBeforePostRejectPlugin} from "./mocks/MockPlugins.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 import {Vm} from "./utils/TestBase.sol";
@@ -44,10 +44,11 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(chat.chatInfo(chatGroupId).configVersion, 5);
         assertEq(chat.metaValue(chatGroupId, "topic"), bytes(""));
 
-        IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
-        assertEq(entries.length, 1);
-        assertEq(entries[0].key, "name");
-        assertEq(entries[0].value, bytes("v3"));
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
+        assertEq(entryKeys.length, 1);
+        assertEq(entryValues.length, 1);
+        assertEq(entryKeys[0], "name");
+        assertEq(entryValues[0], bytes("v3"));
     }
 
     function testT023T024T025T026_metaInvalidCasesRevert() public {
@@ -100,12 +101,13 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         assertEq(chat.chatInfo(chatGroupId).configVersion, 1);
 
-        IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
-        assertEq(entries.length, 2);
-        assertEq(entries[0].key, "a");
-        assertEq(entries[0].value, bytes("1"));
-        assertEq(entries[1].key, "b");
-        assertEq(entries[1].value, bytes("2"));
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
+        assertEq(entryKeys.length, 2);
+        assertEq(entryValues.length, 2);
+        assertEq(entryKeys[0], "a");
+        assertEq(entryValues[0], bytes("1"));
+        assertEq(entryKeys[1], "b");
+        assertEq(entryValues[1], bytes("2"));
 
         assertEq(logs.length, 6);
         assertEq(logs[0].topics[0], META_SET_SIG);
@@ -150,10 +152,11 @@ contract GroupChatMetaTest is GroupChatFixture {
         chat.setMetaBatch(chatGroupId, keys2, values2);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
-        assertEq(entries.length, 1);
-        assertEq(entries[0].key, "b");
-        assertEq(entries[0].value, bytes("2"));
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
+        assertEq(entryKeys.length, 1);
+        assertEq(entryValues.length, 1);
+        assertEq(entryKeys[0], "b");
+        assertEq(entryValues[0], bytes("2"));
         assertEq(chat.metaValue(chatGroupId, "a"), bytes(""));
 
         assertEq(logs.length, 1);

@@ -108,10 +108,11 @@ Query：
 - `endMessageId`：该 round 最后一条消息的 `messageId`；空 round 返回 `0`
 - `messageCount`
 
-`MetaEntry`：
+`metaEntries` 返回：
 
-- `key`
-- `value`
+- `keys`
+- `values`
+- 同一索引的 `keys[i]` 与 `values[i]` 对应
 
 ## 事件
 

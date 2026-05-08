@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupChatErrors, IGroupChatStructs} from "../src/interfaces/IGroupChat.sol";
+import {IGroupChat, IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IGroupDefaultsErrors} from "../src/interfaces/external/IGroupDefaults.sol";
 import {MockGroupDefaults} from "./mocks/MockGroupDefaults.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
@@ -24,7 +24,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         vm.prank(senderOwner);
         _postByDefaultSender(chatGroupId, "default-post");
 
-        IGroupChatStructs.Message memory fetched = chat.message(chatGroupId, 1);
+        IGroupChat.Message memory fetched = chat.message(chatGroupId, 1);
         assertEq(fetched.senderId, senderId);
         assertEq(fetched.senderAddress, senderOwner);
         assertEq(fetched.content, "default-post");

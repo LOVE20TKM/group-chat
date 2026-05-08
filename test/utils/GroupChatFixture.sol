@@ -2,7 +2,7 @@
 pragma solidity =0.8.17;
 
 import {GroupChat} from "../../src/GroupChat.sol";
-import {IGroupChatErrors, IGroupChatStructs} from "../../src/interfaces/IGroupChat.sol";
+import {IGroupChatErrors} from "../../src/interfaces/IGroupChat.sol";
 
 import {MockGroupDefaults} from "../mocks/MockGroupDefaults.sol";
 import {MockLOVE20Group} from "../mocks/MockLOVE20Group.sol";

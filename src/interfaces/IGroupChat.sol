@@ -1,45 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-interface IGroupChatStructs {
-    struct ChatInfo {
-        uint256 chatGroupId;
-        address owner;
-        bool activated;
-        bool postingAllowed;
-        uint256 configVersion;
-        address firstActivatedOwner;
-        uint256 firstActivatedBlockNumber;
-        uint256 firstActivatedTimestamp;
-    }
-
-    struct Message {
-        uint256 chatGroupId;
-        uint256 senderId;
-        address senderAddress;
-        uint256 round;
-        uint256 messageId;
-        string content;
-        uint256 blockNumber;
-        uint256 timestamp;
-        uint256[] mentionedSenderIds;
-        bool mentionAll;
-        uint256 quotedMessageId;
-    }
-
-    struct RoundSpan {
-        uint256 round;
-        uint256 startMessageId;
-        uint256 endMessageId;
-        uint256 messageCount;
-    }
-
-    struct MetaEntry {
-        string key;
-        bytes value;
-    }
-}
-
 interface IGroupChatErrors {
     error GroupNotExist();
     error ChatAlreadyActivated();
@@ -151,7 +112,39 @@ interface IGroupChatEvents {
     );
 }
 
-interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
+interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
+    struct ChatInfo {
+        uint256 chatGroupId;
+        address owner;
+        bool activated;
+        bool postingAllowed;
+        uint256 configVersion;
+        address firstActivatedOwner;
+        uint256 firstActivatedBlockNumber;
+        uint256 firstActivatedTimestamp;
+    }
+
+    struct Message {
+        uint256 chatGroupId;
+        uint256 senderId;
+        address senderAddress;
+        uint256 round;
+        uint256 messageId;
+        string content;
+        uint256 blockNumber;
+        uint256 timestamp;
+        uint256[] mentionedSenderIds;
+        bool mentionAll;
+        uint256 quotedMessageId;
+    }
+
+    struct RoundSpan {
+        uint256 round;
+        uint256 startMessageId;
+        uint256 endMessageId;
+        uint256 messageCount;
+    }
+
     function LOVE20_GROUP_ADDRESS() external view returns (address);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
@@ -215,7 +208,7 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
     function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (MetaEntry[] memory);
+        returns (string[] memory keys, bytes[] memory values);
 
     function delegateIdOf(uint256 chatGroupId) external view returns (uint256);
 

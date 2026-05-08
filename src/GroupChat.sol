@@ -448,20 +448,20 @@ contract GroupChat is IGroupChat {
     function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (MetaEntry[] memory)
+        returns (string[] memory keys_, bytes[] memory values_)
     {
         _requireExistingGroup(chatGroupId);
         string[] storage keys = _metaKeys[chatGroupId];
         uint256 count = _pageCount(keys.length, offset, limit);
-        MetaEntry[] memory result = new MetaEntry[](count);
+        keys_ = new string[](count);
+        values_ = new bytes[](count);
 
         for (uint256 i = 0; i < count; i++) {
             uint256 idx = _pageIndex(keys.length, offset, i, reverse);
             string storage key = keys[idx];
-            result[i] = MetaEntry({key: key, value: _metaStates[chatGroupId][_metaHash(key)].value});
+            keys_[i] = key;
+            values_[i] = _metaStates[chatGroupId][_metaHash(key)].value;
         }
-
-        return result;
     }
 
     function delegateIdOf(uint256 chatGroupId) external view returns (uint256) {

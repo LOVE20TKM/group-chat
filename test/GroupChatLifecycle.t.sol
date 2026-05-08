@@ -2,7 +2,7 @@
 pragma solidity =0.8.17;
 
 import {GroupChat} from "../src/GroupChat.sol";
-import {IGroupChatErrors, IGroupChatStructs} from "../src/interfaces/IGroupChat.sol";
+import {IGroupChat, IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 import {Vm} from "./utils/TestBase.sol";
 
@@ -38,7 +38,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
     function testT011_activateChat_setsLiveStateAndFirstActivationSnapshot() public {
         _activateEmpty();
 
-        IGroupChatStructs.ChatInfo memory info = chat.chatInfo(chatGroupId);
+        IGroupChat.ChatInfo memory info = chat.chatInfo(chatGroupId);
         assertEq(info.chatGroupId, chatGroupId);
         assertEq(info.owner, chatOwner);
         assertTrue(info.activated);
@@ -77,7 +77,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
 
-        IGroupChatStructs.ChatInfo memory firstInfo = chat.chatInfo(chatGroupId);
+        IGroupChat.ChatInfo memory firstInfo = chat.chatInfo(chatGroupId);
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
@@ -98,14 +98,14 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setPostingAllowed(chatGroupId, true);
 
-        IGroupChatStructs.ChatInfo memory secondInfo = chat.chatInfo(chatGroupId);
+        IGroupChat.ChatInfo memory secondInfo = chat.chatInfo(chatGroupId);
         assertEq(secondInfo.firstActivatedOwner, firstInfo.firstActivatedOwner);
         assertEq(secondInfo.firstActivatedBlockNumber, firstInfo.firstActivatedBlockNumber);
         assertEq(secondInfo.firstActivatedTimestamp, firstInfo.firstActivatedTimestamp);
         assertEq(chat.metaValue(chatGroupId, "k1"), bytes("v1"));
         assertEq(chat.metaValue(chatGroupId, "k2"), bytes("v2"));
         assertEq(chat.messagesCount(chatGroupId), 1);
-        IGroupChatStructs.Message[] memory fetched = chat.messages(chatGroupId, 0, 1, false);
+        IGroupChat.Message[] memory fetched = chat.messages(chatGroupId, 0, 1, false);
         assertEq(fetched.length, 1);
         assertEq(fetched[0].content, "old-message");
         assertEq(fetched[0].mentionedSenderIds.length, 0);
@@ -139,7 +139,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
 
         assertEq(logs.length, 1);
         assertEq(logs[0].topics[0], POSTING_ALLOWED_SET_SIG);
-        IGroupChatStructs.ChatInfo memory info = chat.chatInfo(chatGroupId);
+        IGroupChat.ChatInfo memory info = chat.chatInfo(chatGroupId);
         assertTrue(!info.postingAllowed);
         assertEq(info.configVersion, 3);
     }
