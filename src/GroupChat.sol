@@ -334,7 +334,7 @@ contract GroupChat is IGroupChat {
         _post(chatGroupId, senderId, content, mentionedSenderIds, mentionAll, quotedMessageId);
     }
 
-    function postByDefaultSender(
+    function postAsDefaultSender(
         uint256 chatGroupId,
         string calldata content,
         uint256[] calldata mentionedSenderIds,

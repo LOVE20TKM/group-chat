@@ -45,7 +45,7 @@ Rule slots：
 Posting：
 
 - `post`
-- `postByDefaultSender`
+- `postAsDefaultSender`
 - `GROUP_DEFAULTS_ADDRESS`
 
 Query：

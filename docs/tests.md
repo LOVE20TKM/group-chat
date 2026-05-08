@@ -43,7 +43,7 @@ Delegate：
 - `senderId` owner 才能发。
 - 默认允许跨群发言。
 - 空内容、超长内容、非法 quote、重复 mentionedSenderIds、超限 mentionedSenderIds 必须 revert。
-- `postByDefaultSender` 复用默认身份。
+- `postAsDefaultSender` 复用默认身份。
 
 分页：
 

@@ -8,7 +8,7 @@ import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 import {Vm} from "./utils/TestBase.sol";
 
 contract GroupChatDefaultSenderTest is GroupChatFixture {
-    function testT087_setDefaultSenderAndPostByDefaultSender() public {
+    function testT087_setDefaultSenderAndPostAsDefaultSender() public {
         _activateEmpty();
 
         vm.recordLogs();
@@ -22,7 +22,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        _postByDefaultSender(chatGroupId, "default-post");
+        _postAsDefaultSender(chatGroupId, "default-post");
 
         IGroupChat.Message memory fetched = chat.message(chatGroupId, 1);
         assertEq(fetched.senderId, senderId);
@@ -43,7 +43,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         vm.roll(originBlocks);
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.DefaultGroupIdNotSet.selector);
-        _postByDefaultSender(chatGroupId, "stale");
+        _postAsDefaultSender(chatGroupId, "stale");
 
         vm.prank(other);
         groupNft.transferFrom(other, senderOwner, senderId);

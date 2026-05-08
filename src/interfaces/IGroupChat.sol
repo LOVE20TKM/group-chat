@@ -193,7 +193,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         uint256 quotedMessageId
     ) external;
 
-    function postByDefaultSender(
+    function postAsDefaultSender(
         uint256 chatGroupId,
         string calldata content,
         uint256[] calldata mentionedSenderIds,

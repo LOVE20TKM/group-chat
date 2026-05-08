@@ -85,8 +85,8 @@ abstract contract GroupChatFixture is TestBase {
         chat.post(chatGroupId_, senderId_, content, _emptyMentionedSenderIds(), false, quotedMessageId);
     }
 
-    function _postByDefaultSender(uint256 chatGroupId_, string memory content) internal {
-        chat.postByDefaultSender(chatGroupId_, content, _emptyMentionedSenderIds(), false, 0);
+    function _postAsDefaultSender(uint256 chatGroupId_, string memory content) internal {
+        chat.postAsDefaultSender(chatGroupId_, content, _emptyMentionedSenderIds(), false, 0);
     }
 
     function _activateEmpty() internal {

@@ -110,7 +110,7 @@ DenySourceFailed.selector          denySource 调用失败
 - `defaultGroupIdOf(account)`
 - `defaultGroupsOf(accounts)`
 
-`postByDefaultSender(...)` 只是在调用前解析当前有效默认身份，然后复用 `post(...)`。
+`postAsDefaultSender(...)` 只是在调用前解析当前有效默认身份，然后复用 `post(...)`。
 
 ## Round
 

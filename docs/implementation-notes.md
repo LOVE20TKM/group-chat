@@ -22,7 +22,7 @@
 - `ruleSlots`
 - `canPost` / `canPostStatus`
 - `post`
-- `postByDefaultSender`
+- `postAsDefaultSender`
 - `messagesCount` / `messages`
 - `messagesByRoundCount` / `messagesByRound`
 - `messagesBySenderCount` / `messagesBySender` / `messageIdsBySender`
