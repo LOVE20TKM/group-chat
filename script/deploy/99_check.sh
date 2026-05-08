@@ -272,13 +272,11 @@ echo "Verifying ExtensionCenter values used by managers..."
 
 extension_stake_address=$(cast_call $EXTENSION_CENTER_ADDRESS "stakeAddress()(address)")
 extension_vote_address=$(cast_call $EXTENSION_CENTER_ADDRESS "voteAddress()(address)")
-extension_submit_address=$(cast_call $EXTENSION_CENTER_ADDRESS "submitAddress()(address)")
 
 echo -e "\033[32m✓\033[0m ExtensionCenter: dependency addresses loaded"
 echo -e "  STAKE_ADDRESS:  $extension_stake_address"
 echo -e "  JOIN_ADDRESS:   $extension_join_address"
 echo -e "  VOTE_ADDRESS:   $extension_vote_address"
-echo -e "  SUBMIT_ADDRESS: $extension_submit_address"
 echo ""
 
 check_manager_common() {
@@ -309,8 +307,6 @@ check_equal "TokenGroupChatManager: STAKE_ADDRESS" $extension_stake_address $(ca
 check_equal "TokenGroupChatManager: JOIN_ADDRESS" $extension_join_address $(cast_call $tokenGroupChatManagerAddress "JOIN_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenGroupChatManager: VOTE_ADDRESS" $extension_vote_address $(cast_call $tokenGroupChatManagerAddress "VOTE_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
-check_equal "TokenGroupChatManager: SUBMIT_ADDRESS" $extension_submit_address $(cast_call $tokenGroupChatManagerAddress "SUBMIT_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

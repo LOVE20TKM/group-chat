@@ -2,11 +2,9 @@
 pragma solidity =0.8.17;
 
 import {IERC20Balance} from "../interfaces/external/IERC20Balance.sol";
-import {IExtension} from "../interfaces/external/IExtension.sol";
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
-import {ActionInfo, ILOVE20Submit} from "../interfaces/external/ILOVE20Submit.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 
@@ -14,7 +12,6 @@ contract TokenGroupChatManager is BaseGroupChatManager {
     address public immutable STAKE_ADDRESS;
     address public immutable JOIN_ADDRESS;
     address public immutable VOTE_ADDRESS;
-    address public immutable SUBMIT_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
 
     mapping(uint256 => address) public tokenOf;
@@ -33,17 +30,14 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         address stake = IExtensionCenter(extensionCenter_).stakeAddress();
         address join = IExtensionCenter(extensionCenter_).joinAddress();
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
-        address submit = IExtensionCenter(extensionCenter_).submitAddress();
         _requireCode(stake);
         _requireCode(join);
         _requireCode(vote);
-        _requireCode(submit);
 
         EXTENSION_CENTER_ADDRESS = extensionCenter_;
         STAKE_ADDRESS = stake;
         JOIN_ADDRESS = join;
         VOTE_ADDRESS = vote;
-        SUBMIT_ADDRESS = submit;
     }
 
     function activate(address token) external returns (uint256 chatGroupId) {
@@ -113,17 +107,9 @@ contract TokenGroupChatManager is BaseGroupChatManager {
 
         for (uint256 i = 0; i < count; i++) {
             uint256 actionId = ILOVE20Vote(VOTE_ADDRESS).votedActionIdsAtIndex(token, round, i);
-            ActionInfo memory info = ILOVE20Submit(SUBMIT_ADDRESS).actionInfo(token, actionId);
-            address extension = info.body.whiteListAddress;
-            if (extension.code.length == 0) {
-                continue;
+            if (IExtensionCenter(EXTENSION_CENTER_ADDRESS).isAccountJoined(token, actionId, account)) {
+                return true;
             }
-
-            try IExtension(extension).joinedAmountByAccount(account) returns (uint256 amount) {
-                if (amount != 0) {
-                    return true;
-                }
-            } catch {}
         }
 
         return false;

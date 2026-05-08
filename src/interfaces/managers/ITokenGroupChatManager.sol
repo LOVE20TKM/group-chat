@@ -10,8 +10,6 @@ interface ITokenGroupChatManager is IBaseGroupChatManager {
 
     function VOTE_ADDRESS() external view returns (address);
 
-    function SUBMIT_ADDRESS() external view returns (address);
-
     function EXTENSION_CENTER_ADDRESS() external view returns (address);
 
     function activate(address token) external returns (uint256 chatGroupId);

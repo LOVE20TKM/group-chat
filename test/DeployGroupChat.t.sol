@@ -107,7 +107,6 @@ contract DeployGroupChatTest is TestBase {
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).STAKE_ADDRESS(), address(protocol));
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).JOIN_ADDRESS(), address(protocol));
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).VOTE_ADDRESS(), address(protocol));
-        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).SUBMIT_ADDRESS(), address(protocol));
         assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).STAKE_ADDRESS(), address(protocol));
         assertEq(
             TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE_ADDRESS(), address(protocol)

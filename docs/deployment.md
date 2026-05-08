@@ -121,4 +121,4 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 - 四个 Manager 的 `GROUP_CHAT_ADDRESS`
 - 四个 Manager 的固定规则槽
 - 四个 Manager 的 `EXTENSION_CENTER_ADDRESS`
-- Manager 从 `ExtensionCenter` 读取到的 `STAKE_ADDRESS` / `JOIN_ADDRESS` / `VOTE_ADDRESS` / `SUBMIT_ADDRESS`
+- Manager 从 `ExtensionCenter` 读取到的 `STAKE_ADDRESS` / `JOIN_ADDRESS` / `VOTE_ADDRESS`

@@ -50,6 +50,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setVotedAction(token, 20, 100, other);
         assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
         protocol.setVotedAction(token, 20, 101, address(protocol));
+        protocol.setExtensionJoined(token, 101, senderOwner, true);
         assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
 
         vm.expectRevert(BaseGroupChatManager.ChatAlreadyManaged.selector);
