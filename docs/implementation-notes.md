@@ -19,7 +19,7 @@
 - `setDelegateId` / `delegateIdOf`
 - `setScopeSource` / `setDenySource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
-- `canPost` / `canPostStatus`
+- `canPost`
 - `post`
 - `postAsDefaultSender`
 - `messagesCount` / `messages`

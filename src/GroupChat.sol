@@ -504,17 +504,12 @@ contract GroupChat is IGroupChat {
         return _chatConfigs[chatGroupId].afterPostPlugin;
     }
 
-    function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress) external view returns (bool) {
-        (bool allowed,) = _canPostStatus(chatGroupId, senderId, senderAddress);
-        return allowed;
-    }
-
-    function canPostStatus(uint256 chatGroupId, uint256 senderId, address senderAddress)
+    function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress)
         external
         view
         returns (bool allowed, bytes4 reasonCode)
     {
-        return _canPostStatus(chatGroupId, senderId, senderAddress);
+        return _canPost(chatGroupId, senderId, senderAddress);
     }
 
     function currentRound() public view returns (uint256) {
@@ -953,7 +948,7 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _canPostStatus(uint256 chatGroupId, uint256 senderId, address senderAddress)
+    function _canPost(uint256 chatGroupId, uint256 senderId, address senderAddress)
         internal
         view
         returns (bool allowed, bytes4 reasonCode)

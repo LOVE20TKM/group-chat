@@ -89,6 +89,22 @@ abstract contract GroupChatFixture is TestBase {
         chat.postAsDefaultSender(chatGroupId_, content, _emptyMentionedSenderIds(), false, 0);
     }
 
+    function _canPostAllowed(uint256 chatGroupId_, uint256 senderId_, address senderAddress_)
+        internal
+        view
+        returns (bool allowed)
+    {
+        (allowed,) = chat.canPost(chatGroupId_, senderId_, senderAddress_);
+    }
+
+    function _canPost(uint256 chatGroupId_, uint256 senderId_, address senderAddress_)
+        internal
+        view
+        returns (bool allowed, bytes4 reasonCode)
+    {
+        return chat.canPost(chatGroupId_, senderId_, senderAddress_);
+    }
+
     function _activateEmpty() internal {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);

@@ -30,28 +30,28 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(tokenChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_token_LOVE20_");
 
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setBalance(senderOwner, 1);
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setBalance(senderOwner, 2);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setBalance(senderOwner, 0);
         protocol.setGovVotes(token, senderOwner, 9);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 9);
         protocol.setGovVotes(token, senderOwner, 0);
         protocol.setJoinedAmountByAccount(token, senderOwner, 1);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setJoinedAmountByAccount(token, senderOwner, 0);
         protocol.setCurrentRound(20);
         protocol.setExtensionJoinedAmount(senderOwner, 1);
         protocol.setVotedAction(token, 19, 99, address(protocol));
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setVotedAction(token, 20, 100, other);
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setVotedAction(token, 20, 101, address(protocol));
         protocol.setExtensionJoined(token, 101, senderOwner, true);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
 
         vm.expectRevert(BaseGroupChatManager.ChatAlreadyManaged.selector);
         manager.activate(token);
@@ -74,9 +74,9 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(tokenChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_token_gov_LOVE20_");
 
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setGovVotes(token, senderOwner, 7);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 7);
     }
 
@@ -105,9 +105,9 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_action_gov_LOVE20_42_");
 
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 5, senderOwner, 42, 1);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 7, senderOwner, 42, 5);
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 5);
 
@@ -151,15 +151,15 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionChatGroupIds[0], chatGroupId);
         _assertStartsWith(groupNft.groupNameOf(chatGroupId), "mgr_action_LOVE20_88_");
 
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 9, senderOwner, 88, 1);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 9, senderOwner, 88, 0);
         protocol.setJoinedAmount(token, 88, senderOwner, 1);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setJoinedAmount(token, 88, senderOwner, 0);
         protocol.setExtensionJoined(token, 88, senderOwner, true);
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
         protocol.setActionVotes(token, 10, senderOwner, 88, 11);
         assertEq(manager.denyVoteWeightOf(chatGroupId, senderOwner, other, senderId), 11);
 

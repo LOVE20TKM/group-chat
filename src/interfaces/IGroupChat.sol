@@ -229,9 +229,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function afterPostPlugin(uint256 chatGroupId) external view returns (address);
 
-    function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress) external view returns (bool);
-
-    function canPostStatus(uint256 chatGroupId, uint256 senderId, address senderAddress)
+    function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress)
         external
         view
         returns (bool allowed, bytes4 reasonCode);

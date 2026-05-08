@@ -93,7 +93,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         chat.setPostingAllowed(chatGroupId, false);
 
         assertTrue(!chat.postingAllowed(chatGroupId));
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.PostingNotAllowed.selector);
         _post(chatGroupId, senderId, "stopped");

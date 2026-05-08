@@ -44,7 +44,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(opposeWeight, 0);
         assertTrue(deny.isDenied(chatGroupId, senderId, senderOwner));
 
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(bytes32(reasonCode), bytes32(IGroupChatErrors.DenyRejected.selector));
 

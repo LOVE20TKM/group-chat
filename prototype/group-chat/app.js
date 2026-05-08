@@ -1279,7 +1279,7 @@ function renderGroupDetails() {
       ${groupAbout}
       <dt>当前 defaultGroupId</dt>
       <dd>defaultGroupId #${currentDefaultGroupId()}</dd>
-      <dt>canPostStatus</dt>
+      <dt>canPost</dt>
       <dd>${escapeHtml(status.reasonCode)}</dd>
       ${statusRows}
     </dl>

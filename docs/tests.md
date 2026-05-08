@@ -55,7 +55,7 @@ Delegate：
 
 - `scopeSource=false` 拒绝发言。
 - `denySource=true` 拒绝发言。
-- source 失败返回对应 `canPostStatus` reason。
+- source 失败返回对应 `canPost` reason。
 - 非零无代码地址必须 revert。
 - `beforePost` revert 回滚整笔消息。
 - `afterPost` 失败不回滚消息。

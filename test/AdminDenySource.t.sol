@@ -83,7 +83,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         vm.prank(adminOwner);
         deny.addDenyListsBySenderIds(chatGroupId, _uints(senderId));
 
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(bytes32(reasonCode), bytes32(IGroupChatErrors.DenyRejected.selector));
 

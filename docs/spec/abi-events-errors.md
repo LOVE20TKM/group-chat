@@ -41,7 +41,6 @@ Rule slots：
 - `beforePostPlugin`
 - `afterPostPlugin`
 - `canPost`
-- `canPostStatus`
 
 Posting：
 

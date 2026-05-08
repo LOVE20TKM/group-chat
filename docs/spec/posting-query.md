@@ -56,7 +56,7 @@ afterPostPlugin.afterPost
 - `quotedMessageId`
 - `beforePostPlugin`
 
-`canPostStatus(...)` reasonCode：
+`canPost(...)` 返回 `(allowed, reasonCode)`：
 
 ```text
 0x00000000                         OK

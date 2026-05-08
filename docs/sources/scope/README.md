@@ -6,8 +6,8 @@ ScopeSource 判断“某身份 / 地址本来是否有资格发言”。
 
 - `scopeSource = address(0)` 表示默认允许。
 - 非零 `scopeSource` 必须有代码。
-- `canPost(...) == false` 时，`post(...)` 整笔 revert。
-- `scopeSource` 调用失败时，`canPostStatus(...)` 返回 `ScopeSourceFailed.selector`。
+- `scopeSource.canPost(...) == false` 时，`post(...)` 整笔 revert。
+- `scopeSource` 调用失败时，`GroupChat.canPost(...)` 返回 `ScopeSourceFailed.selector`。
 
 ## 接口
 

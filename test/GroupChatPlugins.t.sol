@@ -64,7 +64,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(chat.messagesCount(chatGroupId), 1);
     }
 
-    function testT070A_scopeSourceControlsPostAndCanPostStatus() public {
+    function testT070A_scopeSourceControlsPostAndCanPost() public {
         MockPostScopeSource scope = new MockPostScopeSource();
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
@@ -76,11 +76,11 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(info.denySource, address(0));
         assertEq(info.beforePostPlugin, address(0));
         assertEq(info.afterPostPlugin, address(0));
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
 
         scope.setAllowed(false);
-        assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+        assertTrue(!_canPostAllowed(chatGroupId, senderId, senderOwner));
+        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.ScopeRejected.selector);
 
@@ -95,7 +95,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(chat.messagesCount(chatGroupId), 1);
     }
 
-    function testT070B_denySourceControlsPostAndCanPostStatus() public {
+    function testT070B_denySourceControlsPostAndCanPost() public {
         MockPostDenySource deny = new MockPostDenySource();
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
@@ -103,10 +103,10 @@ contract GroupChatPluginsTest is GroupChatFixture {
         chat.activateChat(chatGroupId, keys, values, address(0), address(deny), address(0), address(0), 0);
 
         assertEq(chat.denySource(chatGroupId), address(deny));
-        assertTrue(chat.canPost(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
 
         deny.setDenied(true);
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
 
@@ -121,22 +121,22 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(chat.messagesCount(chatGroupId), 1);
     }
 
-    function testT070C_canPostStatusReturnsCoreAndSourceFailureReasons() public {
-        (bool allowed, bytes4 reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+    function testT070C_canPostReturnsCoreAndSourceFailureReasons() public {
+        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.ChatNotActivated.selector);
 
-        (allowed, reasonCode) = chat.canPostStatus(999999, senderId, senderOwner);
+        (allowed, reasonCode) = _canPost(999999, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.GroupNotExist.selector);
 
         _activateEmpty();
 
-        (allowed, reasonCode) = chat.canPostStatus(chatGroupId, 999999, senderOwner);
+        (allowed, reasonCode) = _canPost(chatGroupId, 999999, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.GroupNotExist.selector);
 
-        (allowed, reasonCode) = chat.canPostStatus(chatGroupId, senderId, other);
+        (allowed, reasonCode) = _canPost(chatGroupId, senderId, other);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.SenderAddressNotSenderIdOwner.selector);
 
@@ -144,7 +144,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setScopeSource(chatGroupId, address(failingScope));
 
-        (allowed, reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+        (allowed, reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.ScopeSourceFailed.selector);
 
@@ -160,7 +160,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setDenySource(chatGroupId, address(failingDeny));
 
-        (allowed, reasonCode) = chat.canPostStatus(chatGroupId, senderId, senderOwner);
+        (allowed, reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.DenySourceFailed.selector);
 

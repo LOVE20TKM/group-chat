@@ -7,7 +7,7 @@ DenySource 判断“某身份 / 地址是否被禁言”。
 - `denySource = address(0)` 表示无黑名单。
 - 非零 `denySource` 必须有代码。
 - `isDenied(...) == true` 时，`post(...)` 整笔 revert。
-- `denySource` 调用失败时，`canPostStatus(...)` 返回 `DenySourceFailed.selector`。
+- `denySource` 调用失败时，`canPost(...)` 返回 `DenySourceFailed.selector`。
 - 豁免名单不是主协议概念；如果需要，由具体 DenySource 内部实现。
 
 ## 接口

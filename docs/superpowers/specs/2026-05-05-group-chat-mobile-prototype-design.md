@@ -9,7 +9,7 @@
 1. 用户进入某个 `GroupNFT` 对应的 chat。
 2. 前端显示微信式聊天界面。
 3. 前端使用当前地址的 `defaultGroupId` 作为发言 NFT。
-4. 前端展示 `canPostStatus`、`scopeSource`、`denySource` 等链上状态。
+4. 前端展示 `canPost`、`scopeSource`、`denySource` 等链上状态。
 5. 用户读取消息、引用消息、提及身份、发送公开链上消息。
 6. 桌面端同一路由保持手机优先预览，不额外引入宽屏分栏。
 
@@ -50,7 +50,7 @@
 | 头部状态 | `chatInfo(chatGroupId)`：`activated`、`postingAllowed`、`owner`、`configVersion` |
 | 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderId` |
 | 发送消息 | `post` / `postAsDefaultSender` |
-| 可发言判断 | `canPostStatus(chatGroupId, senderId, senderAddress)` |
+| 可发言判断 | `canPost(chatGroupId, senderId, senderAddress)` |
 | 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
@@ -120,7 +120,7 @@
 - `MessageBubble`：气泡、引用、mention 标记、长按菜单。
 - `Composer`：输入栏、引用 chip、自动解析 `@姓名` / `@全部`、发送按钮。
 - `GroupMenu`：详情、黑名单、豁免名单、管理入口。
-- `GroupDetails`：当前 `defaultGroupId`、`canPostStatus` 和错误原因。
+- `GroupDetails`：当前 `defaultGroupId`、`canPost` 和错误原因。
 - `MockProtocolState`：原型用 mock 数据和状态切换。
 
 ## 测试与验收
@@ -138,7 +138,7 @@
   - 不出现嵌套卡片堆叠。
 
 - 协议覆盖：
-  - `canPostStatus` reasonCode 能在 UI 中解释。
+  - `canPost` reasonCode 能在 UI 中解释。
   - `mentionedSenderIds` 去重有前端提示；超过 `32` 时阻止发送并提示 `TooManyMentionedSenderIds`。
   - `quotedMessageId` 为 `0` 与非 `0` 两种状态可见。
   - `MessagePost` 事件不是正文真源的同步策略在 UI 中有提示。
