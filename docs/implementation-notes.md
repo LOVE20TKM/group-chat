@@ -66,8 +66,6 @@
 - `GROUP_DEFAULTS_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
-- `ORIGIN_BLOCKS`
-- `PHASE_BLOCKS`（必须大于 `0`）
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`
 - `network`
 
@@ -77,7 +75,7 @@
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
 
-直接 `forge script` 时也先从网络配置加载参数，不在命令里写 `ORIGIN_BLOCKS` / `PHASE_BLOCKS` 默认值：
+直接 `forge script` 时也先从网络配置加载参数；round 参数由 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约读取：
 
 ```bash
 cd script/deploy

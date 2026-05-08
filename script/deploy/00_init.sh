@@ -37,6 +37,8 @@ fi
 
 if [ -f "$network_dir/group.chat.params" ]; then
     source $network_dir/group.chat.params
+    unset ORIGIN_BLOCKS
+    unset PHASE_BLOCKS
 
     if [ -n "$groupAddress" ]; then
         export LOVE20_GROUP_ADDRESS=$groupAddress
@@ -134,8 +136,6 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
-    export ORIGIN_BLOCKS
-    export PHASE_BLOCKS
 
     echo "GroupChat Configuration loaded:"
     if [ -n "$LOVE20_GROUP_ADDRESS" ]; then
@@ -150,8 +150,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"
-    echo "  ORIGIN_BLOCKS: $ORIGIN_BLOCKS"
-    echo "  PHASE_BLOCKS: $PHASE_BLOCKS"
+    echo "  RoundSource: ExtensionCenter.joinAddress().originBlocks/phaseBlocks"
 else
     echo -e "\033[31mError:\033[0m group.chat.params not found"
     echo -e "Please create $network_dir/group.chat.params"

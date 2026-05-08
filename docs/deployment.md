@@ -31,8 +31,6 @@ source ./one_click_deploy.sh <network>
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`
-- `ORIGIN_BLOCKS`
-- `PHASE_BLOCKS`：必须大于 `0`
 - `network`
 - `KEYSTORE_ACCOUNT`：写在 `script/network/<network>/.account`
 - `ACCOUNT_ADDRESS`：写在 `script/network/<network>/.account`
@@ -43,8 +41,7 @@ source ./one_click_deploy.sh <network>
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
-`ORIGIN_BLOCKS` 与 `PHASE_BLOCKS` 是部署输入，写在 `script/network/<network>/group.chat.params`。
-`thinkium70001_public` 当前按约 24 小时一轮配置为 `PHASE_BLOCKS=30126`；`thinkium70001_public_test` 当前按约 5 分钟一轮配置。
+`GroupChat.originBlocks` 与 `GroupChat.phaseBlocks` 部署时直接读取 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约，保证 `currentRound()` 对齐 Join 合约。
 
 `DeployGroupChat` 固定部署 `AdminDenySource` 与 `GovVotedDenySource`。
 `DeployGroupChat` 固定部署 `GroupJoinScopeSource`，构造参数为 `GROUP_JOIN_ADDRESS`。
@@ -110,14 +107,14 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 ## Check
 
 子脚本默认由 `one_click_deploy.sh` 调用；单独运行前必须先执行 `source ./00_init.sh <network>`。
-`99_check.sh` 会重新读取 `script/network/<network>/address.group.chat.params`、`address.group.params`、`address.group.defaults.params` 与 `group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与配置文件值比对；不一致即视为部署失败，该合约实例不得继续使用。
+`99_check.sh` 会重新读取 `script/network/<network>/address.group.chat.params`、`address.group.params`、`address.group.defaults.params` 与 `group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与 core Join 合约值比对；不一致即视为部署失败，该合约实例不得继续使用。
 
 `script/deploy/99_check.sh` 会检查：
 
 - `GroupChat.GROUP_DEFAULTS_ADDRESS`
 - `GroupChat.LOVE20_GROUP_ADDRESS`
-- `originBlocks`
-- `phaseBlocks`
+- `originBlocks` 对齐 core Join
+- `phaseBlocks` 对齐 core Join
 - `AdminDenySource` 固定依赖
 - `GovVotedDenySource` 固定依赖
 - `GroupJoinScopeSource.GROUP_JOIN_ADDRESS`

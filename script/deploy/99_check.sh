@@ -112,23 +112,8 @@ if [ -z "$EXTENSION_CENTER_ADDRESS" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$ORIGIN_BLOCKS" ]; then
-    echo -e "\033[31m✗\033[0m ORIGIN_BLOCKS not set"
-    ((missing_params++))
-fi
-
-if [ -z "$PHASE_BLOCKS" ]; then
-    echo -e "\033[31m✗\033[0m PHASE_BLOCKS not set"
-    ((missing_params++))
-fi
-
 if [ -z "$GROUP_CHAT_ACTION_RECENT_ROUNDS" ]; then
     echo -e "\033[31m✗\033[0m GROUP_CHAT_ACTION_RECENT_ROUNDS not set"
-    ((missing_params++))
-fi
-
-if [ -n "$PHASE_BLOCKS" ] && [ "$PHASE_BLOCKS" = "0" ]; then
-    echo -e "\033[31m✗\033[0m PHASE_BLOCKS must be greater than zero"
     ((missing_params++))
 fi
 
@@ -228,11 +213,17 @@ check_equal "GroupChat: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_c
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: ORIGIN_BLOCKS from group.chat.params" $ORIGIN_BLOCKS $(cast_call $groupChatAddress "originBlocks()(uint256)")
+group_chat_origin_blocks=$(cast_call $groupChatAddress "originBlocks()(uint256)")
+group_chat_phase_blocks=$(cast_call $groupChatAddress "phaseBlocks()(uint256)")
+extension_join_address=$(cast_call $EXTENSION_CENTER_ADDRESS "joinAddress()(address)")
+core_join_origin_blocks=$(cast_call $extension_join_address "originBlocks()(uint256)")
+core_join_phase_blocks=$(cast_call $extension_join_address "phaseBlocks()(uint256)")
+
+check_equal "GroupChat: originBlocks matches core Join" $core_join_origin_blocks $group_chat_origin_blocks
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: PHASE_BLOCKS from group.chat.params" $PHASE_BLOCKS $(cast_call $groupChatAddress "phaseBlocks()(uint256)")
+check_equal "GroupChat: phaseBlocks matches core Join" $core_join_phase_blocks $group_chat_phase_blocks
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -245,6 +236,11 @@ actual_round=$(cast_call $groupChatAddress "currentRound()(uint256)" 2>/dev/null
 if [ -n "$actual_round" ]; then
     echo -e "\033[32m✓\033[0m GroupChat: currentRound"
     echo -e "  Actual: $actual_round"
+    join_round=$(cast_call $extension_join_address "currentRound()(uint256)" 2>/dev/null)
+    if [ -n "$join_round" ]; then
+        check_equal "GroupChat: currentRound matches core Join" $join_round $actual_round
+        [ $? -ne 0 ] && ((failed_checks++))
+    fi
 else
     echo -e "\033[33m!\033[0m GroupChat: currentRound"
     echo -e "  Current block is before originBlocks, skip round value check"
@@ -275,7 +271,6 @@ echo ""
 echo "Verifying ExtensionCenter values used by managers..."
 
 extension_stake_address=$(cast_call $EXTENSION_CENTER_ADDRESS "stakeAddress()(address)")
-extension_join_address=$(cast_call $EXTENSION_CENTER_ADDRESS "joinAddress()(address)")
 extension_vote_address=$(cast_call $EXTENSION_CENTER_ADDRESS "voteAddress()(address)")
 extension_submit_address=$(cast_call $EXTENSION_CENTER_ADDRESS "submitAddress()(address)")
 

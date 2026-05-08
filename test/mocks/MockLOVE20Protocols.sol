@@ -6,6 +6,8 @@ import {ActionBody, ActionHead, ActionInfo} from "../../src/interfaces/external/
 contract MockLOVE20Protocols {
     string public symbol = "LOVE20";
     uint256 internal _currentRound = 1;
+    uint256 public originBlocks = 100;
+    uint256 public phaseBlocks = 25;
 
     mapping(address => uint256) public balances;
     mapping(address => mapping(address => uint256)) public govVotes;
@@ -19,6 +21,11 @@ contract MockLOVE20Protocols {
 
     function setCurrentRound(uint256 round) external {
         _currentRound = round;
+    }
+
+    function setPhase(uint256 originBlocks_, uint256 phaseBlocks_) external {
+        originBlocks = originBlocks_;
+        phaseBlocks = phaseBlocks_;
     }
 
     function setBalance(address account, uint256 balance) external {

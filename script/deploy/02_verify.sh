@@ -79,10 +79,13 @@ verify_contract(){
 }
 echo "verify_contract() loaded"
 
+group_chat_origin_blocks=$(cast call "$groupChatAddress" "originBlocks()(uint256)" --rpc-url "$RPC_URL")
+group_chat_phase_blocks=$(cast call "$groupChatAddress" "phaseBlocks()(uint256)" --rpc-url "$RPC_URL")
+
 constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
     $GROUP_DEFAULTS_ADDRESS \
-    $ORIGIN_BLOCKS \
-    $PHASE_BLOCKS)
+    $group_chat_origin_blocks \
+    $group_chat_phase_blocks)
 
 failed_verifications=0
 

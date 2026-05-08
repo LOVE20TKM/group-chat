@@ -2,6 +2,8 @@
 pragma solidity =0.8.17;
 
 import {GroupChat} from "../src/GroupChat.sol";
+import {IExtensionCenter} from "../src/interfaces/external/IExtensionCenter.sol";
+import {ILOVE20Join} from "../src/interfaces/external/ILOVE20Join.sol";
 import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
 import {TokenActionGroupChatManager} from "../src/managers/TokenActionGroupChatManager.sol";
 import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
@@ -35,16 +37,15 @@ contract DeployGroupChat is ScriptBase {
     }
 
     function run() external {
-        DeployConfig memory config = DeployConfig({
-            groupDefaults: vm.envAddress("GROUP_DEFAULTS_ADDRESS"),
-            extensionCenter: vm.envAddress("EXTENSION_CENTER_ADDRESS"),
-            groupJoin: vm.envAddress("GROUP_JOIN_ADDRESS"),
-            beforePostPlugin: vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
-            afterPostPlugin: vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
-            originBlocks: vm.envUint("ORIGIN_BLOCKS"),
-            phaseBlocks: vm.envUint("PHASE_BLOCKS"),
-            actionRecentRounds: vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS")
-        });
+        address groupJoin = vm.envAddress("GROUP_JOIN_ADDRESS");
+        DeployConfig memory config = _configFromCoreJoin(
+            vm.envAddress("GROUP_DEFAULTS_ADDRESS"),
+            vm.envAddress("EXTENSION_CENTER_ADDRESS"),
+            groupJoin,
+            vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
+            vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
+            vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS")
+        );
 
         vm.startBroadcast();
         DeployedAddresses memory deployed = _deploy(config);
@@ -54,6 +55,27 @@ contract DeployGroupChat is ScriptBase {
         string memory dir = string.concat("script/network/", network);
         vm.createDir(dir, true);
         _writeAddressFile(dir, config, deployed);
+    }
+
+    function _configFromCoreJoin(
+        address groupDefaults,
+        address extensionCenter,
+        address groupJoin,
+        address beforePostPlugin,
+        address afterPostPlugin,
+        uint256 actionRecentRounds
+    ) internal view returns (DeployConfig memory) {
+        address coreJoin = IExtensionCenter(extensionCenter).joinAddress();
+        return DeployConfig({
+            groupDefaults: groupDefaults,
+            extensionCenter: extensionCenter,
+            groupJoin: groupJoin,
+            beforePostPlugin: beforePostPlugin,
+            afterPostPlugin: afterPostPlugin,
+            originBlocks: ILOVE20Join(coreJoin).originBlocks(),
+            phaseBlocks: ILOVE20Join(coreJoin).phaseBlocks(),
+            actionRecentRounds: actionRecentRounds
+        });
     }
 
     function _deploy(DeployConfig memory config) internal returns (DeployedAddresses memory deployed) {

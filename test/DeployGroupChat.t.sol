@@ -23,6 +23,19 @@ contract DeployMockGroupJoinGlobal {
 }
 
 contract DeployGroupChatHarness is DeployGroupChat {
+    function configFromCoreJoinForTest(
+        address groupDefaults,
+        address extensionCenter,
+        address groupJoin,
+        address beforePostPlugin,
+        address afterPostPlugin,
+        uint256 actionRecentRounds
+    ) external view returns (DeployConfig memory) {
+        return _configFromCoreJoin(
+            groupDefaults, extensionCenter, groupJoin, beforePostPlugin, afterPostPlugin, actionRecentRounds
+        );
+    }
+
     function deployForTest(DeployConfig memory config) external returns (DeployedAddresses memory) {
         return _deploy(config);
     }
@@ -103,6 +116,23 @@ contract DeployGroupChatTest is TestBase {
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).VOTE_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).RECENT_ROUNDS(), 3);
+    }
+
+    function testT140B_configUsesCoreJoinRoundParameters() public {
+        protocol.setPhase(321, 44);
+
+        DeployGroupChat.DeployConfig memory config = deployer.configFromCoreJoinForTest(
+            address(groupDefaults), address(protocol), address(groupJoin), address(0xBEEF), address(0xCAFE), 7
+        );
+
+        assertEq(config.groupDefaults, address(groupDefaults));
+        assertEq(config.extensionCenter, address(protocol));
+        assertEq(config.groupJoin, address(groupJoin));
+        assertEq(config.beforePostPlugin, address(0xBEEF));
+        assertEq(config.afterPostPlugin, address(0xCAFE));
+        assertEq(config.originBlocks, 321);
+        assertEq(config.phaseBlocks, 44);
+        assertEq(config.actionRecentRounds, 7);
     }
 
     function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {

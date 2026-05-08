@@ -1,10 +1,6 @@
 # GroupChat Contract Configuration
 
-# Origin block number for phase calculation
-ORIGIN_BLOCKS=65699591
-
-# Number of blocks per phase: about 24 hours on thinkium70001 public
-PHASE_BLOCKS=30126
+# GroupChat round is derived from extensionCenterAddress.joinAddress().originBlocks/phaseBlocks.
 
 # ExtensionCenter used by typed decentralized managers
 extensionCenterAddress=0x37Ddf561323b823144BaE33264f9C5461714846e
