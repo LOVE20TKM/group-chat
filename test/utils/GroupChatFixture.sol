@@ -58,22 +58,22 @@ abstract contract GroupChatFixture is TestBase {
         values = new bytes[](0);
     }
 
-    function _emptyMentions() internal pure returns (uint256[] memory mentions) {
-        mentions = new uint256[](0);
+    function _emptyMentionedSenderIds() internal pure returns (uint256[] memory mentionedSenderIds) {
+        mentionedSenderIds = new uint256[](0);
     }
 
     function _post(uint256 chatGroupId_, uint256 senderId_, string memory content) internal {
-        chat.post(chatGroupId_, senderId_, content, _emptyMentions(), false, 0);
+        chat.post(chatGroupId_, senderId_, content, _emptyMentionedSenderIds(), false, 0);
     }
 
-    function _postWithMentions(
+    function _postWithMentionedSenderIds(
         uint256 chatGroupId_,
         uint256 senderId_,
         string memory content,
-        uint256[] memory mentions,
+        uint256[] memory mentionedSenderIds,
         bool mentionAll
     ) internal {
-        chat.post(chatGroupId_, senderId_, content, mentions, mentionAll, 0);
+        chat.post(chatGroupId_, senderId_, content, mentionedSenderIds, mentionAll, 0);
     }
 
     function _postWithQuote(
@@ -82,11 +82,11 @@ abstract contract GroupChatFixture is TestBase {
         string memory content,
         uint256 quotedMessageId
     ) internal {
-        chat.post(chatGroupId_, senderId_, content, _emptyMentions(), false, quotedMessageId);
+        chat.post(chatGroupId_, senderId_, content, _emptyMentionedSenderIds(), false, quotedMessageId);
     }
 
     function _postByDefaultSender(uint256 chatGroupId_, string memory content) internal {
-        chat.postByDefaultSender(chatGroupId_, content, _emptyMentions(), false, 0);
+        chat.postByDefaultSender(chatGroupId_, content, _emptyMentionedSenderIds(), false, 0);
     }
 
     function _activateEmpty() internal {

@@ -11,7 +11,7 @@ import {IPostDenySource} from "./interfaces/IPostDenySource.sol";
 
 contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 16384;
-    uint256 public constant MAX_MENTIONS = 32;
+    uint256 public constant MAX_MENTIONED_SENDER_IDS = 32;
 
     address public immutable LOVE20_GROUP_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
@@ -303,30 +303,30 @@ contract GroupChat is IGroupChat {
         uint256 chatGroupId,
         uint256 senderId,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId
     ) external nonReentrant {
-        _post(chatGroupId, senderId, content, mentions, mentionAll, quotedMessageId);
+        _post(chatGroupId, senderId, content, mentionedSenderIds, mentionAll, quotedMessageId);
     }
 
     function postByDefaultSender(
         uint256 chatGroupId,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId
     ) external nonReentrant {
         uint256 senderId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(msg.sender);
         if (senderId == 0) revert DefaultGroupIdNotSet();
-        _post(chatGroupId, senderId, content, mentions, mentionAll, quotedMessageId);
+        _post(chatGroupId, senderId, content, mentionedSenderIds, mentionAll, quotedMessageId);
     }
 
     function _post(
         uint256 chatGroupId,
         uint256 senderId,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId
     ) internal {
@@ -342,19 +342,19 @@ contract GroupChat is IGroupChat {
         if (contentLength > MAX_CONTENT_LENGTH) {
             revert ContentTooLong(contentLength, MAX_CONTENT_LENGTH);
         }
-        _validateMentions(mentions);
+        _validateMentionedSenderIds(mentionedSenderIds);
         _validateQuotedMessageId(chatGroupId, quotedMessageId);
 
         uint256 round = currentRound();
         _requirePostSources(config, chatGroupId, senderId, msg.sender);
         if (config.beforePostPlugin != address(0)) {
             IBeforePostPlugin(config.beforePostPlugin).beforePost(
-                chatGroupId, senderId, msg.sender, content, mentions, mentionAll, quotedMessageId
+                chatGroupId, senderId, msg.sender, content, mentionedSenderIds, mentionAll, quotedMessageId
             );
         }
 
         uint256 messageIndex =
-            _storeMessage(chatGroupId, senderId, round, content, mentions, mentionAll, quotedMessageId);
+            _storeMessage(chatGroupId, senderId, round, content, mentionedSenderIds, mentionAll, quotedMessageId);
 
         _senderMessageIndexes[chatGroupId][senderId].push(messageIndex);
         if (!_senderTracked[chatGroupId][senderId]) {
@@ -365,8 +365,8 @@ contract GroupChat is IGroupChat {
         _recordRound(chatGroupId, round, messageIndex);
 
         emit MessagePost(chatGroupId, senderId, msg.sender, round, messageIndex + 1);
-        for (uint256 i = 0; i < mentions.length; i++) {
-            emit MessageMention(chatGroupId, mentions[i], messageIndex + 1);
+        for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
+            emit MessageMention(chatGroupId, mentionedSenderIds[i], messageIndex + 1);
         }
         if (mentionAll) {
             emit MessageMentionAll(chatGroupId, messageIndex + 1);
@@ -378,7 +378,7 @@ contract GroupChat is IGroupChat {
                 senderId,
                 msg.sender,
                 content,
-                mentions,
+                mentionedSenderIds,
                 mentionAll,
                 quotedMessageId,
                 messageIndex + 1,
@@ -1085,15 +1085,15 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _validateMentions(uint256[] calldata mentions) internal view {
-        if (mentions.length > MAX_MENTIONS) {
-            revert TooManyMentions(mentions.length, MAX_MENTIONS);
+    function _validateMentionedSenderIds(uint256[] calldata mentionedSenderIds) internal view {
+        if (mentionedSenderIds.length > MAX_MENTIONED_SENDER_IDS) {
+            revert TooManyMentionedSenderIds(mentionedSenderIds.length, MAX_MENTIONED_SENDER_IDS);
         }
-        for (uint256 i = 0; i < mentions.length; i++) {
-            _ownerOfOrRevert(mentions[i]);
+        for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
+            _ownerOfOrRevert(mentionedSenderIds[i]);
             for (uint256 j = 0; j < i; j++) {
-                if (mentions[j] == mentions[i]) {
-                    revert DuplicateMentionSenderId();
+                if (mentionedSenderIds[j] == mentionedSenderIds[i]) {
+                    revert DuplicateMentionedSenderId();
                 }
             }
         }
@@ -1104,7 +1104,7 @@ contract GroupChat is IGroupChat {
         uint256 senderId,
         uint256 round,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId
     ) internal returns (uint256 messageIndex) {
@@ -1123,9 +1123,9 @@ contract GroupChat is IGroupChat {
         message_.mentionAll = mentionAll;
         message_.quotedMessageId = quotedMessageId;
 
-        for (uint256 i = 0; i < mentions.length; i++) {
-            uint256 mentionedSenderId = mentions[i];
-            message_.mentions.push(mentionedSenderId);
+        for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
+            uint256 mentionedSenderId = mentionedSenderIds[i];
+            message_.mentionedSenderIds.push(mentionedSenderId);
             _mentionMessageIndexes[chatGroupId][mentionedSenderId].push(messageIndex);
         }
         if (mentionAll) {
@@ -1182,10 +1182,10 @@ contract GroupChat is IGroupChat {
         result.timestamp = source.timestamp;
         result.mentionAll = source.mentionAll;
         result.quotedMessageId = source.quotedMessageId;
-        result.mentions = new uint256[](source.mentions.length);
+        result.mentionedSenderIds = new uint256[](source.mentionedSenderIds.length);
 
-        for (uint256 i = 0; i < source.mentions.length; i++) {
-            result.mentions[i] = source.mentions[i];
+        for (uint256 i = 0; i < source.mentionedSenderIds.length; i++) {
+            result.mentionedSenderIds[i] = source.mentionedSenderIds[i];
         }
     }
 

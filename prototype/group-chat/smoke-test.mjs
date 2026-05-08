@@ -46,15 +46,15 @@ if (renderStatusMatch[1].includes('chatStatus(') || renderStatusMatch[1].include
 }
 
 if (js.includes('data-action="remove-mention"') || js.includes('@all ×')) {
-  throw new Error('Mentions must render in composer text, not composer chips');
+  throw new Error('Mentioned sender IDs must render in composer text, not composer chips');
 }
 
 if (html.includes('data-action="open-more"') || html.includes('id="more-panel"') || js.includes('openMorePanel')) {
   throw new Error('Chat composer must not render a plus/more panel');
 }
 
-if (js.includes('mentions: [...state.mentions]') || js.includes('mentionAll: state.mentionAll')) {
-  throw new Error('Sending must parse mentions from composer content');
+if (js.includes('mentionedSenderIds: [...state.mentionedSenderIds]') || js.includes('mentionAll: state.mentionAll')) {
+  throw new Error('Sending must parse mentionedSenderIds from composer content');
 }
 
 if (js.includes('...state.messages.map((message) => message.messageId)')) {
@@ -200,8 +200,8 @@ const requiredAppJs = [
   'canQuoteMessage',
   'avatarLongPressMs',
   'insertComposerToken',
-  'parseComposerMentions',
-  'mentionValidationHint',
+  'parseComposerMentionedSenderIds',
+  'mentionSenderIdsValidationHint',
   'duplicateCount',
   'overLimitCount',
   'openGovVoters',
@@ -387,15 +387,15 @@ const mentionParserHarness = new Function(
   [
     extractFunctionSource(js, 'nftProfile'),
     extractFunctionSource(js, 'mentionTokenFor'),
-    extractFunctionSource(js, 'parseComposerMentions'),
+    extractFunctionSource(js, 'parseComposerMentionedSenderIds'),
     extractFunctionSource(js, 'tokenOccurrences'),
-    extractFunctionSource(js, 'mentionValidationHint'),
-    'return { parseComposerMentions, mentionValidationHint };',
+    extractFunctionSource(js, 'mentionSenderIdsValidationHint'),
+    'return { parseComposerMentionedSenderIds, mentionSenderIdsValidationHint };',
   ].join('\n'),
 );
 
 const mentionTestState = {
-  mentions: [],
+  mentionedSenderIds: [],
   nftProfiles: Object.fromEntries(
     Array.from({ length: 34 }, (_, index) => {
       const id = String(7000 + index);
@@ -404,24 +404,24 @@ const mentionTestState = {
     }),
   ),
 };
-const { parseComposerMentions, mentionValidationHint } = mentionParserHarness(mentionTestState);
+const { parseComposerMentionedSenderIds, mentionSenderIdsValidationHint } = mentionParserHarness(mentionTestState);
 const overLimitContent = Object.values(mentionTestState.nftProfiles)
   .map((profile) => `@${profile.name}`)
   .join(' ');
-const overLimitDraft = parseComposerMentions(overLimitContent);
-if (overLimitDraft.mentions.length !== 34 || overLimitDraft.overLimitCount !== 2) {
-  throw new Error('Mention parser must keep over-limit mentions so sending can be blocked');
+const overLimitDraft = parseComposerMentionedSenderIds(overLimitContent);
+if (overLimitDraft.mentionedSenderIds.length !== 34 || overLimitDraft.overLimitCount !== 2) {
+  throw new Error('Mention parser must keep over-limit mentionedSenderIds so sending can be blocked');
 }
-const overLimitHint = mentionValidationHint(overLimitDraft);
+const overLimitHint = mentionSenderIdsValidationHint(overLimitDraft);
 if (!overLimitHint.includes('超过 32') || !overLimitHint.includes('请删除 2') || overLimitHint.includes('截断')) {
   throw new Error('Mention validation hint must explain that overflow blocks sending');
 }
 
-const duplicateDraft = parseComposerMentions('@成员01 @成员01');
-if (duplicateDraft.mentions.length !== 1 || duplicateDraft.duplicateCount !== 1) {
+const duplicateDraft = parseComposerMentionedSenderIds('@成员01 @成员01');
+if (duplicateDraft.mentionedSenderIds.length !== 1 || duplicateDraft.duplicateCount !== 1) {
   throw new Error('Mention parser must dedupe repeated @ tokens and report duplicate count');
 }
-if (!mentionValidationHint(duplicateDraft).includes('已去重 1')) {
+if (!mentionSenderIdsValidationHint(duplicateDraft).includes('已去重 1')) {
   throw new Error('Mention validation hint must explain duplicate dedupe');
 }
 
@@ -432,9 +432,9 @@ const sendHarness = new Function(
   [
     extractFunctionSource(js, 'nftProfile'),
     extractFunctionSource(js, 'mentionTokenFor'),
-    extractFunctionSource(js, 'parseComposerMentions'),
+    extractFunctionSource(js, 'parseComposerMentionedSenderIds'),
     extractFunctionSource(js, 'tokenOccurrences'),
-    extractFunctionSource(js, 'mentionValidationHint'),
+    extractFunctionSource(js, 'mentionSenderIdsValidationHint'),
     extractFunctionSource(js, 'messagesForChat'),
     extractFunctionSource(js, 'currentDefaultGroupId'),
     'function activeChatEntry() { return { kind: "group", item: state.chat }; }',
@@ -451,7 +451,7 @@ const sendState = {
   defaultGroupId: 9007,
   activeChatGroupId: '1024',
   messages: [],
-  mentions: [],
+  mentionedSenderIds: [],
   mentionAll: false,
   syncHint: '',
   chat: { round: 42 },
@@ -465,8 +465,8 @@ const sendDocument = {
   },
 };
 sendHarness(sendState, sendDocument, () => {}).sendMessage();
-if (sendState.messages.length !== 0 || !sendState.syncHint.includes('TooManyMentions')) {
-  throw new Error('sendMessage must block over-limit mentions instead of truncating and sending');
+if (sendState.messages.length !== 0 || !sendState.syncHint.includes('TooManyMentionedSenderIds')) {
+  throw new Error('sendMessage must block over-limit mentionedSenderIds instead of truncating and sending');
 }
 
 const quoteHarness = new Function(

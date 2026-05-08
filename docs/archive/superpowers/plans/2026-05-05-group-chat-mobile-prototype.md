@@ -130,7 +130,7 @@ const requiredProtocolCopy = [
   'scopeSource',
   'denySource',
   'quotedMessageIndex',
-  'mentions',
+  'mentionedSenderIds',
   'mentionAll',
 ];
 
@@ -221,7 +221,7 @@ Implement:
 - Top `...` opens status sheet.
 - Message click opens action menu.
 - Quote sets `quotedMessageIndex`.
-- Typing `@姓名` maps to `mentions`.
+- Typing `@姓名` maps to `mentionedSenderIds`.
 - Typing `@全部` maps to `mentionAll`.
 - Send appends a new mock message and shows `MessagePost` sync hint.
 - Status mode buttons simulate `OK`, `ScopeRejected`, `DenyRejected`, `SenderNotGroupOwner`.

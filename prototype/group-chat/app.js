@@ -101,7 +101,7 @@ function conversationStatus(chat) {
   const mySenderId = Number(currentDefaultGroupId());
   return {
     unreadCount: unread.length,
-    hasMentionMe: unread.some((message) => (message.mentions || []).map(Number).includes(mySenderId)),
+    hasMentionMe: unread.some((message) => (message.mentionedSenderIds || []).map(Number).includes(mySenderId)),
     hasMentionAll: unread.some((message) => message.mentionAll),
   };
 }
@@ -1202,7 +1202,7 @@ function renderMessageContent(message) {
   let content = escapeHtml(message.content);
   const tokens = [];
   if (message.mentionAll) tokens.push('@全部');
-  for (const senderId of message.mentions || []) {
+  for (const senderId of message.mentionedSenderIds || []) {
     tokens.push(mentionTokenFor(senderId));
   }
   for (const token of tokens.sort((left, right) => right.length - left.length)) {
@@ -1912,7 +1912,7 @@ function simulateMessageGap(chatId) {
       round: chat.round,
       messageId,
       content: `外部消息 #${messageId} 已通过 messages 区间补拉。`,
-      mentions: [],
+      mentionedSenderIds: [],
       mentionAll: false,
       quotedMessageId: 0,
       mine: false,
@@ -2117,8 +2117,8 @@ function insertComposerToken(token) {
   input.setSelectionRange(cursor, cursor);
 }
 
-function parseComposerMentions(content) {
-  const selected = new Set(state.mentions.map(String));
+function parseComposerMentionedSenderIds(content) {
+  const selected = new Set(state.mentionedSenderIds.map(String));
   let duplicateCount = 0;
   for (const [senderId, profile] of Object.entries(state.nftProfiles)) {
     const token = `@${profile.name}`;
@@ -2126,13 +2126,13 @@ function parseComposerMentions(content) {
     if (count > 0) selected.add(senderId);
     if (count > 1) duplicateCount += count - 1;
   }
-  const matchedMentions = [];
+  const matchedMentionedSenderIds = [];
   for (const senderId of selected) {
-    if (content.includes(mentionTokenFor(senderId))) matchedMentions.push(Number(senderId));
+    if (content.includes(mentionTokenFor(senderId))) matchedMentionedSenderIds.push(Number(senderId));
   }
-  const overLimitCount = Math.max(0, matchedMentions.length - 32);
+  const overLimitCount = Math.max(0, matchedMentionedSenderIds.length - 32);
   return {
-    mentions: matchedMentions,
+    mentionedSenderIds: matchedMentionedSenderIds,
     mentionAll: content.includes('@全部'),
     duplicateCount,
     overLimitCount,
@@ -2143,17 +2143,17 @@ function tokenOccurrences(content, token) {
   return content.split(token).length - 1;
 }
 
-function mentionValidationHint(draftMentions) {
+function mentionSenderIdsValidationHint(draftMentionedSenderIds) {
   const notices = [];
-  if (draftMentions.duplicateCount > 0) notices.push(`已去重 ${draftMentions.duplicateCount} 个重复 @`);
-  if (draftMentions.overLimitCount > 0) notices.push(`超过 32 个，请删除 ${draftMentions.overLimitCount} 个`);
-  return notices.length ? `mentions ${notices.join('；')}。` : '';
+  if (draftMentionedSenderIds.duplicateCount > 0) notices.push(`已去重 ${draftMentionedSenderIds.duplicateCount} 个重复 @`);
+  if (draftMentionedSenderIds.overLimitCount > 0) notices.push(`超过 32 个，请删除 ${draftMentionedSenderIds.overLimitCount} 个`);
+  return notices.length ? `mentionedSenderIds ${notices.join('；')}。` : '';
 }
 
 function sendMessage() {
   const input = document.getElementById('composer-input');
   const content = input.value.trim();
-  const draftMentions = parseComposerMentions(content);
+  const draftMentionedSenderIds = parseComposerMentionedSenderIds(content);
   const active = activeChatEntry();
   const chat = active && active.kind === 'group' ? active.item : null;
   const status = chatStatus(chat);
@@ -2162,9 +2162,9 @@ function sendMessage() {
     render();
     return;
   }
-  if (draftMentions.overLimitCount > 0) {
+  if (draftMentionedSenderIds.overLimitCount > 0) {
     state.syncHint =
-      `TooManyMentions：mentions 最多 32 个，当前 ${draftMentions.mentions.length} 个；请删除 ${draftMentions.overLimitCount} 个 @ 后再发送。`;
+      `TooManyMentionedSenderIds：mentionedSenderIds 最多 32 个，当前 ${draftMentionedSenderIds.mentionedSenderIds.length} 个；请删除 ${draftMentionedSenderIds.overLimitCount} 个 @ 后再发送。`;
     render();
     return;
   }
@@ -2179,16 +2179,16 @@ function sendMessage() {
     round: chat ? chat.round : 0,
     messageId: nextMessageId,
     content,
-    mentions: draftMentions.mentions,
-    mentionAll: draftMentions.mentionAll,
+    mentionedSenderIds: draftMentionedSenderIds.mentionedSenderIds,
+    mentionAll: draftMentionedSenderIds.mentionAll,
     quotedMessageId,
     mine: true,
   });
   if (chat) chat.lastMessageId = nextMessageId;
-  const mentionHint = mentionValidationHint(draftMentions);
+  const mentionHint = mentionSenderIdsValidationHint(draftMentionedSenderIds);
   state.syncHint = `MessagePost 发现 messageId #${nextMessageId}，正文已通过 messages 补拉。${mentionHint ? ` ${mentionHint}` : ''}`;
   clearActiveQuote();
-  state.mentions = [];
+  state.mentionedSenderIds = [];
   state.mentionAll = false;
   input.value = '';
   render();
@@ -2234,7 +2234,7 @@ async function writeClipboardText(text) {
 
 function addMention(senderId) {
   const chatGroupId = Number(senderId);
-  if (!state.mentions.includes(chatGroupId) && state.mentions.length < 32) state.mentions.push(chatGroupId);
+  if (!state.mentionedSenderIds.includes(chatGroupId) && state.mentionedSenderIds.length < 32) state.mentionedSenderIds.push(chatGroupId);
   insertComposerToken(mentionTokenFor(chatGroupId));
   state.activeMenuMessageId = null;
   render();

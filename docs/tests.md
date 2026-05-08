@@ -7,7 +7,7 @@
 - `test/GroupChatLifecycle.t.sol`：部署、激活、关闭、首次激活快照
 - `test/GroupChatMeta.t.sol`：meta、批量写、`configVersion`
 - `test/GroupChatDelegate.t.sol`：delegate、NFT 转让失效 / 恢复
-- `test/GroupChatMessages.t.sol`：发言、mentions、mention 通知事件、quote、round、分页、sender 索引
+- `test/GroupChatMessages.t.sol`：发言、mentionedSenderIds、mention 通知事件、quote、round、分页、sender 索引
 - `test/GroupChatPlugins.t.sol`：scope、deny、before / after plugin、重入
 - `test/GroupChatDefaultSender.t.sol`：默认发言身份
 - `test/GroupChatManager.t.sol`：Manager 共同约束
@@ -42,7 +42,7 @@ Delegate：
 
 - `senderId` owner 才能发。
 - 默认允许跨群发言。
-- 空内容、超长内容、非法 quote、重复 mentions、超限 mentions 必须 revert。
+- 空内容、超长内容、非法 quote、重复 mentionedSenderIds、超限 mentionedSenderIds 必须 revert。
 - `postByDefaultSender` 复用默认身份。
 
 分页：

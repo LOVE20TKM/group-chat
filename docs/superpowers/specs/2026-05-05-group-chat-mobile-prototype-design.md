@@ -27,7 +27,7 @@
 ### 包含
 
 - 聊天列表入口与当前 chat 头部。
-- 消息流：普通消息、自己消息、引用消息、mentions、mentionAll 标识。
+- 消息流：普通消息、自己消息、引用消息、mentionedSenderIds、mentionAll 标识。
 - 底部输入栏：内容输入、引用 chip、发送按钮；`@姓名` 与 `@全部` 由输入框文本自动解析。
 - 点击消息菜单：`messageId > 0` 可引用；`0` 只表示无引用。
 - 顶部 `...` 群菜单：详情、黑名单、豁免名单、管理入口、模拟 `MessagePost` 缺口。
@@ -53,7 +53,7 @@
 | 可发言判断 | `canPostStatus(chatGroupId, senderId, senderAddress)` |
 | 错误原因 | `ChatNotActive`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
-| 提及 | `mentions uint256[]`，最大 `32`，去重 |
+| 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，只记录声明语义 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
@@ -83,7 +83,7 @@
    - 引用 chip 显示在输入框上方。
    - 引用草稿按 `chatGroupId` 隔离，切换群聊不会串用其他群的 `quotedMessageId`。
    - 输入框字号至少 `16px`，避免移动端浏览器自动缩放。
-   - 用户直接输入 `@姓名` 生成 `mentions`，直接输入 `@全部` 生成 `mentionAll=true`。
+   - 用户直接输入 `@姓名` 生成 `mentionedSenderIds`，直接输入 `@全部` 生成 `mentionAll=true`。
    - 长按头像可把对应 `@姓名` 插入输入框。
    - 点击头像时，若当前地址默认 NFT 是该 chat 的管理员 NFT，则弹出拉黑 sender 菜单。
    - 发送按钮触发模拟 `post`。
@@ -139,7 +139,7 @@
 
 - 协议覆盖：
   - `canPostStatus` reasonCode 能在 UI 中解释。
-  - `mentions` 去重有前端提示；超过 `32` 时阻止发送并提示 `TooManyMentions`。
+  - `mentionedSenderIds` 去重有前端提示；超过 `32` 时阻止发送并提示 `TooManyMentionedSenderIds`。
   - `quotedMessageId` 为 `0` 与非 `0` 两种状态可见。
   - `MessagePost` 事件不是正文真源的同步策略在 UI 中有提示。
 

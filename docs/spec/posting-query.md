@@ -28,7 +28,7 @@ chatGroupId exists
 chat active
 senderId exists
 senderAddress owns senderId
-content / mentions / quote core validation
+content / mentionedSenderIds / quote core validation
 currentRound
 scopeSource.canPost
 denySource.isDenied
@@ -49,7 +49,7 @@ afterPostPlugin.afterPost
 `canPost(...)` 不检查：
 
 - `content`
-- `mentions`
+- `mentionedSenderIds`
 - `mentionAll`
 - `quotedMessageId`
 - `beforePostPlugin`
@@ -83,9 +83,9 @@ DenySourceFailed.selector          denySource 调用失败
 - `messageId = messageIndex + 1`，其中 `messageIndex` 只表示合约内部数组下标。
 - `message(chatGroupId, messageId)` 的 `messageId` 必须是 `1..messagesCount(chatGroupId)`。
 
-## Mentions
+## Mentioned Sender IDs
 
-- `mentions` 是 `uint256[]`。
+- `mentionedSenderIds` 是 `uint256[]`。
 - 上限固定为 `32`。
 - 每个 `mentionedSenderId` 必须存在。
 - 不允许重复。

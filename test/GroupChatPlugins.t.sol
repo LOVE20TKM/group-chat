@@ -465,13 +465,13 @@ contract GroupChatPluginsTest is GroupChatFixture {
             0
         );
 
-        uint256[] memory mentions = new uint256[](2);
-        mentions[0] = otherGroupId;
-        mentions[1] = delegateId;
+        uint256[] memory mentionedSenderIds = new uint256[](2);
+        mentionedSenderIds[0] = otherGroupId;
+        mentionedSenderIds[1] = delegateId;
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        _postWithMentions(chatGroupId, senderId, "@all hi", mentions, true);
+        _postWithMentionedSenderIds(chatGroupId, senderId, "@all hi", mentionedSenderIds, true);
 
         assertEq(beforePlugin.lastChatGroupId(), chatGroupId);
         assertEq(beforePlugin.lastSenderId(), senderId);
@@ -479,7 +479,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(beforePlugin.lastContent(), "@all hi");
         assertTrue(beforePlugin.lastMentionAll());
 
-        uint256[] memory captured = beforePlugin.lastMentions();
+        uint256[] memory captured = beforePlugin.lastMentionedSenderIds();
         assertEq(captured.length, 2);
         assertEq(captured[0], otherGroupId);
         assertEq(captured[1], delegateId);
@@ -512,7 +512,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.prank(senderOwner);
         vm.expectRevert(MockBeforePostRejectMentionAllPlugin.MentionAllRejected.selector);
-        _postWithMentions(chatGroupId, senderId, "@all", _emptyMentions(), true);
+        _postWithMentionedSenderIds(chatGroupId, senderId, "@all", _emptyMentionedSenderIds(), true);
 
         assertEq(chat.messagesCount(chatGroupId), 1);
         assertTrue(!chat.messages(chatGroupId, 0, 1, false)[0].mentionAll);
@@ -542,17 +542,17 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(senderOwner);
         _post(chatGroupId, senderId, "base-1");
 
-        uint256[] memory mentions = new uint256[](1);
-        mentions[0] = otherGroupId;
+        uint256[] memory mentionedSenderIds = new uint256[](1);
+        mentionedSenderIds[0] = otherGroupId;
 
         vm.prank(senderOwner);
-        chat.post(chatGroupId, senderId, "quoted", mentions, true, 1);
+        chat.post(chatGroupId, senderId, "quoted", mentionedSenderIds, true, 1);
 
         assertEq(beforePlugin.lastQuotedMessageId(), 1);
 
-        uint256[] memory beforeMentions = beforePlugin.lastMentions();
-        assertEq(beforeMentions.length, 1);
-        assertEq(beforeMentions[0], otherGroupId);
+        uint256[] memory beforeMentionedSenderIds = beforePlugin.lastMentionedSenderIds();
+        assertEq(beforeMentionedSenderIds.length, 1);
+        assertEq(beforeMentionedSenderIds[0], otherGroupId);
 
         assertEq(afterPlugin.lastChatGroupId(), chatGroupId);
         assertEq(afterPlugin.lastSenderId(), senderId);
@@ -564,8 +564,8 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(afterPlugin.lastBlockNumber(), block.number);
         assertEq(afterPlugin.lastTimestamp(), block.timestamp);
 
-        uint256[] memory afterMentions = afterPlugin.lastMentions();
-        assertEq(afterMentions.length, 1);
-        assertEq(afterMentions[0], otherGroupId);
+        uint256[] memory afterMentionedSenderIds = afterPlugin.lastMentionedSenderIds();
+        assertEq(afterMentionedSenderIds.length, 1);
+        assertEq(afterMentionedSenderIds[0], otherGroupId);
     }
 }

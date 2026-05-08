@@ -115,7 +115,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         IGroupChatStructs.Message[] memory fetched = chat.messages(chatGroupId, 0, 1, false);
         assertEq(fetched.length, 1);
         assertEq(fetched[0].content, "old-message");
-        assertEq(fetched[0].mentions.length, 0);
+        assertEq(fetched[0].mentionedSenderIds.length, 0);
         assertTrue(!fetched[0].mentionAll);
         assertEq(chat.delegateIdOf(chatGroupId), delegateId);
         assertEq(chat.chatGroupIdsCount(), 1);

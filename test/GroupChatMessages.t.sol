@@ -26,7 +26,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(result[0].content, "hello");
         assertEq(result[0].blockNumber, originBlocks);
         assertEq(result[0].timestamp, block.timestamp);
-        assertEq(result[0].mentions.length, 0);
+        assertEq(result[0].mentionedSenderIds.length, 0);
         assertTrue(!result[0].mentionAll);
         assertEq(result[0].quotedMessageId, 0);
     }
@@ -94,20 +94,20 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.RoundNotStarted.selector);
-        futureChat.post(chatGroupId, senderId, "early", _emptyMentions(), false, 0);
+        futureChat.post(chatGroupId, senderId, "early", _emptyMentionedSenderIds(), false, 0);
     }
 
-    function testT048_postStoresMentionsAndMentionMessageIds() public {
+    function testT048_postStoresMentionedSenderIdsAndMentionMessageIds() public {
         _activateEmpty();
 
-        uint256[] memory mentions = new uint256[](2);
-        mentions[0] = otherGroupId;
-        mentions[1] = delegateId;
+        uint256[] memory mentionedSenderIds = new uint256[](2);
+        mentionedSenderIds[0] = otherGroupId;
+        mentionedSenderIds[1] = delegateId;
 
         vm.roll(originBlocks);
         vm.recordLogs();
         vm.prank(senderOwner);
-        _postWithMentions(chatGroupId, senderId, "hello @two", mentions, false);
+        _postWithMentionedSenderIds(chatGroupId, senderId, "hello @two", mentionedSenderIds, false);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 3);
@@ -123,9 +123,9 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         IGroupChatStructs.Message[] memory result = chat.messages(chatGroupId, 0, 1, false);
         assertEq(result.length, 1);
-        assertEq(result[0].mentions.length, 2);
-        assertEq(result[0].mentions[0], otherGroupId);
-        assertEq(result[0].mentions[1], delegateId);
+        assertEq(result[0].mentionedSenderIds.length, 2);
+        assertEq(result[0].mentionedSenderIds[0], otherGroupId);
+        assertEq(result[0].mentionedSenderIds[1], delegateId);
         assertTrue(!result[0].mentionAll);
         assertEq(result[0].quotedMessageId, 0);
 
@@ -137,7 +137,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
             chat.messagesByMention(chatGroupId, delegateId, 0, 10, false);
         assertEq(byMention.length, 1);
         assertEq(byMention[0].messageId, 1);
-        assertEq(byMention[0].mentions.length, 2);
+        assertEq(byMention[0].mentionedSenderIds.length, 2);
 
         uint256[] memory messageIds = chat.messageIdsByMention(chatGroupId, otherGroupId, 0, 10, false);
         assertEq(messageIds.length, 1);
@@ -146,23 +146,23 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(chat.messageIdsByMention(chatGroupId, 999999, 0, 10, false).length, 0);
     }
 
-    function testT049_postRejectsDuplicateMentionsAndTracksMentionAll() public {
+    function testT049_postRejectsDuplicateMentionedSenderIdsAndTracksMentionAll() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
 
-        uint256[] memory duplicateMentions = new uint256[](2);
-        duplicateMentions[0] = otherGroupId;
-        duplicateMentions[1] = otherGroupId;
+        uint256[] memory duplicateMentionedSenderIds = new uint256[](2);
+        duplicateMentionedSenderIds[0] = otherGroupId;
+        duplicateMentionedSenderIds[1] = otherGroupId;
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        vm.expectRevert(IGroupChatErrors.DuplicateMentionSenderId.selector);
-        _postWithMentions(chatGroupId, senderId, "dup", duplicateMentions, false);
+        vm.expectRevert(IGroupChatErrors.DuplicateMentionedSenderId.selector);
+        _postWithMentionedSenderIds(chatGroupId, senderId, "dup", duplicateMentionedSenderIds, false);
 
         vm.prank(senderOwner);
         vm.recordLogs();
-        _postWithMentions(chatGroupId, senderId, "@all-0", _emptyMentions(), true);
+        _postWithMentionedSenderIds(chatGroupId, senderId, "@all-0", _emptyMentionedSenderIds(), true);
         Vm.Log[] memory mentionAllLogs = vm.getRecordedLogs();
 
         assertEq(mentionAllLogs.length, 2);
@@ -175,7 +175,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         _post(chatGroupId, otherGroupId, "plain");
 
         vm.prank(senderOwner);
-        _postWithMentions(chatGroupId, senderId, "@all-1", _emptyMentions(), true);
+        _postWithMentionedSenderIds(chatGroupId, senderId, "@all-1", _emptyMentionedSenderIds(), true);
 
         IGroupChatStructs.Message[] memory result = chat.messages(chatGroupId, 0, 10, false);
         assertEq(result.length, 3);
@@ -414,7 +414,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(fetched.messageId, messageId);
         assertEq(fetched.round, messageRound);
         assertEq(fetched.senderId, senderId);
-        assertEq(fetched.mentions.length, 0);
+        assertEq(fetched.mentionedSenderIds.length, 0);
         assertTrue(!fetched.mentionAll);
         assertEq(fetched.quotedMessageId, 0);
     }
@@ -462,19 +462,19 @@ contract GroupChatMessagesTest is GroupChatFixture {
         _postWithQuote(chatGroupId, otherGroupId, "future", 4);
     }
 
-    function testT086_postRejectsTooManyMentions() public {
+    function testT086_postRejectsTooManyMentionedSenderIds() public {
         _activateEmpty();
 
-        uint256 maxMentions = chat.MAX_MENTIONS();
-        uint256[] memory mentions = new uint256[](maxMentions + 1);
-        for (uint256 i = 0; i < maxMentions; i++) {
-            mentions[i] = senderId;
+        uint256 maxMentionedSenderIds = chat.MAX_MENTIONED_SENDER_IDS();
+        uint256[] memory mentionedSenderIds = new uint256[](maxMentionedSenderIds + 1);
+        for (uint256 i = 0; i < maxMentionedSenderIds; i++) {
+            mentionedSenderIds[i] = senderId;
         }
-        mentions[maxMentions] = otherGroupId;
+        mentionedSenderIds[maxMentionedSenderIds] = otherGroupId;
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMentions.selector, maxMentions + 1, maxMentions));
-        _postWithMentions(chatGroupId, senderId, "too-many", mentions, false);
+        vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMentionedSenderIds.selector, maxMentionedSenderIds + 1, maxMentionedSenderIds));
+        _postWithMentionedSenderIds(chatGroupId, senderId, "too-many", mentionedSenderIds, false);
     }
 }

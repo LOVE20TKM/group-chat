@@ -11,7 +11,7 @@
 - `originBlocks`
 - `phaseBlocks`
 - `MAX_CONTENT_LENGTH`
-- `MAX_MENTIONS`
+- `MAX_MENTIONED_SENDER_IDS`
 - `activateChat`
 - `deactivateChat`
 - `chatInfo`
@@ -98,7 +98,7 @@ Query：
 - `content`
 - `blockNumber`
 - `timestamp`
-- `mentions`
+- `mentionedSenderIds`
 - `mentionAll`
 - `quotedMessageId`：`0` 表示无引用，非零时指向当前 chat 内 1-based `messageId`
 
@@ -187,8 +187,8 @@ Rule slot 错误：
 
 - `ContentEmpty`
 - `ContentTooLong`
-- `TooManyMentions`
-- `DuplicateMentionSenderId`
+- `TooManyMentionedSenderIds`
+- `DuplicateMentionedSenderId`
 - `InvalidQuotedMessageId`
 - `InvalidMessageId`
 

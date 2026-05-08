@@ -96,7 +96,7 @@ interface IBeforePostPlugin {
         uint256 senderGroupId,
         address senderAddress,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageIndex
     ) external;

@@ -20,7 +20,7 @@ interface IGroupChatPluginView {
         uint256 chatGroupId,
         uint256 senderId,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId
     ) external;
@@ -55,14 +55,14 @@ contract MockBeforePostCapturePlugin {
     string public lastContent;
     bool public lastMentionAll;
     uint256 public lastQuotedMessageId;
-    uint256[] internal _lastMentions;
+    uint256[] internal _lastMentionedSenderIds;
 
     function beforePost(
         uint256 chatGroupId,
         uint256 senderId,
         address senderAddress,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId
     ) external {
@@ -72,14 +72,14 @@ contract MockBeforePostCapturePlugin {
         lastContent = content;
         lastMentionAll = mentionAll;
         lastQuotedMessageId = quotedMessageId;
-        delete _lastMentions;
-        for (uint256 i = 0; i < mentions.length; i++) {
-            _lastMentions.push(mentions[i]);
+        delete _lastMentionedSenderIds;
+        for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
+            _lastMentionedSenderIds.push(mentionedSenderIds[i]);
         }
     }
 
-    function lastMentions() external view returns (uint256[] memory) {
-        return _lastMentions;
+    function lastMentionedSenderIds() external view returns (uint256[] memory) {
+        return _lastMentionedSenderIds;
     }
 }
 
@@ -186,14 +186,14 @@ contract MockAfterPostCapturePlugin {
     uint256 public lastMessageId;
     uint256 public lastBlockNumber;
     uint256 public lastTimestamp;
-    uint256[] internal _lastMentions;
+    uint256[] internal _lastMentionedSenderIds;
 
     function afterPost(
         uint256 chatGroupId,
         uint256 senderId,
         address senderAddress,
         string calldata content,
-        uint256[] calldata mentions,
+        uint256[] calldata mentionedSenderIds,
         bool mentionAll,
         uint256 quotedMessageId,
         uint256 messageId,
@@ -209,14 +209,14 @@ contract MockAfterPostCapturePlugin {
         lastMessageId = messageId;
         lastBlockNumber = blockNumber;
         lastTimestamp = timestamp;
-        delete _lastMentions;
-        for (uint256 i = 0; i < mentions.length; i++) {
-            _lastMentions.push(mentions[i]);
+        delete _lastMentionedSenderIds;
+        for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
+            _lastMentionedSenderIds.push(mentionedSenderIds[i]);
         }
     }
 
-    function lastMentions() external view returns (uint256[] memory) {
-        return _lastMentions;
+    function lastMentionedSenderIds() external view returns (uint256[] memory) {
+        return _lastMentionedSenderIds;
     }
 }
 
@@ -247,12 +247,12 @@ contract MockAfterPostReenterPlugin {
         uint256,
         uint256
     ) external {
-        uint256[] memory mentions = new uint256[](0);
+        uint256[] memory mentionedSenderIds = new uint256[](0);
         _chat.post(
             _reenterChatGroupId,
             _reenterSenderId,
             "reenter",
-            mentions,
+            mentionedSenderIds,
             false,
             0
         );

@@ -19,7 +19,7 @@ function afterPost(
     uint256 senderId,
     address senderAddress,
     string calldata content,
-    uint256[] calldata mentions,
+    uint256[] calldata mentionedSenderIds,
     bool mentionAll,
     uint256 quotedMessageId,
     uint256 messageId,
