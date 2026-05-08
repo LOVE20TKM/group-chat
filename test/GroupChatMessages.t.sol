@@ -97,7 +97,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         futureChat.post(chatGroupId, senderId, "early", _emptyMentions(), false, 0);
     }
 
-    function testT048_postStoresMentionsAndMentionIndexes() public {
+    function testT048_postStoresMentionsAndMentionMessageIds() public {
         _activateEmpty();
 
         uint256[] memory mentions = new uint256[](2);
@@ -139,14 +139,14 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(byMention[0].messageId, 1);
         assertEq(byMention[0].mentions.length, 2);
 
-        uint256[] memory indexes = chat.messageIdsByMention(chatGroupId, otherGroupId, 0, 10, false);
-        assertEq(indexes.length, 1);
-        assertEq(indexes[0], 1);
+        uint256[] memory messageIds = chat.messageIdsByMention(chatGroupId, otherGroupId, 0, 10, false);
+        assertEq(messageIds.length, 1);
+        assertEq(messageIds[0], 1);
         assertEq(chat.messagesByMention(chatGroupId, 999999, 0, 10, false).length, 0);
         assertEq(chat.messageIdsByMention(chatGroupId, 999999, 0, 10, false).length, 0);
     }
 
-    function testT049_postRejectsDuplicateMentionsAndIndexesMentionAll() public {
+    function testT049_postRejectsDuplicateMentionsAndTracksMentionAll() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
         chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
@@ -194,14 +194,14 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(byMentionAllReverse.length, 1);
         assertEq(byMentionAllReverse[0].messageId, 3);
 
-        uint256[] memory indexes = chat.messageIdsByMentionAll(chatGroupId, 0, 10, false);
-        assertEq(indexes.length, 2);
-        assertEq(indexes[0], 1);
-        assertEq(indexes[1], 3);
+        uint256[] memory messageIds = chat.messageIdsByMentionAll(chatGroupId, 0, 10, false);
+        assertEq(messageIds.length, 2);
+        assertEq(messageIds[0], 1);
+        assertEq(messageIds[1], 3);
 
-        uint256[] memory reverseIndexes = chat.messageIdsByMentionAll(chatGroupId, 1, 1, true);
-        assertEq(reverseIndexes.length, 1);
-        assertEq(reverseIndexes[0], 1);
+        uint256[] memory reverseMessageIds = chat.messageIdsByMentionAll(chatGroupId, 1, 1, true);
+        assertEq(reverseMessageIds.length, 1);
+        assertEq(reverseMessageIds[0], 1);
     }
 
     function testT050_roundInfoAcrossRounds() public {
@@ -222,13 +222,13 @@ contract GroupChatMessagesTest is GroupChatFixture {
         IGroupChatStructs.RoundSpan memory round0 = chat.roundInfo(chatGroupId, 0);
         assertEq(round0.round, 0);
         assertEq(round0.startMessageId, 1);
-        assertEq(round0.endMessageId, 3);
+        assertEq(round0.endMessageId, 2);
         assertEq(round0.messageCount, 2);
 
         IGroupChatStructs.RoundSpan memory round1 = chat.roundInfo(chatGroupId, 1);
         assertEq(round1.round, 1);
         assertEq(round1.startMessageId, 3);
-        assertEq(round1.endMessageId, 4);
+        assertEq(round1.endMessageId, 3);
         assertEq(round1.messageCount, 1);
 
         uint256[] memory roundIds = new uint256[](3);
@@ -240,7 +240,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(batch.length, 3);
         assertEq(batch[0].round, 1);
         assertEq(batch[0].startMessageId, 3);
-        assertEq(batch[0].endMessageId, 4);
+        assertEq(batch[0].endMessageId, 3);
         assertEq(batch[0].messageCount, 1);
         assertEq(batch[1].round, 99);
         assertEq(batch[1].startMessageId, 0);
@@ -248,7 +248,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(batch[1].messageCount, 0);
         assertEq(batch[2].round, 0);
         assertEq(batch[2].startMessageId, 1);
-        assertEq(batch[2].endMessageId, 3);
+        assertEq(batch[2].endMessageId, 2);
         assertEq(batch[2].messageCount, 2);
     }
 
@@ -311,7 +311,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(chat.rounds(chatGroupId, 0, 0, false).length, 0);
     }
 
-    function testT060AndT062_messagesBySenderAndIndexesStayAligned() public {
+    function testT060AndT062_messagesBySenderAndMessageIdsStayAligned() public {
         _activateEmpty();
 
         vm.roll(originBlocks);
@@ -330,15 +330,15 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(senderMessages[0].messageId, 1);
         assertEq(senderMessages[1].messageId, 3);
 
-        uint256[] memory indexes = chat.messageIdsBySender(chatGroupId, senderId, 0, 10, false);
-        assertEq(indexes.length, 2);
-        assertEq(indexes[0], 1);
-        assertEq(indexes[1], 3);
+        uint256[] memory messageIds = chat.messageIdsBySender(chatGroupId, senderId, 0, 10, false);
+        assertEq(messageIds.length, 2);
+        assertEq(messageIds[0], 1);
+        assertEq(messageIds[1], 3);
 
-        uint256[] memory reverseIndexes = chat.messageIdsBySender(chatGroupId, senderId, 0, 10, true);
-        assertEq(reverseIndexes.length, 2);
-        assertEq(reverseIndexes[0], 3);
-        assertEq(reverseIndexes[1], 1);
+        uint256[] memory reverseMessageIds = chat.messageIdsBySender(chatGroupId, senderId, 0, 10, true);
+        assertEq(reverseMessageIds.length, 2);
+        assertEq(reverseMessageIds[0], 3);
+        assertEq(reverseMessageIds[1], 1);
     }
 
     function testT061T064_senderCountMatchesAndNonexistentSenderDoesNotRevert() public {

@@ -507,7 +507,7 @@ contract GroupChat is IGroupChat {
         if (!state.exists) {
             return 0;
         }
-        return state.endIndex - state.startIndex;
+        return state.endIndex - state.startIndex + 1;
     }
 
     function messagesBySenderCount(uint256 chatGroupId, uint256 senderId) external view returns (uint256) {
@@ -556,7 +556,7 @@ contract GroupChat is IGroupChat {
             return new Message[](0);
         }
 
-        uint256 total = state.endIndex - state.startIndex;
+        uint256 total = state.endIndex - state.startIndex + 1;
         uint256 count = _pageCount(total, offset, limit);
         Message[] memory result = new Message[](count);
 
@@ -864,13 +864,13 @@ contract GroupChat is IGroupChat {
         if (!state.exists) {
             state.exists = true;
             state.startIndex = messageIndex;
-            state.endIndex = messageIndex + 1;
+            state.endIndex = messageIndex;
             state.listIndex = _roundListByChat[chatGroupId].length;
             _roundListByChat[chatGroupId].push(round);
             return;
         }
 
-        state.endIndex = messageIndex + 1;
+        state.endIndex = messageIndex;
     }
 
     function _addActiveChatGroupId(uint256 groupId) internal {
@@ -1162,7 +1162,7 @@ contract GroupChat is IGroupChat {
             round: round,
             startMessageId: state.startIndex + 1,
             endMessageId: state.endIndex + 1,
-            messageCount: state.endIndex - state.startIndex
+            messageCount: state.endIndex - state.startIndex + 1
         });
     }
 

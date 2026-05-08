@@ -131,7 +131,7 @@ DenySourceFailed.selector          denySource 调用失败
 消息查询维度：
 
 - 全量：`messages`
-- 按 round：`roundInfo` / `roundInfos` / `rounds` 返回连续 `messageId` 区间；`messagesByRound` 是直接取消息的便利接口
+- 按 round：`roundInfo` / `roundInfos` / `rounds` 返回该 round 首尾 `messageId` 与消息数；`messagesByRound` 是直接取消息的便利接口
 - 按 sender：`messagesBySender`
 - 按 mention：`messagesByMention`
 - 按 mentionAll：`messagesByMentionAll`

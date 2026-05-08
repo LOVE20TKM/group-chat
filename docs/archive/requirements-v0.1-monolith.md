@@ -1,5 +1,8 @@
 # Group Chat 需求文档
 
+- 归档说明：本文保留 v0.1 草案历史语义，不作为当前实现依据。
+- 当前 `RoundSpan` 语义以 `docs/spec/abi-events-errors.md` 为准：`startMessageId` 与 `endMessageId` 都是该 round 内的消息 ID。
+
 - 模块：Group Chat 协议
 - 状态：草案
 - 目标：基于 `GroupNFT` 的完全链上公开群聊协议

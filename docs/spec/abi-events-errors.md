@@ -106,7 +106,7 @@ Query：
 
 - `round`
 - `startMessageId`：该 round 首条消息的 `messageId`；空 round 返回 `0`
-- `endMessageId`：该 round 末尾后一位的 `messageId`；空 round 返回 `0`
+- `endMessageId`：该 round 最后一条消息的 `messageId`；空 round 返回 `0`
 - `messageCount`
 
 `MetaEntry`：
