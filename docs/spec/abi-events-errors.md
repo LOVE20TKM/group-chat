@@ -21,6 +21,7 @@ Meta：
 - `setMeta`
 - `setMetaBatch`
 - `metaValue`
+- `metaEntriesCount`
 - `metaEntries`
 
 Delegate：
@@ -113,6 +114,8 @@ Query：
 - `keys`
 - `values`
 - 同一索引的 `keys[i]` 与 `values[i]` 对应
+
+`metaEntriesCount(chatGroupId)` 返回当前 live `meta` key 总数。
 
 ## 事件
 

@@ -14,7 +14,7 @@
 
 - `activateChat` / `setPostingAllowed`
 - `chatInfo`
-- `metaValue` / `metaEntries`
+- `metaValue` / `metaEntriesCount` / `metaEntries`
 - `setMeta` / `setMetaBatch`
 - `setDelegateId` / `delegateIdOf`
 - `setScopeSource` / `setDenySource`

@@ -14,6 +14,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         chat.setMeta(chatGroupId, "name", bytes("v1"));
         assertEq(chat.chatInfo(chatGroupId).configVersion, 2);
         assertEq(chat.metaValue(chatGroupId, "name"), bytes("v1"));
+        assertEq(chat.metaEntriesCount(chatGroupId), 1);
 
         vm.prank(chatOwner);
         chat.setMeta(chatGroupId, "name", bytes("v2"));
@@ -43,6 +44,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         chat.setMeta(chatGroupId, "topic", bytes(""));
         assertEq(chat.chatInfo(chatGroupId).configVersion, 5);
         assertEq(chat.metaValue(chatGroupId, "topic"), bytes(""));
+        assertEq(chat.metaEntriesCount(chatGroupId), 1);
 
         (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entryKeys.length, 1);
@@ -100,6 +102,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(chat.chatInfo(chatGroupId).configVersion, 1);
+        assertEq(chat.metaEntriesCount(chatGroupId), 2);
 
         (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entryKeys.length, 2);
@@ -155,6 +158,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entryKeys.length, 1);
         assertEq(entryValues.length, 1);
+        assertEq(chat.metaEntriesCount(chatGroupId), 1);
         assertEq(entryKeys[0], "b");
         assertEq(entryValues[0], bytes("2"));
         assertEq(chat.metaValue(chatGroupId, "a"), bytes(""));

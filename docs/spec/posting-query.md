@@ -167,4 +167,4 @@ DenySourceFailed.selector          denySource 调用失败
 - 前端维护每个 `chatGroupId` 的最新 `messageId`。
 - 若事件中的 `messageId == latestMessageId + 1`，可用 `message(chatGroupId, messageId)` 回查。
 - 若事件中的 `messageId > latestMessageId + 1`，用 `messages(chatGroupId, latestMessageId, messageId - latestMessageId, false)` 补拉缺口。
-- 配置变化以 `configVersion` 和 `ruleSlots` / `metaEntries` 重拉为准。
+- 配置变化以 `configVersion` 和 `ruleSlots` / `metaEntriesCount` / `metaEntries` 重拉为准。

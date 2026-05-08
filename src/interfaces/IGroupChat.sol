@@ -205,6 +205,8 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function metaValue(uint256 chatGroupId, string calldata key) external view returns (bytes memory);
 
+    function metaEntriesCount(uint256 chatGroupId) external view returns (uint256);
+
     function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view

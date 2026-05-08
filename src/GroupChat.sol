@@ -445,6 +445,11 @@ contract GroupChat is IGroupChat {
         return _metaStates[chatGroupId][_metaHash(key)].value;
     }
 
+    function metaEntriesCount(uint256 chatGroupId) external view returns (uint256) {
+        _requireExistingGroup(chatGroupId);
+        return _metaKeys[chatGroupId].length;
+    }
+
     function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
         external
         view
