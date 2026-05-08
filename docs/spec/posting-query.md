@@ -152,7 +152,7 @@ DenySourceFailed.selector          denySource 调用失败
 
 批量 round 区间：
 
-- `roundInfos(chatGroupId, roundIds)` 按入参顺序返回 `RoundSpan[]`。
+- `roundInfos(chatGroupId, rounds)` 按入参顺序返回 `RoundSpan[]`。
 - 不存在或无消息的 round 返回 `round = 入参`、`startMessageId = 0`、`endMessageId = 0`、`messageCount = 0`。
 
 群发现：

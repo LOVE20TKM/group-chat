@@ -314,5 +314,5 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function roundInfo(uint256 chatGroupId, uint256 round) external view returns (RoundSpan memory);
 
-    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds) external view returns (RoundSpan[] memory);
+    function roundInfos(uint256 chatGroupId, uint256[] calldata rounds) external view returns (RoundSpan[] memory);
 }

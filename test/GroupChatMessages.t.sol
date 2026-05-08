@@ -230,12 +230,12 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(round1.endMessageId, 3);
         assertEq(round1.messageCount, 1);
 
-        uint256[] memory roundIds = new uint256[](3);
-        roundIds[0] = 1;
-        roundIds[1] = 99;
-        roundIds[2] = 0;
+        uint256[] memory rounds = new uint256[](3);
+        rounds[0] = 1;
+        rounds[1] = 99;
+        rounds[2] = 0;
 
-        IGroupChat.RoundSpan[] memory batch = chat.roundInfos(chatGroupId, roundIds);
+        IGroupChat.RoundSpan[] memory batch = chat.roundInfos(chatGroupId, rounds);
         assertEq(batch.length, 3);
         assertEq(batch[0].round, 1);
         assertEq(batch[0].startMessageId, 3);

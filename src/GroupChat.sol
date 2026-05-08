@@ -763,12 +763,12 @@ contract GroupChat is IGroupChat {
         return _roundSpanOrEmpty(chatGroupId, round);
     }
 
-    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds) external view returns (RoundSpan[] memory) {
+    function roundInfos(uint256 chatGroupId, uint256[] calldata rounds_) external view returns (RoundSpan[] memory) {
         _requireExistingGroup(chatGroupId);
-        RoundSpan[] memory result = new RoundSpan[](roundIds.length);
+        RoundSpan[] memory result = new RoundSpan[](rounds_.length);
 
-        for (uint256 i = 0; i < roundIds.length; i++) {
-            result[i] = _roundSpanOrEmpty(chatGroupId, roundIds[i]);
+        for (uint256 i = 0; i < rounds_.length; i++) {
+            result[i] = _roundSpanOrEmpty(chatGroupId, rounds_[i]);
         }
 
         return result;
