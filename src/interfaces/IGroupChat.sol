@@ -173,7 +173,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         uint256 delegateId_
     ) external;
 
-    function setPostingAllowed(uint256 chatGroupId, bool postingAllowed) external;
+    function setPostingAllowed(uint256 chatGroupId, bool postingAllowed_) external;
 
     function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external;
 
@@ -218,6 +218,8 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         returns (string[] memory keys, bytes[] memory values);
 
     function delegateIdOf(uint256 chatGroupId) external view returns (uint256);
+
+    function postingAllowed(uint256 chatGroupId) external view returns (bool);
 
     function scopeSource(uint256 chatGroupId) external view returns (address);
 

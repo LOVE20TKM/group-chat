@@ -14,6 +14,7 @@
 - `MAX_MENTIONED_SENDER_IDS`
 - `activateChat`
 - `setPostingAllowed`
+- `postingAllowed`
 - `chatInfo`
 
 Meta：

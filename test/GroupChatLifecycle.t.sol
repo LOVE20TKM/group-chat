@@ -43,6 +43,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(info.owner, chatOwner);
         assertTrue(info.activated);
         assertTrue(info.postingAllowed);
+        assertTrue(chat.postingAllowed(chatGroupId));
         assertEq(info.configVersion, 1);
         assertEq(info.delegateId, 0);
         assertEq(info.scopeSource, address(0));
@@ -91,6 +92,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setPostingAllowed(chatGroupId, false);
 
+        assertTrue(!chat.postingAllowed(chatGroupId));
         assertTrue(!chat.canPost(chatGroupId, senderId, senderOwner));
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.PostingNotAllowed.selector);
@@ -102,6 +104,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         chat.setDelegateId(chatGroupId, delegateId);
         vm.prank(chatOwner);
         chat.setPostingAllowed(chatGroupId, true);
+        assertTrue(chat.postingAllowed(chatGroupId));
 
         IGroupChat.ChatInfo memory secondInfo = chat.chatInfo(chatGroupId);
         assertEq(secondInfo.firstActivatedOwner, firstInfo.firstActivatedOwner);

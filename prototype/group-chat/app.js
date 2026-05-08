@@ -695,6 +695,7 @@ function renderChainServiceManagement(chat) {
   const ruleEditor = canEditRules(chat) ? `
     <section class="workspace-band">
       <h2>owner / delegate 配置</h2>
+      ${renderPostingAllowedControl(chat)}
       ${renderRuleInput(chat, 'scopeSource')}
       ${renderRuleInput(chat, 'denySource')}
       ${renderRuleInput(chat, 'beforePostPlugin')}
@@ -715,10 +716,21 @@ function renderChainServiceManagement(chat) {
         <h1>${escapeHtml(chat.shortTitle)}</h1>
         <span class="pill ${manageableRole(chat) ? 'pill-ok' : 'pill-warn'}">${escapeHtml(chat.role)}</span>
       </div>
-      <div class="rule-table">${renderRuleRows(chat)}</div>
       <div class="notice-row">${managementNotice(chat)}</div>
     </section>
     ${ruleEditor}
+  `;
+}
+
+function renderPostingAllowedControl(chat) {
+  return `
+    <div class="field-row activation-choice-row">
+      <label>postingAllowed</label>
+      <div class="choice-group">
+        <button class="picker-button${chat.postingAllowed ? ' active' : ''}" type="button" data-action="set-posting-allowed" data-value="true">允许发言</button>
+        <button class="picker-button${chat.postingAllowed ? '' : ' active'}" type="button" data-action="set-posting-allowed" data-value="false">停止发言</button>
+      </div>
+    </div>
   `;
 }
 
@@ -762,7 +774,7 @@ function renderDelegateInput(chat) {
 }
 
 function managementNotice(chat) {
-  if (canEditRules(chat)) return 'owner/delegate 可管理规则槽、管理员 NFT 和豁免名单。黑名单仅管理员 NFT 可维护。';
+  if (canEditRules(chat)) return 'owner/delegate 可管理群聊设置、管理员 NFT 和豁免名单。黑名单仅管理员 NFT 可维护。';
   if (canEditAdminDeny(chat)) return '当前默认 NFT 命中管理员名单，可维护黑名单。';
   return '当前地址只读。';
 }
@@ -1627,6 +1639,15 @@ function setRuleSlotOption(slot, value) {
   render();
 }
 
+function setPostingAllowed(value) {
+  const chat = activeChat();
+  if (!chat || !canEditRules(chat)) return;
+  const postingAllowed = value === 'true';
+  chat.postingAllowed = postingAllowed;
+  state.syncHint = `postingAllowed 已更新为 ${postingAllowed ? 'true' : 'false'}`;
+  render();
+}
+
 function addAdminList(listName, inputId) {
   const chat = activeChat();
   const input = document.getElementById(inputId);
@@ -2348,6 +2369,7 @@ document.addEventListener('click', (event) => {
   if (action === 'open-exempt') openExempt(target.dataset.chatId);
   if (action === 'set-rule-slot') setRuleSlot(target.dataset.slot, target.dataset.input);
   if (action === 'set-rule-slot-option') setRuleSlotOption(target.dataset.slot, target.dataset.value);
+  if (action === 'set-posting-allowed') setPostingAllowed(target.dataset.value);
   if (action === 'admin-list-add') addAdminList(target.dataset.list, target.dataset.input);
   if (action === 'admin-list-remove') removeAdminList(target.dataset.list, target.dataset.value);
   if (action === 'set-admin-query-type') setAdminIdQueryType(target.dataset.queryType);

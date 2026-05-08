@@ -134,18 +134,18 @@ contract GroupChat is IGroupChat {
         emit ChatActivate(chatGroupId, owner, newVersion);
     }
 
-    function setPostingAllowed(uint256 chatGroupId, bool postingAllowed) external nonReentrant {
+    function setPostingAllowed(uint256 chatGroupId, bool postingAllowed_) external nonReentrant {
         _requireOwnerOrDelegateAndActivated(chatGroupId);
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (config.postingAllowed == postingAllowed) {
+        if (config.postingAllowed == postingAllowed_) {
             revert PostingAllowedUnchanged();
         }
 
-        config.postingAllowed = postingAllowed;
+        config.postingAllowed = postingAllowed_;
         uint256 newVersion = config.configVersion + 1;
         config.configVersion = newVersion;
-        emit PostingAllowedSet(chatGroupId, msg.sender, newVersion, postingAllowed);
+        emit PostingAllowedSet(chatGroupId, msg.sender, newVersion, postingAllowed_);
     }
 
     function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external nonReentrant {
@@ -477,6 +477,11 @@ contract GroupChat is IGroupChat {
     function delegateIdOf(uint256 chatGroupId) external view returns (uint256) {
         address owner = _ownerOfOrRevert(chatGroupId);
         return _delegateIdOf(_chatConfigs[chatGroupId], owner);
+    }
+
+    function postingAllowed(uint256 chatGroupId) external view returns (bool) {
+        _requireExistingGroup(chatGroupId);
+        return _chatConfigs[chatGroupId].postingAllowed;
     }
 
     function scopeSource(uint256 chatGroupId) external view returns (address) {
