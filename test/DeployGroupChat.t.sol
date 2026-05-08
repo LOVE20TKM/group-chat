@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {DeployGroupChat} from "../script/DeployGroupChat.s.sol";
 import {IGroupChat} from "../src/interfaces/IGroupChat.sol";
 import {BaseGroupChatManager} from "../src/managers/BaseGroupChatManager.sol";
 import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
@@ -10,7 +11,6 @@ import {TokenGroupChatManager} from "../src/managers/TokenGroupChatManager.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
-import {DeployGroupChat} from "../script/DeployGroupChat.s.sol";
 import {MockGroupDefaults} from "./mocks/MockGroupDefaults.sol";
 import {MockLOVE20Group} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
@@ -96,7 +96,9 @@ contract DeployGroupChatTest is TestBase {
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).VOTE_ADDRESS(), address(protocol));
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).SUBMIT_ADDRESS(), address(protocol));
         assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).STAKE_ADDRESS(), address(protocol));
-        assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE_ADDRESS(), address(protocol));
+        assertEq(
+            TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE_ADDRESS(), address(protocol)
+        );
         assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).RECENT_ROUNDS(), 3);
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).VOTE_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN_ADDRESS(), address(protocol));

@@ -17,8 +17,7 @@ interface Vm {
 }
 
 contract TestBase {
-    Vm internal constant vm =
-        Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     function assertTrue(bool value) internal pure {
         require(value, "ASSERT_TRUE");
@@ -45,9 +44,6 @@ contract TestBase {
     }
 
     function assertEq(string memory left, string memory right) internal pure {
-        require(
-            keccak256(bytes(left)) == keccak256(bytes(right)),
-            "ASSERT_EQ_STRING"
-        );
+        require(keccak256(bytes(left)) == keccak256(bytes(right)), "ASSERT_EQ_STRING");
     }
 }

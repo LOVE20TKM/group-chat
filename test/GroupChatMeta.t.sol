@@ -2,10 +2,7 @@
 pragma solidity =0.8.17;
 
 import {IGroupChatErrors, IGroupChatStructs} from "../src/interfaces/IGroupChat.sol";
-import {
-    MockAfterPostFailPlugin,
-    MockBeforePostRejectPlugin
-} from "./mocks/MockPlugins.sol";
+import {MockAfterPostFailPlugin, MockBeforePostRejectPlugin} from "./mocks/MockPlugins.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 import {Vm} from "./utils/TestBase.sol";
 
@@ -47,8 +44,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(chat.chatInfo(chatGroupId).configVersion, 5);
         assertEq(chat.metaValue(chatGroupId, "topic"), bytes(""));
 
-        IGroupChatStructs.MetaEntry[] memory entries =
-            chat.metaEntries(chatGroupId, 0, 10, false);
+        IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entries.length, 1);
         assertEq(entries[0].key, "name");
         assertEq(entries[0].value, bytes("v3"));
@@ -97,14 +93,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         chat.activateChat(
-            chatGroupId,
-            keys1,
-            values1,
-            address(0),
-            address(0),
-            address(beforePlugin),
-            address(afterPlugin),
-            delegateId
+            chatGroupId, keys1, values1, address(0), address(0), address(beforePlugin), address(afterPlugin), delegateId
         );
 
         vm.prank(chatOwner);
@@ -124,8 +113,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         assertEq(chat.chatInfo(chatGroupId).configVersion, 3);
 
-        IGroupChatStructs.MetaEntry[] memory entries =
-            chat.metaEntries(chatGroupId, 0, 10, false);
+        IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entries.length, 2);
         assertEq(entries[0].key, "b");
         assertEq(entries[0].value, bytes("22"));
@@ -185,8 +173,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         chat.activateChat(chatGroupId, keys2, values2, address(0), address(0), address(0), address(0), 0);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        IGroupChatStructs.MetaEntry[] memory entries =
-            chat.metaEntries(chatGroupId, 0, 10, false);
+        IGroupChatStructs.MetaEntry[] memory entries = chat.metaEntries(chatGroupId, 0, 10, false);
         assertEq(entries.length, 1);
         assertEq(entries[0].key, "b");
         assertEq(entries[0].value, bytes("2"));

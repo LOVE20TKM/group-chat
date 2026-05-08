@@ -26,14 +26,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(managedPlugin),
-            address(0),
-            delegateId
+            chatGroupId, keys, values, address(0), address(0), address(managedPlugin), address(0), delegateId
         );
 
         vm.prank(chatOwner);
@@ -317,16 +310,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(beforePlugin),
-            address(0),
-            0
-        );
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(beforePlugin), address(0), 0);
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
@@ -341,16 +325,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(0),
-            address(afterPlugin),
-            0
-        );
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(afterPlugin), 0);
 
         vm.roll(originBlocks);
         vm.recordLogs();
@@ -396,21 +371,11 @@ contract GroupChatPluginsTest is GroupChatFixture {
     }
 
     function testT075_afterPostReenterIsBlockedByNonReentrant() public {
-        MockAfterPostReenterPlugin afterPlugin =
-            new MockAfterPostReenterPlugin(address(chat), chatGroupId, senderId);
+        MockAfterPostReenterPlugin afterPlugin = new MockAfterPostReenterPlugin(address(chat), chatGroupId, senderId);
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(0),
-            address(afterPlugin),
-            0
-        );
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(afterPlugin), 0);
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
@@ -424,16 +389,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(0),
-            address(afterPlugin),
-            0
-        );
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(afterPlugin), 0);
 
         vm.roll(originBlocks);
         vm.recordLogs();
@@ -454,16 +410,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(beforePlugin),
-            address(0),
-            0
-        );
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(beforePlugin), address(0), 0);
 
         uint256[] memory mentionedSenderIds = new uint256[](2);
         mentionedSenderIds[0] = otherGroupId;
@@ -490,21 +437,11 @@ contract GroupChatPluginsTest is GroupChatFixture {
     }
 
     function testT078_beforePostPluginCanJudgeMentionAll() public {
-        MockBeforePostRejectMentionAllPlugin beforePlugin =
-            new MockBeforePostRejectMentionAllPlugin();
+        MockBeforePostRejectMentionAllPlugin beforePlugin = new MockBeforePostRejectMentionAllPlugin();
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(beforePlugin),
-            address(0),
-            0
-        );
+        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(beforePlugin), address(0), 0);
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
@@ -525,14 +462,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         chat.activateChat(
-            chatGroupId,
-            keys,
-            values,
-            address(0),
-            address(0),
-            address(beforePlugin),
-            address(afterPlugin),
-            0
+            chatGroupId, keys, values, address(0), address(0), address(beforePlugin), address(afterPlugin), 0
         );
 
         vm.roll(originBlocks);

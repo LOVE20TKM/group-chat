@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
+
+import {IDenyVoteWeightSource} from "../interfaces/IDenyVoteWeightSource.sol";
 import {IGroupChat} from "../interfaces/IGroupChat.sol";
 import {IPostScopeSource} from "../interfaces/IPostScopeSource.sol";
-import {IDenyVoteWeightSource} from "../interfaces/IDenyVoteWeightSource.sol";
-import {IERC721Receiver} from "../interfaces/external/IERC721Receiver.sol";
+
 import {IERC20Payment} from "../interfaces/external/IERC20Payment.sol";
-import {ILOVE20Group} from "../interfaces/external/ILOVE20Group.sol";
+
 import {IERC20Symbol} from "../interfaces/external/IERC20Symbol.sol";
+import {IERC721Receiver} from "../interfaces/external/IERC721Receiver.sol";
+import {ILOVE20Group} from "../interfaces/external/ILOVE20Group.sol";
 
 abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();
@@ -69,14 +72,23 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
 
         uint256 actualMintCost;
         (chatGroupId, actualMintCost) = group.mint(groupName);
-        if (actualMintCost != expectedMintCost) revert ManagerMintCostChanged();
+        if (actualMintCost != expectedMintCost) {
+            revert ManagerMintCostChanged();
+        }
     }
 
     function _activateManagedChat(uint256 chatGroupId) internal {
         string[] memory metaKeys = new string[](0);
         bytes[] memory metaValues = new bytes[](0);
         IGroupChat(GROUP_CHAT_ADDRESS).activateChat(
-            chatGroupId, metaKeys, metaValues, address(this), DENY_SOURCE_ADDRESS, BEFORE_POST_PLUGIN_ADDRESS, AFTER_POST_PLUGIN_ADDRESS, 0
+            chatGroupId,
+            metaKeys,
+            metaValues,
+            address(this),
+            DENY_SOURCE_ADDRESS,
+            BEFORE_POST_PLUGIN_ADDRESS,
+            AFTER_POST_PLUGIN_ADDRESS,
+            0
         );
     }
 
@@ -100,7 +112,9 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
     }
 
     function _requireCode(address target) internal view {
-        if (target.code.length == 0) revert ManagerAddressHasNoCode();
+        if (target.code.length == 0) {
+            revert ManagerAddressHasNoCode();
+        }
     }
 
     function _requireOptionalCode(address target) internal view {
@@ -110,11 +124,15 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
     }
 
     function _requireNotManaged(bool managed) internal pure {
-        if (managed) revert ChatAlreadyManaged();
+        if (managed) {
+            revert ChatAlreadyManaged();
+        }
     }
 
     function _requireRecentRounds(uint256 recentRounds) internal pure {
-        if (recentRounds == 0) revert RecentRoundsZero();
+        if (recentRounds == 0) {
+            revert RecentRoundsZero();
+        }
     }
 
     function _tokenGroupNameStem(string memory managerPrefix, address token) internal view returns (string memory) {
@@ -129,17 +147,16 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         returns (string memory)
     {
         string memory actionIdLabel = _uintToString(actionId);
-        uint256 reservedWithoutSymbol =
-            _testPrefixBytes() + bytes(managerPrefix).length + bytes(actionIdLabel).length + 1 + GROUP_NAME_RANDOM_HEX_LENGTH;
+        uint256 reservedWithoutSymbol = _testPrefixBytes() + bytes(managerPrefix).length + bytes(actionIdLabel).length
+            + 1 + GROUP_NAME_RANDOM_HEX_LENGTH;
         if (reservedWithoutSymbol > MAX_GROUP_NAME_LENGTH) {
-            uint256 maxActionIdBytes = _remainingNameBytes(
-                _testPrefixBytes() + bytes(managerPrefix).length + 1 + GROUP_NAME_RANDOM_HEX_LENGTH
-            );
+            uint256 maxActionIdBytes =
+                _remainingNameBytes(_testPrefixBytes() + bytes(managerPrefix).length + 1 + GROUP_NAME_RANDOM_HEX_LENGTH);
             actionIdLabel = _truncateAscii(actionIdLabel, maxActionIdBytes);
         }
 
-        uint256 reservedWithSymbol =
-            _testPrefixBytes() + bytes(managerPrefix).length + bytes(actionIdLabel).length + 2 + GROUP_NAME_RANDOM_HEX_LENGTH;
+        uint256 reservedWithSymbol = _testPrefixBytes() + bytes(managerPrefix).length + bytes(actionIdLabel).length + 2
+            + GROUP_NAME_RANDOM_HEX_LENGTH;
         string memory tokenSymbol = _tokenSymbolLabel(token, _remainingNameBytes(reservedWithSymbol));
         if (bytes(tokenSymbol).length == 0) {
             return string(abi.encodePacked(managerPrefix, actionIdLabel));
@@ -151,9 +168,17 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         bool requiresTestPrefix = _love20TokenRequiresTestPrefix();
         for (uint256 i = 0; i < 8; i++) {
             string memory groupName = _canonicalizeGroupName(
-                string(abi.encodePacked(
-                    groupNameStem, "_", _hexString(keccak256(abi.encodePacked(block.chainid, address(this), msg.sender, block.number, _mintNonce)))
-                )),
+                string(
+                    abi.encodePacked(
+                        groupNameStem,
+                        "_",
+                        _hexString(
+                            keccak256(
+                                abi.encodePacked(block.chainid, address(this), msg.sender, block.number, _mintNonce)
+                            )
+                        )
+                    )
+                ),
                 requiresTestPrefix
             );
             unchecked {
@@ -199,9 +224,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
 
         for (uint256 i = 0; i < input.length; i++) {
             bytes1 char = input[i];
-            if (
-                (char >= 0x30 && char <= 0x39) || (char >= 0x41 && char <= 0x5A) || (char >= 0x61 && char <= 0x7A)
-            ) {
+            if ((char >= 0x30 && char <= 0x39) || (char >= 0x41 && char <= 0x5A) || (char >= 0x61 && char <= 0x7A)) {
                 output[outputLength] = char;
                 outputLength++;
             }

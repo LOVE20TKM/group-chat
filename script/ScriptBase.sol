@@ -8,17 +8,11 @@ interface Vm {
 
     function envUint(string calldata name) external returns (uint256);
 
-    function envOr(string calldata name, string calldata defaultValue)
-        external
-        returns (string memory);
+    function envOr(string calldata name, string calldata defaultValue) external returns (string memory);
 
-    function envOr(string calldata name, uint256 defaultValue)
-        external
-        returns (uint256);
+    function envOr(string calldata name, uint256 defaultValue) external returns (uint256);
 
-    function envOr(string calldata name, address defaultValue)
-        external
-        returns (address);
+    function envOr(string calldata name, address defaultValue) external returns (address);
 
     function startBroadcast() external;
 
@@ -34,6 +28,5 @@ interface Vm {
 }
 
 abstract contract ScriptBase {
-    Vm internal constant vm =
-        Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 }

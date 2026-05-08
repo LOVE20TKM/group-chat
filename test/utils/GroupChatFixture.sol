@@ -3,8 +3,9 @@ pragma solidity =0.8.17;
 
 import {GroupChat} from "../../src/GroupChat.sol";
 import {IGroupChatErrors, IGroupChatStructs} from "../../src/interfaces/IGroupChat.sol";
-import {MockLOVE20Group} from "../mocks/MockLOVE20Group.sol";
+
 import {MockGroupDefaults} from "../mocks/MockGroupDefaults.sol";
+import {MockLOVE20Group} from "../mocks/MockLOVE20Group.sol";
 import {TestBase, Vm} from "./TestBase.sol";
 
 abstract contract GroupChatFixture is TestBase {
@@ -26,7 +27,8 @@ abstract contract GroupChatFixture is TestBase {
     bytes32 internal constant META_SET_SIG = keccak256("MetaSet(uint256,address,uint256,string,bytes,bytes)");
     bytes32 internal constant DELEGATE_GROUP_ID_SET_SIG =
         keccak256("DelegateIdSet(uint256,address,uint256,uint256,uint256)");
-    bytes32 internal constant SCOPE_SOURCE_SET_SIG = keccak256("ScopeSourceSet(uint256,address,address,uint256,address)");
+    bytes32 internal constant SCOPE_SOURCE_SET_SIG =
+        keccak256("ScopeSourceSet(uint256,address,address,uint256,address)");
     bytes32 internal constant DENY_SOURCE_SET_SIG = keccak256("DenySourceSet(uint256,address,address,uint256,address)");
     bytes32 internal constant BEFORE_POST_PLUGIN_SET_SIG =
         keccak256("BeforePostPluginSet(uint256,address,address,uint256,address)");
@@ -76,12 +78,9 @@ abstract contract GroupChatFixture is TestBase {
         chat.post(chatGroupId_, senderId_, content, mentionedSenderIds, mentionAll, 0);
     }
 
-    function _postWithQuote(
-        uint256 chatGroupId_,
-        uint256 senderId_,
-        string memory content,
-        uint256 quotedMessageId
-    ) internal {
+    function _postWithQuote(uint256 chatGroupId_, uint256 senderId_, string memory content, uint256 quotedMessageId)
+        internal
+    {
         chat.post(chatGroupId_, senderId_, content, _emptyMentionedSenderIds(), false, quotedMessageId);
     }
 

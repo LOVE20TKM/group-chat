@@ -13,7 +13,11 @@ contract MockGroupJoinGlobal {
         counts[chatGroupId][account] = count;
     }
 
-    function gTokenAddressesByGroupIdByAccountCount(uint256 chatGroupId, address account) external view returns (uint256) {
+    function gTokenAddressesByGroupIdByAccountCount(uint256 chatGroupId, address account)
+        external
+        view
+        returns (uint256)
+    {
         return counts[chatGroupId][account];
     }
 }

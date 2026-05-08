@@ -2,8 +2,9 @@
 pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
-import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
+
 import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
+import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
@@ -77,8 +78,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
 
         protocol.setGovVotes(token, senderOwner, 4);
         deny.revalidateDenySenderIdVote(chatGroupId, senderId, senderOwner);
-        (bool supportDeny, uint256 settledWeight) =
-            deny.senderIdDenyVoteOf(chatGroupId, senderId, senderOwner);
+        (bool supportDeny, uint256 settledWeight) = deny.senderIdDenyVoteOf(chatGroupId, senderId, senderOwner);
         assertTrue(supportDeny);
         assertEq(settledWeight, 4);
         assertEq(deny.stateVersion(chatGroupId), 2);

@@ -2,9 +2,10 @@
 pragma solidity =0.8.17;
 
 import {IGroupChat} from "../../interfaces/IGroupChat.sol";
+
+import {IPostDenySource} from "../../interfaces/IPostDenySource.sol";
 import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
-import {IPostDenySource} from "../../interfaces/IPostDenySource.sol";
 
 contract AdminDenySource is IPostDenySource {
     error AdminDenySourceAddressHasNoCode();
@@ -124,10 +125,11 @@ contract AdminDenySource is IPostDenySource {
         uint256 newVersion;
         for (uint256 i = 0; i < targetSenderIds.length; i++) {
             uint256 targetSenderId = targetSenderIds[i];
-            if (targetSenderId == 0) revert TargetSenderIdZero();
+            if (targetSenderId == 0) {
+                revert TargetSenderIdZero();
+            }
             address targetAddress = _ownerOfOrRevert(targetSenderId);
-            newVersion =
-                _addSenderDenyTarget(state, chatGroupId, operatorId, targetSenderId, targetAddress, newVersion);
+            newVersion = _addSenderDenyTarget(state, chatGroupId, operatorId, targetSenderId, targetAddress, newVersion);
         }
         _emitStateVersionChangedIfChanged(chatGroupId, newVersion);
     }
@@ -138,11 +140,12 @@ contract AdminDenySource is IPostDenySource {
         uint256 newVersion;
         for (uint256 i = 0; i < targetSenderIds.length; i++) {
             uint256 targetSenderId = targetSenderIds[i];
-            if (targetSenderId == 0) revert TargetSenderIdZero();
+            if (targetSenderId == 0) {
+                revert TargetSenderIdZero();
+            }
             address targetAddress = _ownerOfOrRevert(targetSenderId);
-            newVersion = _removeSenderDenyTarget(
-                state, chatGroupId, operatorId, targetSenderId, targetAddress, newVersion
-            );
+            newVersion =
+                _removeSenderDenyTarget(state, chatGroupId, operatorId, targetSenderId, targetAddress, newVersion);
         }
         _emitStateVersionChangedIfChanged(chatGroupId, newVersion);
     }
@@ -152,8 +155,7 @@ contract AdminDenySource is IPostDenySource {
         ChatState storage state = _states[chatGroupId];
         uint256 newVersion;
         for (uint256 i = 0; i < targetAddresses.length; i++) {
-            newVersion =
-                _addSenderAddressDenyTarget(state, chatGroupId, operatorId, targetAddresses[i], newVersion);
+            newVersion = _addSenderAddressDenyTarget(state, chatGroupId, operatorId, targetAddresses[i], newVersion);
         }
         _emitStateVersionChangedIfChanged(chatGroupId, newVersion);
     }
@@ -163,8 +165,7 @@ contract AdminDenySource is IPostDenySource {
         ChatState storage state = _states[chatGroupId];
         uint256 newVersion;
         for (uint256 i = 0; i < targetAddresses.length; i++) {
-            newVersion =
-                _removeSenderAddressDenyTarget(state, chatGroupId, operatorId, targetAddresses[i], newVersion);
+            newVersion = _removeSenderAddressDenyTarget(state, chatGroupId, operatorId, targetAddresses[i], newVersion);
         }
         _emitStateVersionChangedIfChanged(chatGroupId, newVersion);
     }
@@ -255,15 +256,16 @@ contract AdminDenySource is IPostDenySource {
         return _states[chatGroupId].stateVersion;
     }
 
-    function _addSenderIdExemptTargets(
-        uint256 chatGroupId,
-        uint256 operatorId,
-        uint256[] calldata senderIds
-    ) internal returns (uint256 newVersion) {
+    function _addSenderIdExemptTargets(uint256 chatGroupId, uint256 operatorId, uint256[] calldata senderIds)
+        internal
+        returns (uint256 newVersion)
+    {
         ChatState storage state = _states[chatGroupId];
         for (uint256 i = 0; i < senderIds.length; i++) {
             uint256 senderId = senderIds[i];
-            if (senderId == 0) revert TargetSenderIdZero();
+            if (senderId == 0) {
+                revert TargetSenderIdZero();
+            }
             if (_addUint(state.senderIdExemptList, senderId)) {
                 newVersion = _ensureStateVersion(state, newVersion);
                 _emitSenderIdSet(chatGroupId, operatorId, senderId, true, false, newVersion);
@@ -271,15 +273,16 @@ contract AdminDenySource is IPostDenySource {
         }
     }
 
-    function _removeSenderIdExemptTargets(
-        uint256 chatGroupId,
-        uint256 operatorId,
-        uint256[] calldata senderIds
-    ) internal returns (uint256 newVersion) {
+    function _removeSenderIdExemptTargets(uint256 chatGroupId, uint256 operatorId, uint256[] calldata senderIds)
+        internal
+        returns (uint256 newVersion)
+    {
         ChatState storage state = _states[chatGroupId];
         for (uint256 i = 0; i < senderIds.length; i++) {
             uint256 senderId = senderIds[i];
-            if (senderId == 0) revert TargetSenderIdZero();
+            if (senderId == 0) {
+                revert TargetSenderIdZero();
+            }
             if (_removeUint(state.senderIdExemptList, senderId)) {
                 newVersion = _ensureStateVersion(state, newVersion);
                 _emitSenderIdSet(chatGroupId, operatorId, senderId, false, false, newVersion);
@@ -295,8 +298,12 @@ contract AdminDenySource is IPostDenySource {
         address targetAddress,
         uint256 newVersion
     ) internal returns (uint256) {
-        if (targetAddress == address(0)) revert TargetAddressZero();
-        if (targetSenderId == 0) revert TargetSenderIdZero();
+        if (targetAddress == address(0)) {
+            revert TargetAddressZero();
+        }
+        if (targetSenderId == 0) {
+            revert TargetSenderIdZero();
+        }
 
         if (_addAddress(state.addressDenyList, targetAddress)) {
             newVersion = _ensureStateVersion(state, newVersion);
@@ -317,8 +324,12 @@ contract AdminDenySource is IPostDenySource {
         address targetAddress,
         uint256 newVersion
     ) internal returns (uint256) {
-        if (targetAddress == address(0)) revert TargetAddressZero();
-        if (targetSenderId == 0) revert TargetSenderIdZero();
+        if (targetAddress == address(0)) {
+            revert TargetAddressZero();
+        }
+        if (targetSenderId == 0) {
+            revert TargetSenderIdZero();
+        }
 
         if (_removeAddress(state.addressDenyList, targetAddress)) {
             newVersion = _ensureStateVersion(state, newVersion);
@@ -337,11 +348,10 @@ contract AdminDenySource is IPostDenySource {
         uint256 operatorId,
         address targetAddress,
         uint256 newVersion
-    )
-        internal
-        returns (uint256)
-    {
-        if (targetAddress == address(0)) revert TargetAddressZero();
+    ) internal returns (uint256) {
+        if (targetAddress == address(0)) {
+            revert TargetAddressZero();
+        }
 
         if (_addAddress(state.addressDenyList, targetAddress)) {
             newVersion = _ensureStateVersion(state, newVersion);
@@ -362,11 +372,10 @@ contract AdminDenySource is IPostDenySource {
         uint256 operatorId,
         address targetAddress,
         uint256 newVersion
-    )
-        internal
-        returns (uint256)
-    {
-        if (targetAddress == address(0)) revert TargetAddressZero();
+    ) internal returns (uint256) {
+        if (targetAddress == address(0)) {
+            revert TargetAddressZero();
+        }
 
         if (_removeAddress(state.addressDenyList, targetAddress)) {
             newVersion = _ensureStateVersion(state, newVersion);
@@ -396,7 +405,9 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _requireOwnerOrDelegate(uint8 role) internal pure {
-        if (role != _ROLE_OWNER && role != _ROLE_DELEGATE) revert UnauthorizedDenySourceManager();
+        if (role != _ROLE_OWNER && role != _ROLE_DELEGATE) {
+            revert UnauthorizedDenySourceManager();
+        }
     }
 
     function _requireAdmin(uint256 chatGroupId) internal view returns (uint256 operatorId) {
@@ -411,7 +422,9 @@ contract AdminDenySource is IPostDenySource {
         for (uint256 i = 0; i < adminIdList.length; i++) {
             _ownerOfOrRevert(adminIdList[i]);
             for (uint256 j = 0; j < i; j++) {
-                if (adminIdList[i] == adminIdList[j]) revert DuplicateAdminId();
+                if (adminIdList[i] == adminIdList[j]) {
+                    revert DuplicateAdminId();
+                }
             }
         }
     }
@@ -429,13 +442,9 @@ contract AdminDenySource is IPostDenySource {
         }
     }
 
-    function _emitAdminSet(
-        uint256 chatGroupId,
-        uint256 operatorId,
-        uint256 adminId,
-        bool listed,
-        uint256 newVersion
-    ) internal {
+    function _emitAdminSet(uint256 chatGroupId, uint256 operatorId, uint256 adminId, bool listed, uint256 newVersion)
+        internal
+    {
         emit AdminSet(chatGroupId, msg.sender, adminId, operatorId, listed, newVersion);
     }
 
@@ -465,7 +474,9 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _requireCode(address target) internal view {
-        if (target.code.length == 0) revert AdminDenySourceAddressHasNoCode();
+        if (target.code.length == 0) {
+            revert AdminDenySourceAddressHasNoCode();
+        }
     }
 
     function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {

@@ -133,8 +133,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(chat.messagesByMentionCount(chatGroupId, delegateId), 1);
         assertEq(chat.messagesByMentionCount(chatGroupId, 999999), 0);
 
-        IGroupChatStructs.Message[] memory byMention =
-            chat.messagesByMention(chatGroupId, delegateId, 0, 10, false);
+        IGroupChatStructs.Message[] memory byMention = chat.messagesByMention(chatGroupId, delegateId, 0, 10, false);
         assertEq(byMention.length, 1);
         assertEq(byMention[0].messageId, 1);
         assertEq(byMention[0].mentionedSenderIds.length, 2);
@@ -324,8 +323,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         assertEq(chat.messagesBySenderCount(chatGroupId, senderId), 2);
 
-        IGroupChatStructs.Message[] memory senderMessages =
-            chat.messagesBySender(chatGroupId, senderId, 0, 10, false);
+        IGroupChatStructs.Message[] memory senderMessages = chat.messagesBySender(chatGroupId, senderId, 0, 10, false);
         assertEq(senderMessages.length, 2);
         assertEq(senderMessages[0].messageId, 1);
         assertEq(senderMessages[1].messageId, 3);
@@ -474,7 +472,11 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMentionedSenderIds.selector, maxMentionedSenderIds + 1, maxMentionedSenderIds));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGroupChatErrors.TooManyMentionedSenderIds.selector, maxMentionedSenderIds + 1, maxMentionedSenderIds
+            )
+        );
         _postWithMentionedSenderIds(chatGroupId, senderId, "too-many", mentionedSenderIds, false);
     }
 }

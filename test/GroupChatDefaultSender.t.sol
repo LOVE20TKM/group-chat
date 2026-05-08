@@ -81,12 +81,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(senderId);
 
         vm.prank(senderOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IGroupDefaultsErrors.DefaultGroupIdAlreadySet.selector,
-                senderId
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IGroupDefaultsErrors.DefaultGroupIdAlreadySet.selector, senderId));
         groupDefaults.setDefaultGroupId(senderId);
     }
 }

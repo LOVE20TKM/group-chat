@@ -2,12 +2,14 @@
 pragma solidity =0.8.17;
 
 import {BaseGroupChatManager} from "../src/managers/BaseGroupChatManager.sol";
-import {TokenGroupChatManager} from "../src/managers/TokenGroupChatManager.sol";
-import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
+
 import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
 import {TokenActionGroupChatManager} from "../src/managers/TokenActionGroupChatManager.sol";
-import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
+import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
+import {TokenGroupChatManager} from "../src/managers/TokenGroupChatManager.sol";
+
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
+import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupChatTypedManagersTest is GroupChatFixture {

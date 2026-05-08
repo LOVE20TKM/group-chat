@@ -15,7 +15,9 @@ contract MockGroupDefaults is IGroupDefaults {
 
     function setDefaultGroupId(uint256 chatGroupId) external {
         address senderOwner = _ownerOfOrRevert(chatGroupId);
-        if (msg.sender != senderOwner) revert SenderAddressNotSenderIdOwner();
+        if (msg.sender != senderOwner) {
+            revert SenderAddressNotSenderIdOwner();
+        }
         if (_defaultGroupIds[msg.sender] == chatGroupId) {
             revert DefaultGroupIdAlreadySet(chatGroupId);
         }
@@ -25,7 +27,9 @@ contract MockGroupDefaults is IGroupDefaults {
 
     function clearDefaultGroupId() external {
         uint256 prevGroupId = _defaultGroupIds[msg.sender];
-        if (prevGroupId == 0) revert DefaultGroupIdNotSet();
+        if (prevGroupId == 0) {
+            revert DefaultGroupIdNotSet();
+        }
         delete _defaultGroupIds[msg.sender];
         emit ClearDefaultGroupId(msg.sender, prevGroupId);
     }

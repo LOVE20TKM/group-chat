@@ -25,25 +25,13 @@ interface IGroupChatPluginView {
         uint256 quotedMessageId
     ) external;
 
-    function setMeta(
-        uint256 chatGroupId,
-        string calldata key,
-        bytes calldata value
-    ) external;
+    function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external;
 }
 
 contract MockBeforePostRejectPlugin {
     error BeforePostRejected();
 
-    function beforePost(
-        uint256,
-        uint256,
-        address,
-        string calldata,
-        uint256[] calldata,
-        bool,
-        uint256
-    ) external pure {
+    function beforePost(uint256, uint256, address, string calldata, uint256[] calldata, bool, uint256) external pure {
         revert BeforePostRejected();
     }
 }
@@ -86,15 +74,10 @@ contract MockBeforePostCapturePlugin {
 contract MockBeforePostRejectMentionAllPlugin {
     error MentionAllRejected();
 
-    function beforePost(
-        uint256,
-        uint256,
-        address,
-        string calldata,
-        uint256[] calldata,
-        bool mentionAll,
-        uint256
-    ) external pure {
+    function beforePost(uint256, uint256, address, string calldata, uint256[] calldata, bool mentionAll, uint256)
+        external
+        pure
+    {
         if (mentionAll) {
             revert MentionAllRejected();
         }
@@ -108,11 +91,7 @@ contract MockPostScopeSource {
         allowed = allowed_;
     }
 
-    function canPost(
-        uint256,
-        uint256,
-        address
-    ) external view returns (bool) {
+    function canPost(uint256, uint256, address) external view returns (bool) {
         return allowed;
     }
 }
@@ -120,11 +99,7 @@ contract MockPostScopeSource {
 contract MockPostScopeFailSource {
     error ScopeSourceBoom();
 
-    function canPost(
-        uint256,
-        uint256,
-        address
-    ) external pure returns (bool) {
+    function canPost(uint256, uint256, address) external pure returns (bool) {
         revert ScopeSourceBoom();
     }
 }
@@ -136,11 +111,7 @@ contract MockPostDenySource {
         denied = denied_;
     }
 
-    function isDenied(
-        uint256,
-        uint256,
-        address
-    ) external view returns (bool) {
+    function isDenied(uint256, uint256, address) external view returns (bool) {
         return denied;
     }
 }
@@ -148,11 +119,7 @@ contract MockPostDenySource {
 contract MockPostDenyFailSource {
     error DenySourceBoom();
 
-    function isDenied(
-        uint256,
-        uint256,
-        address
-    ) external pure returns (bool) {
+    function isDenied(uint256, uint256, address) external pure returns (bool) {
         revert DenySourceBoom();
     }
 }
@@ -225,11 +192,7 @@ contract MockAfterPostReenterPlugin {
     uint256 internal immutable _reenterChatGroupId;
     uint256 internal immutable _reenterSenderId;
 
-    constructor(
-        address chat_,
-        uint256 reenterChatGroupId_,
-        uint256 reenterSenderId_
-    ) {
+    constructor(address chat_, uint256 reenterChatGroupId_, uint256 reenterSenderId_) {
         _chat = IGroupChatPluginView(chat_);
         _reenterChatGroupId = reenterChatGroupId_;
         _reenterSenderId = reenterSenderId_;
@@ -248,14 +211,7 @@ contract MockAfterPostReenterPlugin {
         uint256
     ) external {
         uint256[] memory mentionedSenderIds = new uint256[](0);
-        _chat.post(
-            _reenterChatGroupId,
-            _reenterSenderId,
-            "reenter",
-            mentionedSenderIds,
-            false,
-            0
-        );
+        _chat.post(_reenterChatGroupId, _reenterSenderId, "reenter", mentionedSenderIds, false, 0);
     }
 }
 
@@ -293,13 +249,10 @@ contract MockManagedPlugin {
     }
 
     function configure(uint256 chatGroupId, bytes calldata value) external {
-        IGroupChatPluginView.ChatInfo memory info =
-            IGroupChatPluginView(CHAT_ADDRESS).chatInfo(chatGroupId);
-        uint256 delegateId_ =
-            IGroupChatPluginView(CHAT_ADDRESS).delegateIdOf(chatGroupId);
-        address delegateIdOwner = delegateId_ == 0
-            ? address(0)
-            : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateId_).owner;
+        IGroupChatPluginView.ChatInfo memory info = IGroupChatPluginView(CHAT_ADDRESS).chatInfo(chatGroupId);
+        uint256 delegateId_ = IGroupChatPluginView(CHAT_ADDRESS).delegateIdOf(chatGroupId);
+        address delegateIdOwner =
+            delegateId_ == 0 ? address(0) : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateId_).owner;
         if (msg.sender != info.owner && msg.sender != delegateIdOwner) {
             revert UnauthorizedPluginManager();
         }

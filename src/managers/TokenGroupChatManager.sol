@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 import {IERC20Balance} from "../interfaces/external/IERC20Balance.sol";
 import {IExtension} from "../interfaces/external/IExtension.sol";
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
@@ -9,6 +8,7 @@ import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {ActionInfo, ILOVE20Submit} from "../interfaces/external/ILOVE20Submit.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
+import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 
 contract TokenGroupChatManager is BaseGroupChatManager {
     address public immutable STAKE_ADDRESS;
@@ -132,5 +132,4 @@ contract TokenGroupChatManager is BaseGroupChatManager {
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {
         return ILOVE20Stake(STAKE_ADDRESS).validGovVotes(token, account);
     }
-
 }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
+import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 
 contract TokenActionGroupChatManager is BaseGroupChatManager {
     struct TokenActionChatParams {
@@ -133,7 +133,8 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         view
         returns (uint256)
     {
-        return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId);
+        return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(
+            token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId
+        );
     }
-
 }

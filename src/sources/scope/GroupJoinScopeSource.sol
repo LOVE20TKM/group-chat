@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupJoinGlobal} from "../../interfaces/external/IGroupJoinGlobal.sol";
 import {IPostScopeSource} from "../../interfaces/IPostScopeSource.sol";
+import {IGroupJoinGlobal} from "../../interfaces/external/IGroupJoinGlobal.sol";
 
 contract GroupJoinScopeSource is IPostScopeSource {
     error GroupJoinScopeSourceAddressHasNoCode();
@@ -10,11 +10,14 @@ contract GroupJoinScopeSource is IPostScopeSource {
     address public immutable GROUP_JOIN_ADDRESS;
 
     constructor(address groupJoin_) {
-        if (groupJoin_.code.length == 0) revert GroupJoinScopeSourceAddressHasNoCode();
+        if (groupJoin_.code.length == 0) {
+            revert GroupJoinScopeSourceAddressHasNoCode();
+        }
         GROUP_JOIN_ADDRESS = groupJoin_;
     }
 
     function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        return IGroupJoinGlobal(GROUP_JOIN_ADDRESS).gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) != 0;
+        return
+            IGroupJoinGlobal(GROUP_JOIN_ADDRESS).gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) != 0;
     }
 }

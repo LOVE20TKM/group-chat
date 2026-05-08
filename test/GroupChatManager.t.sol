@@ -4,9 +4,10 @@ pragma solidity =0.8.17;
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IERC721Receiver} from "../src/interfaces/external/IERC721Receiver.sol";
 import {BaseGroupChatManager} from "../src/managers/BaseGroupChatManager.sol";
-import {MockBeforePostRejectPlugin, MockPostDenySource} from "./mocks/MockPlugins.sol";
+
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
 import {MockGroupChatManager} from "./mocks/MockManagers.sol";
+import {MockBeforePostRejectPlugin, MockPostDenySource} from "./mocks/MockPlugins.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupChatManagerTest is GroupChatFixture {

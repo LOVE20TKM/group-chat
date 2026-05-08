@@ -73,17 +73,9 @@ interface IGroupChatErrors {
 }
 
 interface IGroupChatEvents {
-    event ChatActivate(
-        uint256 indexed chatGroupId,
-        address indexed owner,
-        uint256 configVersion
-    );
+    event ChatActivate(uint256 indexed chatGroupId, address indexed owner, uint256 configVersion);
 
-    event ChatDeactivate(
-        uint256 indexed chatGroupId,
-        address indexed owner,
-        uint256 configVersion
-    );
+    event ChatDeactivate(uint256 indexed chatGroupId, address indexed owner, uint256 configVersion);
 
     event MetaSet(
         uint256 indexed chatGroupId,
@@ -142,11 +134,7 @@ interface IGroupChatEvents {
         uint256 messageId
     );
 
-    event MessageMention(
-        uint256 indexed chatGroupId,
-        uint256 indexed mentionedSenderId,
-        uint256 messageId
-    );
+    event MessageMention(uint256 indexed chatGroupId, uint256 indexed mentionedSenderId, uint256 messageId);
 
     event MessageMentionAll(uint256 indexed chatGroupId, uint256 messageId);
 
@@ -185,36 +173,19 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
 
     function deactivateChat(uint256 chatGroupId) external;
 
-    function setMeta(
-        uint256 chatGroupId,
-        string calldata key,
-        bytes calldata value
-    ) external;
+    function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external;
 
-    function setMetaBatch(
-        uint256 chatGroupId,
-        string[] calldata keys,
-        bytes[] calldata values
-    ) external;
+    function setMetaBatch(uint256 chatGroupId, string[] calldata keys, bytes[] calldata values) external;
 
     function setDelegateId(uint256 chatGroupId, uint256 delegateId_) external;
 
-    function setScopeSource(
-        uint256 chatGroupId,
-        address sourceAddress
-    ) external;
+    function setScopeSource(uint256 chatGroupId, address sourceAddress) external;
 
     function setDenySource(uint256 chatGroupId, address sourceAddress) external;
 
-    function setBeforePostPlugin(
-        uint256 chatGroupId,
-        address pluginAddress
-    ) external;
+    function setBeforePostPlugin(uint256 chatGroupId, address pluginAddress) external;
 
-    function setAfterPostPlugin(
-        uint256 chatGroupId,
-        address pluginAddress
-    ) external;
+    function setAfterPostPlugin(uint256 chatGroupId, address pluginAddress) external;
 
     function post(
         uint256 chatGroupId,
@@ -233,21 +204,14 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         uint256 quotedMessageId
     ) external;
 
-    function chatInfo(
-        uint256 chatGroupId
-    ) external view returns (ChatInfo memory);
+    function chatInfo(uint256 chatGroupId) external view returns (ChatInfo memory);
 
-    function metaValue(
-        uint256 chatGroupId,
-        string calldata key
-    ) external view returns (bytes memory);
+    function metaValue(uint256 chatGroupId, string calldata key) external view returns (bytes memory);
 
-    function metaEntries(
-        uint256 chatGroupId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (MetaEntry[] memory);
+    function metaEntries(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (MetaEntry[] memory);
 
     function delegateIdOf(uint256 chatGroupId) external view returns (uint256);
 
@@ -255,100 +219,59 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
 
     function denySource(uint256 chatGroupId) external view returns (address);
 
-    function beforePostPlugin(
-        uint256 chatGroupId
-    ) external view returns (address);
+    function beforePostPlugin(uint256 chatGroupId) external view returns (address);
 
-    function afterPostPlugin(
-        uint256 chatGroupId
-    ) external view returns (address);
+    function afterPostPlugin(uint256 chatGroupId) external view returns (address);
 
-    function ruleSlots(
-        uint256 chatGroupId
-    )
+    function ruleSlots(uint256 chatGroupId)
         external
         view
-        returns (
-            address scopeSource_,
-            address denySource_,
-            address beforePostPlugin_,
-            address afterPostPlugin_
-        );
+        returns (address scopeSource_, address denySource_, address beforePostPlugin_, address afterPostPlugin_);
 
-    function canPost(
-        uint256 chatGroupId,
-        uint256 senderId,
-        address senderAddress
-    ) external view returns (bool);
+    function canPost(uint256 chatGroupId, uint256 senderId, address senderAddress) external view returns (bool);
 
-    function canPostStatus(
-        uint256 chatGroupId,
-        uint256 senderId,
-        address senderAddress
-    ) external view returns (bool allowed, bytes4 reasonCode);
+    function canPostStatus(uint256 chatGroupId, uint256 senderId, address senderAddress)
+        external
+        view
+        returns (bool allowed, bytes4 reasonCode);
 
     function currentRound() external view returns (uint256);
 
     function messagesCount(uint256 chatGroupId) external view returns (uint256);
 
-    function message(
-        uint256 chatGroupId,
-        uint256 messageId
-    ) external view returns (Message memory);
+    function message(uint256 chatGroupId, uint256 messageId) external view returns (Message memory);
 
-    function messagesByRoundCount(
-        uint256 chatGroupId,
-        uint256 round
-    ) external view returns (uint256);
+    function messagesByRoundCount(uint256 chatGroupId, uint256 round) external view returns (uint256);
 
-    function messagesBySenderCount(
-        uint256 chatGroupId,
-        uint256 senderId
-    ) external view returns (uint256);
+    function messagesBySenderCount(uint256 chatGroupId, uint256 senderId) external view returns (uint256);
 
-    function senderIdsCount(
-        uint256 chatGroupId
-    ) external view returns (uint256);
+    function senderIdsCount(uint256 chatGroupId) external view returns (uint256);
 
     function chatGroupIdsCount() external view returns (uint256);
 
     function activeChatGroupIdsCount() external view returns (uint256);
 
-    function messages(
-        uint256 chatGroupId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (Message[] memory);
+    function messages(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (Message[] memory);
 
-    function messagesByRound(
-        uint256 chatGroupId,
-        uint256 round,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (Message[] memory);
+    function messagesByRound(uint256 chatGroupId, uint256 round, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (Message[] memory);
 
-    function messagesBySender(
-        uint256 chatGroupId,
-        uint256 senderId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (Message[] memory);
+    function messagesBySender(uint256 chatGroupId, uint256 senderId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (Message[] memory);
 
-    function messageIdsBySender(
-        uint256 chatGroupId,
-        uint256 senderId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (uint256[] memory);
+    function messageIdsBySender(uint256 chatGroupId, uint256 senderId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory);
 
-    function messagesByMentionCount(
-        uint256 chatGroupId,
-        uint256 mentionedSenderId
-    ) external view returns (uint256);
+    function messagesByMentionCount(uint256 chatGroupId, uint256 mentionedSenderId) external view returns (uint256);
 
     function messagesByMention(
         uint256 chatGroupId,
@@ -366,59 +289,35 @@ interface IGroupChat is IGroupChatStructs, IGroupChatErrors, IGroupChatEvents {
         bool reverse
     ) external view returns (uint256[] memory);
 
-    function messagesByMentionAllCount(
-        uint256 chatGroupId
-    ) external view returns (uint256);
+    function messagesByMentionAllCount(uint256 chatGroupId) external view returns (uint256);
 
-    function messagesByMentionAll(
-        uint256 chatGroupId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (Message[] memory);
+    function messagesByMentionAll(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (Message[] memory);
 
-    function messageIdsByMentionAll(
-        uint256 chatGroupId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (uint256[] memory);
+    function messageIdsByMentionAll(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory);
 
-    function senderIds(
-        uint256 chatGroupId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (uint256[] memory);
+    function senderIds(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory);
 
-    function chatGroupIds(
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (uint256[] memory);
+    function chatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory);
 
-    function activeChatGroupIds(
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (uint256[] memory);
+    function activeChatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory);
 
     function roundsCount(uint256 chatGroupId) external view returns (uint256);
 
-    function rounds(
-        uint256 chatGroupId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (RoundSpan[] memory);
+    function rounds(uint256 chatGroupId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (RoundSpan[] memory);
 
-    function roundInfo(
-        uint256 chatGroupId,
-        uint256 round
-    ) external view returns (RoundSpan memory);
+    function roundInfo(uint256 chatGroupId, uint256 round) external view returns (RoundSpan memory);
 
-    function roundInfos(
-        uint256 chatGroupId,
-        uint256[] calldata roundIds
-    ) external view returns (RoundSpan[] memory);
+    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds) external view returns (RoundSpan[] memory);
 }

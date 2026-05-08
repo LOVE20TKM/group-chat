@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupChat} from "./interfaces/IGroupChat.sol";
-import {IBeforePostPlugin} from "./interfaces/IBeforePostPlugin.sol";
 import {IAfterPostPlugin} from "./interfaces/IAfterPostPlugin.sol";
+import {IBeforePostPlugin} from "./interfaces/IBeforePostPlugin.sol";
+import {IGroupChat} from "./interfaces/IGroupChat.sol";
+
+import {IPostDenySource} from "./interfaces/IPostDenySource.sol";
+import {IPostScopeSource} from "./interfaces/IPostScopeSource.sol";
 import {IGroupDefaults} from "./interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "./interfaces/external/ILOVE20Group.sol";
-import {IPostScopeSource} from "./interfaces/IPostScopeSource.sol";
-import {IPostDenySource} from "./interfaces/IPostDenySource.sol";
 
 contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 16384;
@@ -65,7 +66,9 @@ contract GroupChat is IGroupChat {
         if (groupDefaults_.code.length == 0) {
             revert GroupDefaultsHasNoCode();
         }
-        if (phaseBlocks_ == 0) revert PhaseBlocksZero();
+        if (phaseBlocks_ == 0) {
+            revert PhaseBlocksZero();
+        }
         GROUP_DEFAULTS_ADDRESS = groupDefaults_;
         LOVE20_GROUP_ADDRESS = IGroupDefaults(groupDefaults_).GROUP_ADDRESS();
         originBlocks = originBlocks_;
@@ -90,10 +93,14 @@ contract GroupChat is IGroupChat {
         uint256 delegateId_
     ) external nonReentrant {
         address owner = _ownerOfOrRevert(chatGroupId);
-        if (msg.sender != owner) revert NotChatOwner();
+        if (msg.sender != owner) {
+            revert NotChatOwner();
+        }
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (config.active) revert ChatAlreadyActive();
+        if (config.active) {
+            revert ChatAlreadyActive();
+        }
 
         bytes32[] memory metaHashes = _validateMetaInput(metaKeys_, metaValues_);
         _validatePluginAddress(scopeSource_);
@@ -132,10 +139,14 @@ contract GroupChat is IGroupChat {
 
     function deactivateChat(uint256 chatGroupId) external nonReentrant {
         address owner = _ownerOfOrRevert(chatGroupId);
-        if (msg.sender != owner) revert NotChatOwner();
+        if (msg.sender != owner) {
+            revert NotChatOwner();
+        }
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (!config.active) revert ChatAlreadyInactive();
+        if (!config.active) {
+            revert ChatAlreadyInactive();
+        }
 
         uint256 newVersion = config.configVersion + 1;
         config.active = false;
@@ -153,7 +164,9 @@ contract GroupChat is IGroupChat {
         MetaState storage item = _metaStates[chatGroupId][hash];
 
         if (value.length == 0) {
-            if (!item.exists) revert MetaKeyNotFound();
+            if (!item.exists) {
+                revert MetaKeyNotFound();
+            }
             bytes memory prevValue = item.value;
             _removeMeta(chatGroupId, hash);
             uint256 newVersion = config.configVersion + 1;
@@ -163,7 +176,9 @@ contract GroupChat is IGroupChat {
         }
 
         if (item.exists) {
-            if (_bytesEqual(item.value, value)) revert MetaValueUnchanged();
+            if (_bytesEqual(item.value, value)) {
+                revert MetaValueUnchanged();
+            }
             bytes memory prevValue = item.value;
             item.value = value;
             uint256 newVersion = config.configVersion + 1;
@@ -180,7 +195,9 @@ contract GroupChat is IGroupChat {
 
     function setMetaBatch(uint256 chatGroupId, string[] calldata keys, bytes[] calldata values) external nonReentrant {
         _requireOwnerOrDelegateAndActive(chatGroupId);
-        if (keys.length != values.length) revert MetaArrayLengthMismatch();
+        if (keys.length != values.length) {
+            revert MetaArrayLengthMismatch();
+        }
         if (keys.length == 0) {
             return;
         }
@@ -191,7 +208,9 @@ contract GroupChat is IGroupChat {
         for (uint256 i = 0; i < keys.length; i++) {
             MetaState storage item = _metaStates[chatGroupId][hashes[i]];
             if (values[i].length == 0) {
-                if (!item.exists) revert MetaKeyNotFound();
+                if (!item.exists) {
+                    revert MetaKeyNotFound();
+                }
             } else if (item.exists && _bytesEqual(item.value, values[i])) {
                 revert MetaValueUnchanged();
             }
@@ -219,10 +238,14 @@ contract GroupChat is IGroupChat {
 
     function setDelegateId(uint256 chatGroupId, uint256 delegateId_) external nonReentrant {
         address owner = _ownerOfOrRevert(chatGroupId);
-        if (msg.sender != owner) revert NotChatOwner();
+        if (msg.sender != owner) {
+            revert NotChatOwner();
+        }
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (!config.active) revert ChatNotActive();
+        if (!config.active) {
+            revert ChatNotActive();
+        }
         _validateDelegateId(chatGroupId, delegateId_);
 
         address targetSnapshot = delegateId_ == 0 ? address(0) : owner;
@@ -244,7 +267,9 @@ contract GroupChat is IGroupChat {
         _validatePluginAddress(sourceAddress);
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (config.scopeSource == sourceAddress) revert PluginAddressUnchanged();
+        if (config.scopeSource == sourceAddress) {
+            revert PluginAddressUnchanged();
+        }
 
         address prevSourceAddress = config.scopeSource;
         config.scopeSource = sourceAddress;
@@ -259,7 +284,9 @@ contract GroupChat is IGroupChat {
         _validatePluginAddress(sourceAddress);
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (config.denySource == sourceAddress) revert PluginAddressUnchanged();
+        if (config.denySource == sourceAddress) {
+            revert PluginAddressUnchanged();
+        }
 
         address prevSourceAddress = config.denySource;
         config.denySource = sourceAddress;
@@ -274,7 +301,9 @@ contract GroupChat is IGroupChat {
         _validatePluginAddress(pluginAddress);
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (config.beforePostPlugin == pluginAddress) revert PluginAddressUnchanged();
+        if (config.beforePostPlugin == pluginAddress) {
+            revert PluginAddressUnchanged();
+        }
 
         address prevPluginAddress = config.beforePostPlugin;
         config.beforePostPlugin = pluginAddress;
@@ -289,7 +318,9 @@ contract GroupChat is IGroupChat {
         _validatePluginAddress(pluginAddress);
 
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (config.afterPostPlugin == pluginAddress) revert PluginAddressUnchanged();
+        if (config.afterPostPlugin == pluginAddress) {
+            revert PluginAddressUnchanged();
+        }
 
         address prevPluginAddress = config.afterPostPlugin;
         config.afterPostPlugin = pluginAddress;
@@ -318,7 +349,9 @@ contract GroupChat is IGroupChat {
         uint256 quotedMessageId
     ) external nonReentrant {
         uint256 senderId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(msg.sender);
-        if (senderId == 0) revert DefaultGroupIdNotSet();
+        if (senderId == 0) {
+            revert DefaultGroupIdNotSet();
+        }
         _post(chatGroupId, senderId, content, mentionedSenderIds, mentionAll, quotedMessageId);
     }
 
@@ -332,13 +365,19 @@ contract GroupChat is IGroupChat {
     ) internal {
         _requireExistingGroup(chatGroupId);
         ChatConfig storage config = _chatConfigs[chatGroupId];
-        if (!config.active) revert ChatNotActive();
+        if (!config.active) {
+            revert ChatNotActive();
+        }
 
         address senderOwner = _ownerOfOrRevert(senderId);
-        if (msg.sender != senderOwner) revert SenderAddressNotSenderIdOwner();
+        if (msg.sender != senderOwner) {
+            revert SenderAddressNotSenderIdOwner();
+        }
 
         uint256 contentLength = bytes(content).length;
-        if (contentLength == 0) revert ContentEmpty();
+        if (contentLength == 0) {
+            revert ContentEmpty();
+        }
         if (contentLength > MAX_CONTENT_LENGTH) {
             revert ContentTooLong(contentLength, MAX_CONTENT_LENGTH);
         }
@@ -456,12 +495,7 @@ contract GroupChat is IGroupChat {
     function ruleSlots(uint256 chatGroupId)
         external
         view
-        returns (
-            address scopeSource_,
-            address denySource_,
-            address beforePostPlugin_,
-            address afterPostPlugin_
-        )
+        returns (address scopeSource_, address denySource_, address beforePostPlugin_, address afterPostPlugin_)
     {
         _requireExistingGroup(chatGroupId);
         ChatConfig storage config = _chatConfigs[chatGroupId];
@@ -482,7 +516,9 @@ contract GroupChat is IGroupChat {
     }
 
     function currentRound() public view returns (uint256) {
-        if (block.number < originBlocks) revert RoundNotStarted();
+        if (block.number < originBlocks) {
+            revert RoundNotStarted();
+        }
         return (block.number - originBlocks) / phaseBlocks;
     }
 
@@ -584,13 +620,11 @@ contract GroupChat is IGroupChat {
         return result;
     }
 
-    function messageIdsBySender(
-        uint256 chatGroupId,
-        uint256 senderId,
-        uint256 offset,
-        uint256 limit,
-        bool reverse
-    ) external view returns (uint256[] memory) {
+    function messageIdsBySender(uint256 chatGroupId, uint256 senderId, uint256 offset, uint256 limit, bool reverse)
+        external
+        view
+        returns (uint256[] memory)
+    {
         _requireExistingGroup(chatGroupId);
         uint256[] storage indexes = _senderMessageIndexes[chatGroupId][senderId];
         uint256 count = _pageCount(indexes.length, offset, limit);
@@ -708,11 +742,7 @@ contract GroupChat is IGroupChat {
         return _uint256Page(_chatGroupIds, offset, limit, reverse);
     }
 
-    function activeChatGroupIds(uint256 offset, uint256 limit, bool reverse)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function activeChatGroupIds(uint256 offset, uint256 limit, bool reverse) external view returns (uint256[] memory) {
         return _uint256Page(_activeChatGroupIds, offset, limit, reverse);
     }
 
@@ -744,11 +774,7 @@ contract GroupChat is IGroupChat {
         return _roundSpanOrEmpty(chatGroupId, round);
     }
 
-    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds)
-        external
-        view
-        returns (RoundSpan[] memory)
-    {
+    function roundInfos(uint256 chatGroupId, uint256[] calldata roundIds) external view returns (RoundSpan[] memory) {
         _requireExistingGroup(chatGroupId);
         RoundSpan[] memory result = new RoundSpan[](roundIds.length);
 
@@ -933,7 +959,9 @@ contract GroupChat is IGroupChat {
 
     function _requireOwnerOrDelegateAndActive(uint256 groupId) internal view {
         ChatConfig storage config = _chatConfigs[groupId];
-        if (!config.active) revert ChatNotActive();
+        if (!config.active) {
+            revert ChatNotActive();
+        }
         if (!_isOwnerOrDelegateIdOwner(groupId, config, msg.sender)) {
             revert NotChatOwnerOrDelegateIdOwner();
         }
@@ -981,9 +1009,9 @@ contract GroupChat is IGroupChat {
         }
 
         if (config.scopeSource != address(0)) {
-            try IPostScopeSource(config.scopeSource).canPost(chatGroupId, senderId, senderAddress)
-                returns (bool sourceAllowed)
-            {
+            try IPostScopeSource(config.scopeSource).canPost(chatGroupId, senderId, senderAddress) returns (
+                bool sourceAllowed
+            ) {
                 if (!sourceAllowed) {
                     return (false, ScopeRejected.selector);
                 }
@@ -993,8 +1021,7 @@ contract GroupChat is IGroupChat {
         }
 
         if (config.denySource != address(0)) {
-            try IPostDenySource(config.denySource).isDenied(chatGroupId, senderId, senderAddress)
-                returns (bool denied)
+            try IPostDenySource(config.denySource).isDenied(chatGroupId, senderId, senderAddress) returns (bool denied)
             {
                 if (denied) {
                     return (false, DenyRejected.selector);
@@ -1073,14 +1100,18 @@ contract GroupChat is IGroupChat {
         pure
         returns (bytes32[] memory hashes)
     {
-        if (keys.length != values.length) revert MetaArrayLengthMismatch();
+        if (keys.length != values.length) {
+            revert MetaArrayLengthMismatch();
+        }
 
         hashes = new bytes32[](keys.length);
         for (uint256 i = 0; i < keys.length; i++) {
             _validateMetaKey(keys[i]);
             hashes[i] = keccak256(bytes(keys[i]));
             for (uint256 j = 0; j < i; j++) {
-                if (hashes[j] == hashes[i]) revert DuplicateMetaKey();
+                if (hashes[j] == hashes[i]) {
+                    revert DuplicateMetaKey();
+                }
             }
         }
     }
@@ -1134,7 +1165,9 @@ contract GroupChat is IGroupChat {
     }
 
     function _validateMetaKey(string calldata key) internal pure {
-        if (bytes(key).length == 0) revert MetaKeyEmpty();
+        if (bytes(key).length == 0) {
+            revert MetaKeyEmpty();
+        }
     }
 
     function _pageCount(uint256 total, uint256 offset, uint256 limit) internal pure returns (uint256) {
