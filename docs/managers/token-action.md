@@ -12,7 +12,7 @@
 function activate(
     address token,
     uint256 actionId
-) external returns (uint256 chatGroupId);
+) external returns (uint256 groupId);
 ```
 
 `recentRounds` 是构造函数入参，当前部署配置为 `3`；`recentRounds == 0` 必须在构造时 revert。
@@ -21,14 +21,14 @@ function activate(
 
 - Manager 生成群 NFT 名：`mgr_action_[symbol]_[actionId]_[xxxxxx]`
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
-- 调用 `GroupNFT.mint(...)` 得到 `chatGroupId`
+- 调用 `GroupNFT.mint(...)` 得到 `groupId`
 - 激活对应 chat
 
 写入：
 
-- `actionOfChatGroup[chatGroupId].token = token`
-- `actionOfChatGroup[chatGroupId].actionId = actionId`
-- `chatGroupIdOfAction[token][actionId] = chatGroupId`
+- `actionOfGroup[groupId].token = token`
+- `actionOfGroup[groupId].actionId = actionId`
+- `groupIdOfAction[token][actionId] = groupId`
 - `_actionIdsByToken[token].push(actionId)`
 - `GroupChat.scopeSource = address(this)`
 - `GroupChat.denySource = DENY_SOURCE_ADDRESS`
@@ -47,7 +47,7 @@ function activate(
 ## 黑名单票权
 
 ```solidity
-denyVoteWeightOf(chatGroupId, voter) =
+denyVoteWeightOf(groupId, voter) =
     ILOVE20Vote.votesNumByAccountByActionId(
         token,
         ILOVE20Vote.currentRound(),
@@ -73,20 +73,20 @@ struct ActionChat {
     uint256 actionId;
 }
 
-mapping(uint256 => ActionChat) public actionOfChatGroup;
-mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
+mapping(uint256 => ActionChat) public actionOfGroup;
+mapping(address => mapping(uint256 => uint256)) public groupIdOfAction;
 mapping(address => uint256[]) internal _actionIdsByToken;
 uint256 public immutable RECENT_ROUNDS;
 ```
 
-`actionOfChatGroup(chatGroupId).token == address(0)` 表示未激活。
+`actionOfGroup(groupId).token == address(0)` 表示未激活。
 
 ## 列表查询
 
 - `actionsCountOf(token)`
-- `actionsOf(token, offset, limit, reverse)`：返回 `actionIds`、`chatGroupIds`
-- `chatGroupIdsOfActions(token, actionIds)`：按输入顺序等长返回 `chatGroupId`，未激活返回 `0`
-- `actionsOfChatGroups(chatGroupIds)`：按输入顺序等长返回 `tokens`、`actionIds`，未激活返回 `address(0)`、`0`
+- `actionsOf(token, offset, limit, reverse)`：返回 `actionIds`、`groupIds`
+- `groupIdsOfActions(token, actionIds)`：按输入顺序等长返回 `groupId`，未激活返回 `0`
+- `actionsOfGroups(groupIds)`：按输入顺序等长返回 `tokens`、`actionIds`，未激活返回 `address(0)`、`0`
 
 ## Review 重点
 

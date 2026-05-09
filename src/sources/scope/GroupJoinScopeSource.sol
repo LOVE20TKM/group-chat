@@ -16,8 +16,7 @@ contract GroupJoinScopeSource is IPostScopeSource {
         GROUP_JOIN_ADDRESS = groupJoin_;
     }
 
-    function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        return
-            IGroupJoinGlobal(GROUP_JOIN_ADDRESS).gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) != 0;
+    function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {
+        return IGroupJoinGlobal(GROUP_JOIN_ADDRESS).gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) != 0;
     }
 }

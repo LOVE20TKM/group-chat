@@ -9,8 +9,8 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
     address public immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
 
-    mapping(uint256 => address) public tokenOfChatGroup;
-    mapping(address => uint256) public chatGroupIdOfToken;
+    mapping(uint256 => address) public tokenOfGroup;
+    mapping(address => uint256) public groupIdOfToken;
     address[] internal _activatedTokens;
 
     constructor(
@@ -36,36 +36,36 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
     function activatedTokens(uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (address[] memory tokens, uint256[] memory chatGroupIds)
+        returns (address[] memory tokens, uint256[] memory groupIds)
     {
         uint256 count = _pageCount(_activatedTokens.length, offset, limit);
         tokens = new address[](count);
-        chatGroupIds = new uint256[](count);
+        groupIds = new uint256[](count);
 
         for (uint256 i = 0; i < count; i++) {
             address token = _activatedTokens[_pageIndex(_activatedTokens.length, offset, i, reverse)];
             tokens[i] = token;
-            chatGroupIds[i] = chatGroupIdOfToken[token];
+            groupIds[i] = groupIdOfToken[token];
         }
     }
 
-    function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
-        address token = tokenOfChatGroup[chatGroupId];
+    function denyVoteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
+        address token = tokenOfGroup[groupId];
         if (token == address(0)) {
             return 0;
         }
         return _tokenGovVoteWeight(token, voter);
     }
 
-    function _activateTokenChat(address token, string memory managerPrefix) internal returns (uint256 chatGroupId) {
+    function _activateTokenChat(address token, string memory managerPrefix) internal returns (uint256 groupId) {
         _requireCode(token);
-        _requireNotManaged(chatGroupIdOfToken[token] != 0);
+        _requireNotManaged(groupIdOfToken[token] != 0);
 
-        chatGroupId = _mintManagedChatGroup(_tokenGroupNameStem(managerPrefix, token));
-        tokenOfChatGroup[chatGroupId] = token;
-        chatGroupIdOfToken[token] = chatGroupId;
+        groupId = _mintManagedGroup(_tokenGroupNameStem(managerPrefix, token));
+        tokenOfGroup[groupId] = token;
+        groupIdOfToken[token] = groupId;
         _activatedTokens.push(token);
-        _activateManagedChat(chatGroupId);
+        _activateManagedChat(groupId);
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {

@@ -19,10 +19,10 @@
 
 ```text
 GroupChat.denySource = GovVotedDenySource
-票权源 = ILOVE20Group(GROUP_ADDRESS).ownerOf(chatGroupId)
+票权源 = ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId)
 ```
 
-去中心化群聊的 `chatGroupId` owner 是对应 Manager。该 Manager 必须实现 `IDenyVoteWeightSource`，为本合约提供 `denyVoteWeightOf(...)`。
+去中心化群聊的 `groupId` owner 是对应 Manager。该 Manager 必须实现 `IDenyVoteWeightSource`，为本合约提供 `denyVoteWeightOf(...)`。
 
 ## 可配置项
 
@@ -67,124 +67,124 @@ GroupChat.denySource = GovVotedDenySource
 - `revalidateDeny*Vote` 后当前票权为 `0` 时，必须删除该 voter 对该目标的当前票。
 - 目标名单只包含当前至少有一个投票人的目标，不单独维护“已命中黑名单”派生列表。
 - 某目标最后一个投票人撤票或被重验证删除后，该目标必须从目标名单移除。
-- 地址目标读取票权时调用 `denyVoteWeightOf(chatGroupId, voter)`。
-- `senderId` 目标读取票权时调用 `denyVoteWeightOf(chatGroupId, voter)`。
+- 地址目标读取票权时调用 `denyVoteWeightOf(groupId, voter)`。
+- `senderId` 目标读取票权时调用 `denyVoteWeightOf(groupId, voter)`。
 
 ## 最小接口
 
 ```solidity
 function voteDenyAddress(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external;
 
 function opposeDenyAddress(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external;
 
 function clearDenyAddressVote(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external;
 
 function revalidateDenyAddressVote(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress,
     address voter
 ) external;
 
 function voteDenySenderId(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external;
 
 function opposeDenySenderId(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external;
 
 function clearDenySenderIdVote(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external;
 
 function revalidateDenySenderIdVote(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId,
     address voter
 ) external;
 
 function voteDenySenderBySenderId(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external;
 
 function opposeDenySenderBySenderId(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external;
 
 function clearDenySenderVoteBySenderId(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external;
 
 function revalidateDenySenderVoteBySenderId(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId,
     address voter
 ) external;
 
 function voteDenySenderBySenderAddress(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external;
 
 function opposeDenySenderBySenderAddress(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external;
 
 function clearDenySenderVoteBySenderAddress(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external;
 
 function revalidateDenySenderVoteBySenderAddress(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress,
     address voter
 ) external;
 
 function addressDenyVoteOf(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress,
     address voter
 ) external view returns (bool supportDeny, uint256 settledWeight);
 
 function senderIdDenyVoteOf(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId,
     address voter
 ) external view returns (bool supportDeny, uint256 settledWeight);
 
 function addressDenyTallyOf(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external view returns (uint256 supportWeight, uint256 opposeWeight);
 
 function senderIdDenyTallyOf(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external view returns (uint256 supportWeight, uint256 opposeWeight);
 
 function addressDenyTargetsCount(
-    uint256 chatGroupId
+    uint256 groupId
 ) external view returns (uint256);
 
 function addressDenyTargets(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 offset,
     uint256 limit
 ) external view returns (
@@ -195,11 +195,11 @@ function addressDenyTargets(
 );
 
 function senderIdDenyTargetsCount(
-    uint256 chatGroupId
+    uint256 groupId
 ) external view returns (uint256);
 
 function senderIdDenyTargets(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 offset,
     uint256 limit
 ) external view returns (
@@ -210,12 +210,12 @@ function senderIdDenyTargets(
 );
 
 function addressDenyVotersCount(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress
 ) external view returns (uint256);
 
 function addressDenyVoters(
-    uint256 chatGroupId,
+    uint256 groupId,
     address targetAddress,
     uint256 offset,
     uint256 limit
@@ -226,12 +226,12 @@ function addressDenyVoters(
 );
 
 function senderIdDenyVotersCount(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId
 ) external view returns (uint256);
 
 function senderIdDenyVoters(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 targetSenderId,
     uint256 offset,
     uint256 limit
@@ -242,22 +242,22 @@ function senderIdDenyVoters(
 );
 
 function isDenied(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderId,
     address senderAddress
 ) external view returns (bool);
 
 function stateVersion(
-    uint256 chatGroupId
+    uint256 groupId
 ) external view returns (uint256);
 ```
 
 ## 接口规则
 
-- 票权源固定为 `ILOVE20Group(GROUP_ADDRESS).ownerOf(chatGroupId)`。
+- 票权源固定为 `ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId)`。
 - 票权源必须是合约，并实现 `IDenyVoteWeightSource`；这是 Manager 与部署测试约束，读路径不做通用 ABI 探测。
 - 票权源不可用时，投票、反对、撤票、复议写接口必须拒绝。
-- 票权源不可用时，即 `ownerOf(chatGroupId)` 失败或 owner 无代码，`isDenied(...)` 返回 `false`，`*DenyTallyOf(...)` 返回 `0, 0`，分页接口返回空。
+- 票权源不可用时，即 `ownerOf(groupId)` 失败或 owner 无代码，`isDenied(...)` 返回 `false`，`*DenyTallyOf(...)` 返回 `0, 0`，分页接口返回空。
 - `targetAddress == address(0)` 必须拒绝。
 - `targetSenderId == 0` 必须拒绝。
 - 单个 voter 当前无票时，`*DenyVoteOf(...)` 返回 `supportDeny=false, settledWeight=0`。
@@ -272,14 +272,14 @@ function stateVersion(
 - 分页接口 `limit == 0` 或 `offset` 越界时返回空数组。
 - 同一分页接口返回的数组长度必须一致。
 - 目标与投票人列表必须去重，返回顺序不作协议承诺。
-- 任意外部投票写调用发生至少一项实际状态变化时，必须递增一次对应 `chatGroupId` 的 `stateVersion`。
+- 任意外部投票写调用发生至少一项实际状态变化时，必须递增一次对应 `groupId` 的 `stateVersion`。
 - `*DenySender*` 联动写接口若同时改变地址目标和 NFT 目标，两条明细事件必须使用同一个 `stateVersion`，且只发出一条 `StateVersionChanged`。
 
 ## 最小事件
 
 ```solidity
 event AddressDenyVoteSet(
-    uint256 indexed chatGroupId,
+    uint256 indexed groupId,
     address indexed targetAddress,
     address indexed voter,
     bool supportDeny,
@@ -290,7 +290,7 @@ event AddressDenyVoteSet(
 );
 
 event SenderIdDenyVoteSet(
-    uint256 indexed chatGroupId,
+    uint256 indexed groupId,
     uint256 indexed targetSenderId,
     address indexed voter,
     bool supportDeny,
@@ -301,7 +301,7 @@ event SenderIdDenyVoteSet(
 );
 
 event StateVersionChanged(
-    uint256 indexed chatGroupId,
+    uint256 indexed groupId,
     uint256 stateVersion
 );
 ```
@@ -315,7 +315,7 @@ event StateVersionChanged(
 - `address immutable GROUP_ADDRESS`
 - `address immutable GROUP_DEFAULTS_ADDRESS`
 
-每个 `chatGroupId` 至少维护：
+每个 `groupId` 至少维护：
 
 - `uint256 stateVersion`
 - `address[] addressDenyTargets` 与对应 `indexPlusOne`

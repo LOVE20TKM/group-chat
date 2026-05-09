@@ -56,7 +56,7 @@ Query：
 - `messagesByRoundCount`
 - `messagesBySenderCount`
 - `senderIdsCount`
-- `chatGroupIdsCount`
+- `groupIdsCount`
 - `messages`
 - `messagesByRound`
 - `messagesBySender`
@@ -68,7 +68,7 @@ Query：
 - `messageIdsByMention`
 - `messageIdsByMentionAll`
 - `senderIds`
-- `chatGroupIds`
+- `groupIds`
 - `roundsCount`
 - `rounds`
 - `roundInfo`
@@ -78,7 +78,7 @@ Query：
 
 `ChatInfo`：
 
-- `chatGroupId`
+- `groupId`
 - `owner`
 - `activated`
 - `postingAllowed`
@@ -94,7 +94,7 @@ Query：
 
 `Message`：
 
-- `chatGroupId`
+- `groupId`
 - `senderId`
 - `senderAddress`
 - `round`
@@ -119,7 +119,7 @@ Query：
 - `values`
 - 同一索引的 `keys[i]` 与 `values[i]` 对应
 
-`metaEntriesCount(chatGroupId)` 返回当前 live `meta` key 总数。
+`metaEntriesCount(groupId)` 返回当前 live `meta` key 总数。
 
 ## 事件
 
@@ -137,8 +137,8 @@ Query：
 消息事件：
 
 - `MessagePost`
-- `MessageMention(uint256 indexed chatGroupId, uint256 indexed mentionedSenderId, uint256 messageId)`
-- `MessageMentionAll(uint256 indexed chatGroupId, uint256 messageId)`
+- `MessageMention(uint256 indexed groupId, uint256 indexed mentionedSenderId, uint256 messageId)`
+- `MessageMentionAll(uint256 indexed groupId, uint256 messageId)`
 - `AfterPostPluginFailed`
 
 默认身份注册表事件：
@@ -179,7 +179,7 @@ Meta 错误：
 
 Delegate 错误：
 
-- `DelegateIdCannotBeChatGroupId`
+- `DelegateIdCannotBeGroupId`
 - `DelegateIdUnchanged`
 
 Rule slot 错误：

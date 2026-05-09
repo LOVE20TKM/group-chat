@@ -58,7 +58,7 @@ if (js.includes('mentionedSenderIds: [...state.mentionedSenderIds]') || js.inclu
 }
 
 if (js.includes('...state.messages.map((message) => message.messageId)')) {
-  throw new Error('messageId must be calculated per chatGroupId, not globally');
+  throw new Error('messageId must be calculated per groupId, not globally');
 }
 
 if (data.includes('indexMode') || js.includes('setIndexMode') || js.includes('set-index-mode')) {
@@ -81,7 +81,7 @@ if (
   aiEditing.includes('activeConversationId') ||
   aiEditing.includes('data-conversation-id')
 ) {
-  throw new Error('Prototype data and handlers must use chatGroupId, not conversationId');
+  throw new Error('Prototype data and handlers must use groupId, not conversationId');
 }
 
 if (!js.includes('function canQuoteMessage(') || !js.includes('canQuoteMessage(message)')) {
@@ -89,7 +89,7 @@ if (!js.includes('function canQuoteMessage(') || !js.includes('canQuoteMessage(m
 }
 
 if (data.includes('quotedMessageId: null') || js.includes('state.quotedMessageId')) {
-  throw new Error('Composer quote state must be stored by chatGroupId');
+  throw new Error('Composer quote state must be stored by groupId');
 }
 
 const cssOpenBraces = (css.match(/\{/g) || []).length;
@@ -195,7 +195,7 @@ const requiredAppJs = [
   'PostingNotAllowed',
   'messagesForChat',
   'renderMessageContent',
-  'quotedMessagesByChatGroupId',
+  'quotedMessagesByGroupId',
   'activeQuotedMessageId',
   'clearActiveQuote',
   'canQuoteMessage',
@@ -246,7 +246,7 @@ const requiredAppJs = [
   'simulate-message-gap',
   'conversationStatus',
   'unreadMessagesForChat',
-  'messages(${chatGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
+  'messages(${groupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
   'data-action="add-sender-deny"',
   'revalidateGovVote',
   'canEditRules',
@@ -306,31 +306,31 @@ if (!Array.isArray(initialState.messages)) {
 
 const chatIds = new Set();
 for (const chat of initialState.chats) {
-  if (chatIds.has(chat.chatGroupId)) throw new Error(`Duplicate chat chatGroupId: ${chat.chatGroupId}`);
-  chatIds.add(chat.chatGroupId);
-  for (const field of ['chatGroupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'chatInfo']) {
-    if (chat[field] === undefined) throw new Error(`Chat ${chat.chatGroupId} missing ${field}`);
+  if (chatIds.has(chat.groupId)) throw new Error(`Duplicate chat groupId: ${chat.groupId}`);
+  chatIds.add(chat.groupId);
+  for (const field of ['groupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'chatInfo']) {
+    if (chat[field] === undefined) throw new Error(`Chat ${chat.groupId} missing ${field}`);
   }
-  if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.chatGroupId} missing govDeny`);
-  if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.chatGroupId} missing adminDeny`);
+  if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.groupId} missing govDeny`);
+  if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
   if (chat.params?.token !== undefined) {
     if (!/^0x[a-fA-F0-9]{40}$/.test(chat.params.token)) {
-      throw new Error(`Chat ${chat.chatGroupId} params.token must be a token contract address`);
+      throw new Error(`Chat ${chat.groupId} params.token must be a token contract address`);
     }
     if (chat.tokenAddress !== chat.params.token) {
-      throw new Error(`Chat ${chat.chatGroupId} tokenAddress must match params.token`);
+      throw new Error(`Chat ${chat.groupId} tokenAddress must match params.token`);
     }
   }
 }
 
 for (const action of initialState.actions) {
-  if (!chatIds.has(action.actionChatId)) throw new Error(`Action ${action.actionId} missing actionChatId ${action.actionChatId}`);
-  if (!chatIds.has(action.actionGovChatId)) throw new Error(`Action ${action.actionId} missing actionGovChatId ${action.actionGovChatId}`);
+  if (!chatIds.has(action.actionGroupId)) throw new Error(`Action ${action.actionId} missing actionGroupId ${action.actionGroupId}`);
+  if (!chatIds.has(action.actionGovGroupId)) throw new Error(`Action ${action.actionId} missing actionGovGroupId ${action.actionGovGroupId}`);
 }
 
 for (const message of initialState.messages) {
-  if (!chatIds.has(Number(message.chatGroupId))) {
-    throw new Error(`Message ${message.messageId} points to missing chatGroupId ${message.chatGroupId}`);
+  if (!chatIds.has(Number(message.groupId))) {
+    throw new Error(`Message ${message.messageId} points to missing groupId ${message.groupId}`);
   }
 }
 
@@ -342,11 +342,11 @@ if (hasInvalidMessageId || !hasFirstMessageId) {
 
 const messageIdsByChat = new Map();
 for (const message of initialState.messages) {
-  const key = String(message.chatGroupId);
+  const key = String(message.groupId);
   if (!messageIdsByChat.has(key)) messageIdsByChat.set(key, new Set());
   const indexes = messageIdsByChat.get(key);
   if (indexes.has(message.messageId)) {
-    throw new Error(`Duplicate messageId ${message.messageId} in chatGroupId ${key}`);
+    throw new Error(`Duplicate messageId ${message.messageId} in groupId ${key}`);
   }
   indexes.add(message.messageId);
 }
@@ -372,7 +372,7 @@ const requiredProtocolCopy = [
   '治理群 ${chatTokenSymbol(chat)}',
   '行动大群',
   '行动治理群',
-  '链群#${chat.chatGroupId}',
+  '链群#${chat.groupId}',
   '春节公益铸造',
   '雪松节点',
 ];
@@ -450,7 +450,7 @@ const sendHarness = new Function(
 const sendState = {
   account: '0x8b...91',
   defaultGroupId: 9007,
-  activeChatGroupId: '1024',
+  activeGroupId: '1024',
   messages: [],
   mentionedSenderIds: [],
   mentionAll: false,
@@ -483,12 +483,12 @@ const quoteHarness = new Function(
 );
 
 const quoteTestState = {
-  activeChatGroupId: '1024',
+  activeGroupId: '1024',
   activeMenuMessageId: 0,
-  quotedMessagesByChatGroupId: {},
+  quotedMessagesByGroupId: {},
   messages: [
-    { chatGroupId: '1024', messageId: 1 },
-    { chatGroupId: '1024', messageId: 2 },
+    { groupId: '1024', messageId: 1 },
+    { groupId: '1024', messageId: 2 },
   ],
 };
 const { canQuoteMessage, quoteMessage } = quoteHarness(quoteTestState, () => {});
@@ -496,11 +496,11 @@ if (!canQuoteMessage(quoteTestState.messages[0]) || !canQuoteMessage(quoteTestSt
   throw new Error('canQuoteMessage must allow positive local message ids');
 }
 quoteMessage(0);
-if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== undefined) {
+if (quoteTestState.quotedMessagesByGroupId['1024'] !== undefined) {
   throw new Error('quoteMessage must ignore missing messageId 0');
 }
 quoteMessage(1);
-if (quoteTestState.quotedMessagesByChatGroupId['1024'] !== 1) {
+if (quoteTestState.quotedMessagesByGroupId['1024'] !== 1) {
   throw new Error('quoteMessage must store positive messageId quotes');
 }
 
@@ -518,11 +518,11 @@ let chatMenuRenderCount = 0;
 const { toggleChatMenu } = chatMenuHarness(chatMenuState, () => { chatMenuRenderCount += 1; });
 toggleChatMenu('1301');
 if (chatMenuState.activeGroupMenuId !== 1301 || chatMenuRenderCount !== 1) {
-  throw new Error('toggleChatMenu must open the menu for the requested chatGroupId');
+  throw new Error('toggleChatMenu must open the menu for the requested groupId');
 }
 toggleChatMenu('1301');
 if (chatMenuState.activeGroupMenuId !== null || chatMenuRenderCount !== 2) {
-  throw new Error('toggleChatMenu must close the active chatGroupId menu');
+  throw new Error('toggleChatMenu must close the active groupId menu');
 }
 
 const adminIdQueryHarness = new Function(
@@ -538,7 +538,7 @@ const adminIdQueryHarness = new Function(
 );
 
 const adminIdQueryState = JSON.parse(JSON.stringify(initialState));
-adminIdQueryState.activeChatId = 1301;
+adminIdQueryState.activeGroupNumericId = 1301;
 adminIdQueryState.adminIdQueryType = 'name';
 let adminIdQueryRenderCount = 0;
 adminIdQueryHarness(adminIdQueryState, () => { adminIdQueryRenderCount += 1; }).queryAdminIdValue('链群管理员', true);
@@ -553,9 +553,9 @@ const managerActivateHarness = new Function(
   'render',
   [
     extractFunctionSource(js, 'chatById'),
-    extractFunctionSource(js, 'nextManagedChatGroupId'),
-    extractFunctionSource(js, 'syncManagedChatGroupId'),
-    'function captureActivationDraft(chat) { return state.activationDrafts[String(chat.chatGroupId)] || { ...chat.params }; }',
+    extractFunctionSource(js, 'nextManagedGroupId'),
+    extractFunctionSource(js, 'syncManagedGroupId'),
+    'function captureActivationDraft(chat) { return state.activationDrafts[String(chat.groupId)] || { ...chat.params }; }',
     'function activationBlocker() { return ""; }',
     'function activationPreview(chat, draft) { const values = Object.keys(chat.params).map((key) => draft[key]).join(", "); return `${chat.manager}.activate(${values})`; }',
     'function resolveOptionalKnownNftInput(value) { return value; }',
@@ -565,8 +565,8 @@ const managerActivateHarness = new Function(
 );
 
 const managerActivationState = JSON.parse(JSON.stringify(initialState));
-const expectedMintedChatGroupId =
-  managerActivationState.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.chatGroupId) || 0), 0) + 1;
+const expectedMintedGroupId =
+  managerActivationState.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
 managerActivateHarness(managerActivationState, () => {}).activateChat(1189);
 
 const activatedActionGovChat = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && chat.actionId === '77');
@@ -574,18 +574,18 @@ const linkedAction = managerActivationState.actions.find((action) => action.toke
 if (!activatedActionGovChat || !activatedActionGovChat.activated || !activatedActionGovChat.postingAllowed) {
   throw new Error('Manager activation must mark the chat activated and postingAllowed');
 }
-if (activatedActionGovChat.chatGroupId !== expectedMintedChatGroupId) {
-  throw new Error('Manager activation must replace the placeholder chatGroupId with the minted chatGroupId');
+if (activatedActionGovChat.groupId !== expectedMintedGroupId) {
+  throw new Error('Manager activation must replace the placeholder groupId with the minted groupId');
 }
-if (managerActivationState.activeChatId !== expectedMintedChatGroupId
-  || managerActivationState.activeChatGroupId !== String(expectedMintedChatGroupId)) {
-  throw new Error('Manager activation must switch the active chat to the minted chatGroupId');
+if (managerActivationState.activeGroupNumericId !== expectedMintedGroupId
+  || managerActivationState.activeGroupId !== String(expectedMintedGroupId)) {
+  throw new Error('Manager activation must switch the active chat to the minted groupId');
 }
-if (!linkedAction || linkedAction.actionGovChatId !== expectedMintedChatGroupId) {
-  throw new Error('Manager activation must sync action references to the minted chatGroupId');
+if (!linkedAction || linkedAction.actionGovGroupId !== expectedMintedGroupId) {
+  throw new Error('Manager activation must sync action references to the minted groupId');
 }
-if (!managerActivationState.syncHint.includes(`chatGroupId ${expectedMintedChatGroupId}`)) {
-  throw new Error('Manager activation hint must mention the minted chatGroupId');
+if (!managerActivationState.syncHint.includes(`groupId ${expectedMintedGroupId}`)) {
+  throw new Error('Manager activation hint must mention the minted groupId');
 }
 
 console.log('LOVE20 Chat prototype smoke test passed');

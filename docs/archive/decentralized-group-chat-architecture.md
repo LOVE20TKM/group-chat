@@ -8,7 +8,7 @@
 
 - `GroupNFT` 更接近链上身份账号 / 链上自媒体账号，不只是“一个群”
 - 每个 `GroupNFT` 默认都可激活一个公开 `GroupChat`
-- `chatGroupId` 表示群聊所属身份
+- `groupId` 表示群聊所属身份
 - `senderGroupId` 表示发言身份
 - 地址只是当前控制某个 `GroupNFT` 的签名器，不是协议里的长期身份主体
 - 管理、代理、发言的主语都应是 `GroupNFT`
@@ -16,7 +16,7 @@
 
 因此：
 
-- `GroupChat` 的控制权始终跟随 `GroupNFT.ownerOf(chatGroupId)`
+- `GroupChat` 的控制权始终跟随 `GroupNFT.ownerOf(groupId)`
 - `beforePost` 插件只负责拦截，不接管核心状态
 - 去中心化群聊不能依赖中心化管理员地址，而应由专门的 manager 合约持有 `GroupNFT`
 
@@ -91,7 +91,7 @@
 - 调用 `GroupChat.activateChat(...)`
 - 挂载 `beforePost` 插件
 - 通用错误与事件
-- 通用 `chatGroupId` 生命周期状态
+- 通用 `groupId` 生命周期状态
 
 内部技术名规则：
 
@@ -114,7 +114,7 @@
 - 挂载 `GovVotedBlacklistBeforePostPlugin`
 - 提供发言资格查询
 - 提供治理黑名单投票权重查询
-- 维护 `tokenAddress <-> chatGroupId` 索引
+- 维护 `tokenAddress <-> groupId` 索引
 
 规则：
 
@@ -130,7 +130,7 @@
 - 挂载 `GovVotedBlacklistBeforePostPlugin`
 - 提供发言资格查询
 - 提供治理黑名单投票权重查询
-- 维护 `(tokenAddress, actionId) <-> chatGroupId` 索引
+- 维护 `(tokenAddress, actionId) <-> groupId` 索引
 
 规则：
 
@@ -148,7 +148,7 @@
 - 可复用 `GovVotedBlacklistBeforePostPlugin`
 - 提供发言资格查询
 - 提供治理黑名单投票权重查询
-- 维护 `tokenAddress <-> chatGroupId` 索引
+- 维护 `tokenAddress <-> groupId` 索引
 
 规则：
 
@@ -167,7 +167,7 @@
 - 可复用 `GovVotedBlacklistBeforePostPlugin`
 - 提供发言资格查询
 - 提供治理黑名单投票权重查询
-- 维护 `(tokenAddress, actionId) <-> chatGroupId` 索引
+- 维护 `(tokenAddress, actionId) <-> groupId` 索引
 
 规则：
 
@@ -211,8 +211,8 @@
 
 插件只依赖两类能力：
 
-- 某 `senderGroupId` 当前是否可在指定 `chatGroupId` 下发言
-- 某 `voterGroupId` 当前在指定 `chatGroupId` 下的有效票权
+- 某 `senderGroupId` 当前是否可在指定 `groupId` 下发言
+- 某 `voterGroupId` 当前在指定 `groupId` 下的有效票权
 
 ## 5. 前端识别
 
@@ -220,7 +220,7 @@
 
 识别流程：
 
-1. 读取 `GroupNFT.ownerOf(chatGroupId)`
+1. 读取 `GroupNFT.ownerOf(groupId)`
 2. 若 owner 命中受信的 `TokenGovGroupChatManager` 地址，按代币治理者群聊渲染
 3. 若 owner 命中受信的 `ActionGovGroupChatManager` 地址，按行动治理者群聊渲染
 4. 若 owner 命中受信的 `TokenGroupChatManager` 地址，按代币社区群聊渲染
@@ -231,7 +231,7 @@
 
 所有 `groupId` 都必须带前缀：
 
-- `chatGroupId`
+- `groupId`
 - `senderGroupId`
 - `delegateGroupId`
 - `voterGroupId`
@@ -244,14 +244,14 @@
 
 每个代币治理者群聊至少包含：
 
-- `chatGroupId`
+- `groupId`
 - `tokenAddress`
 
 ### 7.2 ActionGovGroupChat
 
 每个行动治理者群聊至少包含：
 
-- `chatGroupId`
+- `groupId`
 - `tokenAddress`
 - `actionId`
 
@@ -259,14 +259,14 @@
 
 每个代币社区群聊至少包含：
 
-- `chatGroupId`
+- `groupId`
 - `tokenAddress`
 
 ### 7.4 ActionGroupChat
 
 每个行动社区群聊至少包含：
 
-- `chatGroupId`
+- `groupId`
 - `tokenAddress`
 - `actionId`
 
@@ -280,7 +280,7 @@
 
 ### 7.6 SenderGroupIdBlacklistState
 
-每个 `chatGroupId + senderGroupId` 至少包含：
+每个 `groupId + senderGroupId` 至少包含：
 
 - `listed`
 - `supportWeight`
@@ -288,7 +288,7 @@
 
 ### 7.7 AddressBlacklistState
 
-每个 `chatGroupId + targetAddress` 至少包含：
+每个 `groupId + targetAddress` 至少包含：
 
 - `listed`
 - `supportWeight`
@@ -327,7 +327,7 @@
 
 `GovVotedBlacklistBeforePostPlugin.beforePost(...)` 至少按以下顺序判定：
 
-1. 通过 owner 合约判断 `senderGroupId` 当前是否有资格在 `chatGroupId` 发言
+1. 通过 owner 合约判断 `senderGroupId` 当前是否有资格在 `groupId` 发言
 2. 检查 `senderAddress` 是否在地址黑名单
 3. 检查 `senderGroupId` 是否在身份黑名单
 4. 三者都通过才允许发送
@@ -372,12 +372,12 @@
 ```solidity
 interface IGovBlacklistSource {
     function canPost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderGroupId
     ) external view returns (bool);
 
     function currentVoterWeight(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 voterGroupId
     ) external view returns (uint256);
 }
@@ -388,7 +388,7 @@ interface IGovBlacklistSource {
 ```solidity
 abstract contract BaseGroupChatManager is IGovBlacklistSource {
     function _ensureScopeAvailable(bytes32 scopeKey) internal view virtual;
-    function _bindScope(bytes32 scopeKey, uint256 chatGroupId) internal virtual;
+    function _bindScope(bytes32 scopeKey, uint256 groupId) internal virtual;
 }
 ```
 
@@ -397,10 +397,10 @@ abstract contract BaseGroupChatManager is IGovBlacklistSource {
 ```solidity
 interface ITokenGovGroupChatManager is IGovBlacklistSource {
     function governanceTokenAddressOf(
-        uint256 chatGroupId
+        uint256 groupId
     ) external view returns (address);
 
-    function chatGroupIdOfGovernanceToken(
+    function groupIdOfGovernanceToken(
         address tokenAddress
     ) external view returns (uint256);
 }
@@ -411,10 +411,10 @@ interface ITokenGovGroupChatManager is IGovBlacklistSource {
 ```solidity
 interface IActionGovGroupChatManager is IGovBlacklistSource {
     function actionBindingOf(
-        uint256 chatGroupId
+        uint256 groupId
     ) external view returns (address tokenAddress, uint256 actionId);
 
-    function chatGroupIdOfAction(
+    function groupIdOfAction(
         address tokenAddress,
         uint256 actionId
     ) external view returns (uint256);
@@ -426,10 +426,10 @@ interface IActionGovGroupChatManager is IGovBlacklistSource {
 ```solidity
 interface ITokenGroupChatManager is IGovBlacklistSource {
     function tokenAddressOf(
-        uint256 chatGroupId
+        uint256 groupId
     ) external view returns (address);
 
-    function chatGroupIdOfToken(
+    function groupIdOfToken(
         address tokenAddress
     ) external view returns (uint256);
 }
@@ -440,10 +440,10 @@ interface ITokenGroupChatManager is IGovBlacklistSource {
 ```solidity
 interface IActionGroupChatManager is IGovBlacklistSource {
     function actionBindingOf(
-        uint256 chatGroupId
+        uint256 groupId
     ) external view returns (address tokenAddress, uint256 actionId);
 
-    function chatGroupIdOfAction(
+    function groupIdOfAction(
         address tokenAddress,
         uint256 actionId
     ) external view returns (uint256);
@@ -455,7 +455,7 @@ interface IActionGroupChatManager is IGovBlacklistSource {
 ```solidity
 interface IGovVotedBlacklistBeforePostPlugin {
     function beforePost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderGroupId,
         address senderAddress,
         string calldata content,
@@ -465,33 +465,33 @@ interface IGovVotedBlacklistBeforePostPlugin {
     ) external;
 
     function voteAddress(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 voterGroupId,
         address targetAddress,
         uint8 stance
     ) external;
 
     function voteSenderGroupId(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 voterGroupId,
         uint256 targetSenderGroupId,
         uint8 stance
     ) external;
 
     function revalidateAddressVote(
-        uint256 chatGroupId,
+        uint256 groupId,
         address targetAddress,
         uint256 voterGroupId
     ) external;
 
     function revalidateSenderGroupIdVote(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 targetSenderGroupId,
         uint256 voterGroupId
     ) external;
 
     function addressBlacklistState(
-        uint256 chatGroupId,
+        uint256 groupId,
         address targetAddress
     ) external view returns (
         bool listed,
@@ -500,7 +500,7 @@ interface IGovVotedBlacklistBeforePostPlugin {
     );
 
     function senderGroupIdBlacklistState(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderGroupId
     ) external view returns (
         bool listed,
@@ -526,31 +526,31 @@ interface IGovVotedBlacklistBeforePostPlugin {
 
 建议至少维护：
 
-- `mapping(uint256 => address) governanceTokenAddressByChatGroupId`
-- `mapping(address => uint256) chatGroupIdByGovernanceTokenAddress`
+- `mapping(uint256 => address) governanceTokenAddressByGroupId`
+- `mapping(address => uint256) groupIdByGovernanceTokenAddress`
 
 ### 10.3 ActionGovGroupChatManager
 
 建议至少维护：
 
-- `mapping(uint256 => address) tokenAddressByChatGroupId`
-- `mapping(uint256 => uint256) actionIdByChatGroupId`
-- `mapping(address => mapping(uint256 => uint256)) chatGroupIdByTokenAddressByActionId`
+- `mapping(uint256 => address) tokenAddressByGroupId`
+- `mapping(uint256 => uint256) actionIdByGroupId`
+- `mapping(address => mapping(uint256 => uint256)) groupIdByTokenAddressByActionId`
 
 ### 10.4 TokenGroupChatManager
 
 建议至少维护：
 
-- `mapping(uint256 => address) tokenAddressByChatGroupId`
-- `mapping(address => uint256) chatGroupIdByTokenAddress`
+- `mapping(uint256 => address) tokenAddressByGroupId`
+- `mapping(address => uint256) groupIdByTokenAddress`
 
 ### 10.5 ActionGroupChatManager
 
 建议至少维护：
 
-- `mapping(uint256 => address) tokenAddressByChatGroupId`
-- `mapping(uint256 => uint256) actionIdByChatGroupId`
-- `mapping(address => mapping(uint256 => uint256)) chatGroupIdByTokenAddressByActionId`
+- `mapping(uint256 => address) tokenAddressByGroupId`
+- `mapping(uint256 => uint256) actionIdByGroupId`
+- `mapping(address => mapping(uint256 => uint256)) groupIdByTokenAddressByActionId`
 
 ### 10.6 GovVotedBlacklistBeforePostPlugin
 
@@ -576,12 +576,12 @@ interface IGovVotedBlacklistBeforePostPlugin {
 
 ### 11.2 发送消息
 
-1. 用户调用 `GroupChat.post(chatGroupId, senderGroupId, content, mentionedSenderIds, mentionAll, quotedMessageIndex)`，或先设置默认身份后调用 `postByDefaultSender(...)`
+1. 用户调用 `GroupChat.post(groupId, senderGroupId, content, mentionedSenderIds, mentionAll, quotedMessageIndex)`，或先设置默认身份后调用 `postByDefaultSender(...)`
 2. 主协议先校验 `msg.sender` 是否为 `senderGroupId` 当前 owner
 3. 主协议先校验 `quotedMessageIndex`，再将 `content`、`mentionedSenderIds`、`mentionAll`、`quotedMessageIndex` 原样传给 `beforePost` 插件
-4. 插件通过 `GroupNFT.ownerOf(chatGroupId)` 识别当前 owner manager
+4. 插件通过 `GroupNFT.ownerOf(groupId)` 识别当前 owner manager
 5. 插件将该 owner 视为 `IGovBlacklistSource`
-6. 先调用 `canPost(chatGroupId, senderGroupId)`
+6. 先调用 `canPost(groupId, senderGroupId)`
 7. 再检查地址黑名单与身份黑名单
 8. 若插件需要限制 `mentionAll`，也在此阶段判定
 9. 全部通过则放行，否则拒绝

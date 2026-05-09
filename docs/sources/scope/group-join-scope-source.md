@@ -9,12 +9,12 @@
 `GroupJoinScopeSource` 不维护成员表，只读取链群扩展 `GroupJoin` 的全局 g 索引：
 
 ```text
-GroupJoin.gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) > 0
+GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 ```
 
 含义：
 
-- `chatGroupId` 直接对应链群 `groupId`
+- `groupId` 直接对应链群 `groupId`
 - `senderAddress` 当前在该链群下参与至少一个代币社区行动时，可发言
 - 退出最后一个相关行动后，`GroupJoin` 会移除 g 索引，发言资格随之失效
 
@@ -44,7 +44,7 @@ GroupChat.denySource = AdminDenySource
 
 ```solidity
 function canPost(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderId,
     address senderAddress
 ) external view returns (bool);

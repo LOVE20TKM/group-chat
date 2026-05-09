@@ -54,7 +54,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         return IERC721Receiver.onERC721Received.selector;
     }
 
-    function _mintManagedChatGroup(string memory groupNameStem) internal returns (uint256 chatGroupId) {
+    function _mintManagedGroup(string memory groupNameStem) internal returns (uint256 groupId) {
         string memory groupName = _nextGroupName(groupNameStem);
         ILOVE20Group group = ILOVE20Group(LOVE20_GROUP_ADDRESS);
 
@@ -70,17 +70,17 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         }
 
         uint256 actualMintCost;
-        (chatGroupId, actualMintCost) = group.mint(groupName);
+        (groupId, actualMintCost) = group.mint(groupName);
         if (actualMintCost != expectedMintCost) {
             revert ManagerMintCostChanged();
         }
     }
 
-    function _activateManagedChat(uint256 chatGroupId) internal {
+    function _activateManagedChat(uint256 groupId) internal {
         string[] memory metaKeys = new string[](0);
         bytes[] memory metaValues = new bytes[](0);
         IGroupChat(GROUP_CHAT_ADDRESS).activateChat(
-            chatGroupId,
+            groupId,
             metaKeys,
             metaValues,
             address(this),

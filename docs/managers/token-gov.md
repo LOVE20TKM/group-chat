@@ -9,20 +9,20 @@
 ## 激活
 
 ```solidity
-function activate(address token) external returns (uint256 chatGroupId);
+function activate(address token) external returns (uint256 groupId);
 ```
 
 流程：
 
 - Manager 生成群 NFT 名：`mgr_token_gov_[symbol]_[xxxxxx]`
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
-- 调用 `GroupNFT.mint(...)` 得到 `chatGroupId`
+- 调用 `GroupNFT.mint(...)` 得到 `groupId`
 - 激活对应 chat
 
 写入：
 
-- `tokenOfChatGroup[chatGroupId] = token`
-- `chatGroupIdOfToken[token] = chatGroupId`
+- `tokenOfGroup[groupId] = token`
+- `groupIdOfToken[token] = groupId`
 - `_activatedTokens.push(token)`
 - `GroupChat.scopeSource = address(this)`
 - `GroupChat.denySource = DENY_SOURCE_ADDRESS`
@@ -39,7 +39,7 @@ ILOVE20Stake.validGovVotes(token, account) != 0
 ## 黑名单票权
 
 ```solidity
-denyVoteWeightOf(chatGroupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
+denyVoteWeightOf(groupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
 ```
 
 未激活时返回 `0`。
@@ -52,15 +52,15 @@ denyVoteWeightOf(chatGroupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
 
 ## 状态
 
-- `mapping(uint256 => address) public tokenOfChatGroup`
-- `mapping(address => uint256) public chatGroupIdOfToken`
+- `mapping(uint256 => address) public tokenOfGroup`
+- `mapping(address => uint256) public groupIdOfToken`
 - `address[] internal _activatedTokens`
-- `tokenOfChatGroup(chatGroupId) == address(0)` 表示未激活
+- `tokenOfGroup(groupId) == address(0)` 表示未激活
 
 ## 列表查询
 
 - `activatedTokensCount()`
-- `activatedTokens(offset, limit, reverse)`：返回 `tokens`、`chatGroupIds`
+- `activatedTokens(offset, limit, reverse)`：返回 `tokens`、`groupIds`
 
 ## Review 重点
 

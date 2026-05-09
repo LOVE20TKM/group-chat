@@ -11,9 +11,9 @@ contract MockGroupChatManager is BaseGroupChatManager {
         BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_)
     {}
 
-    function activateMockManagedChat() external returns (uint256 chatGroupId) {
-        chatGroupId = _mintManagedChatGroup("mock_manager");
-        _activateManagedChat(chatGroupId);
+    function activateMockManagedChat() external returns (uint256 groupId) {
+        groupId = _mintManagedGroup("mock_manager");
+        _activateManagedChat(groupId);
     }
 
     function setMockPostAllowed(bool postAllowed_) external {

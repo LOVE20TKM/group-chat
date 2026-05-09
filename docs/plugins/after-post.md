@@ -15,7 +15,7 @@ AfterPostPlugin 处理消息落链后的观察型扩展。
 
 ```solidity
 function afterPost(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderId,
     address senderAddress,
     string calldata content,
@@ -44,5 +44,5 @@ function afterPost(
 ## Review 重点
 
 - `MessagePost` 必须先发。
-- 插件失败必须可定位到 `chatGroupId`、1-based `messageId`、`pluginAddress`。
+- 插件失败必须可定位到 `groupId`、1-based `messageId`、`pluginAddress`。
 - 前端收到失败事件后回查 view 结果，不把事件当正文真源。

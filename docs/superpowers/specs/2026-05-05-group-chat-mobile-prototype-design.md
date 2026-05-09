@@ -46,18 +46,18 @@
 
 | UI 能力 | 合约/文档依据 |
 | --- | --- |
-| chat 身份 | `1 NFT = 1 Chat`，`chatGroupId == GroupNFT.tokenId` |
-| 头部状态 | `chatInfo(chatGroupId)`：`activated`、`postingAllowed`、`owner`、`configVersion` |
+| chat 身份 | `1 NFT = 1 Chat`，`groupId == GroupNFT.tokenId` |
+| 头部状态 | `chatInfo(groupId)`：`activated`、`postingAllowed`、`owner`、`configVersion` |
 | 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderId` |
 | 发送消息 | `post` / `postAsDefaultSender` |
-| 可发言判断 | `canPost(chatGroupId, senderId, senderAddress)` |
+| 可发言判断 | `canPost(groupId, senderId, senderAddress)` |
 | 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，只记录声明语义 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
-| 规则槽 | `chatInfo(chatGroupId)`：`delegateId`、`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
+| 规则槽 | `chatInfo(groupId)`：`delegateId`、`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
 
 ## 信息架构
 
@@ -65,7 +65,7 @@
 
 1. 顶部栏
    - 返回按钮。
-   - 群名：按 chat 类型展示；`chatGroupId` 在详情页展示。
+   - 群名：按 chat 类型展示；`groupId` 在详情页展示。
    - `...` 打开群菜单。
 
 2. 消息区
@@ -81,7 +81,7 @@
 
 4. 输入区
    - 引用 chip 显示在输入框上方。
-   - 引用草稿按 `chatGroupId` 隔离，切换群聊不会串用其他群的 `quotedMessageId`。
+   - 引用草稿按 `groupId` 隔离，切换群聊不会串用其他群的 `quotedMessageId`。
    - 输入框字号至少 `16px`，避免移动端浏览器自动缩放。
    - 用户直接输入 `@姓名` 生成 `mentionedSenderIds`，直接输入 `@全部` 生成 `mentionAll=true`。
    - 长按头像可把对应 `@姓名` 插入输入框。

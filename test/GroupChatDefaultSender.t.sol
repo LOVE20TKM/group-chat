@@ -22,9 +22,9 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        _postAsDefaultSender(chatGroupId, "default-post");
+        _postAsDefaultSender(groupId, "default-post");
 
-        IGroupChat.Message memory fetched = chat.message(chatGroupId, 1);
+        IGroupChat.Message memory fetched = chat.message(groupId, 1);
         assertEq(fetched.senderId, senderId);
         assertEq(fetched.senderAddress, senderOwner);
         assertEq(fetched.content, "default-post");
@@ -43,7 +43,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         vm.roll(originBlocks);
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.DefaultGroupIdNotSet.selector);
-        _postAsDefaultSender(chatGroupId, "stale");
+        _postAsDefaultSender(groupId, "stale");
 
         vm.prank(other);
         groupNft.transferFrom(other, senderOwner, senderId);

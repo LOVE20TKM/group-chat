@@ -22,11 +22,11 @@ function escapeHtml(value) {
 }
 
 function activeChat() {
-  return state.chats.find((chat) => chat.chatGroupId === state.activeChatId);
+  return state.chats.find((chat) => chat.groupId === state.activeGroupNumericId);
 }
 
 function activeChatEntry() {
-  const chat = state.chats.find((item) => String(item.chatGroupId) === String(state.activeChatGroupId));
+  const chat = state.chats.find((item) => String(item.groupId) === String(state.activeGroupId));
   return chat ? { kind: 'group', item: chat } : null;
 }
 
@@ -38,13 +38,13 @@ function currentDefaultGroupId() {
   return state.defaultGroupId;
 }
 
-function ownerOfGroupId(chatGroupId) {
-  return state.groupOwners?.[String(chatGroupId)] || '';
+function ownerOfGroupId(groupId) {
+  return state.groupOwners?.[String(groupId)] || '';
 }
 
 function validDefaultGroupIdOf(address) {
-  const chatGroupId = state.defaultGroupIdsByAddress?.[address];
-  return chatGroupId && ownerOfGroupId(chatGroupId) === address ? chatGroupId : '';
+  const groupId = state.defaultGroupIdsByAddress?.[address];
+  return groupId && ownerOfGroupId(groupId) === address ? groupId : '';
 }
 
 function resolveNftInput(value, mode = 'name') {
@@ -76,28 +76,28 @@ function resolveOptionalKnownNftInput(value, mode = 'name') {
   return resolveKnownNftInput(raw, mode);
 }
 
-function messagesForChat(chatGroupId = state.activeChatGroupId) {
-  return state.messages.filter((message) => message.chatGroupId === String(chatGroupId));
+function messagesForChat(groupId = state.activeGroupId) {
+  return state.messages.filter((message) => message.groupId === String(groupId));
 }
 
-function messageById(messageId, chatGroupId = state.activeChatGroupId) {
-  return messagesForChat(chatGroupId).find((message) => message.messageId === Number(messageId));
+function messageById(messageId, groupId = state.activeGroupId) {
+  return messagesForChat(groupId).find((message) => message.messageId === Number(messageId));
 }
 
-function unreadMessagesForChat(chatGroupId) {
-  const lastRead = Number(state.readCursorsByChatGroupId?.[String(chatGroupId)] || 0);
-  return messagesForChat(chatGroupId).filter((message) => !message.mine && message.messageId > lastRead);
+function unreadMessagesForChat(groupId) {
+  const lastRead = Number(state.readCursorsByGroupId?.[String(groupId)] || 0);
+  return messagesForChat(groupId).filter((message) => !message.mine && message.messageId > lastRead);
 }
 
-function markChatRead(chatGroupId) {
-  const key = String(chatGroupId);
-  if (!state.readCursorsByChatGroupId) state.readCursorsByChatGroupId = {};
+function markChatRead(groupId) {
+  const key = String(groupId);
+  if (!state.readCursorsByGroupId) state.readCursorsByGroupId = {};
   const latestMessageId = messagesForChat(key).reduce((latest, message) => Math.max(latest, Number(message.messageId) || 0), 0);
-  state.readCursorsByChatGroupId[key] = latestMessageId;
+  state.readCursorsByGroupId[key] = latestMessageId;
 }
 
 function conversationStatus(chat) {
-  const unread = unreadMessagesForChat(chat.chatGroupId);
+  const unread = unreadMessagesForChat(chat.groupId);
   const mySenderId = Number(currentDefaultGroupId());
   return {
     unreadCount: unread.length,
@@ -107,11 +107,11 @@ function conversationStatus(chat) {
 }
 
 function messageMenuKey(message) {
-  return `${message.chatGroupId}:${message.messageId}`;
+  return `${message.groupId}:${message.messageId}`;
 }
 
 function activeQuotedMessageId() {
-  return state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] || null;
+  return state.quotedMessagesByGroupId[String(state.activeGroupId)] || null;
 }
 
 function canQuoteMessage(message) {
@@ -119,7 +119,7 @@ function canQuoteMessage(message) {
 }
 
 function clearActiveQuote() {
-  delete state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)];
+  delete state.quotedMessagesByGroupId[String(state.activeGroupId)];
 }
 
 function chatDisplayName(chat) {
@@ -127,7 +127,7 @@ function chatDisplayName(chat) {
   if (chat.type === 'token-gov') return `治理群 ${chatTokenSymbol(chat)}`;
   if (chat.type === 'action') return `行动大群 #${chat.actionId}-${actionTitle(chat)}`;
   if (chat.type === 'action-gov') return `行动治理群 #${chat.actionId}-${actionTitle(chat)}`;
-  if (chat.type === 'chain-service') return `链群#${chat.chatGroupId}-${chat.chainName || chat.shortTitle}`;
+  if (chat.type === 'chain-service') return `链群#${chat.groupId}-${chat.chainName || chat.shortTitle}`;
   return chat.title;
 }
 
@@ -160,7 +160,7 @@ function activationTypeForChat(chat) {
 }
 
 function activationDraftFor(chat) {
-  const key = String(chat.chatGroupId);
+  const key = String(chat.groupId);
   if (!state.activationDrafts[key]) {
     state.activationDrafts[key] = {
       ...chat.params,
@@ -178,7 +178,7 @@ function activationDraftFor(chat) {
 
 function activationFieldLabel(field) {
   const labels = {
-    chatGroupId: 'chatGroupId',
+    groupId: 'groupId',
     token: 'token',
     actionId: 'actionId',
     metaTitle: 'meta.title',
@@ -193,7 +193,7 @@ function activationFieldLabel(field) {
 }
 
 function activationInputMode(field) {
-  return ['chatGroupId', 'actionId'].includes(field) ? 'numeric' : 'text';
+  return ['groupId', 'actionId'].includes(field) ? 'numeric' : 'text';
 }
 
 function ruleSlotOptions(slot) {
@@ -222,7 +222,7 @@ function captureActivationDraft(chat) {
     draft[input.dataset.activationField] = input.value.trim();
   });
   if (chat.model === 'chain-service') {
-    draft.chatGroupId = draft.chatGroupId || String(chat.chatGroupId);
+    draft.groupId = draft.groupId || String(chat.groupId);
   }
   return draft;
 }
@@ -231,11 +231,11 @@ function activationBlocker(chat, draft) {
   if (!chat) return '请选择群聊';
   if (chat.activated) return '该群聊已激活';
   if (chat.model === 'chain-service') {
-    if (Number(draft.chatGroupId) !== chat.chatGroupId) return 'chatGroupId 必须等于当前 GroupNFT tokenId';
-    if (chat.role !== 'owner') return '只有 chatGroupId 当前 owner 可以直接激活';
+    if (Number(draft.groupId) !== chat.groupId) return 'groupId 必须等于当前 GroupNFT tokenId';
+    if (chat.role !== 'owner') return '只有 groupId 当前 owner 可以直接激活';
     const delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
     if (!delegateId) return `未找到 NFT：${draft.delegateId}`;
-    if (Number(delegateId || 0) === chat.chatGroupId) return 'delegateId 不能等于 chatGroupId';
+    if (Number(delegateId || 0) === chat.groupId) return 'delegateId 不能等于 groupId';
   }
   return '';
 }
@@ -243,7 +243,7 @@ function activationBlocker(chat, draft) {
 function activationPreview(chat, draft) {
   if (chat.model === 'chain-service') {
     const delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
-    return `activateChat(${draft.chatGroupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${delegateId})`;
+    return `activateChat(${draft.groupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.denySource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${delegateId})`;
   }
   const values = Object.keys(chat.params).map((key) => draft[key]).join(', ');
   return `${chat.manager}.activate(${values})`;
@@ -441,7 +441,7 @@ function renderConversationRows() {
 function renderConversationRow(entry) {
   const chat = entry.item;
   const rowAction = chat.activated ? 'open-chat' : 'open-activation';
-  const rowTarget = chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const rowTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   const status = conversationStatus(chat);
   const badges = [];
   if (status.hasMentionMe) badges.push('<span class="conversation-badge mention-me">@我</span>');
@@ -506,7 +506,7 @@ function renderActivationSection() {
 
 function renderActivationCard(chat) {
   const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
-  const mainTarget = chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const mainTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   return `
     <article class="type-card">
       <div class="card-topline">
@@ -517,15 +517,15 @@ function renderActivationCard(chat) {
       <div class="kv-grid">${renderParams(chat.params)}</div>
       <div class="card-actions">
         <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.activated ? '进入' : '配置入参'}</button>
-        <button class="sheet-button" type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}" ${chat.activated ? '' : 'disabled'}>黑名单</button>
+        <button class="sheet-button" type="button" data-action="open-blacklist" data-group-id="${chat.groupId}" ${chat.activated ? '' : 'disabled'}>黑名单</button>
       </div>
     </article>
   `;
 }
 
 function renderActionActivation(action) {
-  const actionChat = chatById(action.actionChatId);
-  const actionGovChat = chatById(action.actionGovChatId);
+  const actionChat = chatById(action.actionGroupId);
+  const actionGovChat = chatById(action.actionGovGroupId);
   return `
     <article class="action-row">
       <div class="card-topline">
@@ -542,7 +542,7 @@ function renderActionActivation(action) {
 
 function renderMiniActivate(chat) {
   const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
-  const mainTarget = chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`;
+  const mainTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   return `
     <div class="mini-card">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
@@ -562,9 +562,9 @@ function renderChainActivation(chat) {
       </div>
       <div class="muted">一个代币社区可有多个链群服务者管理群</div>
       <div class="inline-actions">
-        <button type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" ${chat.activated ? `data-chat-group-id="${chat.chatGroupId}"` : `data-chat-id="${chat.chatGroupId}"`}>${chat.activated ? '进入' : '配置'}</button>
-        ${chat.activated && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-chat-id="${chat.chatGroupId}">群管理</button>` : ''}
-        ${chat.activated ? `<button type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">黑名单</button>` : ''}
+        <button type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" ${chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`}>${chat.activated ? '进入' : '配置'}</button>
+        ${chat.activated && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">群管理</button>` : ''}
+        ${chat.activated ? `<button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
       </div>
     </article>
   `;
@@ -593,7 +593,7 @@ function renderActivationForm() {
       </div>
       ${blocker ? `<div class="notice-row">${escapeHtml(blocker)}</div>` : ''}
       <div class="card-actions">
-        <button class="sheet-button primary" type="button" data-action="activate-chat" data-chat-id="${chat.chatGroupId}" ${blocker ? 'disabled' : ''}>提交激活</button>
+        <button class="sheet-button primary" type="button" data-action="activate-chat" data-group-id="${chat.groupId}" ${blocker ? 'disabled' : ''}>提交激活</button>
         <button class="sheet-button" type="button" data-action="set-view" data-view="activate">返回列表</button>
       </div>
     </section>
@@ -604,7 +604,7 @@ function renderManagerActivationFields(chat, draft) {
   return `
     <section class="activation-section">
       <h2>Manager 入参</h2>
-      ${Object.keys(chat.params).map((field) => renderActivationTextInput(field, draft[field], field === 'chatGroupId')).join('')}
+      ${Object.keys(chat.params).map((field) => renderActivationTextInput(field, draft[field], field === 'groupId')).join('')}
       <div class="rule-table">${renderRuleRows(chat)}</div>
       <div class="notice-row">Manager 型群聊激活后不再修改 token、actionId 或规则槽；recentRounds 由 Manager 构造配置固定。</div>
     </section>
@@ -685,7 +685,7 @@ function renderDecentralizedManagement(chat) {
       <div class="rule-table">${renderRuleRows(chat)}</div>
       <div class="notice-row">去中心化群聊激活后不提供关闭、重配规则槽、改 token/action 的入口。</div>
       <div class="card-actions single-action">
-        <button class="sheet-button primary" type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">治理黑名单</button>
+        <button class="sheet-button primary" type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">治理黑名单</button>
       </div>
     </section>
   `;
@@ -848,7 +848,7 @@ function renderGroupPicker() {
   const groups = state.chats.filter((chat) => chat.activated);
   return `
     <div class="chat-picker" aria-label="选择群聊">
-      ${groups.map((chat) => `<button class="picker-button${chat.chatGroupId === state.activeChatId ? ' active' : ''}" type="button" data-action="select-chat" data-chat-id="${chat.chatGroupId}">${escapeHtml(chat.shortTitle)}</button>`).join('')}
+      ${groups.map((chat) => `<button class="picker-button${chat.groupId === state.activeGroupNumericId ? ' active' : ''}" type="button" data-action="select-chat" data-group-id="${chat.groupId}">${escapeHtml(chat.shortTitle)}</button>`).join('')}
     </div>
   `;
 }
@@ -1113,8 +1113,8 @@ function renderExemptRowMenu(chat, row) {
 
 function renderMessages() {
   const active = activeChatEntry();
-  const chatGroupId = state.activeChatGroupId;
-  const visibleMessages = messagesForChat(chatGroupId);
+  const groupId = state.activeGroupId;
+  const visibleMessages = messagesForChat(groupId);
   const chat = active ? active.item : null;
   const groupTools = chat ? renderChatTools(chat) : '';
   const roundLabel = chat ? `<div class="round-divider">Round ${chat.round}</div>` : '';
@@ -1124,17 +1124,17 @@ function renderMessages() {
 
 function renderChatTools(chat) {
   const exemptMenuItem = chat.adminDeny
-    ? `<button type="button" data-action="open-exempt" data-chat-id="${chat.chatGroupId}">豁免名单</button>`
+    ? `<button type="button" data-action="open-exempt" data-group-id="${chat.groupId}">豁免名单</button>`
     : '';
   const blacklistLabel = '黑名单';
   const manageMenuItem = canEditRules(chat)
-    ? `<button type="button" data-action="open-manage" data-chat-id="${chat.chatGroupId}">管理</button>`
+    ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>`
     : '<button type="button" disabled title="仅 NFT 拥有者或代理可以进">管理</button>';
-  const menu = state.activeGroupMenuId === chat.chatGroupId ? `
+  const menu = state.activeGroupMenuId === chat.groupId ? `
     <div class="chat-menu">
-      <button type="button" data-action="open-details" data-chat-id="${chat.chatGroupId}">详情</button>
-      <button type="button" data-action="simulate-message-gap" data-chat-id="${chat.chatGroupId}">模拟缺口</button>
-      <button type="button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">${blacklistLabel}</button>
+      <button type="button" data-action="open-details" data-group-id="${chat.groupId}">详情</button>
+      <button type="button" data-action="simulate-message-gap" data-group-id="${chat.groupId}">模拟缺口</button>
+      <button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">${blacklistLabel}</button>
       ${exemptMenuItem}
       ${manageMenuItem}
     </div>
@@ -1142,7 +1142,7 @@ function renderChatTools(chat) {
   return `
     <div class="chat-tools">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
-      <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-chat-id="${chat.chatGroupId}" aria-label="群聊菜单">...</button>
+      <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-group-id="${chat.groupId}" aria-label="群聊菜单">...</button>
       ${menu}
     </div>
   `;
@@ -1182,7 +1182,7 @@ function scopeSourceReason(chat) {
 function renderMessage(chat, message) {
   const mine = message.mine ? ' mine' : '';
   const profile = nftProfile(message.senderId);
-  const quoted = message.quotedMessageId ? messageById(message.quotedMessageId, message.chatGroupId) : null;
+  const quoted = message.quotedMessageId ? messageById(message.quotedMessageId, message.groupId) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderId).name)}</div>` : '';
   const content = renderMessageContent(message);
   const avatarMenu = state.activeAvatarMenuKey === messageMenuKey(message)
@@ -1201,7 +1201,7 @@ function renderMessage(chat, message) {
     : '';
   return `
     <article class="message-row${mine}" data-action="select-message" data-message-id="${message.messageId}">
-      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-chat-group-id="${message.chatGroupId}" data-message-id="${message.messageId}" data-sender-id="${message.senderId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
+      <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-group-id="${message.groupId}" data-message-id="${message.messageId}" data-sender-id="${message.senderId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
         <div class="message-meta">${escapeHtml(profile.name)}</div>
         <div class="message-bubble${mine}">${quote}${content}</div>
@@ -1228,7 +1228,7 @@ function renderMessageContent(message) {
 
 function renderSenderDenyAction(chat, message) {
   if (!canShowAvatarDenyMenu(chat, message)) return '';
-  return `<button type="button" data-action="add-sender-deny" data-chat-group-id="${message.chatGroupId}" data-message-id="${message.messageId}">拉黑sender</button>`;
+  return `<button type="button" data-action="add-sender-deny" data-group-id="${message.groupId}" data-message-id="${message.messageId}">拉黑sender</button>`;
 }
 
 function canShowAvatarDenyMenu(chat, message) {
@@ -1257,8 +1257,8 @@ function renderGroupDetails() {
   const groupAbout = chat ? `
       <dt>群聊</dt>
       <dd>${escapeHtml(chatDisplayName(chat))}</dd>
-      <dt>chatGroupId</dt>
-      <dd>#${chat.chatGroupId}</dd>
+      <dt>groupId</dt>
+      <dd>#${chat.groupId}</dd>
       <dt>类型</dt>
       <dd>${escapeHtml(chat.typeLabel)}</dd>
       <dt>activated</dt>
@@ -1284,8 +1284,8 @@ function renderGroupDetails() {
       ${statusRows}
     </dl>
     <div class="close-row status-actions">
-      ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-chat-id="${chat.chatGroupId}">管理</button>` : ''}
-      ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-chat-id="${chat.chatGroupId}">黑名单</button>` : ''}
+      ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>` : ''}
+      ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
     </div>
     </section>
   `;
@@ -1295,7 +1295,7 @@ function renderComposerChips() {
   const chips = [];
   const quotedMessageId = activeQuotedMessageId();
   if (quotedMessageId) {
-    const quoted = messageById(quotedMessageId, state.activeChatGroupId);
+    const quoted = messageById(quotedMessageId, state.activeGroupId);
     const quotedName = quoted ? nftProfile(quoted.senderId).name : '消息';
     chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
   }
@@ -1312,8 +1312,8 @@ function render() {
   renderComposerChips();
 }
 
-function chatById(chatId) {
-  return state.chats.find((chat) => chat.chatGroupId === Number(chatId));
+function chatById(groupId) {
+  return state.chats.find((chat) => chat.groupId === Number(groupId));
 }
 
 function setBottomTab(tab) {
@@ -1334,8 +1334,8 @@ function goBack() {
   if (previous) {
     state.bottomTab = previous.bottomTab;
     state.view = previous.view;
-    state.activeChatGroupId = previous.activeChatGroupId;
-    state.activeChatId = previous.activeChatId;
+    state.activeGroupId = previous.activeGroupId;
+    state.activeGroupNumericId = previous.activeGroupNumericId;
     state.activeGroupMenuId = null;
   } else if (state.bottomTab !== 'chat') {
     state.bottomTab = 'chat';
@@ -1354,16 +1354,16 @@ function rememberPageReturn() {
   state.pageReturnStack.push({
     bottomTab: state.bottomTab,
     view: state.view,
-    activeChatGroupId: state.activeChatGroupId,
-    activeChatId: state.activeChatId,
+    activeGroupId: state.activeGroupId,
+    activeGroupNumericId: state.activeGroupNumericId,
   });
 }
 
-function selectChat(chatId) {
-  const chat = chatById(chatId);
+function selectChat(groupId) {
+  const chat = chatById(groupId);
   if (!chat) return;
-  state.activeChatId = chat.chatGroupId;
-  state.activeChatGroupId = String(chat.chatGroupId);
+  state.activeGroupNumericId = chat.groupId;
+  state.activeGroupId = String(chat.groupId);
   state.blacklistQueryResult = '';
   state.blacklistPage = 1;
   state.activeBlacklistMenuKey = null;
@@ -1371,24 +1371,24 @@ function selectChat(chatId) {
   state.adminIdQuery = '';
   state.adminIdQueryResult = '';
   state.activeAvatarMenuKey = null;
-  state.syncHint = `已选择 chatGroupId #${chat.chatGroupId}`;
+  state.syncHint = `已选择 groupId #${chat.groupId}`;
   render();
 }
 
-function openActivation(chatId) {
-  if (chatId) {
-    openActivationForm(chatId);
+function openActivation(groupId) {
+  if (groupId) {
+    openActivationForm(groupId);
     return;
   }
   state.view = 'activate';
   render();
 }
 
-function openActivationForm(chatId) {
-  const chat = chatById(chatId);
+function openActivationForm(groupId) {
+  const chat = chatById(groupId);
   if (chat) {
-    state.activeChatId = chat.chatGroupId;
-    state.activeChatGroupId = String(chat.chatGroupId);
+    state.activeGroupNumericId = chat.groupId;
+    state.activeGroupId = String(chat.groupId);
     state.activeToken = chat.token;
     state.activationType = activationTypeForChat(chat);
   }
@@ -1396,11 +1396,11 @@ function openActivationForm(chatId) {
   render();
 }
 
-function openChat(chatGroupId) {
-  state.activeChatGroupId = String(chatGroupId);
-  const chat = chatById(chatGroupId);
-  if (chat) state.activeChatId = chat.chatGroupId;
-  markChatRead(chatGroupId);
+function openChat(groupId) {
+  state.activeGroupId = String(groupId);
+  const chat = chatById(groupId);
+  if (chat) state.activeGroupNumericId = chat.groupId;
+  markChatRead(groupId);
   state.view = 'chat';
   state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
@@ -1409,8 +1409,8 @@ function openChat(chatGroupId) {
   render();
 }
 
-function openManage(chatId) {
-  const chat = chatById(chatId);
+function openManage(groupId) {
+  const chat = chatById(groupId);
   state.activeGroupMenuId = null;
   if (!canEditRules(chat)) {
     state.syncHint = '仅 NFT 拥有者或代理可以进入管理。';
@@ -1418,22 +1418,22 @@ function openManage(chatId) {
     return;
   }
   rememberPageReturn();
-  selectChat(chat.chatGroupId);
+  selectChat(chat.groupId);
   state.view = 'manage';
   render();
 }
 
-function openBlacklist(chatId) {
+function openBlacklist(groupId) {
   state.activeGroupMenuId = null;
   state.activeBlacklistMenuKey = null;
   rememberPageReturn();
-  selectChat(chatId);
+  selectChat(groupId);
   state.view = 'blacklist';
   render();
 }
 
-function openExempt(chatId) {
-  const chat = chatById(chatId);
+function openExempt(groupId) {
+  const chat = chatById(groupId);
   state.activeGroupMenuId = null;
   state.activeExemptMenuKey = null;
   if (!chat || !chat.adminDeny) {
@@ -1442,26 +1442,26 @@ function openExempt(chatId) {
     return;
   }
   rememberPageReturn();
-  selectChat(chat.chatGroupId);
+  selectChat(chat.groupId);
   state.view = 'exempt';
   state.blacklistQueryType = 'nft';
   state.blacklistPage = 1;
   render();
 }
 
-function openDetails(chatId) {
-  const chat = chatById(chatId);
+function openDetails(groupId) {
+  const chat = chatById(groupId);
   state.activeGroupMenuId = null;
   if (!chat) return;
   rememberPageReturn();
-  selectChat(chat.chatGroupId);
+  selectChat(chat.groupId);
   state.view = 'details';
   render();
 }
 
-function toggleChatMenu(chatId) {
-  const chatGroupId = Number(chatId);
-  state.activeGroupMenuId = state.activeGroupMenuId === chatGroupId ? null : chatGroupId;
+function toggleChatMenu(groupId) {
+  const numericGroupId = Number(groupId);
+  state.activeGroupMenuId = state.activeGroupMenuId === numericGroupId ? null : numericGroupId;
   render();
 }
 
@@ -1494,31 +1494,31 @@ function toggleExemptMenu(targetType, target) {
   render();
 }
 
-function nextManagedChatGroupId() {
-  return state.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.chatGroupId) || 0), 0) + 1;
+function nextManagedGroupId() {
+  return state.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
 }
 
-function syncManagedChatGroupId(chat, nextGroupId) {
-  const prevGroupId = Number(chat.chatGroupId);
+function syncManagedGroupId(chat, nextGroupId) {
+  const prevGroupId = Number(chat.groupId);
   if (prevGroupId === nextGroupId) return;
 
-  chat.chatGroupId = nextGroupId;
+  chat.groupId = nextGroupId;
 
   if (chat.type === 'action' || chat.type === 'action-gov') {
     const action = state.actions.find((item) => item.token === chat.token && item.actionId === chat.actionId);
     if (action) {
-      if (chat.type === 'action') action.actionChatId = nextGroupId;
-      else action.actionGovChatId = nextGroupId;
+      if (chat.type === 'action') action.actionGroupId = nextGroupId;
+      else action.actionGovGroupId = nextGroupId;
     }
   }
 
-  if (state.activeChatId === prevGroupId) state.activeChatId = nextGroupId;
-  if (String(state.activeChatGroupId) === String(prevGroupId)) state.activeChatGroupId = String(nextGroupId);
+  if (state.activeGroupNumericId === prevGroupId) state.activeGroupNumericId = nextGroupId;
+  if (String(state.activeGroupId) === String(prevGroupId)) state.activeGroupId = String(nextGroupId);
   if (state.activeGroupMenuId === prevGroupId) state.activeGroupMenuId = nextGroupId;
 
   state.pageReturnStack.forEach((entry) => {
-    if (entry.activeChatId === prevGroupId) entry.activeChatId = nextGroupId;
-    if (String(entry.activeChatGroupId) === String(prevGroupId)) entry.activeChatGroupId = String(nextGroupId);
+    if (entry.activeGroupNumericId === prevGroupId) entry.activeGroupNumericId = nextGroupId;
+    if (String(entry.activeGroupId) === String(prevGroupId)) entry.activeGroupId = String(nextGroupId);
   });
 
   if (state.activationDrafts[String(prevGroupId)]) {
@@ -1526,20 +1526,20 @@ function syncManagedChatGroupId(chat, nextGroupId) {
     delete state.activationDrafts[String(prevGroupId)];
   }
 
-  if (state.quotedMessagesByChatGroupId[String(prevGroupId)] !== undefined) {
-    state.quotedMessagesByChatGroupId[String(nextGroupId)] = state.quotedMessagesByChatGroupId[String(prevGroupId)];
-    delete state.quotedMessagesByChatGroupId[String(prevGroupId)];
+  if (state.quotedMessagesByGroupId[String(prevGroupId)] !== undefined) {
+    state.quotedMessagesByGroupId[String(nextGroupId)] = state.quotedMessagesByGroupId[String(prevGroupId)];
+    delete state.quotedMessagesByGroupId[String(prevGroupId)];
   }
 
   state.messages.forEach((message) => {
-    if (String(message.chatGroupId) === String(prevGroupId)) {
-      message.chatGroupId = String(nextGroupId);
+    if (String(message.groupId) === String(prevGroupId)) {
+      message.groupId = String(nextGroupId);
     }
   });
 }
 
-function activateChat(chatId) {
-  const chat = chatById(chatId);
+function activateChat(groupId) {
+  const chat = chatById(groupId);
   if (!chat || chat.activated) return;
   const draft = captureActivationDraft(chat);
   const blocker = activationBlocker(chat, draft);
@@ -1556,7 +1556,7 @@ function activateChat(chatId) {
     chat.chatInfo.afterPostPlugin = draft.afterPostPlugin || 'address(0)';
     chat.chatInfo.delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
     chat.params = {
-      chatGroupId: String(chat.chatGroupId),
+      groupId: String(chat.groupId),
       scopeSource: chat.chatInfo.scopeSource,
       denySource: chat.chatInfo.denySource,
     };
@@ -1570,18 +1570,18 @@ function activateChat(chatId) {
     });
     if (draft.token) chat.tokenAddress = draft.token;
     if (draft.actionId) chat.actionId = draft.actionId;
-    syncManagedChatGroupId(chat, nextManagedChatGroupId());
+    syncManagedGroupId(chat, nextManagedGroupId());
   }
 
   chat.activated = true;
   chat.postingAllowed = true;
   chat.lastMessageId = 0;
-  state.activeChatId = chat.chatGroupId;
-  state.activeChatGroupId = String(chat.chatGroupId);
+  state.activeGroupNumericId = chat.groupId;
+  state.activeGroupId = String(chat.groupId);
   state.view = 'chat';
   state.syncHint = chat.model === 'chain-service'
     ? `${activationPreview(chat, draft)} 已模拟提交。`
-    : `${activationPreview(chat, draft)} => chatGroupId ${chat.chatGroupId} 已模拟提交。`;
+    : `${activationPreview(chat, draft)} => groupId ${chat.groupId} 已模拟提交。`;
   render();
 }
 
@@ -1612,7 +1612,7 @@ function setRuleSlot(slot, inputId) {
       render();
       return;
     }
-    if (value !== '0' && Number(value) === chat.chatGroupId) {
+    if (value !== '0' && Number(value) === chat.groupId) {
       state.delegateQueryResult = '代理 NFT 不能等于当前群聊 NFT。';
       render();
       return;
@@ -1755,15 +1755,15 @@ function queryAdminId(inputId) {
 function queryAdminIdValue(value, shouldRender) {
   const chat = activeChat();
   if (!chat || !chat.adminDeny || !value) return;
-  const chatGroupId = resolveNftInput(value, state.adminIdQueryType);
-  if (!chatGroupId) {
+  const groupId = resolveNftInput(value, state.adminIdQueryType);
+  if (!groupId) {
     state.adminIdQueryResult = `未找到 NFT：${value}`;
     if (shouldRender) render();
     return;
   }
-  const inList = chat.adminDeny.adminIds.includes(chatGroupId);
-  const profile = nftProfile(chatGroupId);
-  state.adminIdQueryResult = `NFT #${chatGroupId} · ${profile.name} · ${inList ? '已在管理员名单' : '不在管理员名单'}`;
+  const inList = chat.adminDeny.adminIds.includes(groupId);
+  const profile = nftProfile(groupId);
+  state.adminIdQueryResult = `NFT #${groupId} · ${profile.name} · ${inList ? '已在管理员名单' : '不在管理员名单'}`;
   if (shouldRender) render();
 }
 
@@ -1890,9 +1890,9 @@ function voteGovTarget(targetType, target, stance) {
   render();
 }
 
-function addSenderDenyFromMessage(messageId, chatGroupId = state.activeChatGroupId) {
-  const message = messageById(messageId, chatGroupId);
-  const chat = message && chatById(message.chatGroupId);
+function addSenderDenyFromMessage(messageId, groupId = state.activeGroupId) {
+  const message = messageById(messageId, groupId);
+  const chat = message && chatById(message.groupId);
   if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
 
   const targetSenderId = String(message.senderId);
@@ -1924,17 +1924,17 @@ function addSenderDenyFromMessage(messageId, chatGroupId = state.activeChatGroup
   render();
 }
 
-function simulateMessageGap(chatId) {
-  const chat = chatById(chatId);
+function simulateMessageGap(groupId) {
+  const chat = chatById(groupId);
   if (!chat) return;
-  const chatGroupId = String(chat.chatGroupId);
-  const visibleMessages = messagesForChat(chatGroupId);
+  const groupId = String(chat.groupId);
+  const visibleMessages = messagesForChat(groupId);
   const latestMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) : 0;
   const eventMessageId = latestMessageId + 3;
   const startMessageId = latestMessageId + 1;
   for (let messageId = startMessageId; messageId <= eventMessageId; messageId++) {
     state.messages.push({
-      chatGroupId,
+      groupId,
       senderId: 9101,
       senderAddress: ownerOfGroupId(9101),
       round: chat.round,
@@ -1947,10 +1947,10 @@ function simulateMessageGap(chatId) {
     });
   }
   chat.lastMessageId = eventMessageId;
-  if (String(state.activeChatGroupId) === chatGroupId) markChatRead(chatGroupId);
+  if (String(state.activeGroupId) === groupId) markChatRead(groupId);
   state.activeGroupMenuId = null;
   state.syncHint =
-    `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${chatGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;
+    `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${groupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;
   render();
 }
 
@@ -2197,11 +2197,11 @@ function sendMessage() {
     return;
   }
 
-  const visibleMessages = messagesForChat(state.activeChatGroupId);
+  const visibleMessages = messagesForChat(state.activeGroupId);
   const nextMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) + 1 : 1;
   const quotedMessageId = activeQuotedMessageId() || 0;
   state.messages.push({
-    chatGroupId: state.activeChatGroupId,
+    groupId: state.activeGroupId,
     senderId: currentDefaultGroupId(),
     senderAddress: state.account,
     round: chat ? chat.round : 0,
@@ -2225,7 +2225,7 @@ function sendMessage() {
 function quoteMessage(messageId) {
   const message = messageById(messageId);
   if (!canQuoteMessage(message)) return;
-  state.quotedMessagesByChatGroupId[String(state.activeChatGroupId)] = Number(messageId);
+  state.quotedMessagesByGroupId[String(state.activeGroupId)] = Number(messageId);
   state.activeMenuMessageId = null;
   render();
 }
@@ -2261,9 +2261,9 @@ async function writeClipboardText(text) {
 }
 
 function addMention(senderId) {
-  const chatGroupId = Number(senderId);
-  if (!state.mentionedSenderIds.includes(chatGroupId) && state.mentionedSenderIds.length < 32) state.mentionedSenderIds.push(chatGroupId);
-  insertComposerToken(mentionTokenFor(chatGroupId));
+  const groupId = Number(senderId);
+  if (!state.mentionedSenderIds.includes(groupId) && state.mentionedSenderIds.length < 32) state.mentionedSenderIds.push(groupId);
+  insertComposerToken(mentionTokenFor(groupId));
   state.activeMenuMessageId = null;
   render();
 }
@@ -2275,14 +2275,14 @@ function selectMessage(messageId) {
   render();
 }
 
-function toggleAvatarMenu(messageId, chatGroupId = state.activeChatGroupId) {
+function toggleAvatarMenu(messageId, groupId = state.activeGroupId) {
   if (suppressAvatarClick) {
     suppressAvatarClick = false;
     return;
   }
 
-  const message = messageById(messageId, chatGroupId);
-  const chat = message && chatById(message.chatGroupId);
+  const message = messageById(messageId, groupId);
+  const chat = message && chatById(message.groupId);
   if (!message || !canShowAvatarDenyMenu(chat, message)) {
     state.activeAvatarMenuKey = null;
     render();
@@ -2355,18 +2355,18 @@ document.addEventListener('click', (event) => {
     state.activationType = target.dataset.activationType;
     render();
   }
-  if (action === 'select-chat') selectChat(target.dataset.chatId);
-  if (action === 'open-activation') openActivation(target.dataset.chatId);
-  if (action === 'open-activation-form') openActivationForm(target.dataset.chatId);
-  if (action === 'open-chat') openChat(target.dataset.chatGroupId);
-  if (action === 'activate-chat') activateChat(target.dataset.chatId);
+  if (action === 'select-chat') selectChat(target.dataset.groupId);
+  if (action === 'open-activation') openActivation(target.dataset.groupId);
+  if (action === 'open-activation-form') openActivationForm(target.dataset.groupId);
+  if (action === 'open-chat') openChat(target.dataset.groupId);
+  if (action === 'activate-chat') activateChat(target.dataset.groupId);
   if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
-  if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.chatId);
-  if (action === 'simulate-message-gap') simulateMessageGap(target.dataset.chatId);
-  if (action === 'open-manage') openManage(target.dataset.chatId);
-  if (action === 'open-details') openDetails(target.dataset.chatId);
-  if (action === 'open-blacklist') openBlacklist(target.dataset.chatId);
-  if (action === 'open-exempt') openExempt(target.dataset.chatId);
+  if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.groupId);
+  if (action === 'simulate-message-gap') simulateMessageGap(target.dataset.groupId);
+  if (action === 'open-manage') openManage(target.dataset.groupId);
+  if (action === 'open-details') openDetails(target.dataset.groupId);
+  if (action === 'open-blacklist') openBlacklist(target.dataset.groupId);
+  if (action === 'open-exempt') openExempt(target.dataset.groupId);
   if (action === 'set-rule-slot') setRuleSlot(target.dataset.slot, target.dataset.input);
   if (action === 'set-rule-slot-option') setRuleSlotOption(target.dataset.slot, target.dataset.value);
   if (action === 'set-posting-allowed') setPostingAllowed(target.dataset.value);
@@ -2387,12 +2387,12 @@ document.addEventListener('click', (event) => {
   if (action === 'query-self') querySelf();
   if (action === 'query-blacklist') queryBlacklist(target.dataset.input);
   if (action === 'close-gov-voters') closeGovVoterSheet();
-  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageId, target.dataset.chatGroupId);
+  if (action === 'toggle-avatar-menu') toggleAvatarMenu(target.dataset.messageId, target.dataset.groupId);
   if (action === 'select-message') selectMessage(target.dataset.messageId);
   if (action === 'quote-message') quoteMessage(target.dataset.messageId);
   if (action === 'copy-message') copyMessage(target.dataset.messageId);
   if (action === 'add-mention') addMention(target.dataset.senderId);
-  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageId, target.dataset.chatGroupId);
+  if (action === 'add-sender-deny') addSenderDenyFromMessage(target.dataset.messageId, target.dataset.groupId);
   if (action === 'clear-quote') {
     clearActiveQuote();
     render();

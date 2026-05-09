@@ -27,12 +27,12 @@ contract TokenGroupChatManager is BaseTokenGroupChatManager {
         VOTE_ADDRESS = vote;
     }
 
-    function activate(address token) external returns (uint256 chatGroupId) {
+    function activate(address token) external returns (uint256 groupId) {
         return _activateTokenChat(token, "mgr_token_");
     }
 
-    function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        address token = tokenOfChatGroup[chatGroupId];
+    function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {
+        address token = tokenOfGroup[groupId];
         return token != address(0)
             && (
                 _hasTokenBalance(token, senderAddress) || _tokenGovVoteWeight(token, senderAddress) != 0

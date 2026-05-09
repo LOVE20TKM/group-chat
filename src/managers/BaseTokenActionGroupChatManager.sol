@@ -15,8 +15,8 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
     address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 
-    mapping(uint256 => ActionChat) public actionOfChatGroup;
-    mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
+    mapping(uint256 => ActionChat) public actionOfGroup;
+    mapping(address => mapping(uint256 => uint256)) public groupIdOfAction;
     mapping(address => uint256[]) internal _actionIdsByToken;
 
     constructor(
@@ -45,47 +45,47 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
     function actionsOf(address token, uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (uint256[] memory actionIds, uint256[] memory chatGroupIds)
+        returns (uint256[] memory actionIds, uint256[] memory groupIds)
     {
         uint256[] storage source = _actionIdsByToken[token];
         uint256 count = _pageCount(source.length, offset, limit);
         actionIds = new uint256[](count);
-        chatGroupIds = new uint256[](count);
+        groupIds = new uint256[](count);
 
         for (uint256 i = 0; i < count; i++) {
             uint256 actionId = source[_pageIndex(source.length, offset, i, reverse)];
             actionIds[i] = actionId;
-            chatGroupIds[i] = chatGroupIdOfAction[token][actionId];
+            groupIds[i] = groupIdOfAction[token][actionId];
         }
     }
 
-    function chatGroupIdsOfActions(address token, uint256[] calldata actionIds)
+    function groupIdsOfActions(address token, uint256[] calldata actionIds)
         external
         view
-        returns (uint256[] memory chatGroupIds)
+        returns (uint256[] memory groupIds)
     {
-        chatGroupIds = new uint256[](actionIds.length);
+        groupIds = new uint256[](actionIds.length);
         for (uint256 i = 0; i < actionIds.length; i++) {
-            chatGroupIds[i] = chatGroupIdOfAction[token][actionIds[i]];
+            groupIds[i] = groupIdOfAction[token][actionIds[i]];
         }
     }
 
-    function actionsOfChatGroups(uint256[] calldata chatGroupIds)
+    function actionsOfGroups(uint256[] calldata groupIds)
         external
         view
         returns (address[] memory tokens, uint256[] memory actionIds)
     {
-        tokens = new address[](chatGroupIds.length);
-        actionIds = new uint256[](chatGroupIds.length);
-        for (uint256 i = 0; i < chatGroupIds.length; i++) {
-            ActionChat storage action = actionOfChatGroup[chatGroupIds[i]];
+        tokens = new address[](groupIds.length);
+        actionIds = new uint256[](groupIds.length);
+        for (uint256 i = 0; i < groupIds.length; i++) {
+            ActionChat storage action = actionOfGroup[groupIds[i]];
             tokens[i] = action.token;
             actionIds[i] = action.actionId;
         }
     }
 
-    function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
-        ActionChat storage action = actionOfChatGroup[chatGroupId];
+    function denyVoteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
+        ActionChat storage action = actionOfGroup[groupId];
         address token = action.token;
         if (token == address(0)) {
             return 0;
@@ -95,16 +95,16 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
 
     function _activateActionChat(address token, uint256 actionId, string memory managerPrefix)
         internal
-        returns (uint256 chatGroupId)
+        returns (uint256 groupId)
     {
         _requireCode(token);
-        _requireNotManaged(chatGroupIdOfAction[token][actionId] != 0);
+        _requireNotManaged(groupIdOfAction[token][actionId] != 0);
 
-        chatGroupId = _mintManagedChatGroup(_tokenActionGroupNameStem(managerPrefix, token, actionId));
-        actionOfChatGroup[chatGroupId] = ActionChat({token: token, actionId: actionId});
-        chatGroupIdOfAction[token][actionId] = chatGroupId;
+        groupId = _mintManagedGroup(_tokenActionGroupNameStem(managerPrefix, token, actionId));
+        actionOfGroup[groupId] = ActionChat({token: token, actionId: actionId});
+        groupIdOfAction[token][actionId] = groupId;
         _actionIdsByToken[token].push(actionId);
-        _activateManagedChat(chatGroupId);
+        _activateManagedChat(groupId);
     }
 
     function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {

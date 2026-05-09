@@ -90,7 +90,7 @@
 
 控制权来自：
 
-- `GroupNFT.ownerOf(chatGroupId)` 当前 owner
+- `GroupNFT.ownerOf(groupId)` 当前 owner
 - `delegateId` 的有效 owner
 
 推荐配置：
@@ -109,7 +109,7 @@ GroupChat.afterPostPlugin = 可选
 链群群聊的 `scopeSource` 使用 [GroupJoinScopeSource](./sources/scope/group-join-scope-source.md)，语义是：
 
 ```text
-GroupJoin.gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) > 0
+GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 ```
 
 即发送地址当前在该链群下参与至少一个代币社区行动。
@@ -135,7 +135,7 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(chatGroupId, senderAddress) > 0
 
 ```solidity
 activateChat(
-    chatGroupId,
+    groupId,
     metaKeys,
     metaValues,
     groupJoinScopeSource,

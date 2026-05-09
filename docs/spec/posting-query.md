@@ -4,7 +4,7 @@
 
 发消息必须同时指定：
 
-- `chatGroupId`：消息落到哪个 chat
+- `groupId`：消息落到哪个 chat
 - `senderId`：用哪个 `GroupNFT` 身份发言
 
 命名约定：
@@ -15,7 +15,7 @@
 要求：
 
 - `msg.sender` 必须是 `senderId` 当前 owner。
-- `senderId` 可与 `chatGroupId` 不同。
+- `senderId` 可与 `groupId` 不同。
 - `senderId` 自己的 chat 不要求已激活。
 - delegate 不能冒充 `senderId` 发言。
 
@@ -24,7 +24,7 @@
 普通 `post` 校验顺序：
 
 ```text
-chatGroupId exists
+groupId exists
 chat activated
 posting allowed
 senderId exists
@@ -40,7 +40,7 @@ afterPostPlugin.afterPost
 
 `canPost(...)` 只做无内容预检查：
 
-- chatGroupId exists
+- groupId exists
 - activated
 - postingAllowed
 - senderId exists
@@ -62,7 +62,7 @@ afterPostPlugin.afterPost
 0x00000000                         OK
 ChatNotActivated.selector          chat 未激活
 PostingNotAllowed.selector         chat 已停止发言
-GroupNotExist.selector             chatGroupId 或 senderId 不存在
+GroupNotExist.selector             groupId 或 senderId 不存在
 SenderAddressNotSenderIdOwner.selector       senderAddress 不是 senderId 当前 owner
 ScopeRejected.selector             scopeSource 判定无资格
 DenyRejected.selector              denySource 判定被拒绝
@@ -80,11 +80,11 @@ DenySourceFailed.selector          denySource 调用失败
 
 ## 消息 ID
 
-- 每条消息的 `messageId` 只在当前 `chatGroupId` 内唯一。
+- 每条消息的 `messageId` 只在当前 `groupId` 内唯一。
 - `messageId` 从 `1` 开始连续递增。
 - `0` 永远不分配给消息，只保留给“无引用”。
 - `messageId = messageIndex + 1`，其中 `messageIndex` 只表示合约内部数组下标。
-- `message(chatGroupId, messageId)` 的 `messageId` 必须是 `1..messagesCount(chatGroupId)`。
+- `message(groupId, messageId)` 的 `messageId` 必须是 `1..messagesCount(groupId)`。
 
 ## Mentioned Sender IDs
 
@@ -152,19 +152,19 @@ DenySourceFailed.selector          denySource 调用失败
 
 批量 round 区间：
 
-- `roundInfos(chatGroupId, rounds)` 按入参顺序返回 `RoundSpan[]`。
+- `roundInfos(groupId, rounds)` 按入参顺序返回 `RoundSpan[]`。
 - 不存在或无消息的 round 返回 `round = 入参`、`startMessageId = 0`、`endMessageId = 0`、`messageCount = 0`。
 
 群发现：
 
-- `chatGroupIdsCount` / `chatGroupIds`：所有曾首次激活过的 `chatGroupId`，按首次激活顺序分页。
+- `groupIdsCount` / `groupIds`：所有曾首次激活过的 `groupId`，按首次激活顺序分页。
 
 ## 同步策略
 
 - `MessagePost` 只作为发现信号。
 - `MessageMention` / `MessageMentionAll` 只作为链下通知索引信号。
 - 正文以 `message(...)` 或 `messages(...)` 为准。
-- 前端维护每个 `chatGroupId` 的最新 `messageId`。
-- 若事件中的 `messageId == latestMessageId + 1`，可用 `message(chatGroupId, messageId)` 回查。
-- 若事件中的 `messageId > latestMessageId + 1`，用 `messages(chatGroupId, latestMessageId, messageId - latestMessageId, false)` 补拉缺口。
+- 前端维护每个 `groupId` 的最新 `messageId`。
+- 若事件中的 `messageId == latestMessageId + 1`，可用 `message(groupId, messageId)` 回查。
+- 若事件中的 `messageId > latestMessageId + 1`，用 `messages(groupId, latestMessageId, messageId - latestMessageId, false)` 补拉缺口。
 - 配置变化以 `chatInfo.configVersion` 和 `chatInfo` / `metaEntriesCount` / `metaEntries` 重拉为准。

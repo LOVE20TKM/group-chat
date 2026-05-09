@@ -9,16 +9,12 @@ import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 contract MockGroupJoinGlobal {
     mapping(uint256 => mapping(address => uint256)) public counts;
 
-    function setTokenAddressCount(uint256 chatGroupId, address account, uint256 count) external {
-        counts[chatGroupId][account] = count;
+    function setTokenAddressCount(uint256 groupId, address account, uint256 count) external {
+        counts[groupId][account] = count;
     }
 
-    function gTokenAddressesByGroupIdByAccountCount(uint256 chatGroupId, address account)
-        external
-        view
-        returns (uint256)
-    {
-        return counts[chatGroupId][account];
+    function gTokenAddressesByGroupIdByAccountCount(uint256 groupId, address account) external view returns (uint256) {
+        return counts[groupId][account];
     }
 }
 
@@ -40,28 +36,28 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     function testT131_groupJoinGlobalMembershipControlsPost() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(scope), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0), 0);
 
-        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.ScopeRejected.selector);
 
-        groupJoin.setTokenAddressCount(chatGroupId, senderOwner, 1);
+        groupJoin.setTokenAddressCount(groupId, senderOwner, 1);
 
-        (allowed, reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
+        (allowed, reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(allowed);
         assertEq(reasonCode, bytes4(0));
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        _post(chatGroupId, senderId, "joined-group");
-        assertEq(chat.messagesCount(chatGroupId), 1);
+        _post(groupId, senderId, "joined-group");
+        assertEq(chat.messagesCount(groupId), 1);
 
-        groupJoin.setTokenAddressCount(chatGroupId, senderOwner, 0);
+        groupJoin.setTokenAddressCount(groupId, senderOwner, 0);
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.ScopeRejected.selector);
-        _post(chatGroupId, senderId, "exited-group");
+        _post(groupId, senderId, "exited-group");
     }
 
     function testT132_groupJoinScopeCombinesWithAdminDenySource() public {
@@ -69,27 +65,27 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(scope), address(deny), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(deny), address(0), address(0), 0);
 
-        groupJoin.setTokenAddressCount(chatGroupId, senderOwner, 1);
-
-        vm.prank(chatOwner);
-        deny.setAdmins(chatGroupId, _uints(chatGroupId));
+        groupJoin.setTokenAddressCount(groupId, senderOwner, 1);
 
         vm.prank(chatOwner);
-        groupDefaults.setDefaultGroupId(chatGroupId);
+        deny.setAdmins(groupId, _uints(groupId));
 
         vm.prank(chatOwner);
-        deny.addDenyListsBySenderIds(chatGroupId, _uints(senderId));
+        groupDefaults.setDefaultGroupId(groupId);
 
-        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
+        vm.prank(chatOwner);
+        deny.addDenyListsBySenderIds(groupId, _uints(senderId));
+
+        (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
 
         vm.prank(chatOwner);
-        deny.addExemptListBySenderIds(chatGroupId, _uints(senderId));
+        deny.addExemptListBySenderIds(groupId, _uints(senderId));
 
-        assertTrue(_canPostAllowed(chatGroupId, senderId, senderOwner));
+        assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
     }
 
     function _uints(uint256 value) internal pure returns (uint256[] memory values) {

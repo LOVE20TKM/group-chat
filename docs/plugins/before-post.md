@@ -14,7 +14,7 @@ BeforePostPlugin 处理资格和黑名单之外的发言前额外规则。
 
 ```solidity
 function beforePost(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderId,
     address senderAddress,
     string calldata content,
@@ -41,5 +41,5 @@ function beforePost(
 ## Review 重点
 
 - 插件不能修改主协议核心状态。
-- 插件内部状态按 `chatGroupId` 隔离。
+- 插件内部状态按 `groupId` 隔离。
 - 插件内部配置权限应实时锚定 chat owner / 有效 delegate。

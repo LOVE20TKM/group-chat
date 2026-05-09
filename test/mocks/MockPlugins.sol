@@ -3,7 +3,7 @@ pragma solidity =0.8.17;
 
 interface IGroupChatPluginView {
     struct ChatInfo {
-        uint256 chatGroupId;
+        uint256 groupId;
         address owner;
         bool activated;
         bool postingAllowed;
@@ -18,12 +18,12 @@ interface IGroupChatPluginView {
         uint256 firstActivatedTimestamp;
     }
 
-    function chatInfo(uint256 chatGroupId) external view returns (ChatInfo memory);
+    function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
 
-    function delegateIdOf(uint256 chatGroupId) external view returns (uint256);
+    function delegateIdOf(uint256 groupId) external view returns (uint256);
 
     function post(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderId,
         string calldata content,
         uint256[] calldata mentionedSenderIds,
@@ -31,7 +31,7 @@ interface IGroupChatPluginView {
         uint256 quotedMessageId
     ) external;
 
-    function setMeta(uint256 chatGroupId, string calldata key, bytes calldata value) external;
+    function setMeta(uint256 groupId, string calldata key, bytes calldata value) external;
 }
 
 contract MockBeforePostRejectPlugin {
@@ -43,7 +43,7 @@ contract MockBeforePostRejectPlugin {
 }
 
 contract MockBeforePostCapturePlugin {
-    uint256 public lastChatGroupId;
+    uint256 public lastGroupId;
     uint256 public lastSenderId;
     address public lastSenderAddress;
     string public lastContent;
@@ -52,7 +52,7 @@ contract MockBeforePostCapturePlugin {
     uint256[] internal _lastMentionedSenderIds;
 
     function beforePost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderId,
         address senderAddress,
         string calldata content,
@@ -60,7 +60,7 @@ contract MockBeforePostCapturePlugin {
         bool mentionAll,
         uint256 quotedMessageId
     ) external {
-        lastChatGroupId = chatGroupId;
+        lastGroupId = groupId;
         lastSenderId = senderId;
         lastSenderAddress = senderAddress;
         lastContent = content;
@@ -150,7 +150,7 @@ contract MockAfterPostFailPlugin {
 }
 
 contract MockAfterPostCapturePlugin {
-    uint256 public lastChatGroupId;
+    uint256 public lastGroupId;
     uint256 public lastSenderId;
     address public lastSenderAddress;
     string public lastContent;
@@ -162,7 +162,7 @@ contract MockAfterPostCapturePlugin {
     uint256[] internal _lastMentionedSenderIds;
 
     function afterPost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderId,
         address senderAddress,
         string calldata content,
@@ -173,7 +173,7 @@ contract MockAfterPostCapturePlugin {
         uint256 blockNumber,
         uint256 timestamp
     ) external {
-        lastChatGroupId = chatGroupId;
+        lastGroupId = groupId;
         lastSenderId = senderId;
         lastSenderAddress = senderAddress;
         lastContent = content;
@@ -195,12 +195,12 @@ contract MockAfterPostCapturePlugin {
 
 contract MockAfterPostReenterPlugin {
     IGroupChatPluginView internal immutable _chat;
-    uint256 internal immutable _reenterChatGroupId;
+    uint256 internal immutable _reenterGroupId;
     uint256 internal immutable _reenterSenderId;
 
-    constructor(address chat_, uint256 reenterChatGroupId_, uint256 reenterSenderId_) {
+    constructor(address chat_, uint256 reenterGroupId_, uint256 reenterSenderId_) {
         _chat = IGroupChatPluginView(chat_);
-        _reenterChatGroupId = reenterChatGroupId_;
+        _reenterGroupId = reenterGroupId_;
         _reenterSenderId = reenterSenderId_;
     }
 
@@ -217,7 +217,7 @@ contract MockAfterPostReenterPlugin {
         uint256
     ) external {
         uint256[] memory mentionedSenderIds = new uint256[](0);
-        _chat.post(_reenterChatGroupId, _reenterSenderId, "reenter", mentionedSenderIds, false, 0);
+        _chat.post(_reenterGroupId, _reenterSenderId, "reenter", mentionedSenderIds, false, 0);
     }
 }
 
@@ -229,7 +229,7 @@ contract MockAfterPostSetMetaPlugin {
     }
 
     function afterPost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256,
         address,
         string calldata,
@@ -240,7 +240,7 @@ contract MockAfterPostSetMetaPlugin {
         uint256,
         uint256
     ) external {
-        _chat.setMeta(chatGroupId, "hook-write", bytes("1"));
+        _chat.setMeta(groupId, "hook-write", bytes("1"));
     }
 }
 
@@ -254,14 +254,14 @@ contract MockManagedPlugin {
         CHAT_ADDRESS = chat_;
     }
 
-    function configure(uint256 chatGroupId, bytes calldata value) external {
-        IGroupChatPluginView.ChatInfo memory info = IGroupChatPluginView(CHAT_ADDRESS).chatInfo(chatGroupId);
-        uint256 delegateId_ = IGroupChatPluginView(CHAT_ADDRESS).delegateIdOf(chatGroupId);
+    function configure(uint256 groupId, bytes calldata value) external {
+        IGroupChatPluginView.ChatInfo memory info = IGroupChatPluginView(CHAT_ADDRESS).chatInfo(groupId);
+        uint256 delegateId_ = IGroupChatPluginView(CHAT_ADDRESS).delegateIdOf(groupId);
         address delegateIdOwner =
             delegateId_ == 0 ? address(0) : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateId_).owner;
         if (msg.sender != info.owner && msg.sender != delegateIdOwner) {
             revert UnauthorizedPluginManager();
         }
-        configValue[chatGroupId] = value;
+        configValue[groupId] = value;
     }
 }

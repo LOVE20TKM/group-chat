@@ -13,25 +13,25 @@
 - 不处理 `mentionAll`、频率、内容格式等额外发言前规则
 - 只影响未来发言，不回溯历史消息
 - 黑名单同时支持 `senderAddress` 与 `senderId` 两个维度，豁免名单只支持 `senderId` 维度
-- 一个 DenySource 合约可以被多个 `chatGroupId` 复用
-- 同一 DenySource 合约复用时，所有管理员、黑名单、豁免名单状态都必须按 `chatGroupId` 隔离
+- 一个 DenySource 合约可以被多个 `groupId` 复用
+- 同一 DenySource 合约复用时，所有管理员、黑名单、豁免名单状态都必须按 `groupId` 隔离
 
 ## 2. 角色
 
 | 名称 | 含义 |
 | --- | --- |
-| `chatGroupId` | 群聊所属身份 NFT，也是被保护的群聊 |
+| `groupId` | 群聊所属身份 NFT，也是被保护的群聊 |
 | `operatorId` | 管理员路径下，默认身份注册表 `defaultGroupIdOf(msg.sender)` 返回的当前默认身份 NFT |
-| `adminId` | `chatGroupId` 作用域下管理员 NFT 集合中的一个管理员 NFT |
-| owner | `GroupNFT.ownerOf(chatGroupId)` 当前地址 |
-| delegate | `GroupChat.delegateIdOf(chatGroupId)` 对应身份 NFT 的当前 owner |
-| admin | `operatorId` 命中该 `chatGroupId` 配置的 `adminIds` 中任一项 |
+| `adminId` | `groupId` 作用域下管理员 NFT 集合中的一个管理员 NFT |
+| owner | `GroupNFT.ownerOf(groupId)` 当前地址 |
+| delegate | `GroupChat.delegateIdOf(groupId)` 对应身份 NFT 的当前 owner |
+| admin | `operatorId` 命中该 `groupId` 配置的 `adminIds` 中任一项 |
 
 ## 3. 核心规则
 
-- 所有权限设置、管理员配置、黑名单、豁免名单都必须按 `chatGroupId` 隔离
+- 所有权限设置、管理员配置、黑名单、豁免名单都必须按 `groupId` 隔离
 - 不允许存在 DenySource 级全局管理员
-- 每个 `chatGroupId` 可独立配置管理员 NFT 集合，建议管理员数量不超过 `10`
+- 每个 `groupId` 可独立配置管理员 NFT 集合，建议管理员数量不超过 `10`
 - owner / delegate 权限直接按 `msg.sender` 当前是否持有对应 NFT 判断
 - admin 权限以 `operatorId = defaultGroupIdOf(msg.sender)` 作为权限主体
 - 为保持写接口简单，当前不额外提供显式传入 `operatorId` 的双接口
@@ -40,25 +40,25 @@
 - admin 只能管理黑名单
 - owner / delegate 若也要管理黑名单，必须把自己当前默认身份 NFT 加入管理员集合
 - 豁免名单只豁免黑名单，不提供基础发言资格
-- 权限必须实时读取默认身份注册表、`ownerOf(chatGroupId)`、`delegateIdOf(chatGroupId)` 与 delegate NFT 当前 owner，不得缓存权限地址或权限快照
+- 权限必须实时读取默认身份注册表、`ownerOf(groupId)`、`delegateIdOf(groupId)` 与 delegate NFT 当前 owner，不得缓存权限地址或权限快照
 - 管理员 NFT 集合变更不影响既有黑名单与豁免名单内容
 
 owner / delegate 权限判定顺序：
 
-1. 若 `msg.sender == GroupNFT.ownerOf(chatGroupId)`，视为 owner 权限
-2. 否则读取 `delegateId = GroupChat.delegateIdOf(chatGroupId)`
+1. 若 `msg.sender == GroupNFT.ownerOf(groupId)`，视为 owner 权限
+2. 否则读取 `delegateId = GroupChat.delegateIdOf(groupId)`
 3. 若 `delegateId != 0 && msg.sender == GroupNFT.ownerOf(delegateId)`，视为 delegate 权限
 4. 否则拒绝
 
 黑名单写接口只走 admin 权限路径：
 
 1. 读取 `operatorId = GroupDefaults.defaultGroupIdOf(msg.sender)`
-2. 若 `operatorId != 0 && adminIdListed[chatGroupId][operatorId] == true`，允许修改黑名单
+2. 若 `operatorId != 0 && adminIdListed[groupId][operatorId] == true`，允许修改黑名单
 3. 否则拒绝
 
 因此：
 
-- 当前持有 `chatGroupId` NFT 的地址，即使没有把 `chatGroupId` 设为默认身份，也可以配置管理员和豁免名单。
+- 当前持有 `groupId` NFT 的地址，即使没有把 `groupId` 设为默认身份，也可以配置管理员和豁免名单。
 - 当前 delegate NFT owner，即使没有把该 delegate NFT 设为默认身份，也可以配置管理员和豁免名单。
 - 当前管理员 NFT owner，如果没有把对应管理员 NFT 设为默认身份，不能行使 DenySource admin 权限。
 - 当前 owner / delegate 如果没有通过默认身份 NFT 命中管理员集合，不能修改黑名单。
@@ -85,7 +85,7 @@ DenySource 合约全局至少维护：
 
 - `address immutable GROUP_CHAT_ADDRESS`
 
-每个 `chatGroupId` 作用域至少维护：
+每个 `groupId` 作用域至少维护：
 
 - `mapping(uint256 => bool) adminIdListed`
 - `mapping(address => bool) addressDenied`
@@ -100,38 +100,38 @@ DenySource 合约全局至少维护：
 
 约束：
 
-- 管理员集合、黑名单、豁免名单都必须按 `chatGroupId` 隔离
+- 管理员集合、黑名单、豁免名单都必须按 `groupId` 隔离
 - DenySource 不得保存 owner、delegate 或 admin 当前 owner 地址快照
 - DenySource 部署时固定 `GROUP_CHAT_ADDRESS` 地址，后续不得修改
 - `setAdmins(...)` 输入必须去重
-- `setAdmins(...)` 允许传空数组，用于清空当前 `chatGroupId` 的管理员 NFT 集合
+- `setAdmins(...)` 允许传空数组，用于清空当前 `groupId` 的管理员 NFT 集合
 - `setAdmins(...)` 传入的每个 `adminId` 都必须对应当前存在的 `GroupNFT`
 - 可枚举集合必须去重，且支持分页查询
 - 删除可使用 `swap & pop`，分页返回顺序不作协议承诺
 
 ## 5. 最小接口
 
-- `setAdmins(uint256 chatGroupId, uint256[] adminIds)`
-- `addDenyListsBySenderIds(uint256 chatGroupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时加入地址与 NFT 黑名单
-- `removeDenyListsBySenderIds(uint256 chatGroupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时移除地址与 NFT 黑名单
-- `addDenyListsBySenderAddresses(uint256 chatGroupId, address[] targetAddresses)`：逐个加入地址黑名单；若地址有有效默认 NFT，同时加入 NFT 黑名单
-- `removeDenyListsBySenderAddresses(uint256 chatGroupId, address[] targetAddresses)`：逐个移除地址黑名单；若地址有有效默认 NFT，同时移除 NFT 黑名单
-- `addExemptListBySenderIds(uint256 chatGroupId, uint256[] senderIds)`
-- `removeExemptListBySenderIds(uint256 chatGroupId, uint256[] senderIds)`
-- `isAdminId(uint256 chatGroupId, uint256 adminId)`
-- `isAddressDenied(uint256 chatGroupId, address account)`
-- `isSenderIdDenied(uint256 chatGroupId, uint256 senderId)`
-- `isSenderIdExempt(uint256 chatGroupId, uint256 senderId)`
-- `adminIdsCount(uint256 chatGroupId)`
-- `adminIds(uint256 chatGroupId, uint256 offset, uint256 limit)`
-- `addressDenyListCount(uint256 chatGroupId)`
-- `addressDenyList(uint256 chatGroupId, uint256 offset, uint256 limit)`
-- `senderIdDenyListCount(uint256 chatGroupId)`
-- `senderIdDenyList(uint256 chatGroupId, uint256 offset, uint256 limit)`
-- `senderIdExemptListCount(uint256 chatGroupId)`
-- `senderIdExemptList(uint256 chatGroupId, uint256 offset, uint256 limit)`
-- `isDenied(uint256 chatGroupId, uint256 senderId, address senderAddress)`
-- `stateVersion(uint256 chatGroupId)`
+- `setAdmins(uint256 groupId, uint256[] adminIds)`
+- `addDenyListsBySenderIds(uint256 groupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时加入地址与 NFT 黑名单
+- `removeDenyListsBySenderIds(uint256 groupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时移除地址与 NFT 黑名单
+- `addDenyListsBySenderAddresses(uint256 groupId, address[] targetAddresses)`：逐个加入地址黑名单；若地址有有效默认 NFT，同时加入 NFT 黑名单
+- `removeDenyListsBySenderAddresses(uint256 groupId, address[] targetAddresses)`：逐个移除地址黑名单；若地址有有效默认 NFT，同时移除 NFT 黑名单
+- `addExemptListBySenderIds(uint256 groupId, uint256[] senderIds)`
+- `removeExemptListBySenderIds(uint256 groupId, uint256[] senderIds)`
+- `isAdminId(uint256 groupId, uint256 adminId)`
+- `isAddressDenied(uint256 groupId, address account)`
+- `isSenderIdDenied(uint256 groupId, uint256 senderId)`
+- `isSenderIdExempt(uint256 groupId, uint256 senderId)`
+- `adminIdsCount(uint256 groupId)`
+- `adminIds(uint256 groupId, uint256 offset, uint256 limit)`
+- `addressDenyListCount(uint256 groupId)`
+- `addressDenyList(uint256 groupId, uint256 offset, uint256 limit)`
+- `senderIdDenyListCount(uint256 groupId)`
+- `senderIdDenyList(uint256 groupId, uint256 offset, uint256 limit)`
+- `senderIdExemptListCount(uint256 groupId)`
+- `senderIdExemptList(uint256 groupId, uint256 offset, uint256 limit)`
+- `isDenied(uint256 groupId, uint256 senderId, address senderAddress)`
+- `stateVersion(uint256 groupId)`
 
 ## 6. 事件
 
@@ -145,7 +145,7 @@ DenySource 合约全局至少维护：
 
 事件至少包含：
 
-- `chatGroupId`
+- `groupId`
 - `operator`
 - `operatorId`
 - `adminId`，如适用
@@ -155,11 +155,11 @@ DenySource 合约全局至少维护：
 
 批量写接口必须对每个实际变更目标各自 `emit` 一条明细事件；同一批实际变更的明细事件使用同一个 `stateVersion`。
 
-每次外部名单写调用，包括 `setAdmins(...)`，若至少发生一项实际状态变化，必须只递增一次该 `chatGroupId` 的 `stateVersion`，并只发出一条：
+每次外部名单写调用，包括 `setAdmins(...)`，若至少发生一项实际状态变化，必须只递增一次该 `groupId` 的 `stateVersion`，并只发出一条：
 
 ```solidity
 event StateVersionChanged(
-    uint256 indexed chatGroupId,
+    uint256 indexed groupId,
     uint256 stateVersion
 );
 ```

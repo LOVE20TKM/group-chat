@@ -14,7 +14,7 @@ DenySource 判断“某身份 / 地址是否被禁言”。
 
 ```solidity
 function isDenied(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderId,
     address senderAddress
 ) external view returns (bool);
@@ -34,10 +34,10 @@ function isDenied(
 
 - 不得保存 chat owner 或 delegate 当前 owner 快照。
 - 权限判断必须实时读取 `GroupChat`。
-- 状态必须按 `chatGroupId` 隔离。
+- 状态必须按 `groupId` 隔离。
 - 不允许 DenySource 级全局管理员绕过 chat 控制权。
 
 ## 前端规则
 
 - 未在可信地址表中的 denySource，不调用专用展示接口。
-- 可信 denySource 可选实现 `stateVersion(chatGroupId)` 和 `StateVersionChanged`，供前端重拉专用状态。
+- 可信 denySource 可选实现 `stateVersion(groupId)` 和 `StateVersionChanged`，供前端重拉专用状态。

@@ -28,7 +28,7 @@
 
 `ChatInfo` 至少包含：
 
-- `chatGroupId`
+- `groupId`
 - `owner`
 - `activated`
 - `postingAllowed`
@@ -131,7 +131,7 @@
 - 未命中的 `metaValue` 返回空 `bytes`。
 - 未挂载的规则槽返回 `address(0)`。
 - 分页越界或 `limit == 0` 返回空数组。
-- `message(chatGroupId, messageId)` 中 `messageId == 0` 或超过当前消息数时必须 revert。
+- `message(groupId, messageId)` 中 `messageId == 0` 或超过当前消息数时必须 revert。
 
 ## 非功能要求
 

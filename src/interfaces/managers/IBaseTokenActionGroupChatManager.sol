@@ -10,18 +10,18 @@ interface IBaseTokenActionGroupChatManager is IBaseGroupChatManager {
 
     function RECENT_ROUNDS() external view returns (uint256);
 
-    function activate(address token, uint256 actionId) external returns (uint256 chatGroupId);
+    function activate(address token, uint256 actionId) external returns (uint256 groupId);
 
-    function actionOfChatGroup(uint256 chatGroupId) external view returns (address token, uint256 actionId);
+    function actionOfGroup(uint256 groupId) external view returns (address token, uint256 actionId);
 
-    function chatGroupIdOfAction(address token, uint256 actionId) external view returns (uint256);
+    function groupIdOfAction(address token, uint256 actionId) external view returns (uint256);
 
-    function chatGroupIdsOfActions(address token, uint256[] calldata actionIds)
+    function groupIdsOfActions(address token, uint256[] calldata actionIds)
         external
         view
-        returns (uint256[] memory chatGroupIds);
+        returns (uint256[] memory groupIds);
 
-    function actionsOfChatGroups(uint256[] calldata chatGroupIds)
+    function actionsOfGroups(uint256[] calldata groupIds)
         external
         view
         returns (address[] memory tokens, uint256[] memory actionIds);
@@ -31,5 +31,5 @@ interface IBaseTokenActionGroupChatManager is IBaseGroupChatManager {
     function actionsOf(address token, uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (uint256[] memory actionIds, uint256[] memory chatGroupIds);
+        returns (uint256[] memory actionIds, uint256[] memory groupIds);
 }

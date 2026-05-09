@@ -3,7 +3,7 @@ pragma solidity =0.8.17;
 
 interface IBeforePostPlugin {
     function beforePost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderId,
         address senderAddress,
         string calldata content,

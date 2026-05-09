@@ -18,7 +18,7 @@ abstract contract GroupChatFixture is TestBase {
     address internal other = address(0xCAFE);
     address internal delegateIdOwner = address(0xD36E6A7E);
 
-    uint256 internal chatGroupId;
+    uint256 internal groupId;
     uint256 internal senderId;
     uint256 internal otherGroupId;
     uint256 internal delegateId;
@@ -46,7 +46,7 @@ abstract contract GroupChatFixture is TestBase {
 
     function setUp() public virtual {
         groupNft = new MockLOVE20Group();
-        chatGroupId = groupNft.mint(chatOwner);
+        groupId = groupNft.mint(chatOwner);
         senderId = groupNft.mint(senderOwner);
         otherGroupId = groupNft.mint(other);
         delegateId = groupNft.mint(delegateIdOwner);
@@ -65,50 +65,50 @@ abstract contract GroupChatFixture is TestBase {
         mentionedSenderIds = new uint256[](0);
     }
 
-    function _post(uint256 chatGroupId_, uint256 senderId_, string memory content) internal {
-        chat.post(chatGroupId_, senderId_, content, _emptyMentionedSenderIds(), false, 0);
+    function _post(uint256 groupId_, uint256 senderId_, string memory content) internal {
+        chat.post(groupId_, senderId_, content, _emptyMentionedSenderIds(), false, 0);
     }
 
     function _postWithMentionedSenderIds(
-        uint256 chatGroupId_,
+        uint256 groupId_,
         uint256 senderId_,
         string memory content,
         uint256[] memory mentionedSenderIds,
         bool mentionAll
     ) internal {
-        chat.post(chatGroupId_, senderId_, content, mentionedSenderIds, mentionAll, 0);
+        chat.post(groupId_, senderId_, content, mentionedSenderIds, mentionAll, 0);
     }
 
-    function _postWithQuote(uint256 chatGroupId_, uint256 senderId_, string memory content, uint256 quotedMessageId)
+    function _postWithQuote(uint256 groupId_, uint256 senderId_, string memory content, uint256 quotedMessageId)
         internal
     {
-        chat.post(chatGroupId_, senderId_, content, _emptyMentionedSenderIds(), false, quotedMessageId);
+        chat.post(groupId_, senderId_, content, _emptyMentionedSenderIds(), false, quotedMessageId);
     }
 
-    function _postAsDefaultSender(uint256 chatGroupId_, string memory content) internal {
-        chat.postAsDefaultSender(chatGroupId_, content, _emptyMentionedSenderIds(), false, 0);
+    function _postAsDefaultSender(uint256 groupId_, string memory content) internal {
+        chat.postAsDefaultSender(groupId_, content, _emptyMentionedSenderIds(), false, 0);
     }
 
-    function _canPostAllowed(uint256 chatGroupId_, uint256 senderId_, address senderAddress_)
+    function _canPostAllowed(uint256 groupId_, uint256 senderId_, address senderAddress_)
         internal
         view
         returns (bool allowed)
     {
-        (allowed,) = chat.canPost(chatGroupId_, senderId_, senderAddress_);
+        (allowed,) = chat.canPost(groupId_, senderId_, senderAddress_);
     }
 
-    function _canPost(uint256 chatGroupId_, uint256 senderId_, address senderAddress_)
+    function _canPost(uint256 groupId_, uint256 senderId_, address senderAddress_)
         internal
         view
         returns (bool allowed, bytes4 reasonCode)
     {
-        return chat.canPost(chatGroupId_, senderId_, senderAddress_);
+        return chat.canPost(groupId_, senderId_, senderAddress_);
     }
 
     function _activateEmpty() internal {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys, values, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0), 0);
     }
 
     function _decodeMetaConfigVersion(bytes memory data) internal pure returns (uint256 version) {

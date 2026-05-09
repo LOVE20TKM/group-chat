@@ -37,33 +37,33 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         protocol.setGovVotes(token, voter2, 5);
 
         vm.prank(senderOwner);
-        deny.voteDenyAddress(chatGroupId, senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
 
-        (uint256 supportWeight, uint256 opposeWeight) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
+        (uint256 supportWeight, uint256 opposeWeight) = deny.addressDenyTallyOf(groupId, senderOwner);
         assertEq(supportWeight, 7);
         assertEq(opposeWeight, 0);
-        assertTrue(deny.isDenied(chatGroupId, senderId, senderOwner));
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
 
-        (bool allowed, bytes4 reasonCode) = _canPost(chatGroupId, senderId, senderOwner);
+        (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(bytes32(reasonCode), bytes32(IGroupChatErrors.DenyRejected.selector));
 
         vm.prank(voter2);
-        deny.opposeDenyAddress(chatGroupId, senderOwner);
+        deny.opposeDenyAddress(groupId, senderOwner);
 
-        (supportWeight, opposeWeight) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
+        (supportWeight, opposeWeight) = deny.addressDenyTallyOf(groupId, senderOwner);
         assertEq(supportWeight, 7);
         assertEq(opposeWeight, 5);
-        assertTrue(deny.isDenied(chatGroupId, senderId, senderOwner));
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
 
         protocol.setGovVotes(token, voter2, 8);
         vm.prank(voter2);
-        deny.opposeDenyAddress(chatGroupId, senderOwner);
+        deny.opposeDenyAddress(groupId, senderOwner);
 
-        (supportWeight, opposeWeight) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
+        (supportWeight, opposeWeight) = deny.addressDenyTallyOf(groupId, senderOwner);
         assertEq(supportWeight, 7);
         assertEq(opposeWeight, 8);
-        assertTrue(!deny.isDenied(chatGroupId, senderId, senderOwner));
+        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
     }
 
     function testT131_clearAndRevalidateUpdateSettledWeightAndRemoveVoteAtZero() public {
@@ -71,33 +71,33 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         protocol.setGovVotes(token, senderOwner, 9);
 
         vm.prank(senderOwner);
-        deny.voteDenySenderId(chatGroupId, senderId);
-        assertTrue(deny.isDenied(chatGroupId, senderId, senderOwner));
-        assertEq(deny.senderIdDenyTargetsCount(chatGroupId), 1);
-        assertEq(deny.stateVersion(chatGroupId), 1);
+        deny.voteDenySenderId(groupId, senderId);
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
+        assertEq(deny.senderIdDenyTargetsCount(groupId), 1);
+        assertEq(deny.stateVersion(groupId), 1);
 
         protocol.setGovVotes(token, senderOwner, 4);
-        deny.revalidateDenySenderIdVote(chatGroupId, senderId, senderOwner);
-        (bool supportDeny, uint256 settledWeight) = deny.senderIdDenyVoteOf(chatGroupId, senderId, senderOwner);
+        deny.revalidateDenySenderIdVote(groupId, senderId, senderOwner);
+        (bool supportDeny, uint256 settledWeight) = deny.senderIdDenyVoteOf(groupId, senderId, senderOwner);
         assertTrue(supportDeny);
         assertEq(settledWeight, 4);
-        assertEq(deny.stateVersion(chatGroupId), 2);
+        assertEq(deny.stateVersion(groupId), 2);
 
         protocol.setGovVotes(token, senderOwner, 0);
-        deny.revalidateDenySenderIdVote(chatGroupId, senderId, senderOwner);
-        (supportDeny, settledWeight) = deny.senderIdDenyVoteOf(chatGroupId, senderId, senderOwner);
+        deny.revalidateDenySenderIdVote(groupId, senderId, senderOwner);
+        (supportDeny, settledWeight) = deny.senderIdDenyVoteOf(groupId, senderId, senderOwner);
         assertTrue(!supportDeny);
         assertEq(settledWeight, 0);
-        assertEq(deny.senderIdDenyTargetsCount(chatGroupId), 0);
-        assertEq(deny.stateVersion(chatGroupId), 3);
+        assertEq(deny.senderIdDenyTargetsCount(groupId), 0);
+        assertEq(deny.stateVersion(groupId), 3);
 
         protocol.setGovVotes(token, senderOwner, 6);
         vm.prank(senderOwner);
-        deny.voteDenySenderId(chatGroupId, senderId);
+        deny.voteDenySenderId(groupId, senderId);
         vm.prank(senderOwner);
-        deny.clearDenySenderIdVote(chatGroupId, senderId);
-        assertEq(deny.senderIdDenyTargetsCount(chatGroupId), 0);
-        assertEq(deny.stateVersion(chatGroupId), 5);
+        deny.clearDenySenderIdVote(groupId, senderId);
+        assertEq(deny.senderIdDenyTargetsCount(groupId), 0);
+        assertEq(deny.stateVersion(groupId), 5);
     }
 
     function testT132_zeroWeightUnchangedAndMissingVoteRevert() public {
@@ -105,56 +105,56 @@ contract GovVotedDenySourceTest is GroupChatFixture {
 
         vm.prank(senderOwner);
         vm.expectRevert(GovVotedDenySource.VoteWeightZero.selector);
-        deny.voteDenyAddress(chatGroupId, senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
 
         protocol.setGovVotes(token, senderOwner, 3);
         vm.prank(senderOwner);
-        deny.voteDenyAddress(chatGroupId, senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
 
         vm.prank(senderOwner);
         vm.expectRevert(GovVotedDenySource.VoteUnchanged.selector);
-        deny.voteDenyAddress(chatGroupId, senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
 
         vm.expectRevert(GovVotedDenySource.VoteNotFound.selector);
-        deny.revalidateDenyAddressVote(chatGroupId, other, senderOwner);
+        deny.revalidateDenyAddressVote(groupId, other, senderOwner);
 
         vm.prank(voter2);
         vm.expectRevert(GovVotedDenySource.VoteNotFound.selector);
-        deny.clearDenyAddressVote(chatGroupId, senderOwner);
+        deny.clearDenyAddressVote(groupId, senderOwner);
     }
 
     function testT133_readerDegradesWhenSourceUnavailable() public {
-        assertEq(deny.addressDenyTargetsCount(chatGroupId), 0);
-        assertEq(deny.senderIdDenyTargetsCount(chatGroupId), 0);
-        assertTrue(!deny.isDenied(chatGroupId, senderId, senderOwner));
-        (uint256 supportWeight, uint256 opposeWeight) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
+        assertEq(deny.addressDenyTargetsCount(groupId), 0);
+        assertEq(deny.senderIdDenyTargetsCount(groupId), 0);
+        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
+        (uint256 supportWeight, uint256 opposeWeight) = deny.addressDenyTallyOf(groupId, senderOwner);
         assertEq(supportWeight, 0);
         assertEq(opposeWeight, 0);
-        (bool supportDeny, uint256 settledWeight) = deny.addressDenyVoteOf(chatGroupId, senderOwner, senderOwner);
+        (bool supportDeny, uint256 settledWeight) = deny.addressDenyVoteOf(groupId, senderOwner, senderOwner);
         assertTrue(!supportDeny);
         assertEq(settledWeight, 0);
         address[] memory voters;
         bool[] memory supportDenies;
         uint256[] memory settledWeights;
-        (voters, supportDenies, settledWeights) = deny.addressDenyVoters(chatGroupId, senderOwner, 0, 10);
+        (voters, supportDenies, settledWeights) = deny.addressDenyVoters(groupId, senderOwner, 0, 10);
         assertEq(voters.length, 0);
         assertEq(supportDenies.length, 0);
         assertEq(settledWeights.length, 0);
 
         vm.prank(senderOwner);
         vm.expectRevert(GovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
-        deny.voteDenyAddress(chatGroupId, senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
     }
 
     function testT134_actionGovManagerActsAsWeightSource() public {
         protocol.setCurrentRound(7);
-        chatGroupId = actionGovManager.activate(token, 42);
+        groupId = actionGovManager.activate(token, 42);
 
         protocol.setActionVotes(token, 7, senderOwner, 42, 11);
         vm.prank(senderOwner);
-        deny.voteDenySenderId(chatGroupId, senderId);
+        deny.voteDenySenderId(groupId, senderId);
 
-        (uint256 supportWeight, uint256 opposeWeight) = deny.senderIdDenyTallyOf(chatGroupId, senderId);
+        (uint256 supportWeight, uint256 opposeWeight) = deny.senderIdDenyTallyOf(groupId, senderId);
         assertEq(supportWeight, 11);
         assertEq(opposeWeight, 0);
     }
@@ -165,18 +165,18 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         protocol.setGovVotes(token, voter2, 4);
 
         vm.prank(senderOwner);
-        deny.voteDenyAddress(chatGroupId, senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
         vm.prank(senderOwner);
-        deny.voteDenyAddress(chatGroupId, other);
+        deny.voteDenyAddress(groupId, other);
         vm.prank(voter2);
-        deny.opposeDenyAddress(chatGroupId, senderOwner);
+        deny.opposeDenyAddress(groupId, senderOwner);
 
         (
             address[] memory targetAddresses,
             uint256[] memory supportWeights,
             uint256[] memory opposeWeights,
             uint256[] memory voterCounts
-        ) = deny.addressDenyTargets(chatGroupId, 0, 10);
+        ) = deny.addressDenyTargets(groupId, 0, 10);
         assertEq(targetAddresses.length, 2);
         assertEq(supportWeights.length, 2);
         assertEq(opposeWeights.length, 2);
@@ -187,7 +187,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(voterCounts[0], 2);
 
         (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights) =
-            deny.addressDenyVoters(chatGroupId, senderOwner, 0, 10);
+            deny.addressDenyVoters(groupId, senderOwner, 0, 10);
         assertEq(voters.length, 2);
         assertEq(supportDenies.length, 2);
         assertEq(settledWeights.length, 2);
@@ -204,46 +204,46 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         protocol.setGovVotes(token, senderOwner, 7);
 
         vm.prank(senderOwner);
-        deny.voteDenySenderBySenderId(chatGroupId, senderId);
+        deny.voteDenySenderBySenderId(groupId, senderId);
 
-        (uint256 addressSupport, uint256 addressOppose) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
-        (uint256 groupSupport, uint256 groupOppose) = deny.senderIdDenyTallyOf(chatGroupId, senderId);
+        (uint256 addressSupport, uint256 addressOppose) = deny.addressDenyTallyOf(groupId, senderOwner);
+        (uint256 groupSupport, uint256 groupOppose) = deny.senderIdDenyTallyOf(groupId, senderId);
         assertEq(addressSupport, 7);
         assertEq(addressOppose, 0);
         assertEq(groupSupport, 7);
         assertEq(groupOppose, 0);
-        assertTrue(deny.isDenied(chatGroupId, senderId, senderOwner));
-        assertEq(deny.stateVersion(chatGroupId), 1);
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
+        assertEq(deny.stateVersion(groupId), 1);
 
         protocol.setGovVotes(token, senderOwner, 4);
-        deny.revalidateDenySenderVoteBySenderId(chatGroupId, senderId, senderOwner);
+        deny.revalidateDenySenderVoteBySenderId(groupId, senderId, senderOwner);
 
-        (addressSupport, addressOppose) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
-        (groupSupport, groupOppose) = deny.senderIdDenyTallyOf(chatGroupId, senderId);
+        (addressSupport, addressOppose) = deny.addressDenyTallyOf(groupId, senderOwner);
+        (groupSupport, groupOppose) = deny.senderIdDenyTallyOf(groupId, senderId);
         assertEq(addressSupport, 4);
         assertEq(addressOppose, 0);
         assertEq(groupSupport, 4);
         assertEq(groupOppose, 0);
-        assertEq(deny.stateVersion(chatGroupId), 2);
+        assertEq(deny.stateVersion(groupId), 2);
 
         vm.prank(senderOwner);
-        deny.opposeDenySenderBySenderId(chatGroupId, senderId);
+        deny.opposeDenySenderBySenderId(groupId, senderId);
 
-        (addressSupport, addressOppose) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
-        (groupSupport, groupOppose) = deny.senderIdDenyTallyOf(chatGroupId, senderId);
+        (addressSupport, addressOppose) = deny.addressDenyTallyOf(groupId, senderOwner);
+        (groupSupport, groupOppose) = deny.senderIdDenyTallyOf(groupId, senderId);
         assertEq(addressSupport, 0);
         assertEq(addressOppose, 4);
         assertEq(groupSupport, 0);
         assertEq(groupOppose, 4);
-        assertTrue(!deny.isDenied(chatGroupId, senderId, senderOwner));
-        assertEq(deny.stateVersion(chatGroupId), 3);
+        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
+        assertEq(deny.stateVersion(groupId), 3);
 
         vm.prank(senderOwner);
-        deny.clearDenySenderVoteBySenderId(chatGroupId, senderId);
+        deny.clearDenySenderVoteBySenderId(groupId, senderId);
 
-        assertEq(deny.addressDenyTargetsCount(chatGroupId), 0);
-        assertEq(deny.senderIdDenyTargetsCount(chatGroupId), 0);
-        assertEq(deny.stateVersion(chatGroupId), 4);
+        assertEq(deny.addressDenyTargetsCount(groupId), 0);
+        assertEq(deny.senderIdDenyTargetsCount(groupId), 0);
+        assertEq(deny.stateVersion(groupId), 4);
     }
 
     function testT137_senderAddressVoteUsesDefaultGroupWhenPresentAndSkipsNftWhenMissing() public {
@@ -255,26 +255,26 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(senderId);
 
         vm.prank(senderOwner);
-        deny.voteDenySenderBySenderAddress(chatGroupId, senderOwner);
+        deny.voteDenySenderBySenderAddress(groupId, senderOwner);
 
-        (uint256 addressSupport, uint256 addressOppose) = deny.addressDenyTallyOf(chatGroupId, senderOwner);
-        (uint256 groupSupport, uint256 groupOppose) = deny.senderIdDenyTallyOf(chatGroupId, senderId);
+        (uint256 addressSupport, uint256 addressOppose) = deny.addressDenyTallyOf(groupId, senderOwner);
+        (uint256 groupSupport, uint256 groupOppose) = deny.senderIdDenyTallyOf(groupId, senderId);
         assertEq(addressSupport, 7);
         assertEq(addressOppose, 0);
         assertEq(groupSupport, 7);
         assertEq(groupOppose, 0);
 
         vm.prank(voter2);
-        deny.voteDenySenderBySenderAddress(chatGroupId, voter2);
+        deny.voteDenySenderBySenderAddress(groupId, voter2);
 
-        (addressSupport, addressOppose) = deny.addressDenyTallyOf(chatGroupId, voter2);
+        (addressSupport, addressOppose) = deny.addressDenyTallyOf(groupId, voter2);
         assertEq(addressSupport, 5);
         assertEq(addressOppose, 0);
-        assertEq(deny.senderIdDenyTargetsCount(chatGroupId), 1);
-        assertEq(deny.stateVersion(chatGroupId), 2);
+        assertEq(deny.senderIdDenyTargetsCount(groupId), 1);
+        assertEq(deny.stateVersion(groupId), 2);
     }
 
     function _activateTokenGovManager() internal {
-        chatGroupId = tokenGovManager.activate(token);
+        groupId = tokenGovManager.activate(token);
     }
 }

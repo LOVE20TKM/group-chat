@@ -12,12 +12,12 @@ contract TokenGovGroupChatManager is BaseTokenGroupChatManager {
         address extensionCenter_
     ) BaseTokenGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
 
-    function activate(address token) external returns (uint256 chatGroupId) {
+    function activate(address token) external returns (uint256 groupId) {
         return _activateTokenChat(token, "mgr_token_gov_");
     }
 
-    function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        address token = tokenOfChatGroup[chatGroupId];
+    function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {
+        address token = tokenOfGroup[groupId];
         return token != address(0) && _tokenGovVoteWeight(token, senderAddress) != 0;
     }
 }

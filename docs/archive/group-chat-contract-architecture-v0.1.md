@@ -43,7 +43,7 @@ afterPostPlugin == address(0): 无消息后观察
 ```solidity
 interface IPostScopeSource {
     function canPost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderGroupId,
         address senderAddress
     ) external view returns (bool);
@@ -63,7 +63,7 @@ interface IPostScopeSource {
 ```solidity
 interface IPostDenySource {
     function isDenied(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderGroupId,
         address senderAddress
     ) external view returns (bool);
@@ -92,7 +92,7 @@ return false
 ```solidity
 interface IBeforePostPlugin {
     function beforePost(
-        uint256 chatGroupId,
+        uint256 groupId,
         uint256 senderGroupId,
         address senderAddress,
         string calldata content,
@@ -116,7 +116,7 @@ interface IBeforePostPlugin {
 ```solidity
 interface IDenyVoteWeightSource {
     function denyVoteWeightOf(
-        uint256 chatGroupId,
+        uint256 groupId,
         address voter
     ) external view returns (uint256);
 }
@@ -130,7 +130,7 @@ interface IDenyVoteWeightSource {
 
 ```solidity
 function canPost(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderGroupId,
     address senderAddress
 ) external view returns (bool);
@@ -138,7 +138,7 @@ function canPost(
 
 语义：
 
-- `chatGroupId` 未激活，返回 `false`
+- `groupId` 未激活，返回 `false`
 - `senderGroupId` 不存在，返回 `false`
 - `senderAddress != GroupNFT.ownerOf(senderGroupId)`，返回 `false`
 - `scopeSource.canPost(...) == false`，返回 `false`
@@ -151,7 +151,7 @@ function canPost(
 
 ```solidity
 function canPostStatus(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderGroupId,
     address senderAddress
 ) external view returns (bool allowed, bytes4 reasonCode);
@@ -162,7 +162,7 @@ function canPostStatus(
 ```text
 0x00000000                         OK
 ChatNotActive.selector             chat 未激活
-GroupNotExist.selector             chatGroupId 或 senderGroupId 不存在
+GroupNotExist.selector             groupId 或 senderGroupId 不存在
 SenderNotGroupOwner.selector       senderAddress 不是 senderGroupId 当前 owner
 ScopeRejected.selector             scopeSource 判定无资格
 DenyRejected.selector              denySource 判定被拒绝
@@ -216,10 +216,10 @@ chainId + source/plugin address
 
 ```solidity
 interface IRuleStateVersion {
-    function stateVersion(uint256 chatGroupId) external view returns (uint256);
+    function stateVersion(uint256 groupId) external view returns (uint256);
 
     event StateVersionChanged(
-        uint256 indexed chatGroupId,
+        uint256 indexed groupId,
         uint256 stateVersion
     );
 }
@@ -291,7 +291,7 @@ GroupChat
 
 Manager 职责：
 
-- 持有或创建 `chatGroupId`
+- 持有或创建 `groupId`
 - 绑定 token / action scope
 - 通过 `activate(...)` 创建并激活对应类型群聊
 - 激活群聊时一次性写入规则槽位
@@ -323,10 +323,10 @@ DenySource 是实际挂到 `GroupChat.denySource` 的合约。
 
 治理投票型黑名单统一使用 `GovVotedDenySource`。这里的 `Gov` 表示“由投票治理产生黑名单”，不限定票权必须是代币治理票。不同群聊的差异只来自对应 `IDenyVoteWeightSource`。
 
-`GovVotedDenySource` 只允许配置每个 `chatGroupId` 的投票权重源：
+`GovVotedDenySource` 只允许配置每个 `groupId` 的投票权重源：
 
 ```text
-voteWeightSourceOf(chatGroupId) -> IDenyVoteWeightSource
+voteWeightSourceOf(groupId) -> IDenyVoteWeightSource
 ```
 
 四种代币/行动去中心化群聊中：
@@ -368,8 +368,8 @@ AfterPostPlugin 是实际挂到 `GroupChat.afterPostPlugin` 的合约。
 
 ```text
 TokenGroupChatManager
-  - ownerOf(chatGroupId)
-  - activate(chatGroupId, token)
+  - ownerOf(groupId)
+  - activate(groupId, token)
   - canPost = 持币 OR 参与过行动 OR 有治理票
   - denyVoteWeightOf = 地址持有的治理票
 
@@ -383,8 +383,8 @@ GroupChat.beforePostPlugin = 可选
 
 ```text
 TokenGovGroupChatManager
-  - ownerOf(chatGroupId)
-  - activate(chatGroupId, token)
+  - ownerOf(groupId)
+  - activate(groupId, token)
   - canPost = 有代币治理票
   - denyVoteWeightOf = 地址持有的治理票
 
@@ -398,8 +398,8 @@ GroupChat.beforePostPlugin = 可选
 
 ```text
 TokenActionGovGroupChatManager
-  - ownerOf(chatGroupId)
-  - activate(chatGroupId, token, actionId, recentRounds)
+  - ownerOf(groupId)
+  - activate(groupId, token, actionId, recentRounds)
   - canPost = 最近 X 轮给该行动投过票
   - denyVoteWeightOf = 地址当前行动轮的投票数
 
@@ -413,8 +413,8 @@ GroupChat.beforePostPlugin = 可选
 
 ```text
 TokenActionGroupChatManager
-  - ownerOf(chatGroupId)
-  - activate(chatGroupId, token, actionId, recentRounds)
+  - ownerOf(groupId)
+  - activate(groupId, token, actionId, recentRounds)
   - canPost = 最近 X 轮给该行动投过票 OR 参与这个行动
   - denyVoteWeightOf = 地址当前行动轮的投票数
 
@@ -463,10 +463,10 @@ Open:
 
 ```text
 owner:
-  GroupNFT.ownerOf(chatGroupId)
+  GroupNFT.ownerOf(groupId)
 
 delegate:
-  GroupChat.delegateGroupIdOf(chatGroupId) 的当前 owner
+  GroupChat.delegateGroupIdOf(groupId) 的当前 owner
 
 admin:
   denySource 内配置的 adminGroupIds 的当前 owner

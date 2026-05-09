@@ -22,12 +22,12 @@ contract TokenActionGovGroupChatManager is BaseTokenActionGroupChatManager {
         )
     {}
 
-    function activate(address token, uint256 actionId) external returns (uint256 chatGroupId) {
+    function activate(address token, uint256 actionId) external returns (uint256 groupId) {
         return _activateActionChat(token, actionId, "mgr_action_gov_");
     }
 
-    function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        ActionChat storage action = actionOfChatGroup[chatGroupId];
+    function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {
+        ActionChat storage action = actionOfGroup[groupId];
         address token = action.token;
         return token != address(0) && _hasRecentActionVote(token, action.actionId, senderAddress);
     }

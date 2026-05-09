@@ -13,7 +13,7 @@ ScopeSource 判断“某身份 / 地址本来是否有资格发言”。
 
 ```solidity
 function canPost(
-    uint256 chatGroupId,
+    uint256 groupId,
     uint256 senderId,
     address senderAddress
 ) external view returns (bool);
@@ -22,7 +22,7 @@ function canPost(
 ## 状态边界
 
 - 主协议不存 source 的 `configData`。
-- source 自己按 `chatGroupId` 隔离状态。
+- source 自己按 `groupId` 隔离状态。
 - source 内部配置权限应实时锚定 chat owner / 有效 delegate。
 - 主协议停止发言不影响 source 内部配置写；source 自己按权限控制。
 
@@ -45,4 +45,4 @@ function canPost(
 ## 前端规则
 
 - 未在可信地址表中的 source，不调用专用展示接口。
-- 可信 source 可选实现 `stateVersion(chatGroupId)` 和 `StateVersionChanged`，供前端重拉专用状态。
+- 可信 source 可选实现 `stateVersion(groupId)` 和 `StateVersionChanged`，供前端重拉专用状态。

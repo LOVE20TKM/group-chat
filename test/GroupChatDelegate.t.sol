@@ -9,55 +9,55 @@ contract GroupChatDelegateTest is GroupChatFixture {
         _activateEmpty();
 
         vm.prank(chatOwner);
-        chat.setDelegateId(chatGroupId, delegateId);
-        assertEq(chat.delegateIdOf(chatGroupId), delegateId);
-        assertEq(chat.chatInfo(chatGroupId).delegateId, delegateId);
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 2);
+        chat.setDelegateId(groupId, delegateId);
+        assertEq(chat.delegateIdOf(groupId), delegateId);
+        assertEq(chat.chatInfo(groupId).delegateId, delegateId);
+        assertEq(chat.chatInfo(groupId).configVersion, 2);
 
-        groupNft.transferFrom(chatOwner, other, chatGroupId);
-        assertEq(chat.delegateIdOf(chatGroupId), 0);
-        assertEq(chat.chatInfo(chatGroupId).delegateId, 0);
-        assertEq(chat.chatInfo(chatGroupId).owner, other);
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 2);
+        groupNft.transferFrom(chatOwner, other, groupId);
+        assertEq(chat.delegateIdOf(groupId), 0);
+        assertEq(chat.chatInfo(groupId).delegateId, 0);
+        assertEq(chat.chatInfo(groupId).owner, other);
+        assertEq(chat.chatInfo(groupId).configVersion, 2);
 
-        groupNft.transferFrom(other, chatOwner, chatGroupId);
-        assertEq(chat.delegateIdOf(chatGroupId), delegateId);
-        assertEq(chat.chatInfo(chatGroupId).delegateId, delegateId);
+        groupNft.transferFrom(other, chatOwner, groupId);
+        assertEq(chat.delegateIdOf(groupId), delegateId);
+        assertEq(chat.chatInfo(groupId).delegateId, delegateId);
     }
 
     function testT031T032T033T036_delegateIdEdgeCases() public {
         _activateEmpty();
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.DelegateIdCannotBeChatGroupId.selector);
-        chat.setDelegateId(chatGroupId, chatGroupId);
+        vm.expectRevert(IGroupChatErrors.DelegateIdCannotBeGroupId.selector);
+        chat.setDelegateId(groupId, groupId);
 
         vm.prank(chatOwner);
-        chat.setDelegateId(chatGroupId, delegateId);
+        chat.setDelegateId(groupId, delegateId);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.DelegateIdUnchanged.selector);
-        chat.setDelegateId(chatGroupId, delegateId);
+        chat.setDelegateId(groupId, delegateId);
 
         vm.prank(chatOwner);
-        chat.setDelegateId(chatGroupId, 0);
-        assertEq(chat.delegateIdOf(chatGroupId), 0);
-        assertEq(chat.chatInfo(chatGroupId).delegateId, 0);
+        chat.setDelegateId(groupId, 0);
+        assertEq(chat.delegateIdOf(groupId), 0);
+        assertEq(chat.chatInfo(groupId).delegateId, 0);
 
-        groupNft.transferFrom(chatOwner, other, chatGroupId);
-        groupNft.transferFrom(other, chatOwner, chatGroupId);
-        assertEq(chat.delegateIdOf(chatGroupId), 0);
+        groupNft.transferFrom(chatOwner, other, groupId);
+        groupNft.transferFrom(other, chatOwner, groupId);
+        assertEq(chat.delegateIdOf(groupId), 0);
 
         vm.prank(chatOwner);
-        chat.setDelegateId(chatGroupId, delegateId);
-        groupNft.transferFrom(chatOwner, other, chatGroupId);
+        chat.setDelegateId(groupId, delegateId);
+        groupNft.transferFrom(chatOwner, other, groupId);
 
         vm.prank(delegateIdOwner);
         vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateIdOwner.selector);
-        chat.setMeta(chatGroupId, "k", bytes("v"));
+        chat.setMeta(groupId, "k", bytes("v"));
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.NotChatOwner.selector);
-        chat.setDelegateId(chatGroupId, 0);
+        chat.setDelegateId(groupId, 0);
     }
 }

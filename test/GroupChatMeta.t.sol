@@ -11,15 +11,15 @@ contract GroupChatMetaTest is GroupChatFixture {
         _activateEmpty();
 
         vm.prank(chatOwner);
-        chat.setMeta(chatGroupId, "name", bytes("v1"));
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 2);
-        assertEq(chat.metaValue(chatGroupId, "name"), bytes("v1"));
-        assertEq(chat.metaEntriesCount(chatGroupId), 1);
+        chat.setMeta(groupId, "name", bytes("v1"));
+        assertEq(chat.chatInfo(groupId).configVersion, 2);
+        assertEq(chat.metaValue(groupId, "name"), bytes("v1"));
+        assertEq(chat.metaEntriesCount(groupId), 1);
 
         vm.prank(chatOwner);
-        chat.setMeta(chatGroupId, "name", bytes("v2"));
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 3);
-        assertEq(chat.metaValue(chatGroupId, "name"), bytes("v2"));
+        chat.setMeta(groupId, "name", bytes("v2"));
+        assertEq(chat.chatInfo(groupId).configVersion, 3);
+        assertEq(chat.metaValue(groupId, "name"), bytes("v2"));
 
         string[] memory batchKeys = new string[](2);
         bytes[] memory batchValues = new bytes[](2);
@@ -30,10 +30,10 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.setMetaBatch(chatGroupId, batchKeys, batchValues);
+        chat.setMetaBatch(groupId, batchKeys, batchValues);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 4);
+        assertEq(chat.chatInfo(groupId).configVersion, 4);
         assertEq(logs.length, 2);
         assertEq(logs[0].topics[0], META_SET_SIG);
         assertEq(logs[1].topics[0], META_SET_SIG);
@@ -41,12 +41,12 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(_decodeMetaConfigVersion(logs[1].data), 4);
 
         vm.prank(chatOwner);
-        chat.setMeta(chatGroupId, "topic", bytes(""));
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 5);
-        assertEq(chat.metaValue(chatGroupId, "topic"), bytes(""));
-        assertEq(chat.metaEntriesCount(chatGroupId), 1);
+        chat.setMeta(groupId, "topic", bytes(""));
+        assertEq(chat.chatInfo(groupId).configVersion, 5);
+        assertEq(chat.metaValue(groupId, "topic"), bytes(""));
+        assertEq(chat.metaEntriesCount(groupId), 1);
 
-        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(groupId, 0, 10, false);
         assertEq(entryKeys.length, 1);
         assertEq(entryValues.length, 1);
         assertEq(entryKeys[0], "name");
@@ -58,18 +58,18 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.MetaKeyNotFound.selector);
-        chat.setMeta(chatGroupId, "missing", bytes(""));
+        chat.setMeta(groupId, "missing", bytes(""));
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.MetaKeyEmpty.selector);
-        chat.setMeta(chatGroupId, "", bytes("v"));
+        chat.setMeta(groupId, "", bytes("v"));
 
         vm.prank(chatOwner);
-        chat.setMeta(chatGroupId, "same", bytes("v1"));
+        chat.setMeta(groupId, "same", bytes("v1"));
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.MetaValueUnchanged.selector);
-        chat.setMeta(chatGroupId, "same", bytes("v1"));
+        chat.setMeta(groupId, "same", bytes("v1"));
 
         string[] memory batchKeys = new string[](2);
         bytes[] memory batchValues = new bytes[](2);
@@ -80,7 +80,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.DuplicateMetaKey.selector);
-        chat.setMetaBatch(chatGroupId, batchKeys, batchValues);
+        chat.setMetaBatch(groupId, batchKeys, batchValues);
     }
 
     function testT028T082_activateChatWritesInitialMetaAndChatActivateLast() public {
@@ -97,14 +97,14 @@ contract GroupChatMetaTest is GroupChatFixture {
         vm.recordLogs();
         vm.prank(chatOwner);
         chat.activateChat(
-            chatGroupId, keys1, values1, address(0), address(0), address(beforePlugin), address(afterPlugin), delegateId
+            groupId, keys1, values1, address(0), address(0), address(beforePlugin), address(afterPlugin), delegateId
         );
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        assertEq(chat.chatInfo(chatGroupId).configVersion, 1);
-        assertEq(chat.metaEntriesCount(chatGroupId), 2);
+        assertEq(chat.chatInfo(groupId).configVersion, 1);
+        assertEq(chat.metaEntriesCount(groupId), 2);
 
-        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(groupId, 0, 10, false);
         assertEq(entryKeys.length, 2);
         assertEq(entryValues.length, 2);
         assertEq(entryKeys[0], "a");
@@ -143,7 +143,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         values1[1] = bytes("2");
 
         vm.prank(chatOwner);
-        chat.activateChat(chatGroupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
 
         string[] memory keys2 = new string[](1);
         bytes[] memory values2 = new bytes[](1);
@@ -152,16 +152,16 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.setMetaBatch(chatGroupId, keys2, values2);
+        chat.setMetaBatch(groupId, keys2, values2);
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
-        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(chatGroupId, 0, 10, false);
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(groupId, 0, 10, false);
         assertEq(entryKeys.length, 1);
         assertEq(entryValues.length, 1);
-        assertEq(chat.metaEntriesCount(chatGroupId), 1);
+        assertEq(chat.metaEntriesCount(groupId), 1);
         assertEq(entryKeys[0], "b");
         assertEq(entryValues[0], bytes("2"));
-        assertEq(chat.metaValue(chatGroupId, "a"), bytes(""));
+        assertEq(chat.metaValue(groupId, "a"), bytes(""));
 
         assertEq(logs.length, 1);
         assertEq(logs[0].topics[0], META_SET_SIG);
@@ -176,12 +176,12 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.setDelegateId(chatGroupId, delegateId);
+        chat.setDelegateId(groupId, delegateId);
         Vm.Log[] memory logs1 = vm.getRecordedLogs();
 
         assertEq(logs1.length, 1);
         assertEq(logs1[0].topics[0], DELEGATE_GROUP_ID_SET_SIG);
-        assertEq(_decodeVersionAndUint256(logs1[0].data), chat.chatInfo(chatGroupId).configVersion);
+        assertEq(_decodeVersionAndUint256(logs1[0].data), chat.chatInfo(groupId).configVersion);
 
         string[] memory batchKeys = new string[](2);
         bytes[] memory batchValues = new bytes[](2);
@@ -192,9 +192,9 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.setMetaBatch(chatGroupId, batchKeys, batchValues);
+        chat.setMetaBatch(groupId, batchKeys, batchValues);
         Vm.Log[] memory logs2 = vm.getRecordedLogs();
-        uint256 versionAfterBatch = chat.chatInfo(chatGroupId).configVersion;
+        uint256 versionAfterBatch = chat.chatInfo(groupId).configVersion;
 
         assertEq(logs2.length, 2);
         assertEq(_decodeMetaConfigVersion(logs2[0].data), versionAfterBatch);

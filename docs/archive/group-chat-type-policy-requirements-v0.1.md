@@ -19,7 +19,7 @@
 
 主协议只负责不可变事实和标准扩展点调用：
 
-- 校验 `chatGroupId` 存在
+- 校验 `groupId` 存在
 - 校验 chat 已激活
 - 校验 `msg.sender == ownerOf(senderGroupId)`
 - 校验消息内容、提及、引用消息合法
@@ -132,7 +132,7 @@
 治理黑名单原则：
 
 - 四种代币/行动去中心化群聊共用 `GovVotedDenySource`
-- 票权来自按 `chatGroupId` 配置的 `IDenyVoteWeightSource`
+- 票权来自按 `groupId` 配置的 `IDenyVoteWeightSource`
 - 默认票权源就是该群聊对应的 Manager
 - 阈值、投票期、反对票 / 撤票 / 复议等规则由 `GovVotedDenySource` 构造时确定，部署后不按群重配
 
@@ -262,22 +262,22 @@ Open:
 
 前端推荐规则：
 
-- 先读取 `GroupChat.ruleSlots(chatGroupId)`
+- 先读取 `GroupChat.ruleSlots(groupId)`
 - 使用 `chainId + 合约地址` 组成的可信地址表匹配 `scopeSource`、`denySource`、`beforePostPlugin`
 - 命中可信地址时，使用对应专用 ABI 读取展示数据
 - 未命中可信地址时，只展示合约地址与通用状态
-- 发言按钮可用性优先读取 `GroupChat.canPost(chatGroupId, senderGroupId, senderAddress)`
-- 需要展示不能发言的原因时，读取 `GroupChat.canPostStatus(chatGroupId, senderGroupId, senderAddress)`
+- 发言按钮可用性优先读取 `GroupChat.canPost(groupId, senderGroupId, senderAddress)`
+- 需要展示不能发言的原因时，读取 `GroupChat.canPostStatus(groupId, senderGroupId, senderAddress)`
 - `canPost` 只是无内容预检查，真实发送仍以 `post` 结果为准
 - `mentionAll`、特殊引用、内容格式限制等具体动作，不应只依赖 `canPost`
 
 可信模块可选实现：
 
 ```solidity
-function stateVersion(uint256 chatGroupId) external view returns (uint256);
+function stateVersion(uint256 groupId) external view returns (uint256);
 
 event StateVersionChanged(
-    uint256 indexed chatGroupId,
+    uint256 indexed groupId,
     uint256 stateVersion
 );
 ```
