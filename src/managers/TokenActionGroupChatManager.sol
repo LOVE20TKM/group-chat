@@ -3,23 +3,10 @@ pragma solidity =0.8.17;
 
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
-import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
-import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
+import {BaseTokenActionGroupChatManager} from "./BaseTokenActionGroupChatManager.sol";
 
-contract TokenActionGroupChatManager is BaseGroupChatManager {
-    struct TokenActionChatParams {
-        address token;
-        uint256 actionId;
-    }
-
-    address public immutable VOTE_ADDRESS;
+contract TokenActionGroupChatManager is BaseTokenActionGroupChatManager {
     address public immutable JOIN_ADDRESS;
-    address public immutable EXTENSION_CENTER_ADDRESS;
-    uint256 public immutable RECENT_ROUNDS;
-
-    mapping(uint256 => TokenActionChatParams) public paramsOf;
-    mapping(address => mapping(uint256 => uint256)) public chatGroupIdOfAction;
-    mapping(address => uint256[]) internal _activatedActionIdsByToken;
 
     constructor(
         address groupChat_,
@@ -28,113 +15,38 @@ contract TokenActionGroupChatManager is BaseGroupChatManager {
         address afterPostPlugin_,
         address extensionCenter_,
         uint256 recentRounds_
-    ) BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
-        _requireCode(extensionCenter_);
-        _requireRecentRounds(recentRounds_);
-
-        address vote = IExtensionCenter(extensionCenter_).voteAddress();
+    )
+        BaseTokenActionGroupChatManager(
+            groupChat_,
+            denySource_,
+            beforePostPlugin_,
+            afterPostPlugin_,
+            extensionCenter_,
+            recentRounds_
+        )
+    {
         address join = IExtensionCenter(extensionCenter_).joinAddress();
-        _requireCode(vote);
         _requireCode(join);
 
-        EXTENSION_CENTER_ADDRESS = extensionCenter_;
-        VOTE_ADDRESS = vote;
         JOIN_ADDRESS = join;
-        RECENT_ROUNDS = recentRounds_;
     }
 
     function activate(address token, uint256 actionId) external returns (uint256 chatGroupId) {
-        _requireCode(token);
-        _requireNotManaged(chatGroupIdOfAction[token][actionId] != 0);
-
-        chatGroupId = _mintManagedChatGroup(_tokenActionGroupNameStem("mgr_action_", token, actionId));
-        TokenActionChatParams storage params = paramsOf[chatGroupId];
-        params.token = token;
-        params.actionId = actionId;
-        chatGroupIdOfAction[token][actionId] = chatGroupId;
-        _activatedActionIdsByToken[token].push(actionId);
-        _activateManagedChat(chatGroupId);
-    }
-
-    function activatedActionsCount(address token) external view returns (uint256) {
-        return _activatedActionIdsByToken[token].length;
-    }
-
-    function activatedActions(address token, uint256 offset, uint256 limit, bool reverse)
-        external
-        view
-        returns (uint256[] memory actionIds, uint256[] memory chatGroupIds)
-    {
-        uint256[] storage source = _activatedActionIdsByToken[token];
-        uint256 count = _pageCount(source.length, offset, limit);
-        actionIds = new uint256[](count);
-        chatGroupIds = new uint256[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            uint256 actionId = source[_pageIndex(source.length, offset, i, reverse)];
-            actionIds[i] = actionId;
-            chatGroupIds[i] = chatGroupIdOfAction[token][actionId];
-        }
-    }
-
-    function chatGroupIdsOfActions(address token, uint256[] calldata actionIds)
-        external
-        view
-        returns (uint256[] memory chatGroupIds)
-    {
-        chatGroupIds = new uint256[](actionIds.length);
-        for (uint256 i = 0; i < actionIds.length; i++) {
-            chatGroupIds[i] = chatGroupIdOfAction[token][actionIds[i]];
-        }
+        return _activateActionChat(token, actionId, "mgr_action_");
     }
 
     function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        TokenActionChatParams storage params = paramsOf[chatGroupId];
-        address token = params.token;
+        ActionChat storage action = actionOfChatGroup[chatGroupId];
+        address token = action.token;
         return token != address(0)
             && (
-                _hasRecentActionVote(token, params.actionId, senderAddress)
-                    || _hasActionParticipation(token, params.actionId, senderAddress)
+                _hasRecentActionVote(token, action.actionId, senderAddress)
+                    || _hasActionParticipation(token, action.actionId, senderAddress)
             );
-    }
-
-    function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
-        TokenActionChatParams storage params = paramsOf[chatGroupId];
-        address token = params.token;
-        if (token == address(0)) {
-            return 0;
-        }
-        return _currentActionVoteWeight(token, params.actionId, voter);
-    }
-
-    function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {
-        uint256 round = ILOVE20Vote(VOTE_ADDRESS).currentRound();
-        for (uint256 i = 0; i < RECENT_ROUNDS; i++) {
-            if (ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(token, round, account, actionId) != 0) {
-                return true;
-            }
-            if (round == 0) {
-                break;
-            }
-            unchecked {
-                round--;
-            }
-        }
-        return false;
     }
 
     function _hasActionParticipation(address token, uint256 actionId, address account) internal view returns (bool) {
         return ILOVE20Join(JOIN_ADDRESS).amountByActionIdByAccount(token, actionId, account) != 0
             || IExtensionCenter(EXTENSION_CENTER_ADDRESS).isAccountJoined(token, actionId, account);
-    }
-
-    function _currentActionVoteWeight(address token, uint256 actionId, address account)
-        internal
-        view
-        returns (uint256)
-    {
-        return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(
-            token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId
-        );
     }
 }

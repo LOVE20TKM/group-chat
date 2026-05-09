@@ -4,19 +4,12 @@ pragma solidity =0.8.17;
 import {IERC20Balance} from "../interfaces/external/IERC20Balance.sol";
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
-import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
-import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
+import {BaseTokenGroupChatManager} from "./BaseTokenGroupChatManager.sol";
 
-contract TokenGroupChatManager is BaseGroupChatManager {
-    address public immutable STAKE_ADDRESS;
+contract TokenGroupChatManager is BaseTokenGroupChatManager {
     address public immutable JOIN_ADDRESS;
     address public immutable VOTE_ADDRESS;
-    address public immutable EXTENSION_CENTER_ADDRESS;
-
-    mapping(uint256 => address) public tokenOf;
-    mapping(address => uint256) public chatGroupIdOfToken;
-    address[] internal _activatedTokens;
 
     constructor(
         address groupChat_,
@@ -24,51 +17,18 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
-        _requireCode(extensionCenter_);
-
-        address stake = IExtensionCenter(extensionCenter_).stakeAddress();
+    ) BaseTokenGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         address join = IExtensionCenter(extensionCenter_).joinAddress();
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
-        _requireCode(stake);
         _requireCode(join);
         _requireCode(vote);
 
-        EXTENSION_CENTER_ADDRESS = extensionCenter_;
-        STAKE_ADDRESS = stake;
         JOIN_ADDRESS = join;
         VOTE_ADDRESS = vote;
     }
 
     function activate(address token) external returns (uint256 chatGroupId) {
-        _requireCode(token);
-        _requireNotManaged(chatGroupIdOfToken[token] != 0);
-
-        chatGroupId = _mintManagedChatGroup(_tokenGroupNameStem("mgr_token_", token));
-        tokenOf[chatGroupId] = token;
-        chatGroupIdOfToken[token] = chatGroupId;
-        _activatedTokens.push(token);
-        _activateManagedChat(chatGroupId);
-    }
-
-    function activatedTokensCount() external view returns (uint256) {
-        return _activatedTokens.length;
-    }
-
-    function activatedTokens(uint256 offset, uint256 limit, bool reverse)
-        external
-        view
-        returns (address[] memory tokens, uint256[] memory chatGroupIds)
-    {
-        uint256 count = _pageCount(_activatedTokens.length, offset, limit);
-        tokens = new address[](count);
-        chatGroupIds = new uint256[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            address token = _activatedTokens[_pageIndex(_activatedTokens.length, offset, i, reverse)];
-            tokens[i] = token;
-            chatGroupIds[i] = chatGroupIdOfToken[token];
-        }
+        return _activateTokenChat(token, "mgr_token_");
     }
 
     function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
@@ -78,14 +38,6 @@ contract TokenGroupChatManager is BaseGroupChatManager {
                 _hasTokenBalance(token, senderAddress) || _tokenGovVoteWeight(token, senderAddress) != 0
                     || _hasTokenActionParticipation(token, senderAddress)
             );
-    }
-
-    function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
-        address token = tokenOf[chatGroupId];
-        if (token == address(0)) {
-            return 0;
-        }
-        return _tokenGovVoteWeight(token, voter);
     }
 
     function _hasTokenBalance(address token, address account) internal view returns (bool) {
@@ -113,9 +65,5 @@ contract TokenGroupChatManager is BaseGroupChatManager {
         }
 
         return false;
-    }
-
-    function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {
-        return ILOVE20Stake(STAKE_ADDRESS).validGovVotes(token, account);
     }
 }

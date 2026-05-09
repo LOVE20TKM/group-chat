@@ -91,14 +91,13 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
 
         protocol.setCurrentRound(7);
         chatGroupId = manager.activate(token, 42);
-        (address storedToken, uint256 actionId) = manager.paramsOf(chatGroupId);
+        (address storedToken, uint256 actionId) = manager.actionOfChatGroup(chatGroupId);
         assertEq(storedToken, token);
         assertEq(actionId, 42);
         assertEq(manager.RECENT_ROUNDS(), 3);
         assertEq(manager.chatGroupIdOfAction(token, 42), chatGroupId);
-        assertEq(manager.activatedActionsCount(token), 1);
-        (uint256[] memory actionIds, uint256[] memory actionChatGroupIds) =
-            manager.activatedActions(token, 0, 10, false);
+        assertEq(manager.actionsCountOf(token), 1);
+        (uint256[] memory actionIds, uint256[] memory actionChatGroupIds) = manager.actionsOf(token, 0, 10, false);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 42);
         assertEq(actionChatGroupIds.length, 1);
@@ -121,8 +120,18 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(chatGroupIds[0], secondChatGroupId);
         assertEq(chatGroupIds[1], 0);
         assertEq(chatGroupIds[2], chatGroupId);
+        (address[] memory actionTokens, uint256[] memory actionIdsOfChatGroups) =
+            manager.actionsOfChatGroups(chatGroupIds);
+        assertEq(actionTokens.length, 3);
+        assertEq(actionTokens[0], token);
+        assertEq(actionTokens[1], address(0));
+        assertEq(actionTokens[2], token);
+        assertEq(actionIdsOfChatGroups.length, 3);
+        assertEq(actionIdsOfChatGroups[0], 43);
+        assertEq(actionIdsOfChatGroups[1], 0);
+        assertEq(actionIdsOfChatGroups[2], 42);
 
-        (actionIds, actionChatGroupIds) = manager.activatedActions(token, 0, 1, true);
+        (actionIds, actionChatGroupIds) = manager.actionsOf(token, 0, 1, true);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 43);
         assertEq(actionChatGroupIds.length, 1);
@@ -137,14 +146,13 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setCurrentRound(10);
         chatGroupId = manager.activate(token, 88);
 
-        (address storedToken, uint256 actionId) = manager.paramsOf(chatGroupId);
+        (address storedToken, uint256 actionId) = manager.actionOfChatGroup(chatGroupId);
         assertEq(storedToken, token);
         assertEq(actionId, 88);
         assertEq(manager.RECENT_ROUNDS(), 3);
         assertEq(manager.chatGroupIdOfAction(token, 88), chatGroupId);
-        assertEq(manager.activatedActionsCount(token), 1);
-        (uint256[] memory actionIds, uint256[] memory actionChatGroupIds) =
-            manager.activatedActions(token, 0, 10, false);
+        assertEq(manager.actionsCountOf(token), 1);
+        (uint256[] memory actionIds, uint256[] memory actionChatGroupIds) = manager.actionsOf(token, 0, 10, false);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 88);
         assertEq(actionChatGroupIds.length, 1);
@@ -173,8 +181,18 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(chatGroupIds[0], secondChatGroupId);
         assertEq(chatGroupIds[1], 0);
         assertEq(chatGroupIds[2], chatGroupId);
+        (address[] memory actionTokens, uint256[] memory actionIdsOfChatGroups) =
+            manager.actionsOfChatGroups(chatGroupIds);
+        assertEq(actionTokens.length, 3);
+        assertEq(actionTokens[0], token);
+        assertEq(actionTokens[1], address(0));
+        assertEq(actionTokens[2], token);
+        assertEq(actionIdsOfChatGroups.length, 3);
+        assertEq(actionIdsOfChatGroups[0], 89);
+        assertEq(actionIdsOfChatGroups[1], 0);
+        assertEq(actionIdsOfChatGroups[2], 88);
 
-        (actionIds, actionChatGroupIds) = manager.activatedActions(token, 0, 1, true);
+        (actionIds, actionChatGroupIds) = manager.actionsOf(token, 0, 1, true);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 89);
         assertEq(actionChatGroupIds.length, 1);
