@@ -20,7 +20,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
             new TokenGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
         chatGroupId = _activateToken(manager, token);
 
-        assertEq(manager.tokenOf(chatGroupId), token);
+        assertEq(manager.tokenOfChatGroup(chatGroupId), token);
         assertEq(manager.chatGroupIdOfToken(token), chatGroupId);
         assertEq(manager.activatedTokensCount(), 1);
         (address[] memory tokens, uint256[] memory tokenChatGroupIds) = manager.activatedTokens(0, 10, false);
@@ -64,7 +64,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
             new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
         chatGroupId = manager.activate(token);
 
-        assertEq(manager.tokenOf(chatGroupId), token);
+        assertEq(manager.tokenOfChatGroup(chatGroupId), token);
         assertEq(manager.chatGroupIdOfToken(token), chatGroupId);
         assertEq(manager.activatedTokensCount(), 1);
         (address[] memory tokens, uint256[] memory tokenChatGroupIds) = manager.activatedTokens(0, 10, false);

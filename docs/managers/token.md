@@ -21,7 +21,7 @@ function activate(address token) external returns (uint256 chatGroupId);
 
 写入：
 
-- `tokenOf[chatGroupId] = token`
+- `tokenOfChatGroup[chatGroupId] = token`
 - `chatGroupIdOfToken[token] = chatGroupId`
 - `_activatedTokens.push(token)`
 - `GroupChat.scopeSource = address(this)`
@@ -57,10 +57,10 @@ denyVoteWeightOf(chatGroupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
 
 ## 状态
 
-- `mapping(uint256 => address) public tokenOf`
+- `mapping(uint256 => address) public tokenOfChatGroup`
 - `mapping(address => uint256) public chatGroupIdOfToken`
 - `address[] internal _activatedTokens`
-- `tokenOf(chatGroupId) == address(0)` 表示未激活
+- `tokenOfChatGroup(chatGroupId) == address(0)` 表示未激活
 
 ## 列表查询
 

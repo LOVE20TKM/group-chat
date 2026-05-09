@@ -10,7 +10,7 @@ interface IBaseTokenGroupChatManager is IBaseGroupChatManager {
 
     function activate(address token) external returns (uint256 chatGroupId);
 
-    function tokenOf(uint256 chatGroupId) external view returns (address);
+    function tokenOfChatGroup(uint256 chatGroupId) external view returns (address);
 
     function chatGroupIdOfToken(address token) external view returns (uint256);
 

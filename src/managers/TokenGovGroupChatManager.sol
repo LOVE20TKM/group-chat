@@ -17,7 +17,7 @@ contract TokenGovGroupChatManager is BaseTokenGroupChatManager {
     }
 
     function canPost(uint256 chatGroupId, uint256, address senderAddress) external view returns (bool) {
-        address token = tokenOf[chatGroupId];
+        address token = tokenOfChatGroup[chatGroupId];
         return token != address(0) && _tokenGovVoteWeight(token, senderAddress) != 0;
     }
 }

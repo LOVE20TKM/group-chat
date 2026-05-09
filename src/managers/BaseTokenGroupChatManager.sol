@@ -9,7 +9,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
     address public immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
 
-    mapping(uint256 => address) public tokenOf;
+    mapping(uint256 => address) public tokenOfChatGroup;
     mapping(address => uint256) public chatGroupIdOfToken;
     address[] internal _activatedTokens;
 
@@ -50,7 +50,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
     }
 
     function denyVoteWeightOf(uint256 chatGroupId, address voter) external view returns (uint256) {
-        address token = tokenOf[chatGroupId];
+        address token = tokenOfChatGroup[chatGroupId];
         if (token == address(0)) {
             return 0;
         }
@@ -62,7 +62,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         _requireNotManaged(chatGroupIdOfToken[token] != 0);
 
         chatGroupId = _mintManagedChatGroup(_tokenGroupNameStem(managerPrefix, token));
-        tokenOf[chatGroupId] = token;
+        tokenOfChatGroup[chatGroupId] = token;
         chatGroupIdOfToken[token] = chatGroupId;
         _activatedTokens.push(token);
         _activateManagedChat(chatGroupId);
