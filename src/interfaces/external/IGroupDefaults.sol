@@ -3,7 +3,7 @@ pragma solidity =0.8.17;
 
 interface IGroupDefaultsErrors {
     error GroupNotExist();
-    error SenderAddressNotSenderIdOwner();
+    error SenderNotGroupOwner();
     error DefaultGroupIdAlreadySet(uint256 groupId);
     error DefaultGroupIdNotSet();
 }
