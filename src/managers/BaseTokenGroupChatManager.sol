@@ -13,7 +13,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
 
     mapping(uint256 => address) public tokenOfGroup;
     mapping(address => uint256) public groupIdOfToken;
-    address[] internal _activatedTokens;
+    address[] internal _tokens;
 
     constructor(
         address groupChat_,
@@ -34,22 +34,22 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         STAKE_ADDRESS = stake;
     }
 
-    function activatedTokensCount() external view returns (uint256) {
-        return _activatedTokens.length;
+    function tokensCount() external view returns (uint256) {
+        return _tokens.length;
     }
 
-    function activatedTokens(uint256 offset, uint256 limit, bool reverse)
+    function tokens(uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (address[] memory tokens, uint256[] memory groupIds)
+        returns (address[] memory tokenList, uint256[] memory groupIds)
     {
-        uint256 count = _pageCount(_activatedTokens.length, offset, limit);
-        tokens = new address[](count);
+        uint256 count = _pageCount(_tokens.length, offset, limit);
+        tokenList = new address[](count);
         groupIds = new uint256[](count);
 
         for (uint256 i = 0; i < count; i++) {
-            address token = _activatedTokens[_pageIndex(_activatedTokens.length, offset, i, reverse)];
-            tokens[i] = token;
+            address token = _tokens[_pageIndex(_tokens.length, offset, i, reverse)];
+            tokenList[i] = token;
             groupIds[i] = groupIdOfToken[token];
         }
     }
@@ -77,7 +77,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         groupId = _mintManagedGroup(_tokenGroupNameStem(managerPrefix, token));
         tokenOfGroup[groupId] = token;
         groupIdOfToken[token] = groupId;
-        _activatedTokens.push(token);
+        _tokens.push(token);
         _activateManagedChat(groupId);
     }
 

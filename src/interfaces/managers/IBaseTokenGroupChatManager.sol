@@ -16,10 +16,10 @@ interface IBaseTokenGroupChatManager is IBaseGroupChatManager {
 
     function groupIdOfToken(address token) external view returns (uint256);
 
-    function activatedTokensCount() external view returns (uint256);
+    function tokensCount() external view returns (uint256);
 
-    function activatedTokens(uint256 offset, uint256 limit, bool reverse)
+    function tokens(uint256 offset, uint256 limit, bool reverse)
         external
         view
-        returns (address[] memory tokens, uint256[] memory groupIds);
+        returns (address[] memory tokenList, uint256[] memory groupIds);
 }

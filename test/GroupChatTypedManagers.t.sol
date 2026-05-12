@@ -22,8 +22,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
 
         assertEq(manager.tokenOfGroup(groupId), token);
         assertEq(manager.groupIdOfToken(token), groupId);
-        assertEq(manager.activatedTokensCount(), 1);
-        (address[] memory tokens, uint256[] memory tokenGroupIds) = manager.activatedTokens(0, 10, false);
+        assertEq(manager.tokensCount(), 1);
+        (address[] memory tokens, uint256[] memory tokenGroupIds) = manager.tokens(0, 10, false);
         assertEq(tokens.length, 1);
         assertEq(tokens[0], token);
         assertEq(tokenGroupIds.length, 1);
@@ -67,8 +67,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
 
         assertEq(manager.tokenOfGroup(groupId), token);
         assertEq(manager.groupIdOfToken(token), groupId);
-        assertEq(manager.activatedTokensCount(), 1);
-        (address[] memory tokens, uint256[] memory tokenGroupIds) = manager.activatedTokens(0, 10, false);
+        assertEq(manager.tokensCount(), 1);
+        (address[] memory tokens, uint256[] memory tokenGroupIds) = manager.tokens(0, 10, false);
         assertEq(tokens.length, 1);
         assertEq(tokens[0], token);
         assertEq(tokenGroupIds.length, 1);
@@ -203,7 +203,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionGroupIds[0], secondGroupId);
     }
 
-    function testT116_tokenManagersPageActivatedTokens() public {
+    function testT116_tokenManagersPageTokens() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         MockLOVE20Protocols secondProtocol = new MockLOVE20Protocols();
         address token = address(protocol);
@@ -214,8 +214,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         manager.activate(token);
         uint256 secondGroupId = manager.activate(secondToken);
 
-        assertEq(manager.activatedTokensCount(), 2);
-        (address[] memory tokens, uint256[] memory tokenGroupIds) = manager.activatedTokens(0, 10, false);
+        assertEq(manager.tokensCount(), 2);
+        (address[] memory tokens, uint256[] memory tokenGroupIds) = manager.tokens(0, 10, false);
         assertEq(tokens.length, 2);
         assertEq(tokens[0], token);
         assertEq(tokens[1], secondToken);
@@ -223,13 +223,13 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(tokenGroupIds[0], manager.groupIdOfToken(token));
         assertEq(tokenGroupIds[1], secondGroupId);
 
-        (tokens, tokenGroupIds) = manager.activatedTokens(0, 1, true);
+        (tokens, tokenGroupIds) = manager.tokens(0, 1, true);
         assertEq(tokens.length, 1);
         assertEq(tokens[0], secondToken);
         assertEq(tokenGroupIds.length, 1);
         assertEq(tokenGroupIds[0], secondGroupId);
 
-        (tokens, tokenGroupIds) = manager.activatedTokens(2, 10, false);
+        (tokens, tokenGroupIds) = manager.tokens(2, 10, false);
         assertEq(tokens.length, 0);
         assertEq(tokenGroupIds.length, 0);
 
@@ -238,8 +238,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         govManager.activate(token);
         secondGroupId = govManager.activate(secondToken);
 
-        assertEq(govManager.activatedTokensCount(), 2);
-        (tokens, tokenGroupIds) = govManager.activatedTokens(1, 10, false);
+        assertEq(govManager.tokensCount(), 2);
+        (tokens, tokenGroupIds) = govManager.tokens(1, 10, false);
         assertEq(tokens.length, 1);
         assertEq(tokens[0], secondToken);
         assertEq(tokenGroupIds.length, 1);
