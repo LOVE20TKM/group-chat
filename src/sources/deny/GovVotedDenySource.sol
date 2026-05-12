@@ -15,6 +15,7 @@ contract GovVotedDenySource is IPostDenySource {
     error VoteWeightZero();
     error VoteUnchanged();
     error VoteNotFound();
+    error DenyThresholdTooHigh();
 
     event AddressDenyVoteSet(
         uint256 indexed groupId,
@@ -42,6 +43,8 @@ contract GovVotedDenySource is IPostDenySource {
 
     address public immutable GROUP_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
+    uint256 public immutable DENY_THRESHOLD_BPS;
+    uint256 public constant PERCENT_DENOMINATOR = 10_000;
 
     struct VoteState {
         bool supportDeny;
@@ -68,15 +71,19 @@ contract GovVotedDenySource is IPostDenySource {
 
     mapping(uint256 => ChatState) internal _states;
 
-    constructor(address groupAddress_, address groupDefaults_) {
+    constructor(address groupAddress_, address groupDefaults_, uint256 denyThresholdBps_) {
         if (groupAddress_.code.length == 0) {
             revert GovVotedDenySourceAddressHasNoCode();
         }
         if (groupDefaults_.code.length == 0) {
             revert GovVotedDenySourceAddressHasNoCode();
         }
+        if (denyThresholdBps_ > PERCENT_DENOMINATOR) {
+            revert DenyThresholdTooHigh();
+        }
         GROUP_ADDRESS = groupAddress_;
         GROUP_DEFAULTS_ADDRESS = groupDefaults_;
+        DENY_THRESHOLD_BPS = denyThresholdBps_;
     }
 
     function voteDenyAddress(uint256 groupId, address targetAddress) external {
@@ -308,18 +315,28 @@ contract GovVotedDenySource is IPostDenySource {
     }
 
     function isDenied(uint256 groupId, uint256 senderId, address senderAddress) external view returns (bool) {
-        if (!_sourceHasCode(groupId)) {
+        address source = _sourceOrZero(groupId);
+        if (source == address(0)) {
             return false;
         }
 
         ChatState storage state = _states[groupId];
         TargetState storage addressTarget = state.addressTargetStates[senderAddress];
-        if (addressTarget.supportWeight > addressTarget.opposeWeight) {
+        TargetState storage senderIdTarget = state.senderIdTargetStates[senderId];
+        if (!_supportOutweighsOppose(addressTarget) && !_supportOutweighsOppose(senderIdTarget)) {
+            return false;
+        }
+
+        uint256 totalWeight = _totalVoteWeightOrRevert(source, groupId);
+        if (totalWeight == 0) {
+            return false;
+        }
+
+        if (_isTargetDenied(addressTarget, totalWeight)) {
             return true;
         }
 
-        TargetState storage senderIdTarget = state.senderIdTargetStates[senderId];
-        return senderIdTarget.supportWeight > senderIdTarget.opposeWeight;
+        return _isTargetDenied(senderIdTarget, totalWeight);
     }
 
     function stateVersion(uint256 groupId) external view returns (uint256) {
@@ -721,6 +738,15 @@ contract GovVotedDenySource is IPostDenySource {
         }
     }
 
+    function _sourceOrZero(uint256 groupId) internal view returns (address source) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+            if (resolved.code.length != 0) {
+                return resolved;
+            }
+        } catch {}
+        return address(0);
+    }
+
     function _sourceHasCode(uint256 groupId) internal view returns (bool) {
         try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address source) {
             return source.code.length != 0;
@@ -768,6 +794,25 @@ contract GovVotedDenySource is IPostDenySource {
         } catch {
             revert DenyVoteWeightSourceUnavailable();
         }
+    }
+
+    function _totalVoteWeightOrRevert(address source, uint256 groupId) internal view returns (uint256) {
+        try IDenyVoteWeightSource(source).denyVoteTotalWeightOf(groupId) returns (uint256 resolved) {
+            return resolved;
+        } catch {
+            revert DenyVoteWeightSourceUnavailable();
+        }
+    }
+
+    function _supportOutweighsOppose(TargetState storage target) internal view returns (bool) {
+        return target.supportWeight > target.opposeWeight;
+    }
+
+    function _isTargetDenied(TargetState storage target, uint256 totalWeight) internal view returns (bool) {
+        if (!_supportOutweighsOppose(target)) {
+            return false;
+        }
+        return target.supportWeight * PERCENT_DENOMINATOR >= totalWeight * DENY_THRESHOLD_BPS;
     }
 
     function _addAddressTarget(ChatState storage state, address targetAddress) internal {

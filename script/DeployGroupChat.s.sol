@@ -23,6 +23,7 @@ contract DeployGroupChat is ScriptBase {
         uint256 originBlocks;
         uint256 phaseBlocks;
         uint256 actionRecentRounds;
+        uint256 denyThresholdBps;
     }
 
     struct DeployedAddresses {
@@ -44,7 +45,8 @@ contract DeployGroupChat is ScriptBase {
             groupJoin,
             vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
             vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
-            vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS")
+            vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS"),
+            vm.envOr("GROUP_CHAT_DENY_THRESHOLD_BPS", uint256(30))
         );
 
         vm.startBroadcast();
@@ -63,7 +65,8 @@ contract DeployGroupChat is ScriptBase {
         address groupJoin,
         address beforePostPlugin,
         address afterPostPlugin,
-        uint256 actionRecentRounds
+        uint256 actionRecentRounds,
+        uint256 denyThresholdBps
     ) internal view returns (DeployConfig memory) {
         address coreJoin = IExtensionCenter(extensionCenter).joinAddress();
         return DeployConfig({
@@ -74,7 +77,8 @@ contract DeployGroupChat is ScriptBase {
             afterPostPlugin: afterPostPlugin,
             originBlocks: ILOVE20Join(coreJoin).originBlocks(),
             phaseBlocks: ILOVE20Join(coreJoin).phaseBlocks(),
-            actionRecentRounds: actionRecentRounds
+            actionRecentRounds: actionRecentRounds,
+            denyThresholdBps: denyThresholdBps
         });
     }
 
@@ -82,8 +86,11 @@ contract DeployGroupChat is ScriptBase {
         GroupChat groupChat = new GroupChat(config.groupDefaults, config.originBlocks, config.phaseBlocks);
         deployed.groupChat = address(groupChat);
         deployed.adminDenySource = address(new AdminDenySource(address(groupChat)));
-        deployed.groupChatDenySource =
-            address(new GovVotedDenySource(groupChat.LOVE20_GROUP_ADDRESS(), groupChat.GROUP_DEFAULTS_ADDRESS()));
+        deployed.groupChatDenySource = address(
+            new GovVotedDenySource(
+                groupChat.LOVE20_GROUP_ADDRESS(), groupChat.GROUP_DEFAULTS_ADDRESS(), config.denyThresholdBps
+            )
+        );
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(config.groupJoin));
 
         TokenGroupChatManager tokenGroupChatManager = new TokenGroupChatManager(

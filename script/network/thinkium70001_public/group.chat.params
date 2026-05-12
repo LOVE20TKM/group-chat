@@ -11,6 +11,10 @@ groupJoinAddress=0xd94e4Fc2108B78Aa57438BFe5E85192687f74322
 # Recent rounds scanned by action chat managers
 actionRecentRounds=3
 
+# GovVotedDenySource blacklist threshold, in basis points.
+# 30 = 0.3% blacklist effective threshold.
+denyThresholdBps=30
+
 # Optional immutable plugin slots used by typed decentralized managers
 groupChatBeforePostPluginAddress=0x0000000000000000000000000000000000000000
 groupChatAfterPostPluginAddress=0x0000000000000000000000000000000000000000

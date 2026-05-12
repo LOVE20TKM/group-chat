@@ -9,6 +9,18 @@ import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
+contract MissingTotalDenyVoteWeightSource {
+    uint256 internal immutable _voteWeight;
+
+    constructor(uint256 voteWeight_) {
+        _voteWeight = voteWeight_;
+    }
+
+    function denyVoteWeightOf(uint256, address) external view returns (uint256) {
+        return _voteWeight;
+    }
+}
+
 contract GovVotedDenySourceTest is GroupChatFixture {
     MockLOVE20Protocols internal protocol;
     GovVotedDenySource internal deny;
@@ -22,7 +34,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         super.setUp();
         protocol = new MockLOVE20Protocols();
         token = address(protocol);
-        deny = new GovVotedDenySource(address(groupNft), address(groupDefaults));
+        deny = new GovVotedDenySource(address(groupNft), address(groupDefaults), 30);
         tokenGovManager =
             new TokenGovGroupChatManager(address(chat), address(deny), address(0), address(0), address(protocol));
         actionGovManager = new TokenActionGovGroupChatManager(
@@ -157,6 +169,34 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         (uint256 supportWeight, uint256 opposeWeight) = deny.senderIdDenyTallyOf(groupId, senderId);
         assertEq(supportWeight, 11);
         assertEq(opposeWeight, 0);
+    }
+
+    function testT134B_thresholdRequiresMinimumSupport() public {
+        _activateTokenGovManager();
+        address whale = address(0xABCD);
+        protocol.setGovVotes(token, senderOwner, 29);
+        protocol.setGovVotes(token, voter2, 1);
+        protocol.setGovVotes(token, whale, 9969);
+
+        vm.prank(senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
+        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
+
+        vm.prank(voter2);
+        deny.voteDenyAddress(groupId, senderOwner);
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
+    }
+
+    function testT134C_totalWeightFailureDoesNotSilentlyAllow() public {
+        MissingTotalDenyVoteWeightSource source = new MissingTotalDenyVoteWeightSource(1);
+        uint256 managedGroupId = groupNft.mint(address(source));
+        assertTrue(!deny.isDenied(managedGroupId, senderId, senderOwner));
+
+        vm.prank(senderOwner);
+        deny.voteDenyAddress(managedGroupId, senderOwner);
+
+        vm.expectRevert(GovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
+        deny.isDenied(managedGroupId, senderId, senderOwner);
     }
 
     function testT135_targetAndVoterPagination() public {

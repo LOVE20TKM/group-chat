@@ -29,10 +29,17 @@ contract DeployGroupChatHarness is DeployGroupChat {
         address groupJoin,
         address beforePostPlugin,
         address afterPostPlugin,
-        uint256 actionRecentRounds
+        uint256 actionRecentRounds,
+        uint256 denyThresholdBps
     ) external view returns (DeployConfig memory) {
         return _configFromCoreJoin(
-            groupDefaults, extensionCenter, groupJoin, beforePostPlugin, afterPostPlugin, actionRecentRounds
+            groupDefaults,
+            extensionCenter,
+            groupJoin,
+            beforePostPlugin,
+            afterPostPlugin,
+            actionRecentRounds,
+            denyThresholdBps
         );
     }
 
@@ -73,7 +80,8 @@ contract DeployGroupChatTest is TestBase {
             afterPostPlugin: address(0),
             originBlocks: 100,
             phaseBlocks: 25,
-            actionRecentRounds: 3
+            actionRecentRounds: 3,
+            denyThresholdBps: 30
         });
 
         DeployGroupChat.DeployedAddresses memory deployed = deployer.deployForTest(config);
@@ -97,6 +105,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(GovVotedDenySource(deployed.groupChatDenySource).DENY_THRESHOLD_BPS(), 30);
         assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN_ADDRESS(), address(groupJoin));
 
         _assertManagerCommon(deployed.tokenGroupChatManager, deployed);
@@ -105,13 +114,23 @@ contract DeployGroupChatTest is TestBase {
         _assertManagerCommon(deployed.tokenActionGroupChatManager, deployed);
 
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).STAKE_ADDRESS(), address(protocol));
+        assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).LAUNCH_ADDRESS(), address(protocol));
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).JOIN_ADDRESS(), address(protocol));
         assertEq(TokenGroupChatManager(deployed.tokenGroupChatManager).VOTE_ADDRESS(), address(protocol));
         assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).STAKE_ADDRESS(), address(protocol));
+        assertEq(TokenGovGroupChatManager(deployed.tokenGovGroupChatManager).LAUNCH_ADDRESS(), address(protocol));
+        assertEq(
+            TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).STAKE_ADDRESS(), address(protocol)
+        );
+        assertEq(
+            TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).LAUNCH_ADDRESS(), address(protocol)
+        );
         assertEq(
             TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).VOTE_ADDRESS(), address(protocol)
         );
         assertEq(TokenActionGovGroupChatManager(deployed.tokenActionGovGroupChatManager).RECENT_ROUNDS(), 3);
+        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).STAKE_ADDRESS(), address(protocol));
+        assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).LAUNCH_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).VOTE_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).JOIN_ADDRESS(), address(protocol));
         assertEq(TokenActionGroupChatManager(deployed.tokenActionGroupChatManager).RECENT_ROUNDS(), 3);
@@ -121,7 +140,7 @@ contract DeployGroupChatTest is TestBase {
         protocol.setPhase(321, 44);
 
         DeployGroupChat.DeployConfig memory config = deployer.configFromCoreJoinForTest(
-            address(groupDefaults), address(protocol), address(groupJoin), address(0xBEEF), address(0xCAFE), 7
+            address(groupDefaults), address(protocol), address(groupJoin), address(0xBEEF), address(0xCAFE), 7, 30
         );
 
         assertEq(config.groupDefaults, address(groupDefaults));
@@ -132,6 +151,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(config.originBlocks, 321);
         assertEq(config.phaseBlocks, 44);
         assertEq(config.actionRecentRounds, 7);
+        assertEq(config.denyThresholdBps, 30);
     }
 
     function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {
@@ -143,7 +163,8 @@ contract DeployGroupChatTest is TestBase {
             afterPostPlugin: address(0xCAFE),
             originBlocks: 123,
             phaseBlocks: 456,
-            actionRecentRounds: 7
+            actionRecentRounds: 7,
+            denyThresholdBps: 30
         });
         DeployGroupChat.DeployedAddresses memory deployed = DeployGroupChat.DeployedAddresses({
             groupChat: address(0x101),

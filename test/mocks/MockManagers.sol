@@ -31,4 +31,8 @@ contract MockGroupChatManager is BaseGroupChatManager {
     function denyVoteWeightOf(uint256, address) external view returns (uint256) {
         return voteWeight;
     }
+
+    function denyVoteTotalWeightOf(uint256) external view returns (uint256) {
+        return voteWeight;
+    }
 }

@@ -82,6 +82,11 @@ if [ -n "$actionRecentRounds" ]; then
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
 fi
 
+if [ -n "$denyThresholdBps" ]; then
+    GROUP_CHAT_DENY_THRESHOLD_BPS=$denyThresholdBps
+    export GROUP_CHAT_DENY_THRESHOLD_BPS
+fi
+
 zero_address=0x0000000000000000000000000000000000000000
 
 if [ -z "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" ]; then
@@ -92,6 +97,11 @@ fi
 if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
     GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$zero_address
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
+fi
+
+if [ -z "$GROUP_CHAT_DENY_THRESHOLD_BPS" ]; then
+    GROUP_CHAT_DENY_THRESHOLD_BPS=30
+    export GROUP_CHAT_DENY_THRESHOLD_BPS
 fi
 
 if [ -z "$groupChatAddress" ]; then
@@ -186,6 +196,7 @@ echo -e "AdminDenySource Address: $ADMIN_DENY_SOURCE_ADDRESS"
 echo -e "GovVotedDenySource Address: $GROUP_CHAT_DENY_SOURCE_ADDRESS\n"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
+echo -e "Deny Threshold Bps: $GROUP_CHAT_DENY_THRESHOLD_BPS\n"
 echo -e "TokenGroupChatManager Address: $tokenGroupChatManagerAddress"
 echo -e "TokenGovGroupChatManager Address: $tokenGovGroupChatManagerAddress"
 echo -e "TokenActionGovGroupChatManager Address: $tokenActionGovGroupChatManagerAddress"
@@ -264,6 +275,8 @@ check_equal "GovVotedDenySource: GROUP_ADDRESS" $LOVE20_GROUP_ADDRESS $(cast_cal
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "GovVotedDenySource: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
+check_equal "GovVotedDenySource: DENY_THRESHOLD_BPS" $GROUP_CHAT_DENY_THRESHOLD_BPS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "DENY_THRESHOLD_BPS()(uint256)")
+[ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying GroupJoinScopeSource configuration..."
@@ -304,6 +317,8 @@ echo "Verifying manager immutable configuration..."
 check_manager_common "TokenGroupChatManager" $tokenGroupChatManagerAddress
 check_equal "TokenGroupChatManager: STAKE_ADDRESS" $center_stake_address $(cast_call $tokenGroupChatManagerAddress "STAKE_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenGroupChatManager: LAUNCH_ADDRESS" $(cast_call $EXTENSION_CENTER_ADDRESS "launchAddress()(address)") $(cast_call $tokenGroupChatManagerAddress "LAUNCH_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenGroupChatManager: JOIN_ADDRESS" $center_join_address $(cast_call $tokenGroupChatManagerAddress "JOIN_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenGroupChatManager: VOTE_ADDRESS" $center_vote_address $(cast_call $tokenGroupChatManagerAddress "VOTE_ADDRESS()(address)")
@@ -313,9 +328,15 @@ echo ""
 check_manager_common "TokenGovGroupChatManager" $tokenGovGroupChatManagerAddress
 check_equal "TokenGovGroupChatManager: STAKE_ADDRESS" $center_stake_address $(cast_call $tokenGovGroupChatManagerAddress "STAKE_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenGovGroupChatManager: LAUNCH_ADDRESS" $(cast_call $EXTENSION_CENTER_ADDRESS "launchAddress()(address)") $(cast_call $tokenGovGroupChatManagerAddress "LAUNCH_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 check_manager_common "TokenActionGovGroupChatManager" $tokenActionGovGroupChatManagerAddress
+check_equal "TokenActionGovGroupChatManager: STAKE_ADDRESS" $center_stake_address $(cast_call $tokenActionGovGroupChatManagerAddress "STAKE_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenActionGovGroupChatManager: LAUNCH_ADDRESS" $(cast_call $EXTENSION_CENTER_ADDRESS "launchAddress()(address)") $(cast_call $tokenActionGovGroupChatManagerAddress "LAUNCH_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenActionGovGroupChatManager: VOTE_ADDRESS" $center_vote_address $(cast_call $tokenActionGovGroupChatManagerAddress "VOTE_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenActionGovGroupChatManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGovGroupChatManagerAddress "RECENT_ROUNDS()(uint256)")
@@ -323,6 +344,10 @@ check_equal "TokenActionGovGroupChatManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_R
 echo ""
 
 check_manager_common "TokenActionGroupChatManager" $tokenActionGroupChatManagerAddress
+check_equal "TokenActionGroupChatManager: STAKE_ADDRESS" $center_stake_address $(cast_call $tokenActionGroupChatManagerAddress "STAKE_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "TokenActionGroupChatManager: LAUNCH_ADDRESS" $(cast_call $EXTENSION_CENTER_ADDRESS "launchAddress()(address)") $(cast_call $tokenActionGroupChatManagerAddress "LAUNCH_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenActionGroupChatManager: VOTE_ADDRESS" $center_vote_address $(cast_call $tokenActionGroupChatManagerAddress "VOTE_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "TokenActionGroupChatManager: JOIN_ADDRESS" $center_join_address $(cast_call $tokenActionGroupChatManagerAddress "JOIN_ADDRESS()(address)")

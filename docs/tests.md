@@ -64,6 +64,7 @@ Delegate：
 Manager：
 
 - 构造依赖必须有代码。
+- typed Manager 只能激活 `Launch.isLOVE20Token(token) == true` 的代币。
 - 激活后不可通过 Manager 停止发言、不可重配规则槽。
 - 不暴露通用 call / delegatecall / execute 后门。
 - 重复 `activate` 必须 revert。
@@ -72,7 +73,7 @@ Source：
 
 - `GroupJoinScopeSource` 只读 `GroupJoin` g 索引。
 - `AdminDenySource` 可与 `GroupJoinScopeSource` 组合使用。
-- `GovVotedDenySource` 按治理投票权重判定。
+- `GovVotedDenySource` 按治理投票权重和黑名单生效阈值判定。
 
 部署：
 

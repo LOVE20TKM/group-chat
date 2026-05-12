@@ -2,6 +2,8 @@
 pragma solidity =0.8.17;
 
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
+import {ILOVE20Launch} from "../interfaces/external/ILOVE20Launch.sol";
+import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 
@@ -11,6 +13,8 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         uint256 actionId;
     }
 
+    address public immutable LAUNCH_ADDRESS;
+    address public immutable STAKE_ADDRESS;
     address public immutable VOTE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
@@ -30,9 +34,15 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         _requireCode(extensionCenter_);
         _requireRecentRounds(recentRounds_);
 
+        address launch = IExtensionCenter(extensionCenter_).launchAddress();
+        address stake = IExtensionCenter(extensionCenter_).stakeAddress();
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
+        _requireCode(launch);
+        _requireCode(stake);
         _requireCode(vote);
 
+        LAUNCH_ADDRESS = launch;
+        STAKE_ADDRESS = stake;
         EXTENSION_CENTER_ADDRESS = extensionCenter_;
         VOTE_ADDRESS = vote;
         RECENT_ROUNDS = recentRounds_;
@@ -93,11 +103,20 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         return _currentActionVoteWeight(token, action.actionId, voter);
     }
 
+    function denyVoteTotalWeightOf(uint256 groupId) external view returns (uint256) {
+        ActionChat storage action = actionOfGroup[groupId];
+        address token = action.token;
+        if (token == address(0)) {
+            return 0;
+        }
+        return ILOVE20Stake(STAKE_ADDRESS).govVotesNum(token);
+    }
+
     function _activateActionChat(address token, uint256 actionId, string memory managerPrefix)
         internal
         returns (uint256 groupId)
     {
-        _requireCode(token);
+        _requireLOVE20Token(token);
         _requireNotManaged(groupIdOfAction[token][actionId] != 0);
 
         groupId = _mintManagedGroup(_tokenActionGroupNameStem(managerPrefix, token, actionId));
@@ -131,5 +150,12 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(
             token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId
         );
+    }
+
+    function _requireLOVE20Token(address token) internal view {
+        _requireCode(token);
+        if (!ILOVE20Launch(LAUNCH_ADDRESS).isLOVE20Token(token)) {
+            revert TokenNotLOVE20();
+        }
     }
 }

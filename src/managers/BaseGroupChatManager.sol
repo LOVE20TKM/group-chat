@@ -18,6 +18,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
     error ManagerMintCostChanged();
     error ManagerPaymentFailed();
     error ManagerApprovalFailed();
+    error TokenNotLOVE20();
 
     address public immutable GROUP_CHAT_ADDRESS;
     address public immutable LOVE20_GROUP_ADDRESS;

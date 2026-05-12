@@ -12,6 +12,7 @@ interface IGovVotedDenySource is IPostDenySource {
     error VoteWeightZero();
     error VoteUnchanged();
     error VoteNotFound();
+    error DenyThresholdTooHigh();
 
     event AddressDenyVoteSet(
         uint256 indexed groupId,
@@ -40,6 +41,10 @@ interface IGovVotedDenySource is IPostDenySource {
     function GROUP_ADDRESS() external view returns (address);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
+
+    function DENY_THRESHOLD_BPS() external view returns (uint256);
+
+    function PERCENT_DENOMINATOR() external view returns (uint256);
 
     function voteDenyAddress(uint256 groupId, address targetAddress) external;
 

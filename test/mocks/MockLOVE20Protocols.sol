@@ -11,6 +11,7 @@ contract MockLOVE20Protocols {
 
     mapping(address => uint256) public balances;
     mapping(address => mapping(address => uint256)) public govVotes;
+    mapping(address => uint256) public govVoteTotals;
     mapping(address => mapping(uint256 => mapping(address => uint256))) public joinedAmounts;
     mapping(address => mapping(address => uint256)) public joinedAmountsByAccount;
     mapping(address => mapping(uint256 => mapping(address => mapping(uint256 => uint256)))) public actionVotes;
@@ -18,6 +19,7 @@ contract MockLOVE20Protocols {
     mapping(address => uint256) public extensionJoinedAmounts;
     mapping(address => mapping(uint256 => ActionInfo)) internal _actionInfos;
     mapping(address => mapping(uint256 => uint256[])) internal _votedActionIds;
+    mapping(address => uint8) internal _love20TokenFlags;
 
     function setCurrentRound(uint256 round) external {
         _currentRound = round;
@@ -33,7 +35,12 @@ contract MockLOVE20Protocols {
     }
 
     function setGovVotes(address token, address account, uint256 votes) external {
+        govVoteTotals[token] = govVoteTotals[token] - govVotes[token][account] + votes;
         govVotes[token][account] = votes;
+    }
+
+    function setLOVE20Token(address token, bool listed) external {
+        _love20TokenFlags[token] = listed ? 1 : 2;
     }
 
     function setJoinedAmount(address token, uint256 actionId, address account, uint256 amount) external {
@@ -81,6 +88,10 @@ contract MockLOVE20Protocols {
         return address(this);
     }
 
+    function launchAddress() external view returns (address) {
+        return address(this);
+    }
+
     function joinAddress() external view returns (address) {
         return address(this);
     }
@@ -95,6 +106,21 @@ contract MockLOVE20Protocols {
 
     function validGovVotes(address tokenAddress, address account) external view returns (uint256) {
         return govVotes[tokenAddress][account];
+    }
+
+    function govVotesNum(address tokenAddress) external view returns (uint256) {
+        return govVoteTotals[tokenAddress];
+    }
+
+    function isLOVE20Token(address tokenAddress) external view returns (bool) {
+        uint8 flag = _love20TokenFlags[tokenAddress];
+        if (flag == 1) {
+            return true;
+        }
+        if (flag == 2) {
+            return false;
+        }
+        return tokenAddress.code.length != 0;
     }
 
     function currentRound() external view returns (uint256) {

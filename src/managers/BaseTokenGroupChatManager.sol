@@ -2,10 +2,12 @@
 pragma solidity =0.8.17;
 
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
+import {ILOVE20Launch} from "../interfaces/external/ILOVE20Launch.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 
 abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
+    address public immutable LAUNCH_ADDRESS;
     address public immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
 
@@ -22,9 +24,12 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
     ) BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
         _requireCode(extensionCenter_);
 
+        address launch = IExtensionCenter(extensionCenter_).launchAddress();
         address stake = IExtensionCenter(extensionCenter_).stakeAddress();
+        _requireCode(launch);
         _requireCode(stake);
 
+        LAUNCH_ADDRESS = launch;
         EXTENSION_CENTER_ADDRESS = extensionCenter_;
         STAKE_ADDRESS = stake;
     }
@@ -57,8 +62,16 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         return _tokenGovVoteWeight(token, voter);
     }
 
+    function denyVoteTotalWeightOf(uint256 groupId) external view returns (uint256) {
+        address token = tokenOfGroup[groupId];
+        if (token == address(0)) {
+            return 0;
+        }
+        return ILOVE20Stake(STAKE_ADDRESS).govVotesNum(token);
+    }
+
     function _activateTokenChat(address token, string memory managerPrefix) internal returns (uint256 groupId) {
-        _requireCode(token);
+        _requireLOVE20Token(token);
         _requireNotManaged(groupIdOfToken[token] != 0);
 
         groupId = _mintManagedGroup(_tokenGroupNameStem(managerPrefix, token));
@@ -70,5 +83,12 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {
         return ILOVE20Stake(STAKE_ADDRESS).validGovVotes(token, account);
+    }
+
+    function _requireLOVE20Token(address token) internal view {
+        _requireCode(token);
+        if (!ILOVE20Launch(LAUNCH_ADDRESS).isLOVE20Token(token)) {
+            revert TokenNotLOVE20();
+        }
     }
 }

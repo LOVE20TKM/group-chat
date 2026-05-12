@@ -19,6 +19,7 @@ function activate(
 
 流程：
 
+- 校验 `Launch.isLOVE20Token(token) == true`
 - Manager 生成群 NFT 名：`mgr_action_[symbol]_[actionId]_[xxxxxx]`
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
 - 调用 `GroupNFT.mint(...)` 得到 `groupId`
@@ -54,6 +55,7 @@ denyVoteWeightOf(groupId, voter) =
         voter,
         actionId
     )
+denyVoteTotalWeightOf(groupId) = ILOVE20Stake.govVotesNum(token)
 ```
 
 未激活时返回 `0`。
@@ -63,6 +65,8 @@ denyVoteWeightOf(groupId, voter) =
 从 `ExtensionCenter` 固定读取：
 
 - `VOTE_ADDRESS`
+- `STAKE_ADDRESS`
+- `LAUNCH_ADDRESS`
 - `JOIN_ADDRESS`
 
 ## 状态

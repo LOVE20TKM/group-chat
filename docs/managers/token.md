@@ -14,6 +14,7 @@ function activate(address token) external returns (uint256 groupId);
 
 流程：
 
+- 校验 `Launch.isLOVE20Token(token) == true`
 - Manager 生成群 NFT 名：`mgr_token_[symbol]_[xxxxxx]`
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
 - 调用 `GroupNFT.mint(...)` 得到 `groupId`
@@ -43,6 +44,7 @@ function activate(address token) external returns (uint256 groupId);
 
 ```solidity
 denyVoteWeightOf(groupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
+denyVoteTotalWeightOf(groupId) = ILOVE20Stake.govVotesNum(token)
 ```
 
 未激活时返回 `0`。
@@ -52,6 +54,7 @@ denyVoteWeightOf(groupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
 从 `ExtensionCenter` 固定读取：
 
 - `STAKE_ADDRESS`
+- `LAUNCH_ADDRESS`
 - `JOIN_ADDRESS`
 - `VOTE_ADDRESS`
 

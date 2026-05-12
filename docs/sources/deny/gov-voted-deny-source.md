@@ -26,12 +26,17 @@ GroupChat.denySource = GovVotedDenySource
 
 ## 可配置项
 
-无独立可配置项。
-
-构造参数只固定外部依赖：
+构造参数固定外部依赖和全局黑名单生效阈值：
 
 - `GROUP_ADDRESS`
 - `GROUP_DEFAULTS_ADDRESS`
+- `DENY_THRESHOLD_BPS`
+
+当前部署默认值：
+
+- `DENY_THRESHOLD_BPS = 30`，即支持禁言票数至少占总治理票 `0.3%`
+
+比例单位是 basis points，`10000 = 100%`。
 
 治理语义硬编码固定：
 
@@ -48,7 +53,9 @@ GroupChat.denySource = GovVotedDenySource
 
 - 不设置提案开始 / 结束窗口。
 - 每次投票、反对、撤票、复议重验证都立即更新聚合票权。
-- `supportWeight > opposeWeight` 时命中黑名单，否则不命中。
+- 命中黑名单必须同时满足：
+  - `supportWeight > opposeWeight`
+  - `supportWeight / denyVoteTotalWeightOf(groupId) >= DENY_THRESHOLD_BPS / 10000`
 - 地址目标或 `senderId` 目标任一命中，`isDenied(...)` 返回 `true`。
 
 ## 投票模型
@@ -69,6 +76,8 @@ GroupChat.denySource = GovVotedDenySource
 - 某目标最后一个投票人撤票或被重验证删除后，该目标必须从目标名单移除。
 - 地址目标读取票权时调用 `denyVoteWeightOf(groupId, voter)`。
 - `senderId` 目标读取票权时调用 `denyVoteWeightOf(groupId, voter)`。
+- 禁言阈值的分母读取 `denyVoteTotalWeightOf(groupId)`。
+- 四个 typed Manager 的 `denyVoteTotalWeightOf(groupId)` 均返回 `ILOVE20Stake.govVotesNum(token)`。
 
 ## 最小接口
 
@@ -268,7 +277,7 @@ function stateVersion(
 - `revalidateDeny*Vote(...)` 只处理已有当前票的 voter；无当前票必须拒绝。
 - `revalidateDeny*Vote(...)` 读取到当前票权为 `0` 时，必须等价于删除该 voter 当前票。
 - `revalidateDeny*Vote(...)` 读取到当前票权未变化时，不得递增 `stateVersion` 或发事件。
-- 单目标是否命中不单独提供接口，由 `*DenyTallyOf(...)` 的 `supportWeight > opposeWeight` 推导。
+- 单目标是否命中不单独提供接口，由 `*DenyTallyOf(...)` 的 `supportWeight > opposeWeight` 与全局阈值共同推导。
 - 分页接口 `limit == 0` 或 `offset` 越界时返回空数组。
 - 同一分页接口返回的数组长度必须一致。
 - 目标与投票人列表必须去重，返回顺序不作协议承诺。

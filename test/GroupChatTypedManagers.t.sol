@@ -39,6 +39,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setGovVotes(token, senderOwner, 9);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 9);
+        assertEq(manager.denyVoteTotalWeightOf(groupId), 9);
         protocol.setGovVotes(token, senderOwner, 0);
         protocol.setJoinedAmountByAccount(token, senderOwner, 1);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
@@ -78,6 +79,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setGovVotes(token, senderOwner, 7);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 7);
+        assertEq(manager.denyVoteTotalWeightOf(groupId), 7);
     }
 
     function testT112_tokenActionGovManagerStoresParamsAndUsesRecentVotes() public {
@@ -108,7 +110,9 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setActionVotes(token, 5, senderOwner, 42, 1);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setActionVotes(token, 7, senderOwner, 42, 5);
+        protocol.setGovVotes(token, senderOwner, 5);
         assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 5);
+        assertEq(manager.denyVoteTotalWeightOf(groupId), 5);
 
         uint256 secondGroupId = manager.activate(token, 43);
         uint256[] memory queryActionIds = new uint256[](3);
@@ -168,7 +172,9 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setExtensionJoined(token, 88, senderOwner, true);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setActionVotes(token, 10, senderOwner, 88, 11);
+        protocol.setGovVotes(token, senderOwner, 11);
         assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 11);
+        assertEq(manager.denyVoteTotalWeightOf(groupId), 11);
 
         uint256 secondGroupId = manager.activate(token, 89);
         uint256[] memory queryActionIds = new uint256[](3);
@@ -246,6 +252,15 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
 
         vm.expectRevert(BaseGroupChatManager.ManagerAddressHasNoCode.selector);
         new TokenGroupChatManager(address(chat), address(0), address(0), address(0), other);
+
+        MockLOVE20Protocols protocol = new MockLOVE20Protocols();
+        address token = address(protocol);
+        protocol.setLOVE20Token(token, false);
+        TokenGovGroupChatManager manager =
+            new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+
+        vm.expectRevert(BaseGroupChatManager.TokenNotLOVE20.selector);
+        manager.activate(token);
     }
 
     function testT115_tokenManagerMintSurvivesTestPrefixNormalization() public {

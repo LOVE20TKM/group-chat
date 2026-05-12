@@ -38,12 +38,14 @@ source ./one_click_deploy.sh <network>
 ## 可选参数
 
 - `LOVE20_GROUP_ADDRESS`：仅用于部署后校验。
+- `GROUP_CHAT_DENY_THRESHOLD_BPS`：默认 `30`，即 `0.3%`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
 `GroupChat.originBlocks` 与 `GroupChat.phaseBlocks` 部署时直接读取 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约，保证 `currentRound()` 对齐 Join 合约。
 
 `DeployGroupChat` 固定部署 `AdminDenySource` 与 `GovVotedDenySource`。
+`GovVotedDenySource` 构造参数固定写入黑名单生效阈值。
 `DeployGroupChat` 固定部署 `GroupJoinScopeSource`，构造参数为 `GROUP_JOIN_ADDRESS`。
 四个 typed Manager 的 `DENY_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedDenySource`。
 `AdminDenySource` 作为中心化 / 链群等 owner-admin 管理型 deny source 产物写入地址文件，不自动挂到 typed Manager。
@@ -117,8 +119,9 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 - `phaseBlocks` 对齐 core Join
 - `AdminDenySource` 固定依赖
 - `GovVotedDenySource` 固定依赖
+- `GovVotedDenySource` 禁言阈值
 - `GroupJoinScopeSource.GROUP_JOIN_ADDRESS`
 - 四个 Manager 的 `GROUP_CHAT_ADDRESS`
 - 四个 Manager 的固定规则槽
 - 四个 Manager 的 `EXTENSION_CENTER_ADDRESS`
-- Manager 从 `ExtensionCenter` 读取到的 `STAKE_ADDRESS` / `JOIN_ADDRESS` / `VOTE_ADDRESS`
+- Manager 从 `ExtensionCenter` 读取到的 `LAUNCH_ADDRESS` / `STAKE_ADDRESS` / `JOIN_ADDRESS` / `VOTE_ADDRESS`

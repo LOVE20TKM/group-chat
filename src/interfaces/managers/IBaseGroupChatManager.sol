@@ -13,6 +13,7 @@ interface IBaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC
     error ManagerMintCostChanged();
     error ManagerPaymentFailed();
     error ManagerApprovalFailed();
+    error TokenNotLOVE20();
 
     function GROUP_CHAT_ADDRESS() external view returns (address);
 

@@ -28,6 +28,7 @@
 - `delegateId = 0`
 
 激活后，Manager 不暴露关闭、重配规则槽或修改发言资格参数的通用入口。
+Manager 只接受 `Launch.isLOVE20Token(token) == true` 的 LOVE20 协议代币。
 
 ### 2.1 代币社区群聊
 
