@@ -22,7 +22,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
 
     address public immutable GROUP_CHAT_ADDRESS;
     address public immutable LOVE20_GROUP_ADDRESS;
-    uint256 public immutable MAX_GROUP_NAME_LENGTH;
+    uint256 internal immutable MAX_GROUP_NAME_LENGTH;
     address public immutable DENY_SOURCE_ADDRESS;
     address public immutable BEFORE_POST_PLUGIN_ADDRESS;
     address public immutable AFTER_POST_PLUGIN_ADDRESS;

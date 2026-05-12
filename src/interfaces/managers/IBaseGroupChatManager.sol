@@ -19,8 +19,6 @@ interface IBaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC
 
     function LOVE20_GROUP_ADDRESS() external view returns (address);
 
-    function MAX_GROUP_NAME_LENGTH() external view returns (uint256);
-
     function DENY_SOURCE_ADDRESS() external view returns (address);
 
     function BEFORE_POST_PLUGIN_ADDRESS() external view returns (address);
