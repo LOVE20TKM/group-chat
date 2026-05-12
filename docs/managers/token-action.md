@@ -87,8 +87,8 @@ uint256 public immutable RECENT_ROUNDS;
 
 ## 列表查询
 
-- `actionsCountOf(token)`
-- `actionsOf(token, offset, limit, reverse)`：返回 `actionIds`、`groupIds`
+- `actionsByTokenCount(token)`
+- `actionsByToken(token, offset, limit, reverse)`：返回 `actionIds`、`groupIds`
 - `groupIdsOfActions(token, actionIds)`：按输入顺序等长返回 `groupId`，未激活返回 `0`
 - `actionsOfGroups(groupIds)`：按输入顺序等长返回 `tokens`、`actionIds`，未激活返回 `address(0)`、`0`
 

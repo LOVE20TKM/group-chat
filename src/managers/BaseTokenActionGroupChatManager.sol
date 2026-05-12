@@ -48,11 +48,11 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         RECENT_ROUNDS = recentRounds_;
     }
 
-    function actionsCountOf(address token) external view returns (uint256) {
+    function actionsByTokenCount(address token) external view returns (uint256) {
         return _actionIdsByToken[token].length;
     }
 
-    function actionsOf(address token, uint256 offset, uint256 limit, bool reverse)
+    function actionsByToken(address token, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (uint256[] memory actionIds, uint256[] memory groupIds)

@@ -81,8 +81,8 @@ action 类：
 
 - `actionOfGroup(groupId)` 返回 `token`、`actionId`
 - `groupIdOfAction(token, actionId)`
-- `actionsCountOf(token)`
-- `actionsOf(token, offset, limit, reverse)` 返回 `actionIds`、`groupIds`
+- `actionsByTokenCount(token)`
+- `actionsByToken(token, offset, limit, reverse)` 返回 `actionIds`、`groupIds`
 - `groupIdsOfActions(token, actionIds)`：等长返回；未激活项为 `0`
 - `actionsOfGroups(groupIds)`：等长返回 `tokens`、`actionIds`
 - `RECENT_ROUNDS()`

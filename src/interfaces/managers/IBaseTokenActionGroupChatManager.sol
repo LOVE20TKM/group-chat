@@ -30,9 +30,9 @@ interface IBaseTokenActionGroupChatManager is IBaseGroupChatManager {
         view
         returns (address[] memory tokens, uint256[] memory actionIds);
 
-    function actionsCountOf(address token) external view returns (uint256);
+    function actionsByTokenCount(address token) external view returns (uint256);
 
-    function actionsOf(address token, uint256 offset, uint256 limit, bool reverse)
+    function actionsByToken(address token, uint256 offset, uint256 limit, bool reverse)
         external
         view
         returns (uint256[] memory actionIds, uint256[] memory groupIds);

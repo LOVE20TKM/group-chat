@@ -98,8 +98,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionId, 42);
         assertEq(manager.RECENT_ROUNDS(), 3);
         assertEq(manager.groupIdOfAction(token, 42), groupId);
-        assertEq(manager.actionsCountOf(token), 1);
-        (uint256[] memory actionIds, uint256[] memory actionGroupIds) = manager.actionsOf(token, 0, 10, false);
+        assertEq(manager.actionsByTokenCount(token), 1);
+        (uint256[] memory actionIds, uint256[] memory actionGroupIds) = manager.actionsByToken(token, 0, 10, false);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 42);
         assertEq(actionGroupIds.length, 1);
@@ -134,7 +134,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionIdsOfGroups[1], 0);
         assertEq(actionIdsOfGroups[2], 42);
 
-        (actionIds, actionGroupIds) = manager.actionsOf(token, 0, 1, true);
+        (actionIds, actionGroupIds) = manager.actionsByToken(token, 0, 1, true);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 43);
         assertEq(actionGroupIds.length, 1);
@@ -154,8 +154,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionId, 88);
         assertEq(manager.RECENT_ROUNDS(), 3);
         assertEq(manager.groupIdOfAction(token, 88), groupId);
-        assertEq(manager.actionsCountOf(token), 1);
-        (uint256[] memory actionIds, uint256[] memory actionGroupIds) = manager.actionsOf(token, 0, 10, false);
+        assertEq(manager.actionsByTokenCount(token), 1);
+        (uint256[] memory actionIds, uint256[] memory actionGroupIds) = manager.actionsByToken(token, 0, 10, false);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 88);
         assertEq(actionGroupIds.length, 1);
@@ -196,7 +196,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(actionIdsOfGroups[1], 0);
         assertEq(actionIdsOfGroups[2], 88);
 
-        (actionIds, actionGroupIds) = manager.actionsOf(token, 0, 1, true);
+        (actionIds, actionGroupIds) = manager.actionsByToken(token, 0, 1, true);
         assertEq(actionIds.length, 1);
         assertEq(actionIds[0], 89);
         assertEq(actionGroupIds.length, 1);
