@@ -67,8 +67,6 @@ interface IAdminDenySource is IPostDenySource {
 
     function removeDenyListsBySenderAddresses(uint256 groupId, address[] calldata targetAddresses) external;
 
-    function isAddressDenied(uint256 groupId, address account) external view returns (bool);
-
     function addressDenyListCount(uint256 groupId) external view returns (uint256);
 
     function addressDenyList(uint256 groupId, uint256 offset, uint256 limit) external view returns (address[] memory);
@@ -76,8 +74,6 @@ interface IAdminDenySource is IPostDenySource {
     function addDenyListsBySenderIds(uint256 groupId, uint256[] calldata targetSenderIds) external;
 
     function removeDenyListsBySenderIds(uint256 groupId, uint256[] calldata targetSenderIds) external;
-
-    function isSenderIdDenied(uint256 groupId, uint256 senderId) external view returns (bool);
 
     function senderIdDenyListCount(uint256 groupId) external view returns (uint256);
 
@@ -89,8 +85,6 @@ interface IAdminDenySource is IPostDenySource {
     function addExemptListBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
 
     function removeExemptListBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
-
-    function isSenderIdExempt(uint256 groupId, uint256 senderId) external view returns (bool);
 
     function senderIdExemptListCount(uint256 groupId) external view returns (uint256);
 

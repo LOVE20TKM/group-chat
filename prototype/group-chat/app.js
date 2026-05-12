@@ -4,7 +4,9 @@ if (!prototypeData) {
   throw new Error('Missing LOVE20_CHAT_PROTOTYPE_DATA. Load prototype-data.js before app.js.');
 }
 
+const messagePreferenceStorageKey = 'love20-chat:message-preferences:v1';
 const state = JSON.parse(JSON.stringify(prototypeData.initialState));
+state.localMessagePreferences = readLocalMessagePreferences();
 const { bottomTabs, inboxFilters, activationTabs } = prototypeData;
 const blacklistPageSize = prototypeData.pageSizes.blacklist;
 const voterPageSize = prototypeData.pageSizes.voter;
@@ -19,6 +21,30 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function readLocalMessagePreferences() {
+  try {
+    const raw = window.localStorage?.getItem(messagePreferenceStorageKey);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeLocalMessagePreferences() {
+  try {
+    if (!window.localStorage) {
+      state.syncHint = '本地偏好缓存失败，当前只在页面内生效。';
+      return false;
+    }
+    window.localStorage.setItem(messagePreferenceStorageKey, JSON.stringify(state.localMessagePreferences || {}));
+    return true;
+  } catch (error) {
+    state.syncHint = '本地偏好缓存失败，当前只在页面内生效。';
+    return false;
+  }
 }
 
 function activeChat() {
@@ -86,7 +112,8 @@ function messageById(messageId, groupId = state.activeGroupId) {
 
 function unreadMessagesForChat(groupId) {
   const lastRead = Number(state.readCursorsByGroupId?.[String(groupId)] || 0);
-  return messagesForChat(groupId).filter((message) => !message.mine && message.messageId > lastRead);
+  const chat = chatById(groupId);
+  return messagesForChat(groupId).filter((message) => !message.mine && message.messageId > lastRead && !shouldHideMessage(chat, message));
 }
 
 function markChatRead(groupId) {
@@ -273,8 +300,12 @@ function canEditExempt(chat) {
   return chat && ['owner', 'delegate'].includes(chat.role);
 }
 
-function targetDenied(target) {
-  return Number(target.support) > Number(target.oppose);
+function targetDenied(chat, target) {
+  if (Number(target.support) <= Number(target.oppose)) return false;
+  const totalWeight = Number(chat?.govDeny?.totalWeight || 0);
+  const thresholdBps = Number(chat?.govDeny?.denyThresholdBps || 0);
+  if (totalWeight <= 0 || thresholdBps <= 0) return true;
+  return Number(target.support) * 10_000 >= totalWeight * thresholdBps;
 }
 
 function normalizeBlacklistTargetType(targetType) {
@@ -289,9 +320,21 @@ function blacklistRowKey(targetType, target) {
   return `${targetType}:${target}`;
 }
 
+function sameAddress(left, right) {
+  return String(left || '').toLowerCase() === String(right || '').toLowerCase();
+}
+
 function govTargets(chat, targetType) {
   targetType = normalizeBlacklistTargetType(targetType);
   return targetType === 'address' ? chat.govDeny.addressTargets : chat.govDeny.senderIdTargets;
+}
+
+function govAddressDenied(chat, senderAddress) {
+  return Boolean(senderAddress && chat?.govDeny?.addressDenyList?.some((item) => sameAddress(item, senderAddress)));
+}
+
+function govSenderIdDenied(chat, senderId) {
+  return Boolean(senderId && chat?.govDeny?.senderIdDenyList?.includes(String(senderId)));
 }
 
 function findGovTarget(chat, targetType, target) {
@@ -311,15 +354,56 @@ function ensureGovTarget(chat, targetType, target) {
 function currentSenderDenied(chat) {
   if (!chat || chat.blacklistMode === 'none') return false;
   if (chat.blacklistMode === 'gov') {
-    const addressDenied = chat.govDeny.addressTargets.some((item) => item.target === state.account && targetDenied(item));
-    const groupDenied = chat.govDeny.senderIdTargets.some((item) => item.target === String(currentDefaultGroupId()) && targetDenied(item));
-    return addressDenied || groupDenied;
+    return govAddressDenied(chat, state.account) || govSenderIdDenied(chat, currentDefaultGroupId());
   }
 
   const deny = chat.adminDeny;
   const groupExempt = deny.senderIdExemptList.includes(String(currentDefaultGroupId()));
   if (groupExempt) return false;
   return deny.addressDenyList.includes(state.account) || deny.senderIdDenyList.includes(String(currentDefaultGroupId()));
+}
+
+function messagePreferenceKey(groupId = state.activeGroupId) {
+  return `${state.account || 'disconnected'}:${String(groupId)}`;
+}
+
+function groupMessagePreference(groupId = state.activeGroupId) {
+  return state.localMessagePreferences?.[messagePreferenceKey(groupId)] || {};
+}
+
+function showBlacklistedMessages(groupId = state.activeGroupId) {
+  return Boolean(groupMessagePreference(groupId).showBlacklistedMessages);
+}
+
+function setShowBlacklistedMessages(groupId, value) {
+  const key = messagePreferenceKey(groupId);
+  state.localMessagePreferences = {
+    ...(state.localMessagePreferences || {}),
+    [key]: { ...groupMessagePreference(groupId), showBlacklistedMessages: Boolean(value) },
+  };
+  return writeLocalMessagePreferences();
+}
+
+function messageSenderDenied(chat, message) {
+  if (!chat || !message || chat.blacklistMode === 'none') return false;
+  const senderAddress = message.senderAddress;
+  const senderId = message.senderId ? String(message.senderId) : '';
+
+  if (chat.blacklistMode === 'gov') {
+    return govAddressDenied(chat, senderAddress) || govSenderIdDenied(chat, senderId);
+  }
+
+  const deny = chat.adminDeny;
+  if (!deny) return false;
+  if (senderId && deny.senderIdExemptList.includes(senderId)) return false;
+  return Boolean(
+    (senderAddress && deny.addressDenyList.some((item) => sameAddress(item, senderAddress))) ||
+    (senderId && deny.senderIdDenyList.includes(senderId)),
+  );
+}
+
+function shouldHideMessage(chat, message) {
+  return messageSenderDenied(chat, message) && !showBlacklistedMessages(message.groupId);
 }
 
 function chatStatus(chat) {
@@ -927,7 +1011,7 @@ function blacklistRows(chat) {
   if (chat.blacklistMode === 'gov') {
     return [
       ...chat.govDeny.addressTargets.map((item) => {
-        const denied = targetDenied(item);
+        const denied = govAddressDenied(chat, item.target);
         return {
           type: 'address',
           target: item.target,
@@ -938,7 +1022,7 @@ function blacklistRows(chat) {
         };
       }),
       ...chat.govDeny.senderIdTargets.map((item) => {
-        const denied = targetDenied(item);
+        const denied = govSenderIdDenied(chat, item.target);
         return {
           type: 'nft',
           target: item.target,
@@ -1114,15 +1198,20 @@ function renderExemptRowMenu(chat, row) {
 function renderMessages() {
   const active = activeChatEntry();
   const groupId = state.activeGroupId;
-  const visibleMessages = messagesForChat(groupId);
   const chat = active ? active.item : null;
+  const allMessages = messagesForChat(groupId);
+  const visibleMessages = allMessages.filter((message) => !shouldHideMessage(chat, message));
+  const hiddenCount = allMessages.length - visibleMessages.length;
   const groupTools = chat ? renderChatTools(chat) : '';
   const roundLabel = chat ? `<div class="round-divider">Round ${chat.round}</div>` : '';
+  const hiddenNotice = hiddenCount > 0 ? renderHiddenBlacklistedNotice(hiddenCount) : '';
   const items = visibleMessages.map((message) => renderMessage(chat, message)).join('');
-  document.getElementById('message-list').innerHTML = `${groupTools}${roundLabel}${items || '<div class="empty-state">暂无消息</div>'}`;
+  const emptyState = hiddenCount > 0 ? '' : '<div class="empty-state">暂无消息</div>';
+  document.getElementById('message-list').innerHTML = `${groupTools}${roundLabel}${hiddenNotice}${items || emptyState}`;
 }
 
 function renderChatTools(chat) {
+  const showDenied = showBlacklistedMessages(chat.groupId);
   const exemptMenuItem = chat.adminDeny
     ? `<button type="button" data-action="open-exempt" data-group-id="${chat.groupId}">豁免名单</button>`
     : '';
@@ -1132,9 +1221,10 @@ function renderChatTools(chat) {
     : '<button type="button" disabled title="仅 NFT 拥有者或代理可以进">管理</button>';
   const menu = state.activeGroupMenuId === chat.groupId ? `
     <div class="chat-menu">
-      <button type="button" data-action="open-details" data-group-id="${chat.groupId}">详情</button>
+      <button type="button" data-action="open-details" data-group-id="${chat.groupId}">群设置</button>
       <button type="button" data-action="simulate-message-gap" data-group-id="${chat.groupId}">模拟缺口</button>
       <button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">${blacklistLabel}</button>
+      <button type="button" data-action="toggle-show-blacklisted" data-group-id="${chat.groupId}" aria-pressed="${showDenied ? 'true' : 'false'}">${showDenied ? '隐藏黑名单消息' : '显示黑名单消息'}</button>
       ${exemptMenuItem}
       ${manageMenuItem}
     </div>
@@ -1142,8 +1232,18 @@ function renderChatTools(chat) {
   return `
     <div class="chat-tools">
       <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+      <span class="chat-preference-state">${showDenied ? '黑名单消息已显示' : '黑名单消息默认隐藏'}</span>
       <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-group-id="${chat.groupId}" aria-label="群聊菜单">...</button>
       ${menu}
+    </div>
+  `;
+}
+
+function renderHiddenBlacklistedNotice(count) {
+  return `
+    <div class="hidden-message-notice">
+      已隐藏 ${count} 条黑名单消息
+      <button type="button" data-action="toggle-show-blacklisted" data-group-id="${state.activeGroupId}">显示</button>
     </div>
   `;
 }
@@ -1181,6 +1281,9 @@ function scopeSourceReason(chat) {
 
 function renderMessage(chat, message) {
   const mine = message.mine ? ' mine' : '';
+  const denied = messageSenderDenied(chat, message);
+  const deniedClass = denied ? ' denied' : '';
+  const deniedBadge = denied ? '<span class="message-deny-badge">黑名单</span>' : '';
   const profile = nftProfile(message.senderId);
   const quoted = message.quotedMessageId ? messageById(message.quotedMessageId, message.groupId) : null;
   const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderId).name)}</div>` : '';
@@ -1200,10 +1303,10 @@ function renderMessage(chat, message) {
     `
     : '';
   return `
-    <article class="message-row${mine}" data-action="select-message" data-message-id="${message.messageId}">
+    <article class="message-row${mine}${deniedClass}" data-action="select-message" data-message-id="${message.messageId}">
       <div class="avatar" data-action="toggle-avatar-menu" data-long-press-mention data-group-id="${message.groupId}" data-message-id="${message.messageId}" data-sender-id="${message.senderId || currentDefaultGroupId()}">${escapeHtml(profile.badge)}</div>
       <div class="message-body">
-        <div class="message-meta">${escapeHtml(profile.name)}</div>
+        <div class="message-meta">${escapeHtml(profile.name)}${deniedBadge}</div>
         <div class="message-bubble${mine}">${quote}${content}</div>
         ${avatarMenu}
         ${actions}
@@ -1272,7 +1375,7 @@ function renderGroupDetails() {
   return `
     <section class="workspace-band">
       <div class="screen-heading">
-        <h1>群详情</h1>
+        <h1>群设置</h1>
         ${statusBadge}
       </div>
     <dl class="status-card">
@@ -1283,10 +1386,30 @@ function renderGroupDetails() {
       <dd>${escapeHtml(status.reasonCode)}</dd>
       ${statusRows}
     </dl>
+    </section>
+    ${chat ? renderMessagePreferenceControl(chat) : ''}
     <div class="close-row status-actions">
       ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>` : ''}
       ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
     </div>
+  `;
+}
+
+function renderMessagePreferenceControl(chat) {
+  const showDenied = showBlacklistedMessages(chat.groupId);
+  return `
+    <section class="workspace-band message-preference-panel">
+      <div class="card-topline">
+        <strong>本机阅读偏好</strong>
+        <span>localStorage</span>
+      </div>
+      <div class="field-row activation-choice-row">
+        <label>显示黑名单消息</label>
+        <div class="choice-group">
+          <button class="picker-button${showDenied ? ' active' : ''}" type="button" data-action="set-show-blacklisted" data-group-id="${chat.groupId}" data-value="true">开启</button>
+          <button class="picker-button${showDenied ? '' : ' active'}" type="button" data-action="set-show-blacklisted" data-group-id="${chat.groupId}" data-value="false">关闭</button>
+        </div>
+      </div>
     </section>
   `;
 }
@@ -1462,6 +1585,26 @@ function openDetails(groupId) {
 function toggleChatMenu(groupId) {
   const numericGroupId = Number(groupId);
   state.activeGroupMenuId = state.activeGroupMenuId === numericGroupId ? null : numericGroupId;
+  render();
+}
+
+function toggleShowBlacklistedMessages(groupId) {
+  const nextValue = !showBlacklistedMessages(groupId);
+  const saved = setShowBlacklistedMessages(groupId, nextValue);
+  state.activeGroupMenuId = null;
+  state.activeMenuMessageId = null;
+  state.activeAvatarMenuKey = null;
+  if (saved) state.syncHint = nextValue ? '已在本机显示黑名单消息。' : '已在本机隐藏黑名单消息。';
+  render();
+}
+
+function setShowBlacklistedMessagesPreference(groupId, value) {
+  const showDenied = value === 'true';
+  const saved = setShowBlacklistedMessages(groupId, showDenied);
+  state.activeGroupMenuId = null;
+  state.activeMenuMessageId = null;
+  state.activeAvatarMenuKey = null;
+  if (saved) state.syncHint = showDenied ? '已在本机显示黑名单消息。' : '已在本机隐藏黑名单消息。';
   render();
 }
 
@@ -1884,10 +2027,29 @@ function voteGovTarget(targetType, target, stance) {
     render();
     return;
   }
+  syncGovDenyList(chat, targetType, target, item);
   chat.govDeny.stateVersion += 1;
   state.activeBlacklistMenuKey = null;
   state.syncHint = `GovVotedDenySource ${targetType} ${target} -> ${stance}`;
   render();
+}
+
+function syncGovDenyList(chat, targetType, target, item) {
+  const shouldList = targetDenied(chat, item);
+  const listName = normalizeBlacklistTargetType(targetType) === 'address' ? 'addressDenyList' : 'senderIdDenyList';
+  if (!chat.govDeny[listName]) chat.govDeny[listName] = [];
+  const list = chat.govDeny[listName];
+  const exists = listName === 'addressDenyList'
+    ? list.some((entry) => sameAddress(entry, target))
+    : list.includes(String(target));
+  if (exists === shouldList) return;
+  if (shouldList) {
+    list.push(String(target));
+    return;
+  }
+  chat.govDeny[listName] = listName === 'addressDenyList'
+    ? list.filter((entry) => !sameAddress(entry, target))
+    : list.filter((entry) => entry !== String(target));
 }
 
 function addSenderDenyFromMessage(messageId, groupId = state.activeGroupId) {
@@ -1927,14 +2089,14 @@ function addSenderDenyFromMessage(messageId, groupId = state.activeGroupId) {
 function simulateMessageGap(groupId) {
   const chat = chatById(groupId);
   if (!chat) return;
-  const groupId = String(chat.groupId);
-  const visibleMessages = messagesForChat(groupId);
+  const resolvedGroupId = String(chat.groupId);
+  const visibleMessages = messagesForChat(resolvedGroupId);
   const latestMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) : 0;
   const eventMessageId = latestMessageId + 3;
   const startMessageId = latestMessageId + 1;
   for (let messageId = startMessageId; messageId <= eventMessageId; messageId++) {
     state.messages.push({
-      groupId,
+      groupId: resolvedGroupId,
       senderId: 9101,
       senderAddress: ownerOfGroupId(9101),
       round: chat.round,
@@ -1947,10 +2109,10 @@ function simulateMessageGap(groupId) {
     });
   }
   chat.lastMessageId = eventMessageId;
-  if (String(state.activeGroupId) === groupId) markChatRead(groupId);
+  if (String(state.activeGroupId) === resolvedGroupId) markChatRead(resolvedGroupId);
   state.activeGroupMenuId = null;
   state.syncHint =
-    `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${groupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;
+    `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${resolvedGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;
   render();
 }
 
@@ -2111,7 +2273,7 @@ function queryBlacklistValue(value) {
   }
   if (chat.blacklistMode === 'gov') {
     const target = findGovTarget(chat, govType, resolvedValue);
-    result = target ? targetDenied(target) : false;
+    result = isAddress ? govAddressDenied(chat, resolvedValue) : govSenderIdDenied(chat, resolvedValue);
     extra = target ? `support ${target.support} / oppose ${target.oppose}` : '无投票目标';
   } else {
     const deny = chat.adminDeny;
@@ -2362,6 +2524,8 @@ document.addEventListener('click', (event) => {
   if (action === 'activate-chat') activateChat(target.dataset.groupId);
   if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
   if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.groupId);
+  if (action === 'toggle-show-blacklisted') toggleShowBlacklistedMessages(target.dataset.groupId);
+  if (action === 'set-show-blacklisted') setShowBlacklistedMessagesPreference(target.dataset.groupId, target.dataset.value);
   if (action === 'simulate-message-gap') simulateMessageGap(target.dataset.groupId);
   if (action === 'open-manage') openManage(target.dataset.groupId);
   if (action === 'open-details') openDetails(target.dataset.groupId);

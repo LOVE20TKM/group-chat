@@ -131,7 +131,13 @@ DenySource 合约全局至少维护：
 - `senderIdExemptListCount(uint256 groupId)`
 - `senderIdExemptList(uint256 groupId, uint256 offset, uint256 limit)`
 - `isDenied(uint256 groupId, uint256 senderId, address senderAddress)`
+- `isAddressDeniedBatch(uint256 groupId, address[] senderAddresses)`
+- `isSenderIdDeniedBatch(uint256 groupId, uint256[] senderIds)`
+- `isSenderIdExemptBatch(uint256 groupId, uint256[] senderIds)`
 - `stateVersion(uint256 groupId)`
+
+三个批量读接口用于前端消息列表分别缓存地址黑名单、NFT 黑名单、NFT 豁免状态。
+最终隐藏状态由前端合成：`!senderIdExempt && (addressDenied || senderIdDenied)`。
 
 ## 6. 事件
 

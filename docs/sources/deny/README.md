@@ -18,6 +18,36 @@ function isDenied(
     uint256 senderId,
     address senderAddress
 ) external view returns (bool);
+
+function isAddressDenied(
+    uint256 groupId,
+    address senderAddress
+) external view returns (bool);
+
+function isSenderIdDenied(
+    uint256 groupId,
+    uint256 senderId
+) external view returns (bool);
+
+function isSenderIdExempt(
+    uint256 groupId,
+    uint256 senderId
+) external view returns (bool);
+
+function isAddressDeniedBatch(
+    uint256 groupId,
+    address[] calldata senderAddresses
+) external view returns (bool[] memory denied);
+
+function isSenderIdDeniedBatch(
+    uint256 groupId,
+    uint256[] calldata senderIds
+) external view returns (bool[] memory denied);
+
+function isSenderIdExemptBatch(
+    uint256 groupId,
+    uint256[] calldata senderIds
+) external view returns (bool[] memory exempt);
 ```
 
 ## 当前文档
@@ -41,3 +71,8 @@ function isDenied(
 
 - 未在可信地址表中的 denySource，不调用专用展示接口。
 - 可信 denySource 可选实现 `stateVersion(groupId)` 和 `StateVersionChanged`，供前端重拉专用状态。
+- 消息列表前端应先从已拉取消息中分别提取唯一 `senderAddress` 与唯一 `senderId`。
+- 分别调用 `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)`、`isSenderIdExemptBatch(...)`。
+- 前端本地合成最终隐藏状态：`!senderIdExempt && (addressDenied || senderIdDenied)`。
+- 这些通用批量接口只返回隐藏判断需要的布尔状态；治理票数属于 `GovVotedDenySource` 专用展示数据，应从 `addressDenyDetailsBatch(...)`、`senderIdDenyDetailsBatch(...)` 或治理目标 / 投票人分页接口获取。
+- 三类结果可以按 `groupId + denySource + stateVersion + senderAddress/senderId` 分开缓存；监听黑名单相关事件或 `StateVersionChanged` 后清理对应缓存。

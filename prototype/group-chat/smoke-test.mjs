@@ -115,8 +115,8 @@ for (const needle of requiredHtml) {
   }
 }
 
-const dataScriptIndex = html.indexOf('src="./prototype-data.js"');
-const appScriptIndex = html.indexOf('src="./app.js"');
+const dataScriptIndex = html.indexOf('src="./prototype-data.js');
+const appScriptIndex = html.indexOf('src="./app.js');
 if (dataScriptIndex === -1 || appScriptIndex === -1 || dataScriptIndex > appScriptIndex) {
   throw new Error('prototype-data.js must load before app.js');
 }
@@ -195,6 +195,13 @@ const requiredAppJs = [
   'PostingNotAllowed',
   'messagesForChat',
   'renderMessageContent',
+  'showBlacklistedMessages',
+  'messageSenderDenied',
+  'shouldHideMessage',
+  'toggle-show-blacklisted',
+  'set-show-blacklisted',
+  '显示黑名单消息',
+  '黑名单消息默认隐藏',
   'quotedMessagesByGroupId',
   'activeQuotedMessageId',
   'clearActiveQuote',
@@ -246,7 +253,7 @@ const requiredAppJs = [
   'simulate-message-gap',
   'conversationStatus',
   'unreadMessagesForChat',
-  'messages(${groupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
+  'messages(${resolvedGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
   'data-action="add-sender-deny"',
   'revalidateGovVote',
   'canEditRules',
@@ -312,6 +319,11 @@ for (const chat of initialState.chats) {
     if (chat[field] === undefined) throw new Error(`Chat ${chat.groupId} missing ${field}`);
   }
   if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.groupId} missing govDeny`);
+  if (chat.blacklistMode === 'gov') {
+    for (const field of ['addressDenyList', 'senderIdDenyList', 'addressTargets', 'senderIdTargets']) {
+      if (!Array.isArray(chat.govDeny[field])) throw new Error(`Gov chat ${chat.groupId} govDeny.${field} must be an array`);
+    }
+  }
   if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
   if (chat.params?.token !== undefined) {
     if (!/^0x[a-fA-F0-9]{40}$/.test(chat.params.token)) {
@@ -360,6 +372,8 @@ const requiredProtocolCopy = [
   'afterPostPlugin',
   'delegateId',
   'stateVersion',
+  'denyThresholdBps',
+  'totalWeight',
   'addressDenyList',
   'senderIdDenyList',
   'senderIdExemptList',
@@ -424,6 +438,48 @@ if (duplicateDraft.mentionedSenderIds.length !== 1 || duplicateDraft.duplicateCo
 }
 if (!mentionSenderIdsValidationHint(duplicateDraft).includes('已去重 1')) {
   throw new Error('Mention validation hint must explain duplicate dedupe');
+}
+
+const blacklistHarness = new Function(
+  'state',
+  [
+    extractFunctionSource(js, 'sameAddress'),
+    extractFunctionSource(js, 'govAddressDenied'),
+    extractFunctionSource(js, 'govSenderIdDenied'),
+    extractFunctionSource(js, 'messagePreferenceKey'),
+    extractFunctionSource(js, 'groupMessagePreference'),
+    extractFunctionSource(js, 'showBlacklistedMessages'),
+    extractFunctionSource(js, 'messageSenderDenied'),
+    extractFunctionSource(js, 'shouldHideMessage'),
+    'return { showBlacklistedMessages, messageSenderDenied, shouldHideMessage };',
+  ].join('\n'),
+);
+
+const blacklistState = JSON.parse(JSON.stringify(initialState));
+blacklistState.localMessagePreferences = {};
+const blacklistApi = blacklistHarness(blacklistState);
+const blacklistChat = blacklistState.chats.find((chat) => chat.groupId === 1024);
+const blacklistedMessage = blacklistState.messages.find((message) => message.groupId === '1024' && message.senderAddress === '0x44...aa');
+if (!blacklistedMessage) {
+  throw new Error('Fixture must include a message from a blacklisted sender');
+}
+if (!blacklistApi.messageSenderDenied(blacklistChat, blacklistedMessage)) {
+  throw new Error('Blacklisted sender message must be detected from address or NFT deny state');
+}
+blacklistChat.govDeny.addressTargets.push({ target: '0x55...aa', support: 20, oppose: 1, voters: 2, myVote: null, myWeight: 0, voterList: [] });
+const unsettledVoteMessage = { groupId: '1024', senderId: 9012, senderAddress: '0x55...aa' };
+if (blacklistApi.messageSenderDenied(blacklistChat, unsettledVoteMessage)) {
+  throw new Error('Gov messages must use the settled deny list, not support/oppose tallies, for hidden state');
+}
+if (!blacklistApi.shouldHideMessage(blacklistChat, blacklistedMessage)) {
+  throw new Error('Blacklisted sender message must be hidden by default');
+}
+blacklistState.localMessagePreferences[`${blacklistState.account}:1024`] = { showBlacklistedMessages: true };
+if (!blacklistApi.showBlacklistedMessages('1024')) {
+  throw new Error('Local preference must enable blacklisted message display per account and group');
+}
+if (blacklistApi.shouldHideMessage(blacklistChat, blacklistedMessage)) {
+  throw new Error('Blacklisted sender message must show after local preference is enabled');
 }
 
 const sendHarness = new Function(

@@ -225,6 +225,36 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertTrue(deny.isAddressDenied(groupId, senderOwner));
     }
 
+    function testT128_batchListChecksReturnIndependentCacheSlices() public {
+        _configureAdmin();
+
+        vm.prank(adminOwner);
+        deny.addDenyListsBySenderIds(groupId, _uints(senderId));
+
+        bool[] memory addressDenied = deny.isAddressDeniedBatch(groupId, _addresses(senderOwner, other));
+        assertEq(addressDenied.length, 2);
+        assertTrue(addressDenied[0]);
+        assertTrue(!addressDenied[1]);
+
+        bool[] memory senderIdDenied = deny.isSenderIdDeniedBatch(groupId, _uints(senderId, otherGroupId));
+        assertEq(senderIdDenied.length, 2);
+        assertTrue(senderIdDenied[0]);
+        assertTrue(!senderIdDenied[1]);
+
+        bool[] memory senderIdExempt = deny.isSenderIdExemptBatch(groupId, _uints(senderId, otherGroupId));
+        assertEq(senderIdExempt.length, 2);
+        assertTrue(!senderIdExempt[0]);
+        assertTrue(!senderIdExempt[1]);
+
+        vm.prank(chatOwner);
+        deny.addExemptListBySenderIds(groupId, _uints(senderId));
+
+        senderIdExempt = deny.isSenderIdExemptBatch(groupId, _uints(senderId, otherGroupId));
+        assertTrue(senderIdExempt[0]);
+        assertTrue(!senderIdExempt[1]);
+        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
+    }
+
     function _configureAdmin() internal {
         vm.prank(chatOwner);
         deny.setAdmins(groupId, _uints(adminId));

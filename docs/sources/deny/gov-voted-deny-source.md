@@ -53,10 +53,12 @@ GroupChat.denySource = GovVotedDenySource
 
 - 不设置提案开始 / 结束窗口。
 - 每次投票、反对、撤票、复议重验证都立即更新聚合票权。
-- 命中黑名单必须同时满足：
+- 每次聚合票权变化后，同步更新“已命中黑名单”结果。
+- 命中黑名单结果必须同时满足：
   - `supportWeight > opposeWeight`
   - `supportWeight / denyVoteTotalWeightOf(groupId) >= DENY_THRESHOLD_BPS / 10000`
-- 地址目标或 `senderId` 目标任一命中，`isDenied(...)` 返回 `true`。
+- `DENY_THRESHOLD_BPS` 只在投票、反对、撤票、复议等写入/结算路径读取；`isDenied(...)` 仅读取已结算名单。
+- 地址黑名单或 `senderId` 黑名单任一命中，`isDenied(...)` 返回 `true`。
 
 ## 投票模型
 
@@ -72,7 +74,8 @@ GroupChat.denySource = GovVotedDenySource
 - `clearDeny*Vote` 只撤回 `msg.sender` 自己的当前票。
 - `revalidateDeny*Vote` 是复议重验证：任何人都可刷新某个 voter 对某个目标的当前票权。
 - `revalidateDeny*Vote` 后当前票权为 `0` 时，必须删除该 voter 对该目标的当前票。
-- 目标名单只包含当前至少有一个投票人的目标，不单独维护“已命中黑名单”派生列表。
+- 目标名单只包含当前至少有一个投票人的目标。
+- 另外维护已结算地址黑名单和已结算 `senderId` 黑名单，供 `isDenied(...)` 与前端批量读使用。
 - 某目标最后一个投票人撤票或被重验证删除后，该目标必须从目标名单移除。
 - 地址目标读取票权时调用 `denyVoteWeightOf(groupId, voter)`。
 - `senderId` 目标读取票权时调用 `denyVoteWeightOf(groupId, voter)`。
@@ -183,10 +186,28 @@ function addressDenyTallyOf(
     address targetAddress
 ) external view returns (uint256 supportWeight, uint256 opposeWeight);
 
+function addressDenyDetailsBatch(
+    uint256 groupId,
+    address[] calldata targetAddresses
+) external view returns (
+    bool[] memory denied,
+    uint256[] memory supportWeights,
+    uint256[] memory opposeWeights
+);
+
 function senderIdDenyTallyOf(
     uint256 groupId,
     uint256 targetSenderId
 ) external view returns (uint256 supportWeight, uint256 opposeWeight);
+
+function senderIdDenyDetailsBatch(
+    uint256 groupId,
+    uint256[] calldata targetSenderIds
+) external view returns (
+    bool[] memory denied,
+    uint256[] memory supportWeights,
+    uint256[] memory opposeWeights
+);
 
 function addressDenyTargetsCount(
     uint256 groupId
@@ -256,6 +277,36 @@ function isDenied(
     address senderAddress
 ) external view returns (bool);
 
+function isAddressDenied(
+    uint256 groupId,
+    address senderAddress
+) external view returns (bool);
+
+function isSenderIdDenied(
+    uint256 groupId,
+    uint256 senderId
+) external view returns (bool);
+
+function isSenderIdExempt(
+    uint256 groupId,
+    uint256 senderId
+) external view returns (bool);
+
+function isAddressDeniedBatch(
+    uint256 groupId,
+    address[] calldata senderAddresses
+) external view returns (bool[] memory denied);
+
+function isSenderIdDeniedBatch(
+    uint256 groupId,
+    uint256[] calldata senderIds
+) external view returns (bool[] memory denied);
+
+function isSenderIdExemptBatch(
+    uint256 groupId,
+    uint256[] calldata senderIds
+) external view returns (bool[] memory exempt);
+
 function stateVersion(
     uint256 groupId
 ) external view returns (uint256);
@@ -264,9 +315,14 @@ function stateVersion(
 ## 接口规则
 
 - 票权源固定为 `ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId)`。
-- 票权源必须是合约，并实现 `IDenyVoteWeightSource`；这是 Manager 与部署测试约束，读路径不做通用 ABI 探测。
+- 票权源必须是合约，并实现 `IDenyVoteWeightSource`；这是 Manager 与部署测试约束。
 - 票权源不可用时，投票、反对、撤票、复议写接口必须拒绝。
-- 票权源不可用时，即 `ownerOf(groupId)` 失败或 owner 无代码，`isDenied(...)` 返回 `false`，`*DenyTallyOf(...)` 返回 `0, 0`，分页接口返回空。
+- 票权源不可用时，即 `ownerOf(groupId)` 失败或 owner 无代码，`*DenyTallyOf(...)` 返回 `0, 0`，投票分页接口返回空。
+- `isDenied(...)`、`isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)` 仅读取已结算名单，不重新读取总票权。
+- 通用批量黑名单读接口只返回发言 / 隐藏判断所需的布尔状态，不返回治理票数。
+- 如果前端需要按指定地址或 `senderId` 解释治理黑名单原因，使用 `addressDenyDetailsBatch(...)`、`senderIdDenyDetailsBatch(...)` 一次读取 `denied`、`supportWeight`、`opposeWeight`。
+- 详情批量接口只读取已结算名单和当前存储的聚合票数，不重新读取票权源或总票权。
+- 如果前端需要目标列表或投票人明细，继续使用 `addressDenyTargets(...)`、`senderIdDenyTargets(...)` 或对应 voters 分页。
 - `targetAddress == address(0)` 必须拒绝。
 - `targetSenderId == 0` 必须拒绝。
 - 单个 voter 当前无票时，`*DenyVoteOf(...)` 返回 `supportDeny=false, settledWeight=0`。
@@ -276,8 +332,11 @@ function stateVersion(
 - 已无当前票时调用 `clearDeny*Vote(...)` 必须拒绝。
 - `revalidateDeny*Vote(...)` 只处理已有当前票的 voter；无当前票必须拒绝。
 - `revalidateDeny*Vote(...)` 读取到当前票权为 `0` 时，必须等价于删除该 voter 当前票。
-- `revalidateDeny*Vote(...)` 读取到当前票权未变化时，不得递增 `stateVersion` 或发事件。
-- 单目标是否命中不单独提供接口，由 `*DenyTallyOf(...)` 的 `supportWeight > opposeWeight` 与全局阈值共同推导。
+- `revalidateDeny*Vote(...)` 读取到当前票权未变化，但总票权阈值导致黑名单结果变化时，必须更新已结算名单并递增 `stateVersion`。
+- 单目标是否命中由写入/复议路径根据 `supportWeight > opposeWeight` 与全局阈值同步到已结算名单。
+- `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)`、`isSenderIdExemptBatch(...)` 返回顺序必须与入参数组顺序一致。
+- `addressDenyDetailsBatch(...)`、`senderIdDenyDetailsBatch(...)` 返回的三组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `denied=false, supportWeight=0, opposeWeight=0`。
+- `GovVotedDenySource` 没有豁免名单，`isSenderIdExemptBatch(...)` 必须返回同长度的全 `false`。
 - 分页接口 `limit == 0` 或 `offset` 越界时返回空数组。
 - 同一分页接口返回的数组长度必须一致。
 - 目标与投票人列表必须去重，返回顺序不作协议承诺。
@@ -309,13 +368,28 @@ event SenderIdDenyVoteSet(
     uint256 stateVersion
 );
 
+event AddressDenySet(
+    uint256 indexed groupId,
+    address indexed targetAddress,
+    bool listed,
+    uint256 stateVersion
+);
+
+event SenderIdDenySet(
+    uint256 indexed groupId,
+    uint256 indexed targetSenderId,
+    bool listed,
+    uint256 stateVersion
+);
+
 event StateVersionChanged(
     uint256 indexed groupId,
     uint256 stateVersion
 );
 ```
 
-`vote`、`oppose`、`clear`、`revalidate` 发生实际状态变化时，统一发对应的 `*DenyVoteSet` 明细事件。
+投票聚合状态发生变化时，统一发对应的 `*DenyVoteSet` 明细事件。
+已结算黑名单结果发生变化时，必须发对应的 `*DenySet` 明细事件。
 
 ## 状态要求
 
@@ -329,6 +403,8 @@ event StateVersionChanged(
 - `uint256 stateVersion`
 - `address[] addressDenyTargets` 与对应 `indexPlusOne`
 - `uint256[] senderIdDenyTargets` 与对应 `indexPlusOne`
+- `address[] addressDenyList` 与对应 `indexPlusOne`
+- `uint256[] senderIdDenyList` 与对应 `indexPlusOne`
 
 每个地址目标至少维护：
 

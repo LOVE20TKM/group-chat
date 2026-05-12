@@ -51,6 +51,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
     1308: { name: '链群服务者', badge: '服' },
     1309: { name: '代理运营员', badge: '代' },
     1310: { name: '链群管理员', badge: '管' },
+    9011: { name: '争议账号', badge: '争' },
     9101: { name: '治理观察员', badge: '治' },
   },
   groupOwners: {
@@ -95,7 +96,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       postingAllowed: true,
       immutableAfterActivate: true,
       round: 42,
-      lastMessageId: 3,
+      lastMessageId: 4,
       scopeAllowed: true,
       voteWeight: 18,
       voteWeightLabel: 'token 治理票',
@@ -109,6 +110,10 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       blacklistMode: 'gov',
       govDeny: {
         stateVersion: 7,
+        denyThresholdBps: 30,
+        totalWeight: 1000,
+        addressDenyList: ['0x44...aa'],
+        senderIdDenyList: ['9011'],
         addressTargets: [
           { target: '0x44...aa', support: 43, oppose: 12, voters: 5, myVote: null, myWeight: 0, voterList: [
             { voter: '0x3a...02', stance: '支持', weight: 18 },
@@ -153,7 +158,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1188,
@@ -186,6 +191,10 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       blacklistMode: 'gov',
       govDeny: {
         stateVersion: 3,
+        denyThresholdBps: 30,
+        totalWeight: 1000,
+        addressDenyList: [],
+        senderIdDenyList: [],
         addressTargets: [],
         senderIdTargets: [
           { target: '9020', support: 13, oppose: 15, voters: 4, myVote: null, myWeight: 0, voterList: [
@@ -224,7 +233,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1190,
@@ -255,7 +264,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1191,
@@ -286,7 +295,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 2190,
@@ -317,7 +326,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 2191,
@@ -348,7 +357,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1301,
@@ -496,6 +505,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
     { groupId: '1024', senderId: 9001, senderAddress: '0x3a...02', round: 42, messageId: 1, content: '本轮行动投票窗口已经开始，建议先确认治理票。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1024', senderId: 9007, senderAddress: '0x8b...91', round: 42, messageId: 2, content: '@验证员小周 我补充：MessagePost 只是发现信号，正文回查 messages。', mentionedSenderIds: [1029], mentionAll: false, quotedMessageId: 0, mine: true },
     { groupId: '1024', senderId: 1029, senderAddress: '0x52...13', round: 42, messageId: 3, content: '@全部 mentionAll 只记录声明语义，主协议不做许可判断。', mentionedSenderIds: [], mentionAll: true, quotedMessageId: 2, mine: false },
+    { groupId: '1024', senderId: 9011, senderAddress: '0x44...aa', round: 42, messageId: 4, content: '这条消息来自已被治理黑名单命中的地址与 NFT，默认应隐藏。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1188', senderId: 9001, senderAddress: '0x3a...02', round: 42, messageId: 32, content: '@北极熊 行动 #77 需要你确认投票窗口。', mentionedSenderIds: [9007], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1301', senderId: 1308, senderAddress: '0x21...ce', round: 42, messageId: 12, content: 'AdminDenySource 已按 groupId 隔离，黑名单只影响后续发言。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1302', senderId: 1308, senderAddress: '0x21...ce', round: 42, messageId: 4, content: '当前默认 NFT 是管理员时，点击头像可拉黑这个 sender。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },

@@ -36,6 +36,10 @@ interface IGovVotedDenySource is IPostDenySource {
         uint256 stateVersion
     );
 
+    event AddressDenySet(uint256 indexed groupId, address indexed targetAddress, bool listed, uint256 stateVersion);
+
+    event SenderIdDenySet(uint256 indexed groupId, uint256 indexed targetSenderId, bool listed, uint256 stateVersion);
+
     event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_ADDRESS() external view returns (address);
@@ -88,6 +92,11 @@ interface IGovVotedDenySource is IPostDenySource {
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
 
+    function addressDenyDetailsBatch(uint256 groupId, address[] calldata targetAddresses)
+        external
+        view
+        returns (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights);
+
     function addressDenyTargetsCount(uint256 groupId) external view returns (uint256);
 
     function addressDenyTargets(uint256 groupId, uint256 offset, uint256 limit)
@@ -116,6 +125,11 @@ interface IGovVotedDenySource is IPostDenySource {
         external
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
+
+    function senderIdDenyDetailsBatch(uint256 groupId, uint256[] calldata targetSenderIds)
+        external
+        view
+        returns (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
     function senderIdDenyTargetsCount(uint256 groupId) external view returns (uint256);
 

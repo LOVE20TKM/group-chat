@@ -199,6 +199,42 @@ contract AdminDenySource is IPostDenySource {
         return _contains(_states[groupId].senderIdExemptList, senderId);
     }
 
+    function isAddressDeniedBatch(uint256 groupId, address[] calldata accounts)
+        external
+        view
+        returns (bool[] memory denied)
+    {
+        ChatState storage state = _states[groupId];
+        denied = new bool[](accounts.length);
+        for (uint256 i = 0; i < accounts.length; i++) {
+            denied[i] = _contains(state.addressDenyList, accounts[i]);
+        }
+    }
+
+    function isSenderIdDeniedBatch(uint256 groupId, uint256[] calldata senderIds)
+        external
+        view
+        returns (bool[] memory denied)
+    {
+        ChatState storage state = _states[groupId];
+        denied = new bool[](senderIds.length);
+        for (uint256 i = 0; i < senderIds.length; i++) {
+            denied[i] = _contains(state.senderIdDenyList, senderIds[i]);
+        }
+    }
+
+    function isSenderIdExemptBatch(uint256 groupId, uint256[] calldata senderIds)
+        external
+        view
+        returns (bool[] memory exempt)
+    {
+        ChatState storage state = _states[groupId];
+        exempt = new bool[](senderIds.length);
+        for (uint256 i = 0; i < senderIds.length; i++) {
+            exempt[i] = _contains(state.senderIdExemptList, senderIds[i]);
+        }
+    }
+
     function adminIdsCount(uint256 groupId) external view returns (uint256) {
         return _states[groupId].adminIds.values.length;
     }
@@ -240,7 +276,10 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function isDenied(uint256 groupId, uint256 senderId, address senderAddress) external view returns (bool) {
-        ChatState storage state = _states[groupId];
+        return _isDenied(_states[groupId], senderId, senderAddress);
+    }
+
+    function _isDenied(ChatState storage state, uint256 senderId, address senderAddress) internal view returns (bool) {
         if (_contains(state.senderIdExemptList, senderId)) {
             return false;
         }

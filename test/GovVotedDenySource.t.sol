@@ -193,10 +193,24 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertTrue(!deny.isDenied(managedGroupId, senderId, senderOwner));
 
         vm.prank(senderOwner);
-        deny.voteDenyAddress(managedGroupId, senderOwner);
-
         vm.expectRevert(GovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
-        deny.isDenied(managedGroupId, senderId, senderOwner);
+        deny.voteDenyAddress(managedGroupId, senderOwner);
+    }
+
+    function testT134D_thresholdIsSettledOnWriteAndRefreshNotEveryRead() public {
+        _activateTokenGovManager();
+        address whale = address(0xABCD);
+        protocol.setGovVotes(token, senderOwner, 30);
+
+        vm.prank(senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
+
+        protocol.setGovVotes(token, whale, 10000);
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
+
+        deny.revalidateDenyAddressVote(groupId, senderOwner, senderOwner);
+        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
     }
 
     function testT135_targetAndVoterPagination() public {
@@ -312,6 +326,100 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(addressOppose, 0);
         assertEq(deny.senderIdDenyTargetsCount(groupId), 1);
         assertEq(deny.stateVersion(groupId), 2);
+    }
+
+    function testT138_batchListChecksReturnIndependentCacheSlices() public {
+        _activateTokenGovManager();
+        protocol.setGovVotes(token, senderOwner, 7);
+
+        vm.prank(senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
+
+        uint256[] memory senderIds = new uint256[](2);
+        senderIds[0] = senderId;
+        senderIds[1] = otherGroupId;
+        address[] memory senderAddresses = new address[](2);
+        senderAddresses[0] = senderOwner;
+        senderAddresses[1] = other;
+
+        bool[] memory addressDenied = deny.isAddressDeniedBatch(groupId, senderAddresses);
+        assertEq(addressDenied.length, 2);
+        assertTrue(addressDenied[0]);
+        assertTrue(!addressDenied[1]);
+
+        bool[] memory senderIdDenied = deny.isSenderIdDeniedBatch(groupId, senderIds);
+        assertEq(senderIdDenied.length, 2);
+        assertTrue(!senderIdDenied[0]);
+        assertTrue(!senderIdDenied[1]);
+
+        bool[] memory senderIdExempt = deny.isSenderIdExemptBatch(groupId, senderIds);
+        assertEq(senderIdExempt.length, 2);
+        assertTrue(!senderIdExempt[0]);
+        assertTrue(!senderIdExempt[1]);
+
+        protocol.setGovVotes(token, voter2, 8);
+        vm.prank(voter2);
+        deny.opposeDenyAddress(groupId, senderOwner);
+
+        addressDenied = deny.isAddressDeniedBatch(groupId, senderAddresses);
+        assertEq(addressDenied.length, 2);
+        assertTrue(!addressDenied[0]);
+        assertTrue(!addressDenied[1]);
+    }
+
+    function testT139_govBatchDetailsReturnSettledDeniedAndTallies() public {
+        _activateTokenGovManager();
+        address whale = address(0xABCD);
+        protocol.setGovVotes(token, senderOwner, 20);
+        protocol.setGovVotes(token, voter2, 5);
+        protocol.setGovVotes(token, whale, 10000);
+
+        vm.prank(senderOwner);
+        deny.voteDenyAddress(groupId, senderOwner);
+        vm.prank(voter2);
+        deny.opposeDenyAddress(groupId, senderOwner);
+        vm.prank(whale);
+        deny.voteDenyAddress(groupId, other);
+
+        vm.prank(senderOwner);
+        deny.voteDenySenderId(groupId, senderId);
+        vm.prank(whale);
+        deny.voteDenySenderId(groupId, otherGroupId);
+
+        address[] memory targetAddresses = new address[](3);
+        targetAddresses[0] = senderOwner;
+        targetAddresses[1] = other;
+        targetAddresses[2] = address(0x9999);
+
+        (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights) =
+            deny.addressDenyDetailsBatch(groupId, targetAddresses);
+        assertEq(denied.length, 3);
+        assertTrue(!denied[0]);
+        assertTrue(denied[1]);
+        assertTrue(!denied[2]);
+        assertEq(supportWeights[0], 20);
+        assertEq(supportWeights[1], 10000);
+        assertEq(supportWeights[2], 0);
+        assertEq(opposeWeights[0], 5);
+        assertEq(opposeWeights[1], 0);
+        assertEq(opposeWeights[2], 0);
+
+        uint256[] memory targetSenderIds = new uint256[](3);
+        targetSenderIds[0] = senderId;
+        targetSenderIds[1] = otherGroupId;
+        targetSenderIds[2] = 999999;
+
+        (denied, supportWeights, opposeWeights) = deny.senderIdDenyDetailsBatch(groupId, targetSenderIds);
+        assertEq(denied.length, 3);
+        assertTrue(!denied[0]);
+        assertTrue(denied[1]);
+        assertTrue(!denied[2]);
+        assertEq(supportWeights[0], 20);
+        assertEq(supportWeights[1], 10000);
+        assertEq(supportWeights[2], 0);
+        assertEq(opposeWeights[0], 0);
+        assertEq(opposeWeights[1], 0);
+        assertEq(opposeWeights[2], 0);
     }
 
     function _activateTokenGovManager() internal {
