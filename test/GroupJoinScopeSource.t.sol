@@ -6,7 +6,7 @@ import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
-contract MockGroupJoinGlobal {
+contract MockGroupJoin {
     mapping(uint256 => mapping(address => uint256)) public counts;
 
     function setTokenAddressCount(uint256 groupId, address account, uint256 count) external {
@@ -19,12 +19,12 @@ contract MockGroupJoinGlobal {
 }
 
 contract GroupJoinScopeSourceTest is GroupChatFixture {
-    MockGroupJoinGlobal internal groupJoin;
+    MockGroupJoin internal groupJoin;
     GroupJoinScopeSource internal scope;
 
     function setUp() public override {
         super.setUp();
-        groupJoin = new MockGroupJoinGlobal();
+        groupJoin = new MockGroupJoin();
         scope = new GroupJoinScopeSource(address(groupJoin));
     }
 
@@ -33,7 +33,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         new GroupJoinScopeSource(address(0x1234));
     }
 
-    function testT131_groupJoinGlobalMembershipControlsPost() public {
+    function testT131_groupJoinMembershipControlsPost() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
         chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0), 0);

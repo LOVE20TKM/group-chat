@@ -45,7 +45,7 @@ contract MockLOVE20Group {
         _nameToTokenId[normalizedGroupName] = tokenId;
     }
 
-    function calculateMintCost(string calldata) external view returns (uint256) {
+    function calculateMintCost(string memory) external view returns (uint256) {
         return mintCost;
     }
 

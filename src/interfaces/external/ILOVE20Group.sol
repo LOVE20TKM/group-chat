@@ -8,7 +8,7 @@ interface ILOVE20Group {
 
     function mint(string calldata groupName) external returns (uint256 tokenId, uint256 mintCost);
 
-    function calculateMintCost(string calldata groupName) external view returns (uint256);
+    function calculateMintCost(string memory groupName) external view returns (uint256);
 
     function isGroupNameUsed(string calldata groupName) external view returns (bool);
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupJoinGlobal} from "../../interfaces/external/IGroupJoinGlobal.sol";
+import {IGroupJoin} from "../../interfaces/external/IGroupJoin.sol";
 import {IPostScopeSource} from "../../interfaces/sources/IPostScopeSource.sol";
 
 contract GroupJoinScopeSource is IPostScopeSource {
@@ -17,6 +17,6 @@ contract GroupJoinScopeSource is IPostScopeSource {
     }
 
     function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {
-        return IGroupJoinGlobal(GROUP_JOIN_ADDRESS).gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) != 0;
+        return IGroupJoin(GROUP_JOIN_ADDRESS).gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) != 0;
     }
 }

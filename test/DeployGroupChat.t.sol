@@ -16,7 +16,7 @@ import {MockLOVE20Group} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {TestBase} from "./utils/TestBase.sol";
 
-contract DeployMockGroupJoinGlobal {
+contract DeployMockGroupJoin {
     function gTokenAddressesByGroupIdByAccountCount(uint256, address) external pure returns (uint256) {
         return 0;
     }
@@ -60,14 +60,14 @@ contract DeployGroupChatTest is TestBase {
     MockLOVE20Group internal groupNft;
     MockGroupDefaults internal groupDefaults;
     MockLOVE20Protocols internal protocol;
-    DeployMockGroupJoinGlobal internal groupJoin;
+    DeployMockGroupJoin internal groupJoin;
     DeployGroupChatHarness internal deployer;
 
     function setUp() public {
         groupNft = new MockLOVE20Group();
         groupDefaults = new MockGroupDefaults(address(groupNft));
         protocol = new MockLOVE20Protocols();
-        groupJoin = new DeployMockGroupJoinGlobal();
+        groupJoin = new DeployMockGroupJoin();
         deployer = new DeployGroupChatHarness();
     }
 
