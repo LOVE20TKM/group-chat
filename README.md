@@ -34,6 +34,7 @@ LOVE20 `GroupNFT` 群聊协议仓库。
   - `interfaces/sources/`：ScopeSource / DenySource 接口
   - `GroupChat.sol`
   - `managers/`
+  - `sources/`：ScopeSource / DenySource 实现
 - `test/`
   - 详见 [测试矩阵](./docs/tests.md)
 - `script/`

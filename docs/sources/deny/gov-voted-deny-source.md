@@ -22,7 +22,7 @@ GroupChat.denySource = GovVotedDenySource
 票权源 = ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId)
 ```
 
-去中心化群聊的 `groupId` owner 是对应 Manager。该 Manager 必须实现 `IDenyVoteWeightSource`，为本合约提供 `denyVoteWeightOf(...)`。
+去中心化群聊的 `groupId` owner 是对应 Manager。该 Manager 必须实现 `src/interfaces/sources/deny/IDenyVoteWeightSource.sol`，为本合约提供 `denyVoteWeightOf(...)`。
 
 ## 可配置项
 

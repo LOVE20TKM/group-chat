@@ -58,6 +58,7 @@ function isSenderIdExemptBatch(
 专用接口位于：
 
 - `src/interfaces/sources/deny/IAdminDenySource.sol`
+- `src/interfaces/sources/deny/IDenyVoteWeightSource.sol`
 - `src/interfaces/sources/deny/IGovVotedDenySource.sol`
 
 ## 共同约束

@@ -7,7 +7,7 @@ import {IERC20Payment} from "../interfaces/external/IERC20Payment.sol";
 import {IERC20Symbol} from "../interfaces/external/IERC20Symbol.sol";
 import {IERC721Receiver} from "../interfaces/external/IERC721Receiver.sol";
 import {ILOVE20Group} from "../interfaces/external/ILOVE20Group.sol";
-import {IDenyVoteWeightSource} from "../interfaces/sources/IDenyVoteWeightSource.sol";
+import {IDenyVoteWeightSource} from "../interfaces/sources/deny/IDenyVoteWeightSource.sol";
 import {IPostScopeSource} from "../interfaces/sources/IPostScopeSource.sol";
 
 abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
