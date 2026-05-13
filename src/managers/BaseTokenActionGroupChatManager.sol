@@ -13,9 +13,9 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         uint256 actionId;
     }
 
-    address public immutable LAUNCH_ADDRESS;
-    address public immutable STAKE_ADDRESS;
-    address public immutable VOTE_ADDRESS;
+    address internal immutable LAUNCH_ADDRESS;
+    address internal immutable STAKE_ADDRESS;
+    address internal immutable VOTE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 

@@ -8,8 +8,8 @@ import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 import {BaseTokenGroupChatManager} from "./BaseTokenGroupChatManager.sol";
 
 contract TokenGroupChatManager is BaseTokenGroupChatManager {
-    address public immutable JOIN_ADDRESS;
-    address public immutable VOTE_ADDRESS;
+    address internal immutable JOIN_ADDRESS;
+    address internal immutable VOTE_ADDRESS;
 
     constructor(
         address groupChat_,

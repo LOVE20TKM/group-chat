@@ -7,8 +7,8 @@ import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
 
 abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
-    address public immutable LAUNCH_ADDRESS;
-    address public immutable STAKE_ADDRESS;
+    address internal immutable LAUNCH_ADDRESS;
+    address internal immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
 
     mapping(uint256 => address) public tokenOfGroup;

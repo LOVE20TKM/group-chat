@@ -6,7 +6,7 @@ import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
 import {BaseTokenActionGroupChatManager} from "./BaseTokenActionGroupChatManager.sol";
 
 contract TokenActionGroupChatManager is BaseTokenActionGroupChatManager {
-    address public immutable JOIN_ADDRESS;
+    address internal immutable JOIN_ADDRESS;
 
     constructor(
         address groupChat_,

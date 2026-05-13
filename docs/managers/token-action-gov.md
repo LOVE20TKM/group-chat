@@ -64,7 +64,7 @@ denyVoteTotalWeightOf(groupId) = ILOVE20Stake.govVotesNum(token)
 
 ## 依赖
 
-从 `ExtensionCenter` 固定读取：
+构造时从 `EXTENSION_CENTER_ADDRESS` 指向的 `ExtensionCenter` 固定读取以下内部依赖；这些派生地址不作为 Manager public getter 暴露：
 
 - `VOTE_ADDRESS`
 - `STAKE_ADDRESS`
