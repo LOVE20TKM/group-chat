@@ -5,9 +5,9 @@ import {IERC721Receiver} from "../external/IERC721Receiver.sol";
 import {IDenyVoteWeightSource} from "../sources/IDenyVoteWeightSource.sol";
 import {IPostScopeSource} from "../sources/IPostScopeSource.sol";
 
-interface IBaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
+interface IBaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();
-    error ChatAlreadyManaged();
+    error AlreadyManaged();
     error RecentRoundsZero();
     error ManagerGroupNameUnavailable();
     error ManagerMintCostChanged();

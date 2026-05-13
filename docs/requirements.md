@@ -33,10 +33,10 @@
 
 Typed Managers：
 
-- [TokenGroupChatManager](./managers/token.md)
-- [TokenGovGroupChatManager](./managers/token-gov.md)
-- [TokenActionGroupChatManager](./managers/token-action.md)
-- [TokenActionGovGroupChatManager](./managers/token-action-gov.md)
+- [TokenManager](./managers/token.md)
+- [TokenGovManager](./managers/token-gov.md)
+- [TokenActionManager](./managers/token-action.md)
+- [TokenActionGovManager](./managers/token-action-gov.md)
 
 Sources：
 

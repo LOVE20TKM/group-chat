@@ -1,10 +1,10 @@
-# TokenActionGroupChatManager
+# TokenActionManager
 
 代币行动群 Manager。
 
 ## 合约
 
-- `src/managers/TokenActionGroupChatManager.sol`
+- `src/managers/TokenActionManager.sol`
 
 ## 激活
 

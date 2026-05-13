@@ -9,10 +9,10 @@ if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && {
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$groupChatDenySourceAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
-    [ -z "$tokenGroupChatManagerAddress" ] || \
-    [ -z "$tokenGovGroupChatManagerAddress" ] || \
-    [ -z "$tokenActionGovGroupChatManagerAddress" ] || \
-    [ -z "$tokenActionGroupChatManagerAddress" ]; \
+    [ -z "$tokenManagerAddress" ] || \
+    [ -z "$tokenGovManagerAddress" ] || \
+    [ -z "$tokenActionGovManagerAddress" ] || \
+    [ -z "$tokenActionManagerAddress" ]; \
 }; then
     source "$network_dir/address.group.chat.params"
 fi
@@ -162,23 +162,23 @@ if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$tokenGroupChatManagerAddress" ]; then
-    echo -e "\033[31m✗\033[0m tokenGroupChatManagerAddress not set"
+if [ -z "$tokenManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenManagerAddress not set"
     ((missing_params++))
 fi
 
-if [ -z "$tokenGovGroupChatManagerAddress" ]; then
-    echo -e "\033[31m✗\033[0m tokenGovGroupChatManagerAddress not set"
+if [ -z "$tokenGovManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenGovManagerAddress not set"
     ((missing_params++))
 fi
 
-if [ -z "$tokenActionGovGroupChatManagerAddress" ]; then
-    echo -e "\033[31m✗\033[0m tokenActionGovGroupChatManagerAddress not set"
+if [ -z "$tokenActionGovManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenActionGovManagerAddress not set"
     ((missing_params++))
 fi
 
-if [ -z "$tokenActionGroupChatManagerAddress" ]; then
-    echo -e "\033[31m✗\033[0m tokenActionGroupChatManagerAddress not set"
+if [ -z "$tokenActionManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenActionManagerAddress not set"
     ((missing_params++))
 fi
 
@@ -197,10 +197,10 @@ echo -e "GovVotedDenySource Address: $GROUP_CHAT_DENY_SOURCE_ADDRESS\n"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
 echo -e "Deny Threshold Bps: $GROUP_CHAT_DENY_THRESHOLD_BPS\n"
-echo -e "TokenGroupChatManager Address: $tokenGroupChatManagerAddress"
-echo -e "TokenGovGroupChatManager Address: $tokenGovGroupChatManagerAddress"
-echo -e "TokenActionGovGroupChatManager Address: $tokenActionGovGroupChatManagerAddress"
-echo -e "TokenActionGroupChatManager Address: $tokenActionGroupChatManagerAddress\n"
+echo -e "TokenManager Address: $tokenManagerAddress"
+echo -e "TokenGovManager Address: $tokenGovManagerAddress"
+echo -e "TokenActionGovManager Address: $tokenActionGovManagerAddress"
+echo -e "TokenActionManager Address: $tokenActionManagerAddress\n"
 
 failed_checks=0
 
@@ -344,19 +344,19 @@ check_manager_common() {
 
 echo "Verifying manager immutable configuration..."
 
-check_manager_common "TokenGroupChatManager" $tokenGroupChatManagerAddress
+check_manager_common "TokenManager" $tokenManagerAddress
 echo ""
 
-check_manager_common "TokenGovGroupChatManager" $tokenGovGroupChatManagerAddress
+check_manager_common "TokenGovManager" $tokenGovManagerAddress
 echo ""
 
-check_manager_common "TokenActionGovGroupChatManager" $tokenActionGovGroupChatManagerAddress
-check_equal "TokenActionGovGroupChatManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGovGroupChatManagerAddress "RECENT_ROUNDS()(uint256)")
+check_manager_common "TokenActionGovManager" $tokenActionGovManagerAddress
+check_equal "TokenActionGovManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGovManagerAddress "RECENT_ROUNDS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_manager_common "TokenActionGroupChatManager" $tokenActionGroupChatManagerAddress
-check_equal "TokenActionGroupChatManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGroupChatManagerAddress "RECENT_ROUNDS()(uint256)")
+check_manager_common "TokenActionManager" $tokenActionManagerAddress
+check_equal "TokenActionManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionManagerAddress "RECENT_ROUNDS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

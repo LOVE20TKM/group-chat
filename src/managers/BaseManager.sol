@@ -10,9 +10,9 @@ import {ILOVE20Group} from "../interfaces/external/ILOVE20Group.sol";
 import {IDenyVoteWeightSource} from "../interfaces/sources/IDenyVoteWeightSource.sol";
 import {IPostScopeSource} from "../interfaces/sources/IPostScopeSource.sol";
 
-abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
+abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();
-    error ChatAlreadyManaged();
+    error AlreadyManaged();
     error RecentRoundsZero();
     error ManagerGroupNameUnavailable();
     error ManagerMintCostChanged();
@@ -77,7 +77,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
         }
     }
 
-    function _activateManagedChat(uint256 groupId) internal {
+    function _activateManagedGroup(uint256 groupId) internal {
         string[] memory metaKeys = new string[](0);
         bytes[] memory metaValues = new bytes[](0);
         IGroupChat(GROUP_CHAT_ADDRESS).activateChat(
@@ -125,7 +125,7 @@ abstract contract BaseGroupChatManager is IPostScopeSource, IDenyVoteWeightSourc
 
     function _requireNotManaged(bool managed) internal pure {
         if (managed) {
-            revert ChatAlreadyManaged();
+            revert AlreadyManaged();
         }
     }
 

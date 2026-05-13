@@ -1,10 +1,10 @@
-# TokenGovGroupChatManager
+# TokenGovManager
 
 代币治理者群 Manager。
 
 ## 合约
 
-- `src/managers/TokenGovGroupChatManager.sol`
+- `src/managers/TokenGovManager.sol`
 
 ## 激活
 

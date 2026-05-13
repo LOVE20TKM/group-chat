@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseTokenActionGroupChatManager} from "./BaseTokenActionGroupChatManager.sol";
+import {BaseTokenActionManager} from "./BaseTokenActionManager.sol";
 
-contract TokenActionGovGroupChatManager is BaseTokenActionGroupChatManager {
+contract TokenActionGovManager is BaseTokenActionManager {
     constructor(
         address groupChat_,
         address denySource_,
@@ -12,7 +12,7 @@ contract TokenActionGovGroupChatManager is BaseTokenActionGroupChatManager {
         address extensionCenter_,
         uint256 recentRounds_
     )
-        BaseTokenActionGroupChatManager(
+        BaseTokenActionManager(
             groupChat_,
             denySource_,
             beforePostPlugin_,
@@ -23,11 +23,11 @@ contract TokenActionGovGroupChatManager is BaseTokenActionGroupChatManager {
     {}
 
     function activate(address token, uint256 actionId) external returns (uint256 groupId) {
-        return _activateActionChat(token, actionId, "mgr_action_gov_");
+        return _activateManagedAction(token, actionId, "mgr_action_gov_");
     }
 
     function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {
-        ActionChat storage action = actionOfGroup[groupId];
+        ManagedAction storage action = actionOfGroup[groupId];
         address token = action.token;
         return token != address(0) && _hasRecentActionVote(token, action.actionId, senderAddress);
     }

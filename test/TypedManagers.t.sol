@@ -1,23 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseGroupChatManager} from "../src/managers/BaseGroupChatManager.sol";
+import {BaseManager} from "../src/managers/BaseManager.sol";
 
-import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
-import {TokenActionGroupChatManager} from "../src/managers/TokenActionGroupChatManager.sol";
-import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
-import {TokenGroupChatManager} from "../src/managers/TokenGroupChatManager.sol";
+import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
+import {TokenActionManager} from "../src/managers/TokenActionManager.sol";
+import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
+import {TokenManager} from "../src/managers/TokenManager.sol";
 
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
-contract GroupChatTypedManagersTest is GroupChatFixture {
+contract TypedManagersTest is GroupChatFixture {
     function testT110_tokenManagerStoresTokenAndCombinesEligibility() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
-        TokenGroupChatManager manager =
-            new TokenGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenManager manager = new TokenManager(address(chat), address(0), address(0), address(0), address(protocol));
         groupId = _activateToken(manager, token);
 
         assertEq(manager.tokenOfGroup(groupId), token);
@@ -54,15 +53,15 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         protocol.setExtensionJoined(token, 101, senderOwner, true);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
 
-        vm.expectRevert(BaseGroupChatManager.ChatAlreadyManaged.selector);
+        vm.expectRevert(BaseManager.AlreadyManaged.selector);
         manager.activate(token);
     }
 
     function testT111_tokenGovManagerStoresParamsAndUsesGovVoteWeight() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
-        TokenGovGroupChatManager manager =
-            new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenGovManager manager =
+            new TokenGovManager(address(chat), address(0), address(0), address(0), address(protocol));
         groupId = manager.activate(token);
 
         assertEq(manager.tokenOfGroup(groupId), token);
@@ -85,11 +84,11 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
     function testT112_tokenActionGovManagerStoresParamsAndUsesRecentVotes() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
-        TokenActionGovGroupChatManager manager =
-            new TokenActionGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
+        TokenActionGovManager manager =
+            new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
 
-        vm.expectRevert(BaseGroupChatManager.RecentRoundsZero.selector);
-        new TokenActionGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol), 0);
+        vm.expectRevert(BaseManager.RecentRoundsZero.selector);
+        new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 0);
 
         protocol.setCurrentRound(7);
         groupId = manager.activate(token, 42);
@@ -144,8 +143,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
     function testT113_tokenActionManagerStoresParamsAndAllowsVoteOrParticipation() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
-        TokenActionGroupChatManager manager =
-            new TokenActionGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
+        TokenActionManager manager =
+            new TokenActionManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
         protocol.setCurrentRound(10);
         groupId = manager.activate(token, 88);
 
@@ -209,8 +208,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         address token = address(protocol);
         address secondToken = address(secondProtocol);
 
-        TokenGroupChatManager manager =
-            new TokenGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenManager manager = new TokenManager(address(chat), address(0), address(0), address(0), address(protocol));
         manager.activate(token);
         uint256 secondGroupId = manager.activate(secondToken);
 
@@ -233,8 +231,8 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         assertEq(tokens.length, 0);
         assertEq(tokenGroupIds.length, 0);
 
-        TokenGovGroupChatManager govManager =
-            new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenGovManager govManager =
+            new TokenGovManager(address(chat), address(0), address(0), address(0), address(protocol));
         govManager.activate(token);
         secondGroupId = govManager.activate(secondToken);
 
@@ -247,19 +245,19 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
     }
 
     function testT114_typedManagerProtocolDependenciesRequireCode() public {
-        vm.expectRevert(BaseGroupChatManager.ManagerAddressHasNoCode.selector);
-        new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), other);
+        vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
+        new TokenGovManager(address(chat), address(0), address(0), address(0), other);
 
-        vm.expectRevert(BaseGroupChatManager.ManagerAddressHasNoCode.selector);
-        new TokenGroupChatManager(address(chat), address(0), address(0), address(0), other);
+        vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
+        new TokenManager(address(chat), address(0), address(0), address(0), other);
 
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
         protocol.setLOVE20Token(token, false);
-        TokenGovGroupChatManager manager =
-            new TokenGovGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenGovManager manager =
+            new TokenGovManager(address(chat), address(0), address(0), address(0), address(protocol));
 
-        vm.expectRevert(BaseGroupChatManager.TokenNotLOVE20.selector);
+        vm.expectRevert(BaseManager.TokenNotLOVE20.selector);
         manager.activate(token);
     }
 
@@ -270,8 +268,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         groupNft.setMintPayment(address(payment), 10);
         payment.mint(address(this), 10);
 
-        TokenGroupChatManager manager =
-            new TokenGroupChatManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenManager manager = new TokenManager(address(chat), address(0), address(0), address(0), address(protocol));
         payment.approve(address(manager), 10);
 
         groupId = manager.activate(address(protocol));
@@ -280,7 +277,7 @@ contract GroupChatTypedManagersTest is GroupChatFixture {
         _assertStartsWith(groupNft.groupNameOf(groupId), "Testmgr_token_LOVE20_");
     }
 
-    function _activateToken(TokenGroupChatManager manager, address token) internal returns (uint256) {
+    function _activateToken(TokenManager manager, address token) internal returns (uint256) {
         return manager.activate(token);
     }
 

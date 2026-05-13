@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseGroupChatManager} from "../../src/managers/BaseGroupChatManager.sol";
+import {BaseManager} from "../../src/managers/BaseManager.sol";
 
-contract MockGroupChatManager is BaseGroupChatManager {
+contract MockManager is BaseManager {
     bool public postAllowed = true;
     uint256 public voteWeight = 1;
 
     constructor(address groupChat_, address denySource_, address beforePostPlugin_, address afterPostPlugin_)
-        BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_)
+        BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_)
     {}
 
-    function activateMockManagedChat() external returns (uint256 groupId) {
+    function activateMockManagedGroup() external returns (uint256 groupId) {
         groupId = _mintManagedGroup("mock_manager");
-        _activateManagedChat(groupId);
+        _activateManagedGroup(groupId);
     }
 
     function setMockPostAllowed(bool postAllowed_) external {

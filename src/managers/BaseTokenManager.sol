@@ -4,9 +4,9 @@ pragma solidity =0.8.17;
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Launch} from "../interfaces/external/ILOVE20Launch.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
-import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
+import {BaseManager} from "./BaseManager.sol";
 
-abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
+abstract contract BaseTokenManager is BaseManager {
     address internal immutable LAUNCH_ADDRESS;
     address internal immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
@@ -21,7 +21,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
+    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
         _requireCode(extensionCenter_);
 
         address launch = IExtensionCenter(extensionCenter_).launchAddress();
@@ -70,7 +70,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         return ILOVE20Stake(STAKE_ADDRESS).govVotesNum(token);
     }
 
-    function _activateTokenChat(address token, string memory managerPrefix) internal returns (uint256 groupId) {
+    function _activateToken(address token, string memory managerPrefix) internal returns (uint256 groupId) {
         _requireLOVE20Token(token);
         _requireNotManaged(groupIdOfToken[token] != 0);
 
@@ -78,7 +78,7 @@ abstract contract BaseTokenGroupChatManager is BaseGroupChatManager {
         tokenOfGroup[groupId] = token;
         groupIdOfToken[token] = groupId;
         _tokens.push(token);
-        _activateManagedChat(groupId);
+        _activateManagedGroup(groupId);
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {

@@ -4,9 +4,9 @@ Manager 用于去中心化群聊。
 
 接口位于 `src/interfaces/managers/`。公共面分三层：
 
-- `IBaseGroupChatManager`：所有 Manager 共同配置、scope、deny、ERC721 接收面。
-- `IBaseTokenGroupChatManager`：token 类共同激活和查询面。
-- `IBaseTokenActionGroupChatManager`：action 类共同激活和查询面。
+- `IBaseManager`：所有 Manager 共同配置、scope、deny、ERC721 接收面。
+- `IBaseTokenManager`：token 类共同激活和查询面。
+- `IBaseTokenActionManager`：action 类共同激活和查询面。
 
 ## 共同职责
 
@@ -45,10 +45,10 @@ Manager 用于去中心化群聊。
 
 | Manager | 激活入参 | 发言资格 | 黑名单票权 |
 | --- | --- | --- | --- |
-| [TokenGroupChatManager](./token.md) | `token` | 持币 / 参与代币行动 / 有治理票 | token 治理票 |
-| [TokenGovGroupChatManager](./token-gov.md) | `token` | 有 token 治理票 | token 治理票 |
-| [TokenActionGroupChatManager](./token-action.md) | `token, actionId` | 近期投票 / 参与行动 | 当前行动轮投票数 |
-| [TokenActionGovGroupChatManager](./token-action-gov.md) | `token, actionId` | 近期给行动投票 | 当前行动轮投票数 |
+| [TokenManager](./token.md) | `token` | 持币 / 参与代币行动 / 有治理票 | token 治理票 |
+| [TokenGovManager](./token-gov.md) | `token` | 有 token 治理票 | token 治理票 |
+| [TokenActionManager](./token-action.md) | `token, actionId` | 近期投票 / 参与行动 | 当前行动轮投票数 |
+| [TokenActionGovManager](./token-action-gov.md) | `token, actionId` | 近期给行动投票 | 当前行动轮投票数 |
 
 `activate(...)` 返回新铸造并激活的 `groupId`。
 
@@ -89,5 +89,5 @@ action 类：
 
 ## 测试
 
-- `test/GroupChatManager.t.sol`
-- `test/GroupChatTypedManagers.t.sol`
+- `test/Manager.t.sol`
+- `test/TypedManagers.t.sol`

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IBaseGroupChatManager} from "./IBaseGroupChatManager.sol";
+import {IBaseManager} from "./IBaseManager.sol";
 
-interface IBaseTokenActionGroupChatManager is IBaseGroupChatManager {
+interface IBaseTokenActionManager is IBaseManager {
     function EXTENSION_CENTER_ADDRESS() external view returns (address);
 
     function RECENT_ROUNDS() external view returns (uint256);

@@ -1,10 +1,10 @@
-# TokenGroupChatManager
+# TokenManager
 
 基础代币群 Manager。
 
 ## 合约
 
-- `src/managers/TokenGroupChatManager.sol`
+- `src/managers/TokenManager.sol`
 
 ## 激活
 

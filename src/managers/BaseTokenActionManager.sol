@@ -5,10 +5,10 @@ import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Launch} from "../interfaces/external/ILOVE20Launch.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
-import {BaseGroupChatManager} from "./BaseGroupChatManager.sol";
+import {BaseManager} from "./BaseManager.sol";
 
-abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
-    struct ActionChat {
+abstract contract BaseTokenActionManager is BaseManager {
+    struct ManagedAction {
         address token;
         uint256 actionId;
     }
@@ -19,7 +19,7 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
     address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 
-    mapping(uint256 => ActionChat) public actionOfGroup;
+    mapping(uint256 => ManagedAction) public actionOfGroup;
     mapping(address => mapping(uint256 => uint256)) public groupIdOfAction;
     mapping(address => uint256[]) internal _actionIdsByToken;
 
@@ -30,7 +30,7 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         address afterPostPlugin_,
         address extensionCenter_,
         uint256 recentRounds_
-    ) BaseGroupChatManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
+    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
         _requireCode(extensionCenter_);
         _requireRecentRounds(recentRounds_);
 
@@ -88,14 +88,14 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         tokens = new address[](groupIds.length);
         actionIds = new uint256[](groupIds.length);
         for (uint256 i = 0; i < groupIds.length; i++) {
-            ActionChat storage action = actionOfGroup[groupIds[i]];
+            ManagedAction storage action = actionOfGroup[groupIds[i]];
             tokens[i] = action.token;
             actionIds[i] = action.actionId;
         }
     }
 
     function denyVoteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
-        ActionChat storage action = actionOfGroup[groupId];
+        ManagedAction storage action = actionOfGroup[groupId];
         address token = action.token;
         if (token == address(0)) {
             return 0;
@@ -104,7 +104,7 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
     }
 
     function denyVoteTotalWeightOf(uint256 groupId) external view returns (uint256) {
-        ActionChat storage action = actionOfGroup[groupId];
+        ManagedAction storage action = actionOfGroup[groupId];
         address token = action.token;
         if (token == address(0)) {
             return 0;
@@ -112,7 +112,7 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         return ILOVE20Stake(STAKE_ADDRESS).govVotesNum(token);
     }
 
-    function _activateActionChat(address token, uint256 actionId, string memory managerPrefix)
+    function _activateManagedAction(address token, uint256 actionId, string memory managerPrefix)
         internal
         returns (uint256 groupId)
     {
@@ -120,10 +120,10 @@ abstract contract BaseTokenActionGroupChatManager is BaseGroupChatManager {
         _requireNotManaged(groupIdOfAction[token][actionId] != 0);
 
         groupId = _mintManagedGroup(_tokenActionGroupNameStem(managerPrefix, token, actionId));
-        actionOfGroup[groupId] = ActionChat({token: token, actionId: actionId});
+        actionOfGroup[groupId] = ManagedAction({token: token, actionId: actionId});
         groupIdOfAction[token][actionId] = groupId;
         _actionIdsByToken[token].push(actionId);
-        _activateManagedChat(groupId);
+        _activateManagedGroup(groupId);
     }
 
     function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {

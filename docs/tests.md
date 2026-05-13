@@ -10,8 +10,8 @@
 - `test/GroupChatMessages.t.sol`：发言、mentionedSenderIds、mention 通知事件、quote、round、分页、sender 索引
 - `test/GroupChatPlugins.t.sol`：scope、deny、before / after plugin、重入
 - `test/GroupChatDefaultSender.t.sol`：默认发言身份
-- `test/GroupChatManager.t.sol`：Manager 共同约束
-- `test/GroupChatTypedManagers.t.sol`：四个 typed Manager
+- `test/Manager.t.sol`：Manager 共同约束
+- `test/TypedManagers.t.sol`：四个 typed Manager
 - `test/AdminDenySource.t.sol`：中心化 deny source
 - `test/GovVotedDenySource.t.sol`：治理投票 deny source
 - `test/GroupJoinScopeSource.t.sol`：链群成员 scope source

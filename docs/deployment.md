@@ -20,10 +20,10 @@ source ./one_click_deploy.sh <network>
 - `AdminDenySource`
 - `GovVotedDenySource`
 - `GroupJoinScopeSource`
-- `TokenGroupChatManager`
-- `TokenGovGroupChatManager`
-- `TokenActionGroupChatManager`
-- `TokenActionGovGroupChatManager`
+- `TokenManager`
+- `TokenGovManager`
+- `TokenActionManager`
+- `TokenActionGovManager`
 
 ## 必填参数
 
@@ -73,10 +73,10 @@ source ./one_click_deploy.sh <network>
 - `groupChatDenySourceAddress`
 - `groupJoinScopeSourceAddress`
 - `groupChatAddress`
-- `tokenGroupChatManagerAddress`
-- `tokenGovGroupChatManagerAddress`
-- `tokenActionGovGroupChatManagerAddress`
-- `tokenActionGroupChatManagerAddress`
+- `tokenManagerAddress`
+- `tokenGovManagerAddress`
+- `tokenActionGovManagerAddress`
+- `tokenActionManagerAddress`
 
 ## Verify
 

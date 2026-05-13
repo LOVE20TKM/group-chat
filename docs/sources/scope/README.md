@@ -30,10 +30,10 @@ function canPost(
 
 当前实现的 `ScopeSource` 包括四个 typed Manager 与 `GroupJoinScopeSource`：
 
-- [TokenGroupChatManager](../../managers/token.md)
-- [TokenGovGroupChatManager](../../managers/token-gov.md)
-- [TokenActionGroupChatManager](../../managers/token-action.md)
-- [TokenActionGovGroupChatManager](../../managers/token-action-gov.md)
+- [TokenManager](../../managers/token.md)
+- [TokenGovManager](../../managers/token-gov.md)
+- [TokenActionManager](../../managers/token-action.md)
+- [TokenActionGovManager](../../managers/token-action-gov.md)
 - [GroupJoinScopeSource](./group-join-scope-source.md)
 
 链群服务者管理型群聊不使用 Manager。其 `scopeSource` 应挂载 `GroupJoinScopeSource`，用于判断发送地址是否当前属于该链群。

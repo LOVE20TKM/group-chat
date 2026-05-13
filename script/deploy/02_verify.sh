@@ -19,10 +19,10 @@ if [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$groupChatDenySourceAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
-    [ -z "$tokenGroupChatManagerAddress" ] || \
-    [ -z "$tokenGovGroupChatManagerAddress" ] || \
-    [ -z "$tokenActionGovGroupChatManagerAddress" ] || \
-    [ -z "$tokenActionGroupChatManagerAddress" ]; \
+    [ -z "$tokenManagerAddress" ] || \
+    [ -z "$tokenGovManagerAddress" ] || \
+    [ -z "$tokenActionGovManagerAddress" ] || \
+    [ -z "$tokenActionManagerAddress" ]; \
 }; then
     source "$network_dir/address.group.chat.params"
 fi
@@ -123,7 +123,7 @@ verify_contract \
     $group_join_scope_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-token_group_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
+token_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
     $groupChatAddress \
     $GROUP_CHAT_DENY_SOURCE_ADDRESS \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
@@ -154,30 +154,30 @@ token_action_manager_constructor_args=$(cast abi-encode "constructor(address,add
     $GROUP_CHAT_ACTION_RECENT_ROUNDS)
 
 verify_contract \
-    $tokenGroupChatManagerAddress \
-    "TokenGroupChatManager" \
-    "src/managers/TokenGroupChatManager.sol" \
-    $token_group_manager_constructor_args
+    $tokenManagerAddress \
+    "TokenManager" \
+    "src/managers/TokenManager.sol" \
+    $token_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenGovGroupChatManagerAddress \
-    "TokenGovGroupChatManager" \
-    "src/managers/TokenGovGroupChatManager.sol" \
+    $tokenGovManagerAddress \
+    "TokenGovManager" \
+    "src/managers/TokenGovManager.sol" \
     $token_gov_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenActionGovGroupChatManagerAddress \
-    "TokenActionGovGroupChatManager" \
-    "src/managers/TokenActionGovGroupChatManager.sol" \
+    $tokenActionGovManagerAddress \
+    "TokenActionGovManager" \
+    "src/managers/TokenActionGovManager.sol" \
     $token_action_gov_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenActionGroupChatManagerAddress \
-    "TokenActionGroupChatManager" \
-    "src/managers/TokenActionGroupChatManager.sol" \
+    $tokenActionManagerAddress \
+    "TokenActionManager" \
+    "src/managers/TokenActionManager.sol" \
     $token_action_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 

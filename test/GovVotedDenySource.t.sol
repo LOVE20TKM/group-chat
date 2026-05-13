@@ -3,8 +3,8 @@ pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 
-import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
-import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
+import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
+import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
@@ -24,8 +24,8 @@ contract MissingTotalDenyVoteWeightSource {
 contract GovVotedDenySourceTest is GroupChatFixture {
     MockLOVE20Protocols internal protocol;
     GovVotedDenySource internal deny;
-    TokenGovGroupChatManager internal tokenGovManager;
-    TokenActionGovGroupChatManager internal actionGovManager;
+    TokenGovManager internal tokenGovManager;
+    TokenActionGovManager internal actionGovManager;
     address internal token;
     address internal voter2 = address(0xB0B2);
     uint256 internal voter2GroupId;
@@ -35,11 +35,9 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         protocol = new MockLOVE20Protocols();
         token = address(protocol);
         deny = new GovVotedDenySource(address(groupNft), address(groupDefaults), 30);
-        tokenGovManager =
-            new TokenGovGroupChatManager(address(chat), address(deny), address(0), address(0), address(protocol));
-        actionGovManager = new TokenActionGovGroupChatManager(
-            address(chat), address(deny), address(0), address(0), address(protocol), 3
-        );
+        tokenGovManager = new TokenGovManager(address(chat), address(deny), address(0), address(0), address(protocol));
+        actionGovManager =
+            new TokenActionGovManager(address(chat), address(deny), address(0), address(0), address(protocol), 3);
         voter2GroupId = groupNft.mint(voter2);
     }
 

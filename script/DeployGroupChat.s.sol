@@ -4,10 +4,10 @@ pragma solidity =0.8.17;
 import {GroupChat} from "../src/GroupChat.sol";
 import {IExtensionCenter} from "../src/interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../src/interfaces/external/ILOVE20Join.sol";
-import {TokenActionGovGroupChatManager} from "../src/managers/TokenActionGovGroupChatManager.sol";
-import {TokenActionGroupChatManager} from "../src/managers/TokenActionGroupChatManager.sol";
-import {TokenGovGroupChatManager} from "../src/managers/TokenGovGroupChatManager.sol";
-import {TokenGroupChatManager} from "../src/managers/TokenGroupChatManager.sol";
+import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
+import {TokenActionManager} from "../src/managers/TokenActionManager.sol";
+import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
+import {TokenManager} from "../src/managers/TokenManager.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
@@ -31,10 +31,10 @@ contract DeployGroupChat is ScriptBase {
         address adminDenySource;
         address groupChatDenySource;
         address groupJoinScopeSource;
-        address tokenGroupChatManager;
-        address tokenGovGroupChatManager;
-        address tokenActionGovGroupChatManager;
-        address tokenActionGroupChatManager;
+        address tokenManager;
+        address tokenGovManager;
+        address tokenActionGovManager;
+        address tokenActionManager;
     }
 
     function run() external {
@@ -93,23 +93,23 @@ contract DeployGroupChat is ScriptBase {
         );
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(config.groupJoin));
 
-        TokenGroupChatManager tokenGroupChatManager = new TokenGroupChatManager(
+        TokenManager tokenManager = new TokenManager(
             address(groupChat),
             deployed.groupChatDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
         );
-        deployed.tokenGroupChatManager = address(tokenGroupChatManager);
-        TokenGovGroupChatManager tokenGovGroupChatManager = new TokenGovGroupChatManager(
+        deployed.tokenManager = address(tokenManager);
+        TokenGovManager tokenGovManager = new TokenGovManager(
             address(groupChat),
             deployed.groupChatDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
         );
-        deployed.tokenGovGroupChatManager = address(tokenGovGroupChatManager);
-        TokenActionGovGroupChatManager tokenActionGovGroupChatManager = new TokenActionGovGroupChatManager(
+        deployed.tokenGovManager = address(tokenGovManager);
+        TokenActionGovManager tokenActionGovManager = new TokenActionGovManager(
             address(groupChat),
             deployed.groupChatDenySource,
             config.beforePostPlugin,
@@ -117,8 +117,8 @@ contract DeployGroupChat is ScriptBase {
             config.extensionCenter,
             config.actionRecentRounds
         );
-        deployed.tokenActionGovGroupChatManager = address(tokenActionGovGroupChatManager);
-        TokenActionGroupChatManager tokenActionGroupChatManager = new TokenActionGroupChatManager(
+        deployed.tokenActionGovManager = address(tokenActionGovManager);
+        TokenActionManager tokenActionManager = new TokenActionManager(
             address(groupChat),
             deployed.groupChatDenySource,
             config.beforePostPlugin,
@@ -126,7 +126,7 @@ contract DeployGroupChat is ScriptBase {
             config.extensionCenter,
             config.actionRecentRounds
         );
-        deployed.tokenActionGroupChatManager = address(tokenActionGroupChatManager);
+        deployed.tokenActionManager = address(tokenActionManager);
     }
 
     function _writeAddressFile(string memory dir, DeployConfig memory config, DeployedAddresses memory deployed)
@@ -149,13 +149,13 @@ contract DeployGroupChat is ScriptBase {
         content = string.concat(
             content,
             _addressLine("groupChatAddress", deployed.groupChat),
-            _addressLine("tokenGroupChatManagerAddress", deployed.tokenGroupChatManager),
-            _addressLine("tokenGovGroupChatManagerAddress", deployed.tokenGovGroupChatManager)
+            _addressLine("tokenManagerAddress", deployed.tokenManager),
+            _addressLine("tokenGovManagerAddress", deployed.tokenGovManager)
         );
         content = string.concat(
             content,
-            _addressLine("tokenActionGovGroupChatManagerAddress", deployed.tokenActionGovGroupChatManager),
-            _addressLine("tokenActionGroupChatManagerAddress", deployed.tokenActionGroupChatManager)
+            _addressLine("tokenActionGovManagerAddress", deployed.tokenActionGovManager),
+            _addressLine("tokenActionManagerAddress", deployed.tokenActionManager)
         );
         return content;
     }
