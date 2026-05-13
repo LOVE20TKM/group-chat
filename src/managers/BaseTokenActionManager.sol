@@ -94,7 +94,7 @@ abstract contract BaseTokenActionManager is BaseManager {
         }
     }
 
-    function denyVoteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
+    function voteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
         ManagedAction storage action = actionOfGroup[groupId];
         address token = action.token;
         if (token == address(0)) {
@@ -103,7 +103,7 @@ abstract contract BaseTokenActionManager is BaseManager {
         return _currentActionVoteWeight(token, action.actionId, voter);
     }
 
-    function denyVoteTotalWeightOf(uint256 groupId) external view returns (uint256) {
+    function totalVoteWeight(uint256 groupId) external view returns (uint256) {
         ManagedAction storage action = actionOfGroup[groupId];
         address token = action.token;
         if (token == address(0)) {

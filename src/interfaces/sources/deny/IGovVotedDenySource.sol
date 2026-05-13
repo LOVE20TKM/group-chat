@@ -43,102 +43,109 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function GROUP_ADDRESS() external view returns (address);
 
-    function DENY_THRESHOLD_BPS() external view returns (uint256);
+    function PRECISION() external view returns (uint256);
 
-    function PERCENT_DENOMINATOR() external view returns (uint256);
+    function DENY_THRESHOLD_RATIO() external view returns (uint256);
 
-    function voteDenyAddress(uint256 groupId, address targetAddress) external;
+    function voteBySenderAddress(uint256 groupId, address senderAddress, bool supportDeny) external;
 
-    function opposeDenyAddress(uint256 groupId, address targetAddress) external;
+    function clearVoteBySenderAddress(uint256 groupId, address senderAddress) external;
 
-    function clearDenyAddressVote(uint256 groupId, address targetAddress) external;
+    function refreshVoteBySenderAddress(uint256 groupId, address senderAddress, address voter) external;
 
-    function revalidateDenyAddressVote(uint256 groupId, address targetAddress, address voter) external;
+    function voteBySenderId(uint256 groupId, uint256 senderId, bool supportDeny) external;
 
-    function voteDenySenderId(uint256 groupId, uint256 targetSenderId) external;
+    function clearVoteBySenderId(uint256 groupId, uint256 senderId) external;
 
-    function opposeDenySenderId(uint256 groupId, uint256 targetSenderId) external;
+    function refreshVoteBySenderId(uint256 groupId, uint256 senderId, address voter) external;
 
-    function clearDenySenderIdVote(uint256 groupId, uint256 targetSenderId) external;
+    function voteBySender(uint256 groupId, uint256 senderId, address senderAddress, bool supportDeny) external;
 
-    function revalidateDenySenderIdVote(uint256 groupId, uint256 targetSenderId, address voter) external;
+    function clearVoteBySender(uint256 groupId, uint256 senderId, address senderAddress) external;
 
-    function voteDenySender(uint256 groupId, uint256 targetSenderId, address targetAddress) external;
+    function refreshVoteBySender(uint256 groupId, uint256 senderId, address senderAddress, address voter) external;
 
-    function opposeDenySender(uint256 groupId, uint256 targetSenderId, address targetAddress) external;
-
-    function clearDenySenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress) external;
-
-    function revalidateDenySenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter)
-        external;
-
-    function addressDenyVoteOf(uint256 groupId, address targetAddress, address voter)
-        external
-        view
-        returns (bool supportDeny, uint256 settledWeight);
-
-    function addressDenyTallyOf(uint256 groupId, address targetAddress)
+    function voteWeightsBySenderAddressByVoter(uint256 groupId, address senderAddress, address voter)
         external
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
 
-    function addressDenyDetailsBatch(uint256 groupId, address[] calldata targetAddresses)
+    function voteStatusBySenderAddress(uint256 groupId, address senderAddress)
+        external
+        view
+        returns (bool denied, uint256 supportWeight, uint256 opposeWeight);
+
+    function voteStatusBySenderAddresses(uint256 groupId, address[] calldata senderAddresses)
         external
         view
         returns (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-    function addressDenyTargetsCount(uint256 groupId) external view returns (uint256);
+    function isAddressDenied(uint256 groupId, address senderAddress) external view returns (bool);
 
-    function addressDenyTargets(uint256 groupId, uint256 offset, uint256 limit)
+    function isAddressDeniedBatch(uint256 groupId, address[] calldata senderAddresses)
+        external
+        view
+        returns (bool[] memory denied);
+
+    function votedSenderAddressesCount(uint256 groupId) external view returns (uint256);
+
+    function votedSenderAddresses(uint256 groupId, uint256 offset, uint256 limit)
         external
         view
         returns (
-            address[] memory targetAddresses,
+            address[] memory senderAddresses,
             uint256[] memory supportWeights,
             uint256[] memory opposeWeights,
             uint256[] memory voterCounts
         );
 
-    function addressDenyVotersCount(uint256 groupId, address targetAddress) external view returns (uint256);
+    function votersBySenderAddressCount(uint256 groupId, address senderAddress) external view returns (uint256);
 
-    function addressDenyVoters(uint256 groupId, address targetAddress, uint256 offset, uint256 limit)
+    function votersBySenderAddress(uint256 groupId, address senderAddress, uint256 offset, uint256 limit)
         external
         view
-        returns (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights);
+        returns (address[] memory voters, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-    function senderIdDenyVoteOf(uint256 groupId, uint256 targetSenderId, address voter)
-        external
-        view
-        returns (bool supportDeny, uint256 settledWeight);
-
-    function senderIdDenyTallyOf(uint256 groupId, uint256 targetSenderId)
+    function voteWeightsBySenderIdByVoter(uint256 groupId, uint256 senderId, address voter)
         external
         view
         returns (uint256 supportWeight, uint256 opposeWeight);
 
-    function senderIdDenyDetailsBatch(uint256 groupId, uint256[] calldata targetSenderIds)
+    function voteStatusBySenderId(uint256 groupId, uint256 senderId)
+        external
+        view
+        returns (bool denied, uint256 supportWeight, uint256 opposeWeight);
+
+    function voteStatusBySenderIds(uint256 groupId, uint256[] calldata senderIds)
         external
         view
         returns (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-    function senderIdDenyTargetsCount(uint256 groupId) external view returns (uint256);
+    function isSenderIdDenied(uint256 groupId, uint256 senderId) external view returns (bool);
 
-    function senderIdDenyTargets(uint256 groupId, uint256 offset, uint256 limit)
+    function isSenderIdDeniedBatch(uint256 groupId, uint256[] calldata senderIds)
+        external
+        view
+        returns (bool[] memory denied);
+
+    function votedSenderIdsCount(uint256 groupId) external view returns (uint256);
+
+    function votedSenderIds(uint256 groupId, uint256 offset, uint256 limit)
         external
         view
         returns (
-            uint256[] memory targetSenderIds,
+            uint256[] memory senderIds,
             uint256[] memory supportWeights,
             uint256[] memory opposeWeights,
             uint256[] memory voterCounts
         );
 
-    function senderIdDenyVotersCount(uint256 groupId, uint256 targetSenderId) external view returns (uint256);
+    function votersBySenderIdCount(uint256 groupId, uint256 senderId) external view returns (uint256);
 
-    function senderIdDenyVoters(uint256 groupId, uint256 targetSenderId, uint256 offset, uint256 limit)
+    function votersBySenderId(uint256 groupId, uint256 senderId, uint256 offset, uint256 limit)
         external
         view
-        returns (address[] memory voters, bool[] memory supportDenies, uint256[] memory settledWeights);
+        returns (address[] memory voters, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
     function stateVersion(uint256 groupId) external view returns (uint256);
 }

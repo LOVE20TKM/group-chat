@@ -100,13 +100,13 @@ verify_contract \
     $admin_deny_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-if [ -z "$GROUP_CHAT_DENY_THRESHOLD_BPS" ]; then
-    GROUP_CHAT_DENY_THRESHOLD_BPS=30
+if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
+    GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
 fi
 
 gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
     $LOVE20_GROUP_ADDRESS \
-    $GROUP_CHAT_DENY_THRESHOLD_BPS)
+    $GROUP_CHAT_DENY_THRESHOLD_RATIO)
 verify_contract \
     $groupChatDenySourceAddress \
     "GovVotedDenySource" \

@@ -17,7 +17,7 @@ Manager 用于去中心化群聊。
 - 激活时 `delegateId = 0`。
 - 作为该 chat 的 `scopeSource`。
 - 作为治理黑名单的 `IDenyVoteWeightSource`。
-- 为治理黑名单提供 `denyVoteWeightOf(...)` 与 `denyVoteTotalWeightOf(...)`。
+- 为治理黑名单提供 `voteWeightOf(...)` 与 `totalVoteWeight(...)`。
 
 ## NFT 命名
 

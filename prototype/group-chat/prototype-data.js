@@ -110,7 +110,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       blacklistMode: 'gov',
       govDeny: {
         stateVersion: 7,
-        denyThresholdBps: 30,
+        denyThresholdRatio: 3000000000000000,
         totalWeight: 1000,
         addressDenyList: ['0x44...aa'],
         senderIdDenyList: ['9011'],
@@ -158,7 +158,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1188,
@@ -191,7 +191,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       blacklistMode: 'gov',
       govDeny: {
         stateVersion: 3,
-        denyThresholdBps: 30,
+        denyThresholdRatio: 3000000000000000,
         totalWeight: 1000,
         addressDenyList: [],
         senderIdDenyList: [],
@@ -233,7 +233,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1190,
@@ -264,7 +264,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1191,
@@ -295,7 +295,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 2190,
@@ -326,7 +326,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 2191,
@@ -357,7 +357,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdBps: 30, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1301,

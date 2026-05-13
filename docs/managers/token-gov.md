@@ -40,8 +40,8 @@ ILOVE20Stake.validGovVotes(token, account) != 0
 ## 黑名单票权
 
 ```solidity
-denyVoteWeightOf(groupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
-denyVoteTotalWeightOf(groupId) = ILOVE20Stake.govVotesNum(token)
+voteWeightOf(groupId, voter) = ILOVE20Stake.validGovVotes(token, voter)
+totalVoteWeight(groupId) = ILOVE20Stake.govVotesNum(token)
 ```
 
 未激活时返回 `0`。

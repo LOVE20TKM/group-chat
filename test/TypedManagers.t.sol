@@ -37,8 +37,8 @@ contract TypedManagersTest is GroupChatFixture {
         protocol.setBalance(senderOwner, 0);
         protocol.setGovVotes(token, senderOwner, 9);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
-        assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 9);
-        assertEq(manager.denyVoteTotalWeightOf(groupId), 9);
+        assertEq(manager.voteWeightOf(groupId, senderOwner), 9);
+        assertEq(manager.totalVoteWeight(groupId), 9);
         protocol.setGovVotes(token, senderOwner, 0);
         protocol.setJoinedAmountByAccount(token, senderOwner, 1);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
@@ -77,8 +77,8 @@ contract TypedManagersTest is GroupChatFixture {
         assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setGovVotes(token, senderOwner, 7);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
-        assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 7);
-        assertEq(manager.denyVoteTotalWeightOf(groupId), 7);
+        assertEq(manager.voteWeightOf(groupId, senderOwner), 7);
+        assertEq(manager.totalVoteWeight(groupId), 7);
     }
 
     function testT112_tokenActionGovManagerStoresParamsAndUsesRecentVotes() public {
@@ -110,8 +110,8 @@ contract TypedManagersTest is GroupChatFixture {
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setActionVotes(token, 7, senderOwner, 42, 5);
         protocol.setGovVotes(token, senderOwner, 5);
-        assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 5);
-        assertEq(manager.denyVoteTotalWeightOf(groupId), 5);
+        assertEq(manager.voteWeightOf(groupId, senderOwner), 5);
+        assertEq(manager.totalVoteWeight(groupId), 5);
 
         uint256 secondGroupId = manager.activate(token, 43);
         uint256[] memory queryActionIds = new uint256[](3);
@@ -172,8 +172,8 @@ contract TypedManagersTest is GroupChatFixture {
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setActionVotes(token, 10, senderOwner, 88, 11);
         protocol.setGovVotes(token, senderOwner, 11);
-        assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 11);
-        assertEq(manager.denyVoteTotalWeightOf(groupId), 11);
+        assertEq(manager.voteWeightOf(groupId, senderOwner), 11);
+        assertEq(manager.totalVoteWeight(groupId), 11);
 
         uint256 secondGroupId = manager.activate(token, 89);
         uint256[] memory queryActionIds = new uint256[](3);

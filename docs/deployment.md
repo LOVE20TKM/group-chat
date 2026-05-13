@@ -38,7 +38,7 @@ source ./one_click_deploy.sh <network>
 ## 可选参数
 
 - `LOVE20_GROUP_ADDRESS`：仅用于部署后校验。
-- `GROUP_CHAT_DENY_THRESHOLD_BPS`：默认 `30`，即 `0.3%`。
+- `GROUP_CHAT_DENY_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 

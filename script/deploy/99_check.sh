@@ -82,9 +82,9 @@ if [ -n "$actionRecentRounds" ]; then
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
 fi
 
-if [ -n "$denyThresholdBps" ]; then
-    GROUP_CHAT_DENY_THRESHOLD_BPS=$denyThresholdBps
-    export GROUP_CHAT_DENY_THRESHOLD_BPS
+if [ -n "$denyThresholdRatio" ]; then
+    GROUP_CHAT_DENY_THRESHOLD_RATIO=$denyThresholdRatio
+    export GROUP_CHAT_DENY_THRESHOLD_RATIO
 fi
 
 zero_address=0x0000000000000000000000000000000000000000
@@ -99,9 +99,9 @@ if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 fi
 
-if [ -z "$GROUP_CHAT_DENY_THRESHOLD_BPS" ]; then
-    GROUP_CHAT_DENY_THRESHOLD_BPS=30
-    export GROUP_CHAT_DENY_THRESHOLD_BPS
+if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
+    GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
+    export GROUP_CHAT_DENY_THRESHOLD_RATIO
 fi
 
 if [ -z "$groupChatAddress" ]; then
@@ -196,7 +196,7 @@ echo -e "AdminDenySource Address: $ADMIN_DENY_SOURCE_ADDRESS"
 echo -e "GovVotedDenySource Address: $GROUP_CHAT_DENY_SOURCE_ADDRESS\n"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
-echo -e "Deny Threshold Bps: $GROUP_CHAT_DENY_THRESHOLD_BPS\n"
+echo -e "Deny Threshold Ratio: $GROUP_CHAT_DENY_THRESHOLD_RATIO\n"
 echo -e "TokenManager Address: $tokenManagerAddress"
 echo -e "TokenGovManager Address: $tokenGovManagerAddress"
 echo -e "TokenActionGovManager Address: $tokenActionGovManagerAddress"
@@ -293,7 +293,9 @@ echo ""
 echo "Verifying GovVotedDenySource configuration..."
 check_equal "GovVotedDenySource: GROUP_ADDRESS" $LOVE20_GROUP_ADDRESS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedDenySource: DENY_THRESHOLD_BPS" $GROUP_CHAT_DENY_THRESHOLD_BPS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "DENY_THRESHOLD_BPS()(uint256)")
+check_equal "GovVotedDenySource: PRECISION" 1000000000000000000 $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "PRECISION()(uint256)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GovVotedDenySource: DENY_THRESHOLD_RATIO" $GROUP_CHAT_DENY_THRESHOLD_RATIO $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "DENY_THRESHOLD_RATIO()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

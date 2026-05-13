@@ -54,7 +54,7 @@ abstract contract BaseTokenManager is BaseManager {
         }
     }
 
-    function denyVoteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
+    function voteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
         address token = tokenOfGroup[groupId];
         if (token == address(0)) {
             return 0;
@@ -62,7 +62,7 @@ abstract contract BaseTokenManager is BaseManager {
         return _tokenGovVoteWeight(token, voter);
     }
 
-    function denyVoteTotalWeightOf(uint256 groupId) external view returns (uint256) {
+    function totalVoteWeight(uint256 groupId) external view returns (uint256) {
         address token = tokenOfGroup[groupId];
         if (token == address(0)) {
             return 0;

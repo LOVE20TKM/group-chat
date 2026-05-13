@@ -30,7 +30,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
         address beforePostPlugin,
         address afterPostPlugin,
         uint256 actionRecentRounds,
-        uint256 denyThresholdBps
+        uint256 denyThresholdRatio
     ) external view returns (DeployConfig memory) {
         return _configFromCoreJoin(
             groupDefaults,
@@ -39,7 +39,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
             beforePostPlugin,
             afterPostPlugin,
             actionRecentRounds,
-            denyThresholdBps
+            denyThresholdRatio
         );
     }
 
@@ -57,6 +57,8 @@ contract DeployGroupChatHarness is DeployGroupChat {
 }
 
 contract DeployGroupChatTest is TestBase {
+    uint256 internal constant DENY_THRESHOLD_RATIO = 3e15;
+
     MockLOVE20Group internal groupNft;
     MockGroupDefaults internal groupDefaults;
     MockLOVE20Protocols internal protocol;
@@ -81,7 +83,7 @@ contract DeployGroupChatTest is TestBase {
             originBlocks: 100,
             phaseBlocks: 25,
             actionRecentRounds: 3,
-            denyThresholdBps: 30
+            denyThresholdRatio: DENY_THRESHOLD_RATIO
         });
 
         DeployGroupChat.DeployedAddresses memory deployed = deployer.deployForTest(config);
@@ -104,7 +106,8 @@ contract DeployGroupChatTest is TestBase {
         assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_ADDRESS(), address(groupNft));
-        assertEq(GovVotedDenySource(deployed.groupChatDenySource).DENY_THRESHOLD_BPS(), 30);
+        assertEq(GovVotedDenySource(deployed.groupChatDenySource).PRECISION(), 1e18);
+        assertEq(GovVotedDenySource(deployed.groupChatDenySource).DENY_THRESHOLD_RATIO(), DENY_THRESHOLD_RATIO);
         assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN_ADDRESS(), address(groupJoin));
 
         _assertManagerCommon(deployed.tokenManager, deployed);
@@ -130,7 +133,13 @@ contract DeployGroupChatTest is TestBase {
         protocol.setPhase(321, 44);
 
         DeployGroupChat.DeployConfig memory config = deployer.configFromCoreJoinForTest(
-            address(groupDefaults), address(protocol), address(groupJoin), address(0xBEEF), address(0xCAFE), 7, 30
+            address(groupDefaults),
+            address(protocol),
+            address(groupJoin),
+            address(0xBEEF),
+            address(0xCAFE),
+            7,
+            DENY_THRESHOLD_RATIO
         );
 
         assertEq(config.groupDefaults, address(groupDefaults));
@@ -141,7 +150,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(config.originBlocks, 321);
         assertEq(config.phaseBlocks, 44);
         assertEq(config.actionRecentRounds, 7);
-        assertEq(config.denyThresholdBps, 30);
+        assertEq(config.denyThresholdRatio, DENY_THRESHOLD_RATIO);
     }
 
     function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {
@@ -154,7 +163,7 @@ contract DeployGroupChatTest is TestBase {
             originBlocks: 123,
             phaseBlocks: 456,
             actionRecentRounds: 7,
-            denyThresholdBps: 30
+            denyThresholdRatio: DENY_THRESHOLD_RATIO
         });
         DeployGroupChat.DeployedAddresses memory deployed = DeployGroupChat.DeployedAddresses({
             groupChat: address(0x101),

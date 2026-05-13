@@ -28,11 +28,11 @@ contract MockManager is BaseManager {
         return postAllowed;
     }
 
-    function denyVoteWeightOf(uint256, address) external view returns (uint256) {
+    function voteWeightOf(uint256, address) external view returns (uint256) {
         return voteWeight;
     }
 
-    function denyVoteTotalWeightOf(uint256) external view returns (uint256) {
+    function totalVoteWeight(uint256) external view returns (uint256) {
         return voteWeight;
     }
 }

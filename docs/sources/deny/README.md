@@ -10,7 +10,7 @@ DenySource 判断“某身份 / 地址是否被禁言”。
 - `denySource` 调用失败时，`canPost(...)` 返回 `DenySourceFailed.selector`。
 - 豁免名单不是主协议概念；如果需要，由具体 DenySource 内部实现。
 
-## 接口
+## 主协议接口
 
 ```solidity
 function isDenied(
@@ -18,37 +18,9 @@ function isDenied(
     uint256 senderId,
     address senderAddress
 ) external view returns (bool);
-
-function isAddressDenied(
-    uint256 groupId,
-    address senderAddress
-) external view returns (bool);
-
-function isSenderIdDenied(
-    uint256 groupId,
-    uint256 senderId
-) external view returns (bool);
-
-function isSenderIdExempt(
-    uint256 groupId,
-    uint256 senderId
-) external view returns (bool);
-
-function isAddressDeniedBatch(
-    uint256 groupId,
-    address[] calldata senderAddresses
-) external view returns (bool[] memory denied);
-
-function isSenderIdDeniedBatch(
-    uint256 groupId,
-    uint256[] calldata senderIds
-) external view returns (bool[] memory denied);
-
-function isSenderIdExemptBatch(
-    uint256 groupId,
-    uint256[] calldata senderIds
-) external view returns (bool[] memory exempt);
 ```
+
+`IPostDenySource` 只回答主协议发帖路径需要的问题。名单、投票状态、豁免状态都属于具体 DenySource 的展示 / 管理接口。
 
 ## 当前文档
 
@@ -70,10 +42,10 @@ function isSenderIdExemptBatch(
 
 ## 前端规则
 
-- 未在可信地址表中的 denySource，不调用专用展示接口。
+- 未在可信地址表中的 denySource，只调用主协议接口 `isDenied(...)`。
 - 可信 denySource 可选实现 `stateVersion(groupId)` 和 `StateVersionChanged`，供前端重拉专用状态。
 - 消息列表前端应先从已拉取消息中分别提取唯一 `senderAddress` 与唯一 `senderId`。
-- 分别调用 `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)`、`isSenderIdExemptBatch(...)`。
-- 前端本地合成最终隐藏状态：`!senderIdExempt && (addressDenied || senderIdDenied)`。
-- 这些通用批量接口只返回隐藏判断需要的布尔状态；治理票数属于 `GovVotedDenySource` 专用展示数据，应从 `addressDenyDetailsBatch(...)`、`senderIdDenyDetailsBatch(...)` 或治理目标 / 投票人分页接口获取。
-- 三类结果可以按 `groupId + denySource + stateVersion + senderAddress/senderId` 分开缓存；监听黑名单相关事件或 `StateVersionChanged` 后清理对应缓存。
+- `AdminDenySource` 展示隐藏状态时，可分别调用 `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)`、`isSenderIdExemptBatch(...)`，并本地合成 `!senderIdExempt && (addressDenied || senderIdDenied)`。
+- `GovVotedDenySource` 没有豁免名单；展示隐藏状态时，只调用 `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)`。
+- 治理票数属于 `GovVotedDenySource` 专用展示数据，应从 `voteStatusBySenderAddresses(...)`、`voteStatusBySenderIds(...)` 或 voted sender / 投票人分页接口获取。
+- 展示结果可以按 `groupId + denySource + stateVersion + senderAddress/senderId` 分开缓存；监听黑名单相关事件或 `StateVersionChanged` 后清理对应缓存。

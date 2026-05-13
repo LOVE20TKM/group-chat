@@ -80,8 +80,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_ACTION_RECENT_ROUNDS=$actionRecentRounds
     fi
 
-    if [ -n "$denyThresholdBps" ]; then
-        export GROUP_CHAT_DENY_THRESHOLD_BPS=$denyThresholdBps
+    if [ -n "$denyThresholdRatio" ]; then
+        export GROUP_CHAT_DENY_THRESHOLD_RATIO=$denyThresholdRatio
     fi
 
     if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
@@ -108,8 +108,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
         return 1
     fi
 
-    if [ -z "$GROUP_CHAT_DENY_THRESHOLD_BPS" ]; then
-        export GROUP_CHAT_DENY_THRESHOLD_BPS=30
+    if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
+        export GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
     fi
 
     zero_address=0x0000000000000000000000000000000000000000
@@ -144,7 +144,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
-    export GROUP_CHAT_DENY_THRESHOLD_BPS
+    export GROUP_CHAT_DENY_THRESHOLD_RATIO
 
     echo "GroupChat Configuration loaded:"
     if [ -n "$LOVE20_GROUP_ADDRESS" ]; then
@@ -159,7 +159,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"
-    echo "  DenyThresholdBps: $GROUP_CHAT_DENY_THRESHOLD_BPS"
+    echo "  DenyThresholdRatio: $GROUP_CHAT_DENY_THRESHOLD_RATIO"
     echo "  RoundSource: ExtensionCenter.joinAddress().originBlocks/phaseBlocks"
 else
     echo -e "\033[31mError:\033[0m group.chat.params not found"

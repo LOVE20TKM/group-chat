@@ -372,7 +372,7 @@ const requiredProtocolCopy = [
   'afterPostPlugin',
   'delegateId',
   'stateVersion',
-  'denyThresholdBps',
+  'denyThresholdRatio',
   'totalWeight',
   'addressDenyList',
   'senderIdDenyList',

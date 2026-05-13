@@ -63,6 +63,27 @@ interface IAdminDenySource is IPostDenySource {
 
     function adminIds(uint256 groupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
 
+    function isAddressDenied(uint256 groupId, address account) external view returns (bool);
+
+    function isSenderIdDenied(uint256 groupId, uint256 senderId) external view returns (bool);
+
+    function isSenderIdExempt(uint256 groupId, uint256 senderId) external view returns (bool);
+
+    function isAddressDeniedBatch(uint256 groupId, address[] calldata accounts)
+        external
+        view
+        returns (bool[] memory denied);
+
+    function isSenderIdDeniedBatch(uint256 groupId, uint256[] calldata senderIds)
+        external
+        view
+        returns (bool[] memory denied);
+
+    function isSenderIdExemptBatch(uint256 groupId, uint256[] calldata senderIds)
+        external
+        view
+        returns (bool[] memory exempt);
+
     function addDenyListsBySenderAddresses(uint256 groupId, address[] calldata targetAddresses) external;
 
     function removeDenyListsBySenderAddresses(uint256 groupId, address[] calldata targetAddresses) external;

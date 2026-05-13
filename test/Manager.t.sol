@@ -30,7 +30,7 @@ contract ManagerTest is GroupChatFixture {
         assertEq(info.afterPostPlugin, address(0));
 
         assertTrue(manager.canPost(groupId, senderId, senderOwner));
-        assertEq(manager.denyVoteWeightOf(groupId, senderOwner), 1);
+        assertEq(manager.voteWeightOf(groupId, senderOwner), 1);
     }
 
     function testT101_managerOwnerCannotStopPostingThroughGroupChat() public {

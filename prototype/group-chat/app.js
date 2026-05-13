@@ -300,12 +300,21 @@ function canEditExempt(chat) {
   return chat && ['owner', 'delegate'].includes(chat.role);
 }
 
+const DENY_THRESHOLD_PRECISION = 1000000000000000000n;
+
+function uintLike(value) {
+  const raw = String(value ?? 0).trim();
+  return /^\d+$/.test(raw) ? BigInt(raw) : 0n;
+}
+
 function targetDenied(chat, target) {
-  if (Number(target.support) <= Number(target.oppose)) return false;
-  const totalWeight = Number(chat?.govDeny?.totalWeight || 0);
-  const thresholdBps = Number(chat?.govDeny?.denyThresholdBps || 0);
-  if (totalWeight <= 0 || thresholdBps <= 0) return true;
-  return Number(target.support) * 10_000 >= totalWeight * thresholdBps;
+  const support = uintLike(target.support);
+  const oppose = uintLike(target.oppose);
+  if (support <= oppose) return false;
+  const totalWeight = uintLike(chat?.govDeny?.totalWeight);
+  const thresholdRatio = uintLike(chat?.govDeny?.denyThresholdRatio);
+  if (totalWeight === 0n || thresholdRatio === 0n) return true;
+  return support * DENY_THRESHOLD_PRECISION >= totalWeight * thresholdRatio;
 }
 
 function normalizeBlacklistTargetType(targetType) {

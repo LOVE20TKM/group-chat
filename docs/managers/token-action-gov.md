@@ -50,14 +50,14 @@ function activate(
 ## 黑名单票权
 
 ```solidity
-denyVoteWeightOf(groupId, voter) =
+voteWeightOf(groupId, voter) =
     ILOVE20Vote.votesNumByAccountByActionId(
         token,
         ILOVE20Vote.currentRound(),
         voter,
         actionId
     )
-denyVoteTotalWeightOf(groupId) = ILOVE20Stake.govVotesNum(token)
+totalVoteWeight(groupId) = ILOVE20Stake.govVotesNum(token)
 ```
 
 未激活时返回 `0`。

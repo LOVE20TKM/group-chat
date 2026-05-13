@@ -115,7 +115,7 @@ interface IBeforePostPlugin {
 
 ```solidity
 interface IDenyVoteWeightSource {
-    function denyVoteWeightOf(
+    function voteWeightOf(
         uint256 groupId,
         address voter
     ) external view returns (uint256);
@@ -335,7 +335,7 @@ voteWeightSourceOf(groupId) -> IDenyVoteWeightSource
 voteWeightSource = 对应 Manager
 ```
 
-即由 Manager 同时提供 `denyVoteWeightOf(...)`。阈值、投票期、是否支持反对票 / 撤票 / 复议等其他规则，全部在 `GovVotedDenySource` 构造时确定，部署后不按群重配。
+即由 Manager 同时提供 `voteWeightOf(...)`。阈值、投票期、是否支持反对票 / 撤票 / 复议等其他规则，全部在 `GovVotedDenySource` 构造时确定，部署后不按群重配。
 
 ### 4.4 BeforePostPlugin
 
@@ -371,7 +371,7 @@ TokenGroupChatManager
   - ownerOf(groupId)
   - activate(groupId, token)
   - canPost = 持币 OR 参与过行动 OR 有治理票
-  - denyVoteWeightOf = 地址持有的治理票
+  - voteWeightOf = 地址持有的治理票
 
 GroupChat.scopeSource = TokenGroupChatManager
 GroupChat.denySource = GovVotedDenySource
@@ -386,7 +386,7 @@ TokenGovGroupChatManager
   - ownerOf(groupId)
   - activate(groupId, token)
   - canPost = 有代币治理票
-  - denyVoteWeightOf = 地址持有的治理票
+  - voteWeightOf = 地址持有的治理票
 
 GroupChat.scopeSource = TokenGovGroupChatManager
 GroupChat.denySource = GovVotedDenySource
@@ -401,7 +401,7 @@ TokenActionGovGroupChatManager
   - ownerOf(groupId)
   - activate(groupId, token, actionId, recentRounds)
   - canPost = 最近 X 轮给该行动投过票
-  - denyVoteWeightOf = 地址当前行动轮的投票数
+  - voteWeightOf = 地址当前行动轮的投票数
 
 GroupChat.scopeSource = TokenActionGovGroupChatManager
 GroupChat.denySource = GovVotedDenySource
@@ -416,7 +416,7 @@ TokenActionGroupChatManager
   - ownerOf(groupId)
   - activate(groupId, token, actionId, recentRounds)
   - canPost = 最近 X 轮给该行动投过票 OR 参与这个行动
-  - denyVoteWeightOf = 地址当前行动轮的投票数
+  - voteWeightOf = 地址当前行动轮的投票数
 
 GroupChat.scopeSource = TokenActionGroupChatManager
 GroupChat.denySource = GovVotedDenySource
@@ -427,7 +427,7 @@ GroupChat.beforePostPlugin = 可选
 四类代币/行动去中心化群聊共用 `GovVotedDenySource`。差异只在：
 
 - `scopeSource.canPost(...)`
-- `IDenyVoteWeightSource.denyVoteWeightOf(...)`
+- `IDenyVoteWeightSource.voteWeightOf(...)`
 - Manager `activate(...)` 的入参
 
 ### 5.5 链群群聊
