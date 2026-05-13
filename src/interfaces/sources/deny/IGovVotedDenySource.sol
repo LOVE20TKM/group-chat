@@ -6,7 +6,6 @@ import {IPostDenySource} from "../IPostDenySource.sol";
 interface IGovVotedDenySource is IPostDenySource {
     error GovVotedDenySourceAddressHasNoCode();
     error DenyVoteWeightSourceUnavailable();
-    error GroupNotExist();
     error TargetAddressZero();
     error TargetSenderIdZero();
     error VoteWeightZero();
@@ -44,8 +43,6 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function GROUP_ADDRESS() external view returns (address);
 
-    function GROUP_DEFAULTS_ADDRESS() external view returns (address);
-
     function DENY_THRESHOLD_BPS() external view returns (uint256);
 
     function PERCENT_DENOMINATOR() external view returns (uint256);
@@ -66,21 +63,14 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function revalidateDenySenderIdVote(uint256 groupId, uint256 targetSenderId, address voter) external;
 
-    function voteDenySenderBySenderId(uint256 groupId, uint256 targetSenderId) external;
+    function voteDenySender(uint256 groupId, uint256 targetSenderId, address targetAddress) external;
 
-    function opposeDenySenderBySenderId(uint256 groupId, uint256 targetSenderId) external;
+    function opposeDenySender(uint256 groupId, uint256 targetSenderId, address targetAddress) external;
 
-    function clearDenySenderVoteBySenderId(uint256 groupId, uint256 targetSenderId) external;
+    function clearDenySenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress) external;
 
-    function revalidateDenySenderVoteBySenderId(uint256 groupId, uint256 targetSenderId, address voter) external;
-
-    function voteDenySenderBySenderAddress(uint256 groupId, address targetAddress) external;
-
-    function opposeDenySenderBySenderAddress(uint256 groupId, address targetAddress) external;
-
-    function clearDenySenderVoteBySenderAddress(uint256 groupId, address targetAddress) external;
-
-    function revalidateDenySenderVoteBySenderAddress(uint256 groupId, address targetAddress, address voter) external;
+    function revalidateDenySenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter)
+        external;
 
     function addressDenyVoteOf(uint256 groupId, address targetAddress, address voter)
         external

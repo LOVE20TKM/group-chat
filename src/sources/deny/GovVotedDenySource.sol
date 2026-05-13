@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
-import {IDenyVoteWeightSource} from "../../interfaces/sources/deny/IDenyVoteWeightSource.sol";
+
 import {IPostDenySource} from "../../interfaces/sources/IPostDenySource.sol";
+import {IDenyVoteWeightSource} from "../../interfaces/sources/deny/IDenyVoteWeightSource.sol";
 
 contract GovVotedDenySource is IPostDenySource {
     error GovVotedDenySourceAddressHasNoCode();
     error DenyVoteWeightSourceUnavailable();
-    error GroupNotExist();
     error TargetAddressZero();
     error TargetSenderIdZero();
     error VoteWeightZero();
@@ -46,7 +45,6 @@ contract GovVotedDenySource is IPostDenySource {
     event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
     address public immutable GROUP_ADDRESS;
-    address public immutable GROUP_DEFAULTS_ADDRESS;
     uint256 public immutable DENY_THRESHOLD_BPS;
     uint256 public constant PERCENT_DENOMINATOR = 10_000;
 
@@ -87,18 +85,14 @@ contract GovVotedDenySource is IPostDenySource {
 
     mapping(uint256 => ChatState) internal _states;
 
-    constructor(address groupAddress_, address groupDefaults_, uint256 denyThresholdBps_) {
+    constructor(address groupAddress_, uint256 denyThresholdBps_) {
         if (groupAddress_.code.length == 0) {
-            revert GovVotedDenySourceAddressHasNoCode();
-        }
-        if (groupDefaults_.code.length == 0) {
             revert GovVotedDenySourceAddressHasNoCode();
         }
         if (denyThresholdBps_ > PERCENT_DENOMINATOR) {
             revert DenyThresholdTooHigh();
         }
         GROUP_ADDRESS = groupAddress_;
-        GROUP_DEFAULTS_ADDRESS = groupDefaults_;
         DENY_THRESHOLD_BPS = denyThresholdBps_;
     }
 
@@ -134,40 +128,22 @@ contract GovVotedDenySource is IPostDenySource {
         _revalidateSenderIdVote(groupId, targetSenderId, voter);
     }
 
-    function voteDenySenderBySenderId(uint256 groupId, uint256 targetSenderId) external {
-        address targetAddress = _ownerOfOrRevert(targetSenderId);
+    function voteDenySender(uint256 groupId, uint256 targetSenderId, address targetAddress) external {
         _setSenderVote(groupId, targetSenderId, targetAddress, msg.sender, true);
     }
 
-    function opposeDenySenderBySenderId(uint256 groupId, uint256 targetSenderId) external {
-        address targetAddress = _ownerOfOrRevert(targetSenderId);
+    function opposeDenySender(uint256 groupId, uint256 targetSenderId, address targetAddress) external {
         _setSenderVote(groupId, targetSenderId, targetAddress, msg.sender, false);
     }
 
-    function clearDenySenderVoteBySenderId(uint256 groupId, uint256 targetSenderId) external {
-        address targetAddress = _ownerOfOrRevert(targetSenderId);
+    function clearDenySenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress) external {
         _clearSenderVote(groupId, targetSenderId, targetAddress, msg.sender);
     }
 
-    function revalidateDenySenderVoteBySenderId(uint256 groupId, uint256 targetSenderId, address voter) external {
-        address targetAddress = _ownerOfOrRevert(targetSenderId);
+    function revalidateDenySenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter)
+        external
+    {
         _revalidateSenderVote(groupId, targetSenderId, targetAddress, voter);
-    }
-
-    function voteDenySenderBySenderAddress(uint256 groupId, address targetAddress) external {
-        _setSenderAddressVote(groupId, targetAddress, msg.sender, true);
-    }
-
-    function opposeDenySenderBySenderAddress(uint256 groupId, address targetAddress) external {
-        _setSenderAddressVote(groupId, targetAddress, msg.sender, false);
-    }
-
-    function clearDenySenderVoteBySenderAddress(uint256 groupId, address targetAddress) external {
-        _clearSenderAddressVote(groupId, targetAddress, msg.sender);
-    }
-
-    function revalidateDenySenderVoteBySenderAddress(uint256 groupId, address targetAddress, address voter) external {
-        _revalidateSenderAddressVote(groupId, targetAddress, voter);
     }
 
     function addressDenyVoteOf(uint256 groupId, address targetAddress, address voter)
@@ -702,6 +678,7 @@ contract GovVotedDenySource is IPostDenySource {
         address voter,
         bool supportDeny
     ) internal {
+        _requireSenderTarget(targetSenderId, targetAddress);
         uint256 newVersion = _setAddressVoteIfChanged(groupId, targetAddress, voter, supportDeny, 0);
         newVersion = _setSenderIdVoteIfChanged(groupId, targetSenderId, voter, supportDeny, newVersion);
         if (newVersion == 0) {
@@ -711,6 +688,7 @@ contract GovVotedDenySource is IPostDenySource {
     }
 
     function _clearSenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter) internal {
+        _requireSenderTarget(targetSenderId, targetAddress);
         uint256 newVersion = _clearAddressVoteIfFound(groupId, targetAddress, voter, 0);
         newVersion = _clearSenderIdVoteIfFound(groupId, targetSenderId, voter, newVersion);
         if (newVersion == 0) {
@@ -722,6 +700,7 @@ contract GovVotedDenySource is IPostDenySource {
     function _revalidateSenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter)
         internal
     {
+        _requireSenderTarget(targetSenderId, targetAddress);
         (bool addressFound, uint256 newVersion) = _revalidateAddressVoteIfFound(groupId, targetAddress, voter, 0);
         (bool senderIdFound, uint256 newVersion2) =
             _revalidateSenderIdVoteIfFound(groupId, targetSenderId, voter, newVersion);
@@ -731,31 +710,13 @@ contract GovVotedDenySource is IPostDenySource {
         _emitStateVersionChangedIfChanged(groupId, newVersion2);
     }
 
-    function _setSenderAddressVote(uint256 groupId, address targetAddress, address voter, bool supportDeny) internal {
-        uint256 targetSenderId = _validDefaultGroupIdOf(targetAddress);
+    function _requireSenderTarget(uint256 targetSenderId, address targetAddress) internal pure {
         if (targetSenderId == 0) {
-            _setAddressVote(groupId, targetAddress, voter, supportDeny);
-            return;
+            revert TargetSenderIdZero();
         }
-        _setSenderVote(groupId, targetSenderId, targetAddress, voter, supportDeny);
-    }
-
-    function _clearSenderAddressVote(uint256 groupId, address targetAddress, address voter) internal {
-        uint256 targetSenderId = _validDefaultGroupIdOf(targetAddress);
-        if (targetSenderId == 0) {
-            _clearAddressVote(groupId, targetAddress, voter);
-            return;
+        if (targetAddress == address(0)) {
+            revert TargetAddressZero();
         }
-        _clearSenderVote(groupId, targetSenderId, targetAddress, voter);
-    }
-
-    function _revalidateSenderAddressVote(uint256 groupId, address targetAddress, address voter) internal {
-        uint256 targetSenderId = _validDefaultGroupIdOf(targetAddress);
-        if (targetSenderId == 0) {
-            _revalidateAddressVote(groupId, targetAddress, voter);
-            return;
-        }
-        _revalidateSenderVote(groupId, targetSenderId, targetAddress, voter);
     }
 
     function _ensureStateVersion(ChatState storage state, uint256 newVersion) internal returns (uint256) {
@@ -879,35 +840,6 @@ contract GovVotedDenySource is IPostDenySource {
             return source.code.length != 0;
         } catch {
             return false;
-        }
-    }
-
-    function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
-        if (groupId == 0) {
-            revert TargetSenderIdZero();
-        }
-        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
-            return resolved;
-        } catch {
-            revert GroupNotExist();
-        }
-    }
-
-    function _tryOwnerOf(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
-            return resolved;
-        } catch {
-            return address(0);
-        }
-    }
-
-    function _validDefaultGroupIdOf(address account) internal view returns (uint256 groupId) {
-        if (account == address(0)) {
-            revert TargetAddressZero();
-        }
-        groupId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(account);
-        if (groupId == 0 || _tryOwnerOf(groupId) != account) {
-            return 0;
         }
     }
 

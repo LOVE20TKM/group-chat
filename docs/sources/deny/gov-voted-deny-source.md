@@ -29,7 +29,6 @@ GroupChat.denySource = GovVotedDenySource
 构造参数固定外部依赖和全局黑名单生效阈值：
 
 - `GROUP_ADDRESS`
-- `GROUP_DEFAULTS_ADDRESS`
 - `DENY_THRESHOLD_BPS`
 
 当前部署默认值：
@@ -66,9 +65,10 @@ GroupChat.denySource = GovVotedDenySource
 - 不引入 `voterGroupId`；治理票来自地址维度的流动性质押，票权源按 `voter` 地址计算。
 - `senderId` 只作为被投票目标维度，不作为投票人身份。
 - 每个投票主体对同一目标只有一个当前立场：无票、赞成拉黑、反对拉黑。
-- 基础目标分两类：`targetAddress` 与 `targetSenderId`，接口层分开，不用“二选一参数”。
-- `*BySenderId` 通过 `ownerOf(targetSenderId)` 解析目标地址，一次操作同步影响地址与 NFT 两个目标维度。
-- `*BySenderAddress` 直接影响地址目标；若 `defaultGroupIdOf(targetAddress) != 0` 且该 NFT 当前 owner 仍是 `targetAddress`，同时影响 NFT 目标，否则不处理 NFT 且不拒绝。
+- 基础目标分两类：`targetAddress` 与 `targetSenderId`；单维度投票使用对应接口。
+- `voteDenySender(...)` / `opposeDenySender(...)` / `clearDenySenderVote(...)` / `revalidateDenySenderVote(...)` 由调用方显式传入发言消息快照里的 `targetSenderId` 与 `targetAddress`，一次操作同步影响地址与 NFT 两个目标维度。
+- `targetSenderId == 0` 或 `targetAddress == address(0)` 是无效输入，不作为单维度模式。
+- 合约不通过 `ownerOf(targetSenderId)` 或 `defaultGroupIdOf(targetAddress)` 推断另一半目标，避免目标在发言后转移或解绑导致漏投或投错。
 - `voteDeny*` 会用当前票权覆盖旧立场。
 - `opposeDeny*` 是反对票，也是一种复议手段。
 - `clearDeny*Vote` 只撤回 `msg.sender` 自己的当前票。
@@ -127,44 +127,27 @@ function revalidateDenySenderIdVote(
     address voter
 ) external;
 
-function voteDenySenderBySenderId(
-    uint256 groupId,
-    uint256 targetSenderId
-) external;
-
-function opposeDenySenderBySenderId(
-    uint256 groupId,
-    uint256 targetSenderId
-) external;
-
-function clearDenySenderVoteBySenderId(
-    uint256 groupId,
-    uint256 targetSenderId
-) external;
-
-function revalidateDenySenderVoteBySenderId(
+function voteDenySender(
     uint256 groupId,
     uint256 targetSenderId,
-    address voter
-) external;
-
-function voteDenySenderBySenderAddress(
-    uint256 groupId,
     address targetAddress
 ) external;
 
-function opposeDenySenderBySenderAddress(
+function opposeDenySender(
     uint256 groupId,
+    uint256 targetSenderId,
     address targetAddress
 ) external;
 
-function clearDenySenderVoteBySenderAddress(
+function clearDenySenderVote(
     uint256 groupId,
+    uint256 targetSenderId,
     address targetAddress
 ) external;
 
-function revalidateDenySenderVoteBySenderAddress(
+function revalidateDenySenderVote(
     uint256 groupId,
+    uint256 targetSenderId,
     address targetAddress,
     address voter
 ) external;
@@ -396,7 +379,7 @@ event StateVersionChanged(
 合约全局至少维护：
 
 - `address immutable GROUP_ADDRESS`
-- `address immutable GROUP_DEFAULTS_ADDRESS`
+- `uint256 immutable DENY_THRESHOLD_BPS`
 
 每个 `groupId` 至少维护：
 

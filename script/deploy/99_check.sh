@@ -293,8 +293,6 @@ echo ""
 echo "Verifying GovVotedDenySource configuration..."
 check_equal "GovVotedDenySource: GROUP_ADDRESS" $LOVE20_GROUP_ADDRESS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedDenySource: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
 check_equal "GovVotedDenySource: DENY_THRESHOLD_BPS" $GROUP_CHAT_DENY_THRESHOLD_BPS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "DENY_THRESHOLD_BPS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""

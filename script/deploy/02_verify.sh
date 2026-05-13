@@ -104,9 +104,8 @@ if [ -z "$GROUP_CHAT_DENY_THRESHOLD_BPS" ]; then
     GROUP_CHAT_DENY_THRESHOLD_BPS=30
 fi
 
-gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,address,uint256)" \
+gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
     $LOVE20_GROUP_ADDRESS \
-    $GROUP_DEFAULTS_ADDRESS \
     $GROUP_CHAT_DENY_THRESHOLD_BPS)
 verify_contract \
     $groupChatDenySourceAddress \

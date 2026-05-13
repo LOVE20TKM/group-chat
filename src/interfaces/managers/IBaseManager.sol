@@ -2,8 +2,9 @@
 pragma solidity =0.8.17;
 
 import {IERC721Receiver} from "../external/IERC721Receiver.sol";
-import {IDenyVoteWeightSource} from "../sources/deny/IDenyVoteWeightSource.sol";
+
 import {IPostScopeSource} from "../sources/IPostScopeSource.sol";
+import {IDenyVoteWeightSource} from "../sources/deny/IDenyVoteWeightSource.sol";
 
 interface IBaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
     error ManagerAddressHasNoCode();

@@ -104,7 +104,6 @@ contract DeployGroupChatTest is TestBase {
         assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_ADDRESS(), address(groupNft));
-        assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).DENY_THRESHOLD_BPS(), 30);
         assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN_ADDRESS(), address(groupJoin));
 
