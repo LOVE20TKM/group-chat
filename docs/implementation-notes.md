@@ -74,11 +74,13 @@
 
 可选变量：
 
-- `LOVE20_GROUP_ADDRESS`
+- `GROUP_ADDRESS`
+- `GROUP_CHAT_MAX_ADMIN_IDS`
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
 
 `GROUP_CHAT_DENY_THRESHOLD_RATIO` 缺省为 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
+`GROUP_CHAT_MAX_ADMIN_IDS` 缺省为 `20`，写入 `AdminDenySource.MAX_ADMIN_IDS`，限制单个 `groupId` 的管理员 NFT 数量。
 
 直接 `forge script` 时也先从网络配置加载参数；round 参数由 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约读取：
 
@@ -95,7 +97,7 @@ shell 一键部署时：
 - 上游 `GroupJoin` 地址来自 `extension-group` 仓库，用于部署链群 `scopeSource`
 - `DeployGroupChat` 不部署 `GroupDefaults`，只读取 `GROUP_DEFAULTS_ADDRESS`
 - `DeployGroupChat` 会同时部署 `GroupChat`、`AdminDenySource`、`GovVotedDenySource`、`GroupJoinScopeSource` 与四个 typed Manager
-- `GroupChat` 构造时通过 `GroupDefaults.GROUP_ADDRESS()` 派生 `LOVE20_GROUP_ADDRESS`
+- `GroupChat` 构造时通过 `GroupDefaults.GROUP_ADDRESS()` 派生 `GROUP_ADDRESS`
 - `GroupChat` 自身初始化参数与 Manager 依赖从 `group.chat.params` 读取
 - 四个 typed Manager 固定挂本次部署的 `GovVotedDenySource`
 

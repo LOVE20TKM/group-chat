@@ -22,7 +22,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
     error TokenNotLOVE20();
 
     address public immutable GROUP_CHAT_ADDRESS;
-    address public immutable LOVE20_GROUP_ADDRESS;
+    address public immutable GROUP_ADDRESS;
     uint256 internal immutable MAX_GROUP_NAME_LENGTH;
     address public immutable DENY_SOURCE_ADDRESS;
     address public immutable BEFORE_POST_PLUGIN_ADDRESS;
@@ -41,11 +41,11 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
         _requireOptionalCode(beforePostPlugin_);
         _requireOptionalCode(afterPostPlugin_);
 
-        address love20Group = IGroupChat(groupChat_).LOVE20_GROUP_ADDRESS();
+        address love20Group = IGroupChat(groupChat_).GROUP_ADDRESS();
         _requireCode(love20Group);
 
         GROUP_CHAT_ADDRESS = groupChat_;
-        LOVE20_GROUP_ADDRESS = love20Group;
+        GROUP_ADDRESS = love20Group;
         MAX_GROUP_NAME_LENGTH = ILOVE20Group(love20Group).MAX_GROUP_NAME_LENGTH();
         DENY_SOURCE_ADDRESS = denySource_;
         BEFORE_POST_PLUGIN_ADDRESS = beforePostPlugin_;
@@ -58,7 +58,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
 
     function _mintManagedGroup(string memory groupNameStem) internal returns (uint256 groupId) {
         string memory groupName = _nextGroupName(groupNameStem);
-        ILOVE20Group group = ILOVE20Group(LOVE20_GROUP_ADDRESS);
+        ILOVE20Group group = ILOVE20Group(GROUP_ADDRESS);
 
         uint256 expectedMintCost = group.calculateMintCost(groupName);
         if (expectedMintCost != 0) {
@@ -66,7 +66,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
             if (!IERC20Payment(love20).transferFrom(msg.sender, address(this), expectedMintCost)) {
                 revert ManagerPaymentFailed();
             }
-            if (!IERC20Payment(love20).approve(LOVE20_GROUP_ADDRESS, expectedMintCost)) {
+            if (!IERC20Payment(love20).approve(GROUP_ADDRESS, expectedMintCost)) {
                 revert ManagerApprovalFailed();
             }
         }
@@ -185,7 +185,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
             unchecked {
                 _mintNonce++;
             }
-            if (!ILOVE20Group(LOVE20_GROUP_ADDRESS).isGroupNameUsed(groupName)) {
+            if (!ILOVE20Group(GROUP_ADDRESS).isGroupNameUsed(groupName)) {
                 return groupName;
             }
         }
@@ -211,7 +211,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
     }
 
     function _love20TokenRequiresTestPrefix() internal view returns (bool) {
-        address love20 = ILOVE20Group(LOVE20_GROUP_ADDRESS).LOVE20_TOKEN_ADDRESS();
+        address love20 = ILOVE20Group(GROUP_ADDRESS).LOVE20_TOKEN_ADDRESS();
         if (love20.code.length == 0) {
             return false;
         }

@@ -37,8 +37,9 @@ source ./one_click_deploy.sh <network>
 
 ## 可选参数
 
-- `LOVE20_GROUP_ADDRESS`：仅用于部署后校验。
+- `GROUP_ADDRESS`：仅用于部署后校验。
 - `GROUP_CHAT_DENY_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
+- `GROUP_CHAT_MAX_ADMIN_IDS`：`AdminDenySource.setAdmins` 单组最多管理员 NFT 数，默认 `20`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
@@ -114,10 +115,11 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 `script/deploy/99_check.sh` 会检查：
 
 - `GroupChat.GROUP_DEFAULTS_ADDRESS`
-- `GroupChat.LOVE20_GROUP_ADDRESS`
+- `GroupChat.GROUP_ADDRESS`
 - `originBlocks` 对齐 core Join
 - `phaseBlocks` 对齐 core Join
 - `AdminDenySource` 固定依赖
+- `AdminDenySource.MAX_ADMIN_IDS`
 - `GovVotedDenySource` 固定依赖
 - `GovVotedDenySource` 禁言阈值
 - `GroupJoinScopeSource.GROUP_JOIN_ADDRESS`

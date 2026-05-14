@@ -13,7 +13,7 @@ contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 16384;
     uint256 public constant MAX_MENTIONED_SENDER_IDS = 32;
 
-    address public immutable LOVE20_GROUP_ADDRESS;
+    address public immutable GROUP_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
     uint256 public immutable originBlocks;
     uint256 public immutable phaseBlocks;
@@ -68,7 +68,7 @@ contract GroupChat is IGroupChat {
             revert PhaseBlocksZero();
         }
         GROUP_DEFAULTS_ADDRESS = groupDefaults_;
-        LOVE20_GROUP_ADDRESS = IGroupDefaults(groupDefaults_).GROUP_ADDRESS();
+        GROUP_ADDRESS = IGroupDefaults(groupDefaults_).GROUP_ADDRESS();
         originBlocks = originBlocks_;
         phaseBlocks = phaseBlocks_;
     }
@@ -999,7 +999,7 @@ contract GroupChat is IGroupChat {
     }
 
     function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(LOVE20_GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
             return resolved;
         } catch {
             revert GroupNotExist();
@@ -1007,7 +1007,7 @@ contract GroupChat is IGroupChat {
     }
 
     function _tryOwnerOf(uint256 groupId) internal view returns (bool exists, address owner) {
-        try ILOVE20Group(LOVE20_GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
             return (true, resolved);
         } catch {
             return (false, address(0));

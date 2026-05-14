@@ -12,6 +12,8 @@ contract AdminDenySource is IPostDenySource {
     error UnauthorizedDenySourceManager();
     error GroupNotExist();
     error DuplicateAdminId();
+    error AdminIdsLimitExceeded();
+    error MaxAdminIdsZero();
     error TargetAddressZero();
     error TargetSenderIdZero();
 
@@ -57,7 +59,8 @@ contract AdminDenySource is IPostDenySource {
     uint8 internal constant _ROLE_DELEGATE = 2;
     address public immutable GROUP_CHAT_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
-    address public immutable LOVE20_GROUP_ADDRESS;
+    address public immutable GROUP_ADDRESS;
+    uint256 public immutable MAX_ADMIN_IDS;
 
     struct AddressSet {
         address[] values;
@@ -79,21 +82,28 @@ contract AdminDenySource is IPostDenySource {
 
     mapping(uint256 => ChatState) internal _states;
 
-    constructor(address groupChat_) {
+    constructor(address groupChat_, uint256 maxAdminIds_) {
+        if (maxAdminIds_ == 0) {
+            revert MaxAdminIdsZero();
+        }
         _requireCode(groupChat_);
         address groupDefaults = IGroupChat(groupChat_).GROUP_DEFAULTS_ADDRESS();
-        address love20Group = IGroupChat(groupChat_).LOVE20_GROUP_ADDRESS();
+        address love20Group = IGroupChat(groupChat_).GROUP_ADDRESS();
         _requireCode(groupDefaults);
         _requireCode(love20Group);
 
         GROUP_CHAT_ADDRESS = groupChat_;
         GROUP_DEFAULTS_ADDRESS = groupDefaults;
-        LOVE20_GROUP_ADDRESS = love20Group;
+        GROUP_ADDRESS = love20Group;
+        MAX_ADMIN_IDS = maxAdminIds_;
     }
 
     function setAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
         (uint8 role, uint256 operatorId) = _roleOf(groupId);
         _requireOwnerOrDelegate(role);
+        if (adminIdList.length > MAX_ADMIN_IDS) {
+            revert AdminIdsLimitExceeded();
+        }
         _validateAdminIds(adminIdList);
 
         ChatState storage state = _states[groupId];
@@ -235,12 +245,8 @@ contract AdminDenySource is IPostDenySource {
         }
     }
 
-    function adminIdsCount(uint256 groupId) external view returns (uint256) {
-        return _states[groupId].adminIds.values.length;
-    }
-
-    function adminIds(uint256 groupId, uint256 offset, uint256 limit) external view returns (uint256[] memory) {
-        return _page(_states[groupId].adminIds.values, offset, limit);
+    function adminIds(uint256 groupId) external view returns (uint256[] memory) {
+        return _states[groupId].adminIds.values;
     }
 
     function addressDenyListCount(uint256 groupId) external view returns (uint256) {
@@ -510,7 +516,7 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(LOVE20_GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
             return resolved;
         } catch {
             revert GroupNotExist();
@@ -518,7 +524,7 @@ contract AdminDenySource is IPostDenySource {
     }
 
     function _tryOwnerOf(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(LOVE20_GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
+        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
             return resolved;
         } catch {
             return address(0);

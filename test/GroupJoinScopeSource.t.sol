@@ -61,7 +61,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     }
 
     function testT132_groupJoinScopeCombinesWithAdminDenySource() public {
-        AdminDenySource deny = new AdminDenySource(address(chat));
+        AdminDenySource deny = new AdminDenySource(address(chat), 20);
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);

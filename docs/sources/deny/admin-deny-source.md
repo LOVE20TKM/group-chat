@@ -31,7 +31,7 @@
 
 - 所有权限设置、管理员配置、黑名单、豁免名单都必须按 `groupId` 隔离
 - 不允许存在 DenySource 级全局管理员
-- 每个 `groupId` 可独立配置管理员 NFT 集合，建议管理员数量不超过 `10`
+- 每个 `groupId` 可独立配置管理员 NFT 集合，数量由 `MAX_ADMIN_IDS` 硬限制，部署默认 `20`
 - owner / delegate 权限直接按 `msg.sender` 当前是否持有对应 NFT 判断
 - admin 权限以 `operatorId = defaultGroupIdOf(msg.sender)` 作为权限主体
 - 为保持写接口简单，当前不额外提供显式传入 `operatorId` 的双接口
@@ -84,6 +84,7 @@ owner / delegate 权限判定顺序：
 DenySource 合约全局至少维护：
 
 - `address immutable GROUP_CHAT_ADDRESS`
+- `uint256 immutable MAX_ADMIN_IDS`
 
 每个 `groupId` 作用域至少维护：
 
@@ -106,7 +107,7 @@ DenySource 合约全局至少维护：
 - `setAdmins(...)` 输入必须去重
 - `setAdmins(...)` 允许传空数组，用于清空当前 `groupId` 的管理员 NFT 集合
 - `setAdmins(...)` 传入的每个 `adminId` 都必须对应当前存在的 `GroupNFT`
-- 可枚举集合必须去重，且支持分页查询
+- 可枚举集合必须去重；黑名单与豁免名单支持分页查询，管理员集合因受 `MAX_ADMIN_IDS` 限制可全量返回
 - 删除可使用 `swap & pop`，分页返回顺序不作协议承诺
 
 ## 5. 最小接口
@@ -122,8 +123,8 @@ DenySource 合约全局至少维护：
 - `isAddressDenied(uint256 groupId, address account)`
 - `isSenderIdDenied(uint256 groupId, uint256 senderId)`
 - `isSenderIdExempt(uint256 groupId, uint256 senderId)`
-- `adminIdsCount(uint256 groupId)`
-- `adminIds(uint256 groupId, uint256 offset, uint256 limit)`
+- `MAX_ADMIN_IDS()`
+- `adminIds(uint256 groupId)`
 - `addressDenyListCount(uint256 groupId)`
 - `addressDenyList(uint256 groupId, uint256 offset, uint256 limit)`
 - `senderIdDenyListCount(uint256 groupId)`

@@ -47,9 +47,9 @@ if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ] && [ -n "$adminDenySourceAddress" ]; then
     export ADMIN_DENY_SOURCE_ADDRESS
 fi
 
-if [ -z "$LOVE20_GROUP_ADDRESS" ]; then
-    LOVE20_GROUP_ADDRESS=$(cast call "$GROUP_DEFAULTS_ADDRESS" "GROUP_ADDRESS()(address)" --rpc-url "$RPC_URL")
-    export LOVE20_GROUP_ADDRESS
+if [ -z "$GROUP_ADDRESS" ]; then
+    GROUP_ADDRESS=$(cast call "$GROUP_DEFAULTS_ADDRESS" "GROUP_ADDRESS()(address)" --rpc-url "$RPC_URL")
+    export GROUP_ADDRESS
 fi
 
 verify_contract(){
@@ -92,7 +92,13 @@ failed_verifications=0
 verify_contract $groupChatAddress "GroupChat" "src/GroupChat.sol" $constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-admin_deny_source_constructor_args=$(cast abi-encode "constructor(address)" $groupChatAddress)
+if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
+    GROUP_CHAT_MAX_ADMIN_IDS=20
+fi
+
+admin_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
+    $groupChatAddress \
+    $GROUP_CHAT_MAX_ADMIN_IDS)
 verify_contract \
     $adminDenySourceAddress \
     "AdminDenySource" \
@@ -105,7 +111,7 @@ if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
 fi
 
 gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
-    $LOVE20_GROUP_ADDRESS \
+    $GROUP_ADDRESS \
     $GROUP_CHAT_DENY_THRESHOLD_RATIO)
 verify_contract \
     $groupChatDenySourceAddress \

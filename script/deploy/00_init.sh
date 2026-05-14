@@ -41,7 +41,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     unset PHASE_BLOCKS
 
     if [ -n "$groupAddress" ]; then
-        export LOVE20_GROUP_ADDRESS=$groupAddress
+        export GROUP_ADDRESS=$groupAddress
     fi
 
     if [ -n "$groupDefaultsAddress" ]; then
@@ -84,6 +84,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_DENY_THRESHOLD_RATIO=$denyThresholdRatio
     fi
 
+    if [ -n "$maxAdminIds" ]; then
+        export GROUP_CHAT_MAX_ADMIN_IDS=$maxAdminIds
+    fi
+
     if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
         echo -e "\033[31mError:\033[0m GROUP_DEFAULTS_ADDRESS not set"
         echo -e "Please provide groupDefaultsAddress in $network_dir/address.group.defaults.params"
@@ -112,6 +116,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
     fi
 
+    if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
+        export GROUP_CHAT_MAX_ADMIN_IDS=20
+    fi
+
     zero_address=0x0000000000000000000000000000000000000000
 
     if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
@@ -134,7 +142,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS=$zero_address
     fi
 
-    export LOVE20_GROUP_ADDRESS
+    export GROUP_ADDRESS
     export GROUP_DEFAULTS_ADDRESS
     export EXTENSION_CENTER_ADDRESS
     export GROUP_JOIN_ADDRESS
@@ -145,10 +153,11 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
     export GROUP_CHAT_DENY_THRESHOLD_RATIO
+    export GROUP_CHAT_MAX_ADMIN_IDS
 
     echo "GroupChat Configuration loaded:"
-    if [ -n "$LOVE20_GROUP_ADDRESS" ]; then
-        echo "  LOVE20 Group: $LOVE20_GROUP_ADDRESS"
+    if [ -n "$GROUP_ADDRESS" ]; then
+        echo "  LOVE20 Group: $GROUP_ADDRESS"
     fi
     echo "  GroupDefaults: $GROUP_DEFAULTS_ADDRESS"
     echo "  ExtensionCenter: $EXTENSION_CENTER_ADDRESS"
@@ -160,6 +169,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"
     echo "  DenyThresholdRatio: $GROUP_CHAT_DENY_THRESHOLD_RATIO"
+    echo "  MaxAdminIds: $GROUP_CHAT_MAX_ADMIN_IDS"
     echo "  RoundSource: ExtensionCenter.joinAddress().originBlocks/phaseBlocks"
 else
     echo -e "\033[31mError:\033[0m group.chat.params not found"

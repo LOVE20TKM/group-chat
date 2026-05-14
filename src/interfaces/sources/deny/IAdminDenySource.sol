@@ -8,6 +8,8 @@ interface IAdminDenySource is IPostDenySource {
     error UnauthorizedDenySourceManager();
     error GroupNotExist();
     error DuplicateAdminId();
+    error AdminIdsLimitExceeded();
+    error MaxAdminIdsZero();
     error TargetAddressZero();
     error TargetSenderIdZero();
 
@@ -53,15 +55,15 @@ interface IAdminDenySource is IPostDenySource {
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 
-    function LOVE20_GROUP_ADDRESS() external view returns (address);
+    function GROUP_ADDRESS() external view returns (address);
+
+    function MAX_ADMIN_IDS() external view returns (uint256);
 
     function setAdmins(uint256 groupId, uint256[] calldata adminIdList) external;
 
     function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool);
 
-    function adminIdsCount(uint256 groupId) external view returns (uint256);
-
-    function adminIds(uint256 groupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
+    function adminIds(uint256 groupId) external view returns (uint256[] memory);
 
     function isAddressDenied(uint256 groupId, address account) external view returns (bool);
 

@@ -6,6 +6,8 @@ import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract AdminDenySourceTest is GroupChatFixture {
+    uint256 internal constant MAX_ADMIN_IDS = 20;
+
     AdminDenySource internal deny;
     address internal adminOwner = address(0xAD11);
     address internal secondAdminOwner = address(0xAD12);
@@ -17,7 +19,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         super.setUp();
         adminId = groupNft.mint(adminOwner);
         secondAdminId = groupNft.mint(secondAdminOwner);
-        deny = new AdminDenySource(address(chat));
+        deny = new AdminDenySource(address(chat), MAX_ADMIN_IDS);
     }
 
     function testT120_ownerAndDelegateCanConfigureAdminsAndExemptButNotDenyLists() public {
@@ -133,7 +135,10 @@ contract AdminDenySourceTest is GroupChatFixture {
     function testT124_setAdminsReplacesValidatesAndTransferRevokesAdmin() public {
         vm.prank(chatOwner);
         deny.setAdmins(groupId, _uints(adminId, secondAdminId));
-        assertEq(deny.adminIdsCount(groupId), 2);
+        uint256[] memory admins = deny.adminIds(groupId);
+        assertEq(admins.length, 2);
+        assertEq(admins[0], adminId);
+        assertEq(admins[1], secondAdminId);
         assertEq(deny.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
@@ -157,6 +162,20 @@ contract AdminDenySourceTest is GroupChatFixture {
         vm.prank(adminOwner);
         vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.addDenyListsBySenderIds(groupId, _uints(otherGroupId));
+    }
+
+    function testT124B_setAdminsRejectsAdminCountAboveLimit() public {
+        vm.expectRevert(AdminDenySource.MaxAdminIdsZero.selector);
+        new AdminDenySource(address(chat), 0);
+
+        uint256[] memory admins = new uint256[](MAX_ADMIN_IDS + 1);
+        for (uint256 i = 0; i < admins.length; i++) {
+            admins[i] = groupNft.mint(address(uint160(0xA000 + i)));
+        }
+
+        vm.prank(chatOwner);
+        vm.expectRevert(AdminDenySource.AdminIdsLimitExceeded.selector);
+        deny.setAdmins(groupId, admins);
     }
 
     function testT125_senderIdDenyListsResolveOwnersAndAffectAddressesAndNftsTogether() public {

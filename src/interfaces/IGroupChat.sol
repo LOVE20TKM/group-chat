@@ -150,7 +150,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         uint256 messageCount;
     }
 
-    function LOVE20_GROUP_ADDRESS() external view returns (address);
+    function GROUP_ADDRESS() external view returns (address);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 

@@ -6,7 +6,7 @@
 
 生命周期：
 
-- `LOVE20_GROUP_ADDRESS`
+- `GROUP_ADDRESS`
 - `GROUP_DEFAULTS_ADDRESS`
 - `originBlocks`
 - `phaseBlocks`

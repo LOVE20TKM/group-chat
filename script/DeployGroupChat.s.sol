@@ -14,6 +14,8 @@ import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.so
 import {ScriptBase} from "./ScriptBase.sol";
 
 contract DeployGroupChat is ScriptBase {
+    uint256 internal constant DEFAULT_MAX_ADMIN_IDS = 20;
+
     struct DeployConfig {
         address groupDefaults;
         address extensionCenter;
@@ -23,6 +25,7 @@ contract DeployGroupChat is ScriptBase {
         uint256 originBlocks;
         uint256 phaseBlocks;
         uint256 actionRecentRounds;
+        uint256 maxAdminIds;
         uint256 denyThresholdRatio;
     }
 
@@ -46,6 +49,7 @@ contract DeployGroupChat is ScriptBase {
             vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
             vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
             vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS"),
+            vm.envOr("GROUP_CHAT_MAX_ADMIN_IDS", DEFAULT_MAX_ADMIN_IDS),
             vm.envOr("GROUP_CHAT_DENY_THRESHOLD_RATIO", uint256(3e15))
         );
 
@@ -66,6 +70,7 @@ contract DeployGroupChat is ScriptBase {
         address beforePostPlugin,
         address afterPostPlugin,
         uint256 actionRecentRounds,
+        uint256 maxAdminIds,
         uint256 denyThresholdRatio
     ) internal view returns (DeployConfig memory) {
         address coreJoin = IExtensionCenter(extensionCenter).joinAddress();
@@ -78,6 +83,7 @@ contract DeployGroupChat is ScriptBase {
             originBlocks: ILOVE20Join(coreJoin).originBlocks(),
             phaseBlocks: ILOVE20Join(coreJoin).phaseBlocks(),
             actionRecentRounds: actionRecentRounds,
+            maxAdminIds: maxAdminIds,
             denyThresholdRatio: denyThresholdRatio
         });
     }
@@ -85,9 +91,9 @@ contract DeployGroupChat is ScriptBase {
     function _deploy(DeployConfig memory config) internal returns (DeployedAddresses memory deployed) {
         GroupChat groupChat = new GroupChat(config.groupDefaults, config.originBlocks, config.phaseBlocks);
         deployed.groupChat = address(groupChat);
-        deployed.adminDenySource = address(new AdminDenySource(address(groupChat)));
+        deployed.adminDenySource = address(new AdminDenySource(address(groupChat), config.maxAdminIds));
         deployed.groupChatDenySource =
-            address(new GovVotedDenySource(groupChat.LOVE20_GROUP_ADDRESS(), config.denyThresholdRatio));
+            address(new GovVotedDenySource(groupChat.GROUP_ADDRESS(), config.denyThresholdRatio));
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(config.groupJoin));
 
         TokenManager tokenManager = new TokenManager(

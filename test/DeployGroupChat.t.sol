@@ -30,6 +30,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
         address beforePostPlugin,
         address afterPostPlugin,
         uint256 actionRecentRounds,
+        uint256 maxAdminIds,
         uint256 denyThresholdRatio
     ) external view returns (DeployConfig memory) {
         return _configFromCoreJoin(
@@ -39,6 +40,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
             beforePostPlugin,
             afterPostPlugin,
             actionRecentRounds,
+            maxAdminIds,
             denyThresholdRatio
         );
     }
@@ -58,6 +60,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
 
 contract DeployGroupChatTest is TestBase {
     uint256 internal constant DENY_THRESHOLD_RATIO = 3e15;
+    uint256 internal constant MAX_ADMIN_IDS = 20;
 
     MockLOVE20Group internal groupNft;
     MockGroupDefaults internal groupDefaults;
@@ -83,6 +86,7 @@ contract DeployGroupChatTest is TestBase {
             originBlocks: 100,
             phaseBlocks: 25,
             actionRecentRounds: 3,
+            maxAdminIds: MAX_ADMIN_IDS,
             denyThresholdRatio: DENY_THRESHOLD_RATIO
         });
 
@@ -98,13 +102,14 @@ contract DeployGroupChatTest is TestBase {
         assertTrue(deployed.tokenActionManager.code.length != 0);
 
         assertEq(IGroupChat(deployed.groupChat).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
-        assertEq(IGroupChat(deployed.groupChat).LOVE20_GROUP_ADDRESS(), address(groupNft));
+        assertEq(IGroupChat(deployed.groupChat).GROUP_ADDRESS(), address(groupNft));
         assertEq(IGroupChat(deployed.groupChat).originBlocks(), 100);
         assertEq(IGroupChat(deployed.groupChat).phaseBlocks(), 25);
 
         assertEq(AdminDenySource(deployed.adminDenySource).GROUP_CHAT_ADDRESS(), deployed.groupChat);
         assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
-        assertEq(AdminDenySource(deployed.adminDenySource).LOVE20_GROUP_ADDRESS(), address(groupNft));
+        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_ADDRESS(), address(groupNft));
+        assertEq(AdminDenySource(deployed.adminDenySource).MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).PRECISION(), 1e18);
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).DENY_THRESHOLD_RATIO(), DENY_THRESHOLD_RATIO);
@@ -139,6 +144,7 @@ contract DeployGroupChatTest is TestBase {
             address(0xBEEF),
             address(0xCAFE),
             7,
+            MAX_ADMIN_IDS,
             DENY_THRESHOLD_RATIO
         );
 
@@ -150,6 +156,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(config.originBlocks, 321);
         assertEq(config.phaseBlocks, 44);
         assertEq(config.actionRecentRounds, 7);
+        assertEq(config.maxAdminIds, MAX_ADMIN_IDS);
         assertEq(config.denyThresholdRatio, DENY_THRESHOLD_RATIO);
     }
 
@@ -163,6 +170,7 @@ contract DeployGroupChatTest is TestBase {
             originBlocks: 123,
             phaseBlocks: 456,
             actionRecentRounds: 7,
+            maxAdminIds: MAX_ADMIN_IDS,
             denyThresholdRatio: DENY_THRESHOLD_RATIO
         });
         DeployGroupChat.DeployedAddresses memory deployed = DeployGroupChat.DeployedAddresses({
@@ -193,6 +201,7 @@ contract DeployGroupChatTest is TestBase {
         _assertNotContains(content, "groupChatAfterPostPluginAddress=");
         _assertNotContains(content, "originBlocks=");
         _assertNotContains(content, "phaseBlocks=");
+        _assertNotContains(content, "maxAdminIds=");
     }
 
     function _assertManagerCommon(address manager, DeployGroupChat.DeployedAddresses memory deployed) internal view {
