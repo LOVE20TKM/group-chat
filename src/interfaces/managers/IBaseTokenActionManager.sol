@@ -4,6 +4,8 @@ pragma solidity =0.8.17;
 import {IBaseManager} from "./IBaseManager.sol";
 
 interface IBaseTokenActionManager is IBaseManager {
+    event Activate(address indexed token, uint256 indexed actionId, uint256 indexed groupId, address operator);
+
     function EXTENSION_CENTER_ADDRESS() external view returns (address);
 
     function RECENT_ROUNDS() external view returns (uint256);

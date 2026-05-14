@@ -101,8 +101,8 @@ contract GroupChat is IGroupChat {
         }
 
         bytes32[] memory metaHashes = _validateMetaInput(metaKeys_, metaValues_);
-        _validatePluginAddress(scopeSource_);
-        _validatePluginAddress(denySource_);
+        _validateSourceAddress(scopeSource_);
+        _validateSourceAddress(denySource_);
         _validatePluginAddress(beforePostPlugin_);
         _validatePluginAddress(afterPostPlugin_);
         _validateDelegateId(groupId, delegateId_);
@@ -130,7 +130,7 @@ contract GroupChat is IGroupChat {
         config.denySource = denySource_;
         config.beforePostPlugin = beforePostPlugin_;
         config.afterPostPlugin = afterPostPlugin_;
-        emit ChatActivate(groupId, owner, newVersion);
+        emit Activate(groupId, owner, newVersion);
     }
 
     function setPostingAllowed(uint256 groupId, bool postingAllowed_) external nonReentrant {
@@ -256,11 +256,11 @@ contract GroupChat is IGroupChat {
 
     function setScopeSource(uint256 groupId, address sourceAddress) external nonReentrant {
         _requireOwnerOrDelegateAndActivated(groupId);
-        _validatePluginAddress(sourceAddress);
+        _validateSourceAddress(sourceAddress);
 
         ChatConfig storage config = _chatConfigs[groupId];
         if (config.scopeSource == sourceAddress) {
-            revert PluginAddressUnchanged();
+            revert SourceAddressUnchanged();
         }
 
         address prevSourceAddress = config.scopeSource;
@@ -273,11 +273,11 @@ contract GroupChat is IGroupChat {
 
     function setDenySource(uint256 groupId, address sourceAddress) external nonReentrant {
         _requireOwnerOrDelegateAndActivated(groupId);
-        _validatePluginAddress(sourceAddress);
+        _validateSourceAddress(sourceAddress);
 
         ChatConfig storage config = _chatConfigs[groupId];
         if (config.denySource == sourceAddress) {
-            revert PluginAddressUnchanged();
+            revert SourceAddressUnchanged();
         }
 
         address prevSourceAddress = config.denySource;
@@ -1029,6 +1029,12 @@ contract GroupChat is IGroupChat {
             revert DelegateIdCannotBeGroupId();
         }
         _ownerOfOrRevert(delegateId_);
+    }
+
+    function _validateSourceAddress(address sourceAddress) internal view {
+        if (sourceAddress != address(0) && sourceAddress.code.length == 0) {
+            revert SourceAddressHasNoCode();
+        }
     }
 
     function _validatePluginAddress(address pluginAddress) internal view {

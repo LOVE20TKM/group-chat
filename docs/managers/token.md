@@ -19,6 +19,7 @@ function activate(address token) external returns (uint256 groupId);
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
 - 调用 `GroupNFT.mint(...)` 得到 `groupId`
 - 激活对应 chat
+- 发出 `Activate(token, groupId, operator)`
 
 写入：
 

@@ -5,6 +5,14 @@ import {IGroupDefaults} from "../../src/interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../src/interfaces/external/ILOVE20Group.sol";
 
 contract MockGroupDefaults is IGroupDefaults {
+    error GroupNotExist();
+    error SenderNotGroupOwner();
+    error DefaultGroupIdAlreadySet(uint256 groupId);
+    error DefaultGroupIdNotSet();
+
+    event SetDefaultGroupId(address indexed account, uint256 indexed groupId);
+    event ClearDefaultGroupId(address indexed account, uint256 indexed prevGroupId);
+
     address public immutable GROUP_ADDRESS;
 
     mapping(address => uint256) internal _defaultGroupIds;

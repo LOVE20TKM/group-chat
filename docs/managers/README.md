@@ -52,6 +52,11 @@ Manager 用于去中心化群聊。
 
 `activate(...)` 返回新铸造并激活的 `groupId`。
 
+成功激活时：
+
+- token 类 Manager 发 `Activate(token, groupId, operator)`。
+- action 类 Manager 发 `Activate(token, actionId, groupId, operator)`。
+
 ## 共同构造参数
 
 ```solidity

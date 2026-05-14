@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {ActionBody, ActionHead, ActionInfo} from "../../src/interfaces/external/ILOVE20Submit.sol";
-
 contract MockLOVE20Protocols {
     string public symbol = "LOVE20";
     uint256 internal _currentRound = 1;
@@ -17,7 +15,6 @@ contract MockLOVE20Protocols {
     mapping(address => mapping(uint256 => mapping(address => mapping(uint256 => uint256)))) public actionVotes;
     mapping(address => mapping(uint256 => mapping(address => bool))) public extensionJoined;
     mapping(address => uint256) public extensionJoinedAmounts;
-    mapping(address => mapping(uint256 => ActionInfo)) internal _actionInfos;
     mapping(address => mapping(uint256 => uint256[])) internal _votedActionIds;
     mapping(address => uint8) internal _love20TokenFlags;
 
@@ -64,19 +61,7 @@ contract MockLOVE20Protocols {
     }
 
     function setVotedAction(address token, uint256 round, uint256 actionId, address whiteListAddress) external {
-        string[] memory emptyStrings = new string[](0);
-        _actionInfos[token][actionId] = ActionInfo({
-            head: ActionHead({id: actionId, author: address(this), createAtBlock: block.number}),
-            body: ActionBody({
-                minStake: 1,
-                maxRandomAccounts: 1,
-                whiteListAddress: whiteListAddress,
-                title: "",
-                verificationRule: "",
-                verificationKeys: emptyStrings,
-                verificationInfoGuides: emptyStrings
-            })
-        });
+        whiteListAddress;
         _votedActionIds[token][round].push(actionId);
     }
 
@@ -157,10 +142,6 @@ contract MockLOVE20Protocols {
         returns (uint256)
     {
         return _votedActionIds[tokenAddress][round][index];
-    }
-
-    function actionInfo(address tokenAddress, uint256 actionId) external view returns (ActionInfo memory) {
-        return _actionInfos[tokenAddress][actionId];
     }
 
     function joinedAmountByAccount(address account) external view returns (uint256) {

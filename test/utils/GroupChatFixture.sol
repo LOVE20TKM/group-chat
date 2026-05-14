@@ -34,7 +34,7 @@ abstract contract GroupChatFixture is TestBase {
         keccak256("BeforePostPluginSet(uint256,address,address,uint256,address)");
     bytes32 internal constant AFTER_POST_PLUGIN_SET_SIG =
         keccak256("AfterPostPluginSet(uint256,address,address,uint256,address)");
-    bytes32 internal constant CHAT_ACTIVATE_SIG = keccak256("ChatActivate(uint256,address,uint256)");
+    bytes32 internal constant ACTIVATE_SIG = keccak256("Activate(uint256,address,uint256)");
     bytes32 internal constant POSTING_ALLOWED_SET_SIG = keccak256("PostingAllowedSet(uint256,address,uint256,bool)");
     bytes32 internal constant MESSAGE_POST_SIG = keccak256("MessagePost(uint256,uint256,address,uint256,uint256)");
     bytes32 internal constant MESSAGE_MENTION_SIG = keccak256("MessageMention(uint256,uint256,uint256)");
@@ -135,7 +135,7 @@ abstract contract GroupChatFixture is TestBase {
         (version,) = abi.decode(data, (uint256, uint256));
     }
 
-    function _decodeChatActivateVersion(bytes memory data) internal pure returns (uint256 version) {
+    function _decodeActivateVersion(bytes memory data) internal pure returns (uint256 version) {
         version = abi.decode(data, (uint256));
     }
 

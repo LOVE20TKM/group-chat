@@ -11,8 +11,12 @@ import {TokenManager} from "../src/managers/TokenManager.sol";
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
+import {Vm} from "./utils/TestBase.sol";
 
 contract TypedManagersTest is GroupChatFixture {
+    bytes32 internal constant TOKEN_ACTIVATE_SIG = keccak256("Activate(address,uint256,address)");
+    bytes32 internal constant TOKEN_ACTION_ACTIVATE_SIG = keccak256("Activate(address,uint256,uint256,address)");
+
     function testT110_tokenManagerStoresTokenAndCombinesEligibility() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
@@ -62,7 +66,9 @@ contract TypedManagersTest is GroupChatFixture {
         address token = address(protocol);
         TokenGovManager manager =
             new TokenGovManager(address(chat), address(0), address(0), address(0), address(protocol));
+        vm.recordLogs();
         groupId = manager.activate(token);
+        _assertTokenActivate(vm.getRecordedLogs(), address(manager), token, groupId, address(this));
 
         assertEq(manager.tokenOfGroup(groupId), token);
         assertEq(manager.groupIdOfToken(token), groupId);
@@ -91,7 +97,9 @@ contract TypedManagersTest is GroupChatFixture {
         new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 0);
 
         protocol.setCurrentRound(7);
+        vm.recordLogs();
         groupId = manager.activate(token, 42);
+        _assertTokenActionActivate(vm.getRecordedLogs(), address(manager), token, 42, groupId, address(this));
         (address storedToken, uint256 actionId) = manager.actionOfGroup(groupId);
         assertEq(storedToken, token);
         assertEq(actionId, 42);
@@ -288,5 +296,42 @@ contract TypedManagersTest is GroupChatFixture {
         for (uint256 i = 0; i < prefixBytes.length; i++) {
             assertEq(valueBytes[i], prefixBytes[i]);
         }
+    }
+
+    function _assertTokenActivate(
+        Vm.Log[] memory logs,
+        address manager,
+        address token,
+        uint256 activatedGroupId,
+        address operator
+    ) internal pure {
+        Vm.Log memory log = logs[logs.length - 1];
+        assertEq(log.emitter, manager);
+        assertEq(log.topics[0], TOKEN_ACTIVATE_SIG);
+        assertEq(log.topics[1], _topicAddress(token));
+        assertEq(log.topics[2], bytes32(activatedGroupId));
+        assertEq(log.topics[3], _topicAddress(operator));
+        assertEq(log.data.length, 0);
+    }
+
+    function _assertTokenActionActivate(
+        Vm.Log[] memory logs,
+        address manager,
+        address token,
+        uint256 actionId,
+        uint256 activatedGroupId,
+        address operator
+    ) internal pure {
+        Vm.Log memory log = logs[logs.length - 1];
+        assertEq(log.emitter, manager);
+        assertEq(log.topics[0], TOKEN_ACTION_ACTIVATE_SIG);
+        assertEq(log.topics[1], _topicAddress(token));
+        assertEq(log.topics[2], bytes32(actionId));
+        assertEq(log.topics[3], bytes32(activatedGroupId));
+        assertEq(abi.decode(log.data, (address)), operator);
+    }
+
+    function _topicAddress(address value) internal pure returns (bytes32) {
+        return bytes32(uint256(uint160(value)));
     }
 }

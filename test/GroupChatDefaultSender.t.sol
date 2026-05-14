@@ -2,7 +2,6 @@
 pragma solidity =0.8.17;
 
 import {IGroupChat, IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
-import {IGroupDefaultsErrors} from "../src/interfaces/external/IGroupDefaults.sol";
 import {MockGroupDefaults} from "./mocks/MockGroupDefaults.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 import {Vm} from "./utils/TestBase.sol";
@@ -74,14 +73,14 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
 
     function testT090_defaultSenderSetAndClearRejectNoOpStates() public {
         vm.prank(senderOwner);
-        vm.expectRevert(IGroupDefaultsErrors.DefaultGroupIdNotSet.selector);
+        vm.expectRevert(MockGroupDefaults.DefaultGroupIdNotSet.selector);
         groupDefaults.clearDefaultGroupId();
 
         vm.prank(senderOwner);
         groupDefaults.setDefaultGroupId(senderId);
 
         vm.prank(senderOwner);
-        vm.expectRevert(abi.encodeWithSelector(IGroupDefaultsErrors.DefaultGroupIdAlreadySet.selector, senderId));
+        vm.expectRevert(abi.encodeWithSelector(MockGroupDefaults.DefaultGroupIdAlreadySet.selector, senderId));
         groupDefaults.setDefaultGroupId(senderId);
     }
 }

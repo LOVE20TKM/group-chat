@@ -7,6 +7,8 @@ import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {BaseManager} from "./BaseManager.sol";
 
 abstract contract BaseTokenManager is BaseManager {
+    event Activate(address indexed token, uint256 indexed groupId, address indexed operator);
+
     address internal immutable LAUNCH_ADDRESS;
     address internal immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
@@ -79,6 +81,7 @@ abstract contract BaseTokenManager is BaseManager {
         groupIdOfToken[token] = groupId;
         _tokens.push(token);
         _activateManagedGroup(groupId);
+        emit Activate(token, groupId, msg.sender);
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {

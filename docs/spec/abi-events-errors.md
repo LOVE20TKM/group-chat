@@ -125,7 +125,7 @@ Query：
 
 配置事件：
 
-- `ChatActivate`
+- `Activate(uint256 indexed groupId, address indexed owner, uint256 configVersion)`
 - `PostingAllowedSet`
 - `MetaSet`
 - `DelegateIdSet`
@@ -141,6 +141,11 @@ Query：
 - `MessageMentionAll(uint256 indexed groupId, uint256 messageId)`
 - `AfterPostPluginFailed`
 
+Manager 事件：
+
+- `Activate(address indexed token, uint256 indexed groupId, address indexed operator)`
+- `Activate(address indexed token, uint256 indexed actionId, uint256 indexed groupId, address operator)`
+
 默认身份注册表事件：
 
 - `SetDefaultGroupId`
@@ -149,7 +154,7 @@ Query：
 事件规则：
 
 - 同一笔配置写的所有差异事件必须携带同一个新 `configVersion`。
-- `ChatActivate` 在同笔交易内所有配置差异事件之后发出。
+- `GroupChat.Activate` 在同笔交易内所有配置差异事件之后发出。
 - `MessagePost` 必须先于 `afterPostPlugin` 调用。
 - `MessageMention` / `MessageMentionAll` 是链下通知索引信号，必须在 `MessagePost` 之后、`afterPostPlugin` 之前发出。
 - `afterPostPlugin` 失败只发 `AfterPostPluginFailed`，不回滚消息。
@@ -184,6 +189,8 @@ Delegate 错误：
 
 Rule slot 错误：
 
+- `SourceAddressHasNoCode`
+- `SourceAddressUnchanged`
 - `PluginAddressHasNoCode`
 - `PluginAddressUnchanged`
 - `ScopeRejected`

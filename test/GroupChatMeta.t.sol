@@ -83,7 +83,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         chat.setMetaBatch(groupId, batchKeys, batchValues);
     }
 
-    function testT028T082_activateChatWritesInitialMetaAndChatActivateLast() public {
+    function testT028T082_activateChatWritesInitialMetaAndActivateLast() public {
         MockBeforePostRejectPlugin beforePlugin = new MockBeforePostRejectPlugin();
         MockAfterPostFailPlugin afterPlugin = new MockAfterPostFailPlugin();
 
@@ -130,8 +130,8 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(_decodeVersionAndAddress(logs[3].data), 1);
         assertEq(logs[4].topics[0], AFTER_POST_PLUGIN_SET_SIG);
         assertEq(_decodeVersionAndAddress(logs[4].data), 1);
-        assertEq(logs[5].topics[0], CHAT_ACTIVATE_SIG);
-        assertEq(_decodeChatActivateVersion(logs[5].data), 1);
+        assertEq(logs[5].topics[0], ACTIVATE_SIG);
+        assertEq(_decodeActivateVersion(logs[5].data), 1);
     }
 
     function testT029_setMetaBatchTreatsExplicitEmptyMetaAsDeletion() public {

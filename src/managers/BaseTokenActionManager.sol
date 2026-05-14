@@ -8,6 +8,8 @@ import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 import {BaseManager} from "./BaseManager.sol";
 
 abstract contract BaseTokenActionManager is BaseManager {
+    event Activate(address indexed token, uint256 indexed actionId, uint256 indexed groupId, address operator);
+
     struct ManagedAction {
         address token;
         uint256 actionId;
@@ -124,6 +126,7 @@ abstract contract BaseTokenActionManager is BaseManager {
         groupIdOfAction[token][actionId] = groupId;
         _actionIdsByToken[token].push(actionId);
         _activateManagedGroup(groupId);
+        emit Activate(token, actionId, groupId, msg.sender);
     }
 
     function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {

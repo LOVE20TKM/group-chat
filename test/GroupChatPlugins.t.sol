@@ -192,7 +192,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(chat.scopeSource(groupId), address(scope1));
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressUnchanged.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setScopeSource(groupId, address(scope1));
 
         vm.recordLogs();
@@ -207,7 +207,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         chat.setScopeSource(groupId, address(0));
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressUnchanged.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setScopeSource(groupId, address(0));
 
         vm.prank(chatOwner);
@@ -243,7 +243,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(chat.denySource(groupId), address(deny1));
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressUnchanged.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setDenySource(groupId, address(deny1));
 
         vm.recordLogs();
@@ -258,7 +258,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         chat.setDenySource(groupId, address(0));
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressUnchanged.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setDenySource(groupId, address(0));
 
         vm.prank(chatOwner);
@@ -282,10 +282,10 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(activateLogs.length, 3);
         assertEq(activateLogs[0].topics[0], SCOPE_SOURCE_SET_SIG);
         assertEq(activateLogs[1].topics[0], DENY_SOURCE_SET_SIG);
-        assertEq(activateLogs[2].topics[0], CHAT_ACTIVATE_SIG);
+        assertEq(activateLogs[2].topics[0], ACTIVATE_SIG);
         assertEq(_decodeVersionAndAddress(activateLogs[0].data), 1);
         assertEq(_decodeVersionAndAddress(activateLogs[1].data), 1);
-        assertEq(_decodeChatActivateVersion(activateLogs[2].data), 1);
+        assertEq(_decodeActivateVersion(activateLogs[2].data), 1);
 
         vm.recordLogs();
         vm.prank(chatOwner);
@@ -351,18 +351,18 @@ contract GroupChatPluginsTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressHasNoCode.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressHasNoCode.selector);
         chat.activateChat(groupId, keys, values, other, address(0), address(0), address(0), 0);
 
         vm.prank(chatOwner);
         chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0), 0);
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressHasNoCode.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressHasNoCode.selector);
         chat.setScopeSource(groupId, other);
 
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PluginAddressHasNoCode.selector);
+        vm.expectRevert(IGroupChatErrors.SourceAddressHasNoCode.selector);
         chat.setDenySource(groupId, other);
 
         vm.prank(chatOwner);

@@ -19,6 +19,8 @@ interface IGroupChatErrors {
     error MetaKeyNotFound();
     error DelegateIdCannotBeGroupId();
     error DelegateIdUnchanged();
+    error SourceAddressHasNoCode();
+    error SourceAddressUnchanged();
     error PluginAddressHasNoCode();
     error PluginAddressUnchanged();
     error ContentEmpty();
@@ -36,7 +38,7 @@ interface IGroupChatErrors {
 }
 
 interface IGroupChatEvents {
-    event ChatActivate(uint256 indexed groupId, address indexed owner, uint256 configVersion);
+    event Activate(uint256 indexed groupId, address indexed owner, uint256 configVersion);
 
     event PostingAllowedSet(
         uint256 indexed groupId, address indexed operator, uint256 configVersion, bool postingAllowed
