@@ -12,6 +12,7 @@ interface IAdminDenySource is IPostDenySource {
     error MaxAdminIdsZero();
     error TargetAddressZero();
     error TargetSenderIdZero();
+    error SenderPairLengthMismatch();
 
     event AdminSet(
         uint256 indexed groupId,
@@ -86,17 +87,23 @@ interface IAdminDenySource is IPostDenySource {
         view
         returns (bool[] memory exempt);
 
-    function addDenyListsBySenderAddresses(uint256 groupId, address[] calldata targetAddresses) external;
+    function denyBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external;
 
-    function removeDenyListsBySenderAddresses(uint256 groupId, address[] calldata targetAddresses) external;
+    function undenyBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external;
 
     function addressDenyListCount(uint256 groupId) external view returns (uint256);
 
     function addressDenyList(uint256 groupId, uint256 offset, uint256 limit) external view returns (address[] memory);
 
-    function addDenyListsBySenderIds(uint256 groupId, uint256[] calldata targetSenderIds) external;
+    function denyBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
 
-    function removeDenyListsBySenderIds(uint256 groupId, uint256[] calldata targetSenderIds) external;
+    function undenyBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
+
+    function denyBySenders(uint256 groupId, uint256[] calldata senderIds, address[] calldata senderAddresses)
+        external;
+
+    function undenyBySenders(uint256 groupId, uint256[] calldata senderIds, address[] calldata senderAddresses)
+        external;
 
     function senderIdDenyListCount(uint256 groupId) external view returns (uint256);
 
@@ -105,9 +112,9 @@ interface IAdminDenySource is IPostDenySource {
         view
         returns (uint256[] memory);
 
-    function addExemptListBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
+    function exemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external;
 
-    function removeExemptListBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
+    function unexemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external;
 
     function senderIdExemptListCount(uint256 groupId) external view returns (uint256);
 

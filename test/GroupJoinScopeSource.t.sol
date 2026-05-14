@@ -76,14 +76,14 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(groupId);
 
         vm.prank(chatOwner);
-        deny.addDenyListsBySenderIds(groupId, _uints(senderId));
+        deny.denyBySenderIds(groupId, _uints(senderId));
 
         (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
         assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
 
         vm.prank(chatOwner);
-        deny.addExemptListBySenderIds(groupId, _uints(senderId));
+        deny.exemptSenderIds(groupId, _uints(senderId));
 
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
     }

@@ -108,17 +108,20 @@ DenySource 合约全局至少维护：
 - `setAdmins(...)` 允许传空数组，用于清空当前 `groupId` 的管理员 NFT 集合
 - `setAdmins(...)` 传入的每个 `adminId` 都必须对应当前存在的 `GroupNFT`
 - 可枚举集合必须去重；黑名单与豁免名单支持分页查询，管理员集合因受 `MAX_ADMIN_IDS` 限制可全量返回
+- 单维度黑名单写接口不得自动解析或补齐另一维度；需要同时维护 NFT 与地址黑名单时必须显式调用 `denyBySenders(...)`
 - 删除可使用 `swap & pop`，分页返回顺序不作协议承诺
 
 ## 5. 最小接口
 
 - `setAdmins(uint256 groupId, uint256[] adminIds)`
-- `addDenyListsBySenderIds(uint256 groupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时加入地址与 NFT 黑名单
-- `removeDenyListsBySenderIds(uint256 groupId, uint256[] targetSenderIds)`：逐个通过 `ownerOf(targetSenderId)` 解析地址，同时移除地址与 NFT 黑名单
-- `addDenyListsBySenderAddresses(uint256 groupId, address[] targetAddresses)`：逐个加入地址黑名单；若地址有有效默认 NFT，同时加入 NFT 黑名单
-- `removeDenyListsBySenderAddresses(uint256 groupId, address[] targetAddresses)`：逐个移除地址黑名单；若地址有有效默认 NFT，同时移除 NFT 黑名单
-- `addExemptListBySenderIds(uint256 groupId, uint256[] senderIds)`
-- `removeExemptListBySenderIds(uint256 groupId, uint256[] senderIds)`
+- `denyBySenderIds(uint256 groupId, uint256[] senderIds)`：只加入 NFT 黑名单
+- `undenyBySenderIds(uint256 groupId, uint256[] senderIds)`：只移除 NFT 黑名单
+- `denyBySenderAddresses(uint256 groupId, address[] senderAddresses)`：只加入地址黑名单
+- `undenyBySenderAddresses(uint256 groupId, address[] senderAddresses)`：只移除地址黑名单
+- `denyBySenders(uint256 groupId, uint256[] senderIds, address[] senderAddresses)`：按相同下标同时加入 NFT 与地址黑名单
+- `undenyBySenders(uint256 groupId, uint256[] senderIds, address[] senderAddresses)`：按相同下标同时移除 NFT 与地址黑名单
+- `exemptSenderIds(uint256 groupId, uint256[] senderIds)`
+- `unexemptSenderIds(uint256 groupId, uint256[] senderIds)`
 - `isAdminId(uint256 groupId, uint256 adminId)`
 - `isAddressDenied(uint256 groupId, address account)`
 - `isSenderIdDenied(uint256 groupId, uint256 senderId)`

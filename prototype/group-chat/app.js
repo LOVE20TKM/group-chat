@@ -1012,8 +1012,7 @@ function renderBlacklistControls(chat, placeholder, selfLabel) {
 
 function renderAdminBlacklistAdd(chat, listName) {
   if (chat.blacklistMode !== 'admin') return '';
-  const label = listName === 'senderIdDenyList' ? '联动加入黑名单' : '加入黑名单';
-  return `<button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="blacklist-query-input" ${canEditAdminDeny(chat) ? '' : 'disabled'}>${label}</button>`;
+  return `<button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="${listName}" data-input="blacklist-query-input" ${canEditAdminDeny(chat) ? '' : 'disabled'}>加入黑名单</button>`;
 }
 
 function blacklistRows(chat) {
@@ -1111,11 +1110,10 @@ function renderBlacklistRowMenu(chat, row) {
   }
 
   const listName = row.type === 'address' ? 'addressDenyList' : 'senderIdDenyList';
-  const label = row.type === 'address' ? '移出黑名单' : '联动移出黑名单';
   const disabled = canEditAdminDeny(chat) ? '' : 'disabled';
   return `
     <div class="blacklist-menu">
-      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>${label}</button>
+      <button type="button" data-action="admin-list-remove" data-list="${listName}" data-value="${escapeHtml(row.target)}" ${disabled}>移出黑名单</button>
     </div>
   `;
 }
@@ -1817,44 +1815,19 @@ function addAdminList(listName, inputId) {
     return;
   }
   if (listName === 'senderIdDenyList') {
-    const profileAddress = ownerOfGroupId(targetValue);
-    if (!profileAddress) {
-      state.syncHint = `GroupNotExist：NFT #${targetValue} 当前 ownerOf 不存在`;
-      render();
-      return;
-    }
-    let changes = 0;
     if (!chat.adminDeny.senderIdDenyList.includes(targetValue)) {
       chat.adminDeny.senderIdDenyList.push(targetValue);
-      changes += 1;
-    }
-    if (profileAddress && !chat.adminDeny.addressDenyList.includes(profileAddress)) {
-      chat.adminDeny.addressDenyList.push(profileAddress);
-      changes += 1;
-    }
-    if (changes > 0) {
       chat.adminDeny.stateVersion += 1;
-      state.syncHint = `addDenyListsBySenderIds([${targetValue}]) 已模拟，当前 ownerOf=${profileAddress}`;
+      state.syncHint = `denyBySenderIds([${targetValue}]) 已模拟`;
     }
     render();
     return;
   }
   if (listName === 'addressDenyList') {
-    const targetGroupId = validDefaultGroupIdOf(targetValue);
-    let changes = 0;
     if (!chat.adminDeny.addressDenyList.includes(targetValue)) {
       chat.adminDeny.addressDenyList.push(targetValue);
-      changes += 1;
-    }
-    if (targetGroupId && !chat.adminDeny.senderIdDenyList.includes(targetGroupId)) {
-      chat.adminDeny.senderIdDenyList.push(targetGroupId);
-      changes += 1;
-    }
-    if (changes > 0) {
       chat.adminDeny.stateVersion += 1;
-      state.syncHint = targetGroupId
-        ? `addDenyListsBySenderAddresses([${targetValue}]) 已模拟，联动 NFT #${targetGroupId}`
-        : `addDenyListsBySenderAddresses([${targetValue}]) 已模拟`;
+      state.syncHint = `denyBySenderAddresses([${targetValue}]) 已模拟`;
     }
     render();
     return;
@@ -1930,41 +1903,16 @@ function removeAdminList(listName, value) {
   if (!listName.includes('Exempt') && listName !== 'adminIds' && !canEditAdminDeny(chat)) return;
   if (listName === 'adminIds' && !canEditRules(chat)) return;
   if (listName === 'senderIdDenyList') {
-    const profileAddress = ownerOfGroupId(value);
-    if (!profileAddress) {
-      state.syncHint = `GroupNotExist：NFT #${value} 当前 ownerOf 不存在`;
-      render();
-      return;
-    }
-    let changes = 0;
     if (chat.adminDeny.senderIdDenyList.includes(value)) {
       chat.adminDeny.senderIdDenyList = chat.adminDeny.senderIdDenyList.filter((item) => item !== value);
-      changes += 1;
-    }
-    if (profileAddress && chat.adminDeny.addressDenyList.includes(profileAddress)) {
-      chat.adminDeny.addressDenyList = chat.adminDeny.addressDenyList.filter((item) => item !== profileAddress);
-      changes += 1;
-    }
-    if (changes > 0) {
       chat.adminDeny.stateVersion += 1;
-      state.syncHint = `removeDenyListsBySenderIds([${value}]) 已模拟，当前 ownerOf=${profileAddress}`;
+      state.syncHint = `undenyBySenderIds([${value}]) 已模拟`;
     }
   } else if (listName === 'addressDenyList') {
-    const targetGroupId = validDefaultGroupIdOf(value);
-    let changes = 0;
     if (chat.adminDeny.addressDenyList.includes(value)) {
       chat.adminDeny.addressDenyList = chat.adminDeny.addressDenyList.filter((item) => item !== value);
-      changes += 1;
-    }
-    if (targetGroupId && chat.adminDeny.senderIdDenyList.includes(targetGroupId)) {
-      chat.adminDeny.senderIdDenyList = chat.adminDeny.senderIdDenyList.filter((item) => item !== targetGroupId);
-      changes += 1;
-    }
-    if (changes > 0) {
       chat.adminDeny.stateVersion += 1;
-      state.syncHint = targetGroupId
-        ? `removeDenyListsBySenderAddresses([${value}]) 已模拟，联动 NFT #${targetGroupId}`
-        : `removeDenyListsBySenderAddresses([${value}]) 已模拟`;
+      state.syncHint = `undenyBySenderAddresses([${value}]) 已模拟`;
     }
   } else {
     chat.adminDeny[listName] = chat.adminDeny[listName].filter((item) => item !== value);
@@ -2067,9 +2015,9 @@ function addSenderDenyFromMessage(messageId, groupId = state.activeGroupId) {
   if (!chat || chat.blacklistMode !== 'admin' || !canEditAdminDeny(chat)) return;
 
   const targetSenderId = String(message.senderId);
-  const targetAddress = ownerOfGroupId(targetSenderId);
+  const targetAddress = message.senderAddress;
   if (!targetAddress) {
-    state.syncHint = `GroupNotExist：NFT #${targetSenderId} 当前 ownerOf 不存在`;
+    state.syncHint = `TargetAddressZero：消息 #${messageId} 缺少 senderAddress`;
     render();
     return;
   }
@@ -2086,7 +2034,7 @@ function addSenderDenyFromMessage(messageId, groupId = state.activeGroupId) {
   if (changes > 0) {
     chat.adminDeny.stateVersion += 1;
     state.syncHint =
-      `addDenyListsBySenderIds([${targetSenderId}]) 已模拟，当前 ownerOf=${targetAddress}，消息发送地址=${message.senderAddress}`;
+      `denyBySenders([${targetSenderId}], [${targetAddress}]) 已模拟，消息发送地址=${message.senderAddress}`;
   } else {
     state.syncHint = `sender ${targetAddress} / NFT #${targetSenderId} 已在黑名单`;
   }
