@@ -276,10 +276,10 @@ const requiredDataJs = [
   '爱聊',
   'defaultGroupId',
   'bottomTabs',
-  'TokenGroupChatManager',
-  'TokenGovGroupChatManager',
-  'TokenActionGroupChatManager',
-  'TokenActionGovGroupChatManager',
+  'TokenMainManager',
+  'TokenGovManager',
+  'TokenActionMainManager',
+  'TokenActionGovManager',
   'GroupJoinScopeSource',
   'AdminDenySource',
   'GovVotedDenySource',
@@ -291,6 +291,19 @@ const requiredDataJs = [
 for (const needle of requiredDataJs) {
   if (!data.includes(needle)) {
     throw new Error(`Missing prototype-data.js marker: ${needle}`);
+  }
+}
+
+const legacyManagerNames = [
+  'Token',
+  'TokenGov',
+  'TokenAction',
+  'TokenActionGov',
+].map((prefix) => `${prefix}GroupChatManager`);
+
+for (const legacyName of legacyManagerNames) {
+  if (data.includes(legacyName) || js.includes(legacyName)) {
+    throw new Error(`Legacy manager name must not be used: ${legacyName}`);
   }
 }
 

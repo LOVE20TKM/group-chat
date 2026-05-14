@@ -3,9 +3,9 @@ pragma solidity =0.8.17;
 
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
-import {BaseTokenActionManager} from "./BaseTokenActionManager.sol";
+import {BaseTokenActionScopeManager} from "./BaseTokenActionScopeManager.sol";
 
-contract TokenActionManager is BaseTokenActionManager {
+contract TokenActionMainManager is BaseTokenActionScopeManager {
     address internal immutable JOIN_ADDRESS;
 
     constructor(
@@ -16,7 +16,7 @@ contract TokenActionManager is BaseTokenActionManager {
         address extensionCenter_,
         uint256 recentRounds_
     )
-        BaseTokenActionManager(
+        BaseTokenActionScopeManager(
             groupChat_,
             denySource_,
             beforePostPlugin_,
@@ -32,7 +32,7 @@ contract TokenActionManager is BaseTokenActionManager {
     }
 
     function activate(address token, uint256 actionId) external returns (uint256 groupId) {
-        return _activateManagedAction(token, actionId, "mgr_action_");
+        return _activateManagedAction(token, actionId, "mgr_action_main_");
     }
 
     function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {

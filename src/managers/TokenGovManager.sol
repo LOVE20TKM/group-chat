@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseTokenManager} from "./BaseTokenManager.sol";
+import {BaseTokenScopeManager} from "./BaseTokenScopeManager.sol";
 
-contract TokenGovManager is BaseTokenManager {
+contract TokenGovManager is BaseTokenScopeManager {
     constructor(
         address groupChat_,
         address denySource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseTokenManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
+    ) BaseTokenScopeManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
 
     function activate(address token) external returns (uint256 groupId) {
         return _activateToken(token, "mgr_token_gov_");

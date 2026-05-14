@@ -30,9 +30,9 @@ function canPost(
 
 当前实现的 `ScopeSource` 包括四个 typed Manager 与 `GroupJoinScopeSource`：
 
-- [TokenManager](../../managers/token.md)
+- [TokenMainManager](../../managers/token-main.md)
 - [TokenGovManager](../../managers/token-gov.md)
-- [TokenActionManager](../../managers/token-action.md)
+- [TokenActionMainManager](../../managers/token-action-main.md)
 - [TokenActionGovManager](../../managers/token-action-gov.md)
 - [GroupJoinScopeSource](./group-join-scope-source.md)
 

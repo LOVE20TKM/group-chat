@@ -7,15 +7,9 @@ import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {BaseManager} from "./BaseManager.sol";
 
 abstract contract BaseTokenManager is BaseManager {
-    event Activate(address indexed token, uint256 indexed groupId, address indexed operator);
-
     address internal immutable LAUNCH_ADDRESS;
     address internal immutable STAKE_ADDRESS;
     address public immutable EXTENSION_CENTER_ADDRESS;
-
-    mapping(uint256 => address) public tokenOfGroup;
-    mapping(address => uint256) public groupIdOfToken;
-    address[] internal _tokens;
 
     constructor(
         address groupChat_,
@@ -32,56 +26,8 @@ abstract contract BaseTokenManager is BaseManager {
         _requireCode(stake);
 
         LAUNCH_ADDRESS = launch;
-        EXTENSION_CENTER_ADDRESS = extensionCenter_;
         STAKE_ADDRESS = stake;
-    }
-
-    function tokensCount() external view returns (uint256) {
-        return _tokens.length;
-    }
-
-    function tokens(uint256 offset, uint256 limit, bool reverse)
-        external
-        view
-        returns (address[] memory tokenList, uint256[] memory groupIds)
-    {
-        uint256 count = _pageCount(_tokens.length, offset, limit);
-        tokenList = new address[](count);
-        groupIds = new uint256[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            address token = _tokens[_pageIndex(_tokens.length, offset, i, reverse)];
-            tokenList[i] = token;
-            groupIds[i] = groupIdOfToken[token];
-        }
-    }
-
-    function voteWeightOf(uint256 groupId, address voter) external view returns (uint256) {
-        address token = tokenOfGroup[groupId];
-        if (token == address(0)) {
-            return 0;
-        }
-        return _tokenGovVoteWeight(token, voter);
-    }
-
-    function totalVoteWeight(uint256 groupId) external view returns (uint256) {
-        address token = tokenOfGroup[groupId];
-        if (token == address(0)) {
-            return 0;
-        }
-        return ILOVE20Stake(STAKE_ADDRESS).govVotesNum(token);
-    }
-
-    function _activateToken(address token, string memory managerPrefix) internal returns (uint256 groupId) {
-        _requireLOVE20Token(token);
-        _requireNotManaged(groupIdOfToken[token] != 0);
-
-        groupId = _mintManagedGroup(_tokenGroupNameStem(managerPrefix, token));
-        tokenOfGroup[groupId] = token;
-        groupIdOfToken[token] = groupId;
-        _tokens.push(token);
-        _activateManagedGroup(groupId);
-        emit Activate(token, groupId, msg.sender);
+        EXTENSION_CENTER_ADDRESS = extensionCenter_;
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {

@@ -5,9 +5,9 @@ import {GroupChat} from "../src/GroupChat.sol";
 import {IExtensionCenter} from "../src/interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../src/interfaces/external/ILOVE20Join.sol";
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
-import {TokenActionManager} from "../src/managers/TokenActionManager.sol";
+import {TokenActionMainManager} from "../src/managers/TokenActionMainManager.sol";
 import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
-import {TokenManager} from "../src/managers/TokenManager.sol";
+import {TokenMainManager} from "../src/managers/TokenMainManager.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
@@ -34,10 +34,10 @@ contract DeployGroupChat is ScriptBase {
         address adminDenySource;
         address groupChatDenySource;
         address groupJoinScopeSource;
-        address tokenManager;
+        address tokenMainManager;
         address tokenGovManager;
         address tokenActionGovManager;
-        address tokenActionManager;
+        address tokenActionMainManager;
     }
 
     function run() external {
@@ -96,14 +96,14 @@ contract DeployGroupChat is ScriptBase {
             address(new GovVotedDenySource(groupChat.GROUP_ADDRESS(), config.denyThresholdRatio));
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(config.groupJoin));
 
-        TokenManager tokenManager = new TokenManager(
+        TokenMainManager tokenMainManager = new TokenMainManager(
             address(groupChat),
             deployed.groupChatDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
         );
-        deployed.tokenManager = address(tokenManager);
+        deployed.tokenMainManager = address(tokenMainManager);
         TokenGovManager tokenGovManager = new TokenGovManager(
             address(groupChat),
             deployed.groupChatDenySource,
@@ -121,7 +121,7 @@ contract DeployGroupChat is ScriptBase {
             config.actionRecentRounds
         );
         deployed.tokenActionGovManager = address(tokenActionGovManager);
-        TokenActionManager tokenActionManager = new TokenActionManager(
+        TokenActionMainManager tokenActionMainManager = new TokenActionMainManager(
             address(groupChat),
             deployed.groupChatDenySource,
             config.beforePostPlugin,
@@ -129,7 +129,7 @@ contract DeployGroupChat is ScriptBase {
             config.extensionCenter,
             config.actionRecentRounds
         );
-        deployed.tokenActionManager = address(tokenActionManager);
+        deployed.tokenActionMainManager = address(tokenActionMainManager);
     }
 
     function _writeAddressFile(string memory dir, DeployConfig memory config, DeployedAddresses memory deployed)
@@ -152,13 +152,13 @@ contract DeployGroupChat is ScriptBase {
         content = string.concat(
             content,
             _addressLine("groupChatAddress", deployed.groupChat),
-            _addressLine("tokenManagerAddress", deployed.tokenManager),
+            _addressLine("tokenMainManagerAddress", deployed.tokenMainManager),
             _addressLine("tokenGovManagerAddress", deployed.tokenGovManager)
         );
         content = string.concat(
             content,
             _addressLine("tokenActionGovManagerAddress", deployed.tokenActionGovManager),
-            _addressLine("tokenActionManagerAddress", deployed.tokenActionManager)
+            _addressLine("tokenActionMainManagerAddress", deployed.tokenActionMainManager)
         );
         return content;
     }

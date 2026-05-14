@@ -1,10 +1,10 @@
-# TokenActionManager
+# TokenActionMainManager
 
 代币行动群 Manager。
 
 ## 合约
 
-- `src/managers/TokenActionManager.sol`
+- `src/managers/TokenActionMainManager.sol`
 
 ## 激活
 
@@ -20,7 +20,7 @@ function activate(
 流程：
 
 - 校验 `Launch.isLOVE20Token(token) == true`
-- Manager 生成群 NFT 名：`mgr_action_[symbol]_[actionId]_[xxxxxx]`
+- Manager 生成群 NFT 名：`mgr_action_main_[symbol]_[actionId]_[xxxxxx]`
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
 - 调用 `GroupNFT.mint(...)` 得到 `groupId`
 - 激活对应 chat

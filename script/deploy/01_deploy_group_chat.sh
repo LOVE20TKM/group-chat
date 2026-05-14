@@ -18,10 +18,10 @@ if [ $? -eq 0 ]; then
     echo -e "\033[32m✓\033[0m AdminDenySource deployed at: $adminDenySourceAddress"
     echo -e "\033[32m✓\033[0m GovVotedDenySource deployed at: $groupChatDenySourceAddress"
     echo -e "\033[32m✓\033[0m GroupJoinScopeSource deployed at: $groupJoinScopeSourceAddress"
-    echo -e "\033[32m✓\033[0m TokenManager deployed at: $tokenManagerAddress"
+    echo -e "\033[32m✓\033[0m TokenMainManager deployed at: $tokenMainManagerAddress"
     echo -e "\033[32m✓\033[0m TokenGovManager deployed at: $tokenGovManagerAddress"
     echo -e "\033[32m✓\033[0m TokenActionGovManager deployed at: $tokenActionGovManagerAddress"
-    echo -e "\033[32m✓\033[0m TokenActionManager deployed at: $tokenActionManagerAddress"
+    echo -e "\033[32m✓\033[0m TokenActionMainManager deployed at: $tokenActionMainManagerAddress"
     return 0
 else
     echo -e "\033[31m✗\033[0m Failed to deploy GroupChat"

@@ -2,12 +2,11 @@
 pragma solidity =0.8.17;
 
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
-import {ILOVE20Launch} from "../interfaces/external/ILOVE20Launch.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
-import {BaseManager} from "./BaseManager.sol";
+import {BaseTokenManager} from "./BaseTokenManager.sol";
 
-abstract contract BaseTokenActionManager is BaseManager {
+abstract contract BaseTokenActionScopeManager is BaseTokenManager {
     event Activate(address indexed token, uint256 indexed actionId, uint256 indexed groupId, address operator);
 
     struct ManagedAction {
@@ -15,10 +14,7 @@ abstract contract BaseTokenActionManager is BaseManager {
         uint256 actionId;
     }
 
-    address internal immutable LAUNCH_ADDRESS;
-    address internal immutable STAKE_ADDRESS;
     address internal immutable VOTE_ADDRESS;
-    address public immutable EXTENSION_CENTER_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 
     mapping(uint256 => ManagedAction) public actionOfGroup;
@@ -32,20 +28,12 @@ abstract contract BaseTokenActionManager is BaseManager {
         address afterPostPlugin_,
         address extensionCenter_,
         uint256 recentRounds_
-    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
-        _requireCode(extensionCenter_);
+    ) BaseTokenManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         _requireRecentRounds(recentRounds_);
 
-        address launch = IExtensionCenter(extensionCenter_).launchAddress();
-        address stake = IExtensionCenter(extensionCenter_).stakeAddress();
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
-        _requireCode(launch);
-        _requireCode(stake);
         _requireCode(vote);
 
-        LAUNCH_ADDRESS = launch;
-        STAKE_ADDRESS = stake;
-        EXTENSION_CENTER_ADDRESS = extensionCenter_;
         VOTE_ADDRESS = vote;
         RECENT_ROUNDS = recentRounds_;
     }
@@ -153,12 +141,5 @@ abstract contract BaseTokenActionManager is BaseManager {
         return ILOVE20Vote(VOTE_ADDRESS).votesNumByAccountByActionId(
             token, ILOVE20Vote(VOTE_ADDRESS).currentRound(), account, actionId
         );
-    }
-
-    function _requireLOVE20Token(address token) internal view {
-        _requireCode(token);
-        if (!ILOVE20Launch(LAUNCH_ADDRESS).isLOVE20Token(token)) {
-            revert TokenNotLOVE20();
-        }
     }
 }

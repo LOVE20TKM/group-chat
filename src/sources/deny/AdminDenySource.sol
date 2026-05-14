@@ -132,49 +132,25 @@ contract AdminDenySource is IPostDenySource {
 
     function denyBySenderIds(uint256 groupId, uint256[] calldata senderIds) external {
         uint256 operatorId = _requireAdmin(groupId);
-        ChatState storage state = _states[groupId];
-        uint256 newVersion;
-        for (uint256 i = 0; i < senderIds.length; i++) {
-            uint256 senderId = senderIds[i];
-            if (senderId == 0) {
-                revert TargetSenderIdZero();
-            }
-            newVersion = _addSenderIdDenyTarget(state, groupId, operatorId, senderId, newVersion);
-        }
+        uint256 newVersion = _setSenderIdDenyTargets(groupId, operatorId, senderIds, true);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
     function undenyBySenderIds(uint256 groupId, uint256[] calldata senderIds) external {
         uint256 operatorId = _requireAdmin(groupId);
-        ChatState storage state = _states[groupId];
-        uint256 newVersion;
-        for (uint256 i = 0; i < senderIds.length; i++) {
-            uint256 senderId = senderIds[i];
-            if (senderId == 0) {
-                revert TargetSenderIdZero();
-            }
-            newVersion = _removeSenderIdDenyTarget(state, groupId, operatorId, senderId, newVersion);
-        }
+        uint256 newVersion = _setSenderIdDenyTargets(groupId, operatorId, senderIds, false);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
     function denyBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external {
         uint256 operatorId = _requireAdmin(groupId);
-        ChatState storage state = _states[groupId];
-        uint256 newVersion;
-        for (uint256 i = 0; i < senderAddresses.length; i++) {
-            newVersion = _addSenderAddressDenyTarget(state, groupId, operatorId, senderAddresses[i], newVersion);
-        }
+        uint256 newVersion = _setSenderAddressDenyTargets(groupId, operatorId, senderAddresses, true);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
     function undenyBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external {
         uint256 operatorId = _requireAdmin(groupId);
-        ChatState storage state = _states[groupId];
-        uint256 newVersion;
-        for (uint256 i = 0; i < senderAddresses.length; i++) {
-            newVersion = _removeSenderAddressDenyTarget(state, groupId, operatorId, senderAddresses[i], newVersion);
-        }
+        uint256 newVersion = _setSenderAddressDenyTargets(groupId, operatorId, senderAddresses, false);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
@@ -212,14 +188,14 @@ contract AdminDenySource is IPostDenySource {
     function exemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external {
         (uint8 role, uint256 operatorId) = _roleOf(groupId);
         _requireOwnerOrDelegate(role);
-        uint256 newVersion = _addSenderIdExemptTargets(groupId, operatorId, senderIds);
+        uint256 newVersion = _setSenderIdExemptTargets(groupId, operatorId, senderIds, true);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
     function unexemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external {
         (uint8 role, uint256 operatorId) = _roleOf(groupId);
         _requireOwnerOrDelegate(role);
-        uint256 newVersion = _removeSenderIdExemptTargets(groupId, operatorId, senderIds);
+        uint256 newVersion = _setSenderIdExemptTargets(groupId, operatorId, senderIds, false);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
@@ -326,7 +302,7 @@ contract AdminDenySource is IPostDenySource {
         return _states[groupId].stateVersion;
     }
 
-    function _addSenderIdExemptTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds)
+    function _setSenderIdExemptTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds, bool listed)
         internal
         returns (uint256 newVersion)
     {
@@ -336,14 +312,16 @@ contract AdminDenySource is IPostDenySource {
             if (senderId == 0) {
                 revert TargetSenderIdZero();
             }
-            if (_addUint(state.senderIdExemptList, senderId)) {
+            bool changed =
+                listed ? _addUint(state.senderIdExemptList, senderId) : _removeUint(state.senderIdExemptList, senderId);
+            if (changed) {
                 newVersion = _ensureStateVersion(state, newVersion);
-                _emitSenderIdSet(groupId, operatorId, senderId, true, false, newVersion);
+                _emitSenderIdSet(groupId, operatorId, senderId, listed, false, newVersion);
             }
         }
     }
 
-    function _removeSenderIdExemptTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds)
+    function _setSenderIdDenyTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds, bool listed)
         internal
         returns (uint256 newVersion)
     {
@@ -353,9 +331,28 @@ contract AdminDenySource is IPostDenySource {
             if (senderId == 0) {
                 revert TargetSenderIdZero();
             }
-            if (_removeUint(state.senderIdExemptList, senderId)) {
+            if (_setSenderIdDenyTarget(state, senderId, listed)) {
                 newVersion = _ensureStateVersion(state, newVersion);
-                _emitSenderIdSet(groupId, operatorId, senderId, false, false, newVersion);
+                _emitSenderIdSet(groupId, operatorId, senderId, listed, true, newVersion);
+            }
+        }
+    }
+
+    function _setSenderAddressDenyTargets(
+        uint256 groupId,
+        uint256 operatorId,
+        address[] calldata senderAddresses,
+        bool listed
+    ) internal returns (uint256 newVersion) {
+        ChatState storage state = _states[groupId];
+        for (uint256 i = 0; i < senderAddresses.length; i++) {
+            address senderAddress = senderAddresses[i];
+            if (senderAddress == address(0)) {
+                revert TargetAddressZero();
+            }
+            if (_setSenderAddressDenyTarget(state, senderAddress, listed)) {
+                newVersion = _ensureStateVersion(state, newVersion);
+                _emitAddressDenySet(groupId, operatorId, senderAddress, listed, newVersion);
             }
         }
     }
@@ -375,11 +372,11 @@ contract AdminDenySource is IPostDenySource {
             revert TargetSenderIdZero();
         }
 
-        if (_addAddress(state.addressDenyList, senderAddress)) {
+        if (_setSenderAddressDenyTarget(state, senderAddress, true)) {
             newVersion = _ensureStateVersion(state, newVersion);
             _emitAddressDenySet(groupId, operatorId, senderAddress, true, newVersion);
         }
-        return _addSenderIdDenyTarget(state, groupId, operatorId, senderId, newVersion);
+        return _setSenderIdDenyTargetWithEvent(state, groupId, operatorId, senderId, true, newVersion);
     }
 
     function _removeSenderDenyTarget(
@@ -397,75 +394,39 @@ contract AdminDenySource is IPostDenySource {
             revert TargetSenderIdZero();
         }
 
-        if (_removeAddress(state.addressDenyList, senderAddress)) {
+        if (_setSenderAddressDenyTarget(state, senderAddress, false)) {
             newVersion = _ensureStateVersion(state, newVersion);
             _emitAddressDenySet(groupId, operatorId, senderAddress, false, newVersion);
         }
-        return _removeSenderIdDenyTarget(state, groupId, operatorId, senderId, newVersion);
+        return _setSenderIdDenyTargetWithEvent(state, groupId, operatorId, senderId, false, newVersion);
     }
 
-    function _addSenderIdDenyTarget(
+    function _setSenderIdDenyTargetWithEvent(
         ChatState storage state,
         uint256 groupId,
         uint256 operatorId,
         uint256 senderId,
+        bool listed,
         uint256 newVersion
     ) internal returns (uint256) {
-        if (_addUint(state.senderIdDenyList, senderId)) {
+        if (_setSenderIdDenyTarget(state, senderId, listed)) {
             newVersion = _ensureStateVersion(state, newVersion);
-            _emitSenderIdSet(groupId, operatorId, senderId, true, true, newVersion);
+            _emitSenderIdSet(groupId, operatorId, senderId, listed, true, newVersion);
         }
         return newVersion;
     }
 
-    function _removeSenderIdDenyTarget(
-        ChatState storage state,
-        uint256 groupId,
-        uint256 operatorId,
-        uint256 senderId,
-        uint256 newVersion
-    ) internal returns (uint256) {
-        if (_removeUint(state.senderIdDenyList, senderId)) {
-            newVersion = _ensureStateVersion(state, newVersion);
-            _emitSenderIdSet(groupId, operatorId, senderId, false, true, newVersion);
-        }
-        return newVersion;
+    function _setSenderIdDenyTarget(ChatState storage state, uint256 senderId, bool listed) internal returns (bool) {
+        return listed ? _addUint(state.senderIdDenyList, senderId) : _removeUint(state.senderIdDenyList, senderId);
     }
 
-    function _addSenderAddressDenyTarget(
-        ChatState storage state,
-        uint256 groupId,
-        uint256 operatorId,
-        address targetAddress,
-        uint256 newVersion
-    ) internal returns (uint256) {
-        if (targetAddress == address(0)) {
-            revert TargetAddressZero();
-        }
-
-        if (_addAddress(state.addressDenyList, targetAddress)) {
-            newVersion = _ensureStateVersion(state, newVersion);
-            _emitAddressDenySet(groupId, operatorId, targetAddress, true, newVersion);
-        }
-        return newVersion;
-    }
-
-    function _removeSenderAddressDenyTarget(
-        ChatState storage state,
-        uint256 groupId,
-        uint256 operatorId,
-        address targetAddress,
-        uint256 newVersion
-    ) internal returns (uint256) {
-        if (targetAddress == address(0)) {
-            revert TargetAddressZero();
-        }
-
-        if (_removeAddress(state.addressDenyList, targetAddress)) {
-            newVersion = _ensureStateVersion(state, newVersion);
-            _emitAddressDenySet(groupId, operatorId, targetAddress, false, newVersion);
-        }
-        return newVersion;
+    function _setSenderAddressDenyTarget(ChatState storage state, address targetAddress, bool listed)
+        internal
+        returns (bool)
+    {
+        return listed
+            ? _addAddress(state.addressDenyList, targetAddress)
+            : _removeAddress(state.addressDenyList, targetAddress);
     }
 
     function _roleOf(uint256 groupId) internal view returns (uint8 role, uint256 operatorId) {

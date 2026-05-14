@@ -33,9 +33,9 @@
 
 Typed Managers：
 
-- [TokenManager](./managers/token.md)
+- [TokenMainManager](./managers/token-main.md)
 - [TokenGovManager](./managers/token-gov.md)
-- [TokenActionManager](./managers/token-action.md)
+- [TokenActionMainManager](./managers/token-action-main.md)
 - [TokenActionGovManager](./managers/token-action-gov.md)
 
 Sources：

@@ -9,10 +9,10 @@ if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && {
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$groupChatDenySourceAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
-    [ -z "$tokenManagerAddress" ] || \
+    [ -z "$tokenMainManagerAddress" ] || \
     [ -z "$tokenGovManagerAddress" ] || \
     [ -z "$tokenActionGovManagerAddress" ] || \
-    [ -z "$tokenActionManagerAddress" ]; \
+    [ -z "$tokenActionMainManagerAddress" ]; \
 }; then
     source "$network_dir/address.group.chat.params"
 fi
@@ -177,8 +177,8 @@ if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$tokenManagerAddress" ]; then
-    echo -e "\033[31m✗\033[0m tokenManagerAddress not set"
+if [ -z "$tokenMainManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenMainManagerAddress not set"
     ((missing_params++))
 fi
 
@@ -192,8 +192,8 @@ if [ -z "$tokenActionGovManagerAddress" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$tokenActionManagerAddress" ]; then
-    echo -e "\033[31m✗\033[0m tokenActionManagerAddress not set"
+if [ -z "$tokenActionMainManagerAddress" ]; then
+    echo -e "\033[31m✗\033[0m tokenActionMainManagerAddress not set"
     ((missing_params++))
 fi
 
@@ -213,10 +213,10 @@ echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
 echo -e "Deny Threshold Ratio: $GROUP_CHAT_DENY_THRESHOLD_RATIO\n"
 echo -e "Max Admin Ids: $GROUP_CHAT_MAX_ADMIN_IDS\n"
-echo -e "TokenManager Address: $tokenManagerAddress"
+echo -e "TokenMainManager Address: $tokenMainManagerAddress"
 echo -e "TokenGovManager Address: $tokenGovManagerAddress"
 echo -e "TokenActionGovManager Address: $tokenActionGovManagerAddress"
-echo -e "TokenActionManager Address: $tokenActionManagerAddress\n"
+echo -e "TokenActionMainManager Address: $tokenActionMainManagerAddress\n"
 
 failed_checks=0
 
@@ -362,7 +362,7 @@ check_manager_common() {
 
 echo "Verifying manager immutable configuration..."
 
-check_manager_common "TokenManager" $tokenManagerAddress
+check_manager_common "TokenMainManager" $tokenMainManagerAddress
 echo ""
 
 check_manager_common "TokenGovManager" $tokenGovManagerAddress
@@ -373,8 +373,8 @@ check_equal "TokenActionGovManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROU
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_manager_common "TokenActionManager" $tokenActionManagerAddress
-check_equal "TokenActionManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionManagerAddress "RECENT_ROUNDS()(uint256)")
+check_manager_common "TokenActionMainManager" $tokenActionMainManagerAddress
+check_equal "TokenActionMainManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionMainManagerAddress "RECENT_ROUNDS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

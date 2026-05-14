@@ -1277,10 +1277,10 @@ function postBlockReason(chat, status) {
 function scopeSourceReason(chat) {
   const source = chat.chatInfo?.scopeSource || chat.params?.scopeSource || 'scopeSource';
   const messages = {
-    TokenGroupChatManager: 'scopeSource 会检查当前地址是否属于这个代币的大群范围；当前地址不在范围内。',
-    TokenGovGroupChatManager: 'scopeSource 会检查当前地址是否有这个代币治理群的发言资格；当前地址不满足。',
-    TokenActionGroupChatManager: 'scopeSource 会检查当前地址是否属于这个行动群的参与范围；当前地址不在范围内。',
-    TokenActionGovGroupChatManager: 'scopeSource 会检查当前地址是否有这个行动治理群的发言资格；当前地址不满足。',
+    TokenMainManager: 'scopeSource 会检查当前地址是否属于这个代币的大群范围；当前地址不在范围内。',
+    TokenGovManager: 'scopeSource 会检查当前地址是否有这个代币治理群的发言资格；当前地址不满足。',
+    TokenActionMainManager: 'scopeSource 会检查当前地址是否属于这个行动群的参与范围；当前地址不在范围内。',
+    TokenActionGovManager: 'scopeSource 会检查当前地址是否有这个行动治理群的发言资格；当前地址不满足。',
     GroupJoinScopeSource: 'scopeSource 会检查当前地址是否在该链群下参与至少一个代币社区行动；当前地址不满足。',
   };
   return messages[source] || `${source} 判断当前地址没有这个群聊的发言资格。`;

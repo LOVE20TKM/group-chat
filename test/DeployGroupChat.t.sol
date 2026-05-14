@@ -4,10 +4,10 @@ pragma solidity =0.8.17;
 import {DeployGroupChat} from "../script/DeployGroupChat.s.sol";
 import {IGroupChat} from "../src/interfaces/IGroupChat.sol";
 import {BaseManager} from "../src/managers/BaseManager.sol";
-import {BaseTokenActionManager} from "../src/managers/BaseTokenActionManager.sol";
-import {BaseTokenManager} from "../src/managers/BaseTokenManager.sol";
+import {BaseTokenActionScopeManager} from "../src/managers/BaseTokenActionScopeManager.sol";
+import {BaseTokenScopeManager} from "../src/managers/BaseTokenScopeManager.sol";
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
-import {TokenActionManager} from "../src/managers/TokenActionManager.sol";
+import {TokenActionMainManager} from "../src/managers/TokenActionMainManager.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
@@ -96,10 +96,10 @@ contract DeployGroupChatTest is TestBase {
         assertTrue(deployed.adminDenySource.code.length != 0);
         assertTrue(deployed.groupChatDenySource.code.length != 0);
         assertTrue(deployed.groupJoinScopeSource.code.length != 0);
-        assertTrue(deployed.tokenManager.code.length != 0);
+        assertTrue(deployed.tokenMainManager.code.length != 0);
         assertTrue(deployed.tokenGovManager.code.length != 0);
         assertTrue(deployed.tokenActionGovManager.code.length != 0);
-        assertTrue(deployed.tokenActionManager.code.length != 0);
+        assertTrue(deployed.tokenActionMainManager.code.length != 0);
 
         assertEq(IGroupChat(deployed.groupChat).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(IGroupChat(deployed.groupChat).GROUP_ADDRESS(), address(groupNft));
@@ -115,23 +115,27 @@ contract DeployGroupChatTest is TestBase {
         assertEq(GovVotedDenySource(deployed.groupChatDenySource).DENY_THRESHOLD_RATIO(), DENY_THRESHOLD_RATIO);
         assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN_ADDRESS(), address(groupJoin));
 
-        _assertManagerCommon(deployed.tokenManager, deployed);
+        _assertManagerCommon(deployed.tokenMainManager, deployed);
         _assertManagerCommon(deployed.tokenGovManager, deployed);
         _assertManagerCommon(deployed.tokenActionGovManager, deployed);
-        _assertManagerCommon(deployed.tokenActionManager, deployed);
+        _assertManagerCommon(deployed.tokenActionMainManager, deployed);
 
-        assertEq(BaseTokenManager(deployed.tokenManager).EXTENSION_CENTER_ADDRESS(), address(protocol));
-        assertEq(BaseTokenManager(deployed.tokenGovManager).EXTENSION_CENTER_ADDRESS(), address(protocol));
-        assertEq(BaseTokenActionManager(deployed.tokenActionGovManager).EXTENSION_CENTER_ADDRESS(), address(protocol));
-        assertEq(BaseTokenActionManager(deployed.tokenActionManager).EXTENSION_CENTER_ADDRESS(), address(protocol));
+        assertEq(BaseTokenScopeManager(deployed.tokenMainManager).EXTENSION_CENTER_ADDRESS(), address(protocol));
+        assertEq(BaseTokenScopeManager(deployed.tokenGovManager).EXTENSION_CENTER_ADDRESS(), address(protocol));
+        assertEq(
+            BaseTokenActionScopeManager(deployed.tokenActionGovManager).EXTENSION_CENTER_ADDRESS(), address(protocol)
+        );
+        assertEq(
+            BaseTokenActionScopeManager(deployed.tokenActionMainManager).EXTENSION_CENTER_ADDRESS(), address(protocol)
+        );
 
-        _assertTokenManagerDerivedAddressGettersHidden(deployed.tokenManager);
-        _assertTokenManagerDerivedAddressGettersHidden(deployed.tokenGovManager);
+        _assertTokenMainManagerDerivedAddressGettersHidden(deployed.tokenMainManager);
+        _assertTokenMainManagerDerivedAddressGettersHidden(deployed.tokenGovManager);
         _assertActionManagerDerivedAddressGettersHidden(deployed.tokenActionGovManager);
-        _assertActionManagerDerivedAddressGettersHidden(deployed.tokenActionManager);
+        _assertActionManagerDerivedAddressGettersHidden(deployed.tokenActionMainManager);
 
         assertEq(TokenActionGovManager(deployed.tokenActionGovManager).RECENT_ROUNDS(), 3);
-        assertEq(TokenActionManager(deployed.tokenActionManager).RECENT_ROUNDS(), 3);
+        assertEq(TokenActionMainManager(deployed.tokenActionMainManager).RECENT_ROUNDS(), 3);
     }
 
     function testT140B_configUsesCoreJoinRoundParameters() public {
@@ -178,10 +182,10 @@ contract DeployGroupChatTest is TestBase {
             adminDenySource: address(0x102),
             groupChatDenySource: address(0x103),
             groupJoinScopeSource: address(0x104),
-            tokenManager: address(0x105),
+            tokenMainManager: address(0x105),
             tokenGovManager: address(0x106),
             tokenActionGovManager: address(0x107),
-            tokenActionManager: address(0x108)
+            tokenActionMainManager: address(0x108)
         });
 
         string memory content = deployer.addressFileContentForTest(config, deployed);
@@ -190,10 +194,10 @@ contract DeployGroupChatTest is TestBase {
         _assertContains(content, "groupChatDenySourceAddress=");
         _assertContains(content, "groupJoinScopeSourceAddress=");
         _assertContains(content, "groupChatAddress=");
-        _assertContains(content, "tokenManagerAddress=");
+        _assertContains(content, "tokenMainManagerAddress=");
         _assertContains(content, "tokenGovManagerAddress=");
         _assertContains(content, "tokenActionGovManagerAddress=");
-        _assertContains(content, "tokenActionManagerAddress=");
+        _assertContains(content, "tokenActionMainManagerAddress=");
         _assertNotContains(content, "groupDefaultsAddress=");
         _assertNotContains(content, "extensionCenterAddress=");
         _assertNotContains(content, "groupJoinAddress=");
@@ -211,7 +215,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(BaseManager(manager).AFTER_POST_PLUGIN_ADDRESS(), address(0));
     }
 
-    function _assertTokenManagerDerivedAddressGettersHidden(address manager) internal {
+    function _assertTokenMainManagerDerivedAddressGettersHidden(address manager) internal {
         _expectUnknownSelector(manager, abi.encodeWithSignature("STAKE_ADDRESS()"));
         _expectUnknownSelector(manager, abi.encodeWithSignature("LAUNCH_ADDRESS()"));
         _expectUnknownSelector(manager, abi.encodeWithSignature("JOIN_ADDRESS()"));

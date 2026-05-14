@@ -19,10 +19,10 @@ if [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$groupChatDenySourceAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
-    [ -z "$tokenManagerAddress" ] || \
+    [ -z "$tokenMainManagerAddress" ] || \
     [ -z "$tokenGovManagerAddress" ] || \
     [ -z "$tokenActionGovManagerAddress" ] || \
-    [ -z "$tokenActionManagerAddress" ]; \
+    [ -z "$tokenActionMainManagerAddress" ]; \
 }; then
     source "$network_dir/address.group.chat.params"
 fi
@@ -159,9 +159,9 @@ token_action_manager_constructor_args=$(cast abi-encode "constructor(address,add
     $GROUP_CHAT_ACTION_RECENT_ROUNDS)
 
 verify_contract \
-    $tokenManagerAddress \
-    "TokenManager" \
-    "src/managers/TokenManager.sol" \
+    $tokenMainManagerAddress \
+    "TokenMainManager" \
+    "src/managers/TokenMainManager.sol" \
     $token_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
@@ -180,9 +180,9 @@ verify_contract \
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenActionManagerAddress \
-    "TokenActionManager" \
-    "src/managers/TokenActionManager.sol" \
+    $tokenActionMainManagerAddress \
+    "TokenActionMainManager" \
+    "src/managers/TokenActionMainManager.sol" \
     $token_action_manager_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 

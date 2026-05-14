@@ -5,9 +5,9 @@ import {IERC20Balance} from "../interfaces/external/IERC20Balance.sol";
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
-import {BaseTokenManager} from "./BaseTokenManager.sol";
+import {BaseTokenScopeManager} from "./BaseTokenScopeManager.sol";
 
-contract TokenManager is BaseTokenManager {
+contract TokenMainManager is BaseTokenScopeManager {
     address internal immutable JOIN_ADDRESS;
     address internal immutable VOTE_ADDRESS;
 
@@ -17,7 +17,7 @@ contract TokenManager is BaseTokenManager {
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseTokenManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
+    ) BaseTokenScopeManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         address join = IExtensionCenter(extensionCenter_).joinAddress();
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
         _requireCode(join);
@@ -28,7 +28,7 @@ contract TokenManager is BaseTokenManager {
     }
 
     function activate(address token) external returns (uint256 groupId) {
-        return _activateToken(token, "mgr_token_");
+        return _activateToken(token, "mgr_token_main_");
     }
 
     function canPost(uint256 groupId, uint256, address senderAddress) external view returns (bool) {

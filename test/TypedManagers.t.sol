@@ -4,9 +4,9 @@ pragma solidity =0.8.17;
 import {BaseManager} from "../src/managers/BaseManager.sol";
 
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
-import {TokenActionManager} from "../src/managers/TokenActionManager.sol";
+import {TokenActionMainManager} from "../src/managers/TokenActionMainManager.sol";
 import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
-import {TokenManager} from "../src/managers/TokenManager.sol";
+import {TokenMainManager} from "../src/managers/TokenMainManager.sol";
 
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
@@ -17,10 +17,11 @@ contract TypedManagersTest is GroupChatFixture {
     bytes32 internal constant TOKEN_ACTIVATE_SIG = keccak256("Activate(address,uint256,address)");
     bytes32 internal constant TOKEN_ACTION_ACTIVATE_SIG = keccak256("Activate(address,uint256,uint256,address)");
 
-    function testT110_tokenManagerStoresTokenAndCombinesEligibility() public {
+    function testT110_tokenMainManagerStoresTokenAndCombinesEligibility() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
-        TokenManager manager = new TokenManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenMainManager manager =
+            new TokenMainManager(address(chat), address(0), address(0), address(0), address(protocol));
         groupId = _activateToken(manager, token);
 
         assertEq(manager.tokenOfGroup(groupId), token);
@@ -31,7 +32,7 @@ contract TypedManagersTest is GroupChatFixture {
         assertEq(tokens[0], token);
         assertEq(tokenGroupIds.length, 1);
         assertEq(tokenGroupIds[0], groupId);
-        _assertStartsWith(groupNft.groupNameOf(groupId), "mgr_token_LOVE20_");
+        _assertStartsWith(groupNft.groupNameOf(groupId), "mgr_token_main_LOVE20_");
 
         assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setBalance(senderOwner, 1);
@@ -148,11 +149,11 @@ contract TypedManagersTest is GroupChatFixture {
         assertEq(actionGroupIds[0], secondGroupId);
     }
 
-    function testT113_tokenActionManagerStoresParamsAndAllowsVoteOrParticipation() public {
+    function testT113_tokenActionMainManagerStoresParamsAndAllowsVoteOrParticipation() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
-        TokenActionManager manager =
-            new TokenActionManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
+        TokenActionMainManager manager =
+            new TokenActionMainManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
         protocol.setCurrentRound(10);
         groupId = manager.activate(token, 88);
 
@@ -167,7 +168,7 @@ contract TypedManagersTest is GroupChatFixture {
         assertEq(actionIds[0], 88);
         assertEq(actionGroupIds.length, 1);
         assertEq(actionGroupIds[0], groupId);
-        _assertStartsWith(groupNft.groupNameOf(groupId), "mgr_action_LOVE20_88_");
+        _assertStartsWith(groupNft.groupNameOf(groupId), "mgr_action_main_LOVE20_88_");
 
         assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setActionVotes(token, 9, senderOwner, 88, 1);
@@ -210,13 +211,14 @@ contract TypedManagersTest is GroupChatFixture {
         assertEq(actionGroupIds[0], secondGroupId);
     }
 
-    function testT116_tokenManagersPageTokens() public {
+    function testT116_tokenMainManagersPageTokens() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         MockLOVE20Protocols secondProtocol = new MockLOVE20Protocols();
         address token = address(protocol);
         address secondToken = address(secondProtocol);
 
-        TokenManager manager = new TokenManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenMainManager manager =
+            new TokenMainManager(address(chat), address(0), address(0), address(0), address(protocol));
         manager.activate(token);
         uint256 secondGroupId = manager.activate(secondToken);
 
@@ -257,7 +259,7 @@ contract TypedManagersTest is GroupChatFixture {
         new TokenGovManager(address(chat), address(0), address(0), address(0), other);
 
         vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
-        new TokenManager(address(chat), address(0), address(0), address(0), other);
+        new TokenMainManager(address(chat), address(0), address(0), address(0), other);
 
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         address token = address(protocol);
@@ -269,23 +271,24 @@ contract TypedManagersTest is GroupChatFixture {
         manager.activate(token);
     }
 
-    function testT115_tokenManagerMintSurvivesTestPrefixNormalization() public {
+    function testT115_tokenMainManagerMintSurvivesTestPrefixNormalization() public {
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
         MockERC20Payment payment = new MockERC20Payment();
         payment.setSymbol("TestLOVE");
         groupNft.setMintPayment(address(payment), 10);
         payment.mint(address(this), 10);
 
-        TokenManager manager = new TokenManager(address(chat), address(0), address(0), address(0), address(protocol));
+        TokenMainManager manager =
+            new TokenMainManager(address(chat), address(0), address(0), address(0), address(protocol));
         payment.approve(address(manager), 10);
 
         groupId = manager.activate(address(protocol));
 
         assertEq(chat.chatInfo(groupId).owner, address(manager));
-        _assertStartsWith(groupNft.groupNameOf(groupId), "Testmgr_token_LOVE20_");
+        _assertStartsWith(groupNft.groupNameOf(groupId), "Testmgr_token_main_LOVE20_");
     }
 
-    function _activateToken(TokenManager manager, address token) internal returns (uint256) {
+    function _activateToken(TokenMainManager manager, address token) internal returns (uint256) {
         return manager.activate(token);
     }
 

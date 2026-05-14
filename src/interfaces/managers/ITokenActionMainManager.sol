@@ -3,4 +3,4 @@ pragma solidity =0.8.17;
 
 import {IBaseTokenActionScopeManager} from "./IBaseTokenActionScopeManager.sol";
 
-interface ITokenActionGovManager is IBaseTokenActionScopeManager {}
+interface ITokenActionMainManager is IBaseTokenActionScopeManager {}
