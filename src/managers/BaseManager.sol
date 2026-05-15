@@ -32,6 +32,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
     bytes internal constant FALLBACK_TOKEN_SYMBOL = "TOKEN";
     bytes16 internal constant HEX_SYMBOLS = "0123456789abcdef";
     uint256 internal constant GROUP_NAME_RANDOM_HEX_LENGTH = 12;
+    uint256 internal constant GROUP_NAME_SEPARATOR_BYTES = 1;
 
     uint256 internal _mintNonce;
 
@@ -137,9 +138,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
     }
 
     function _tokenGroupNameStem(string memory managerPrefix, address token) internal view returns (string memory) {
-        uint256 reservedBytes = _testPrefixBytes() + bytes(managerPrefix).length + 1 + GROUP_NAME_RANDOM_HEX_LENGTH;
-        string memory tokenSymbol = _tokenSymbolLabel(token, _remainingNameBytes(reservedBytes));
-        return string(abi.encodePacked(managerPrefix, tokenSymbol));
+        return string(abi.encodePacked(managerPrefix, _tokenSymbolLabel(token)));
     }
 
     function _tokenActionGroupNameStem(string memory managerPrefix, address token, uint256 actionId)
@@ -148,17 +147,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
         returns (string memory)
     {
         string memory actionIdLabel = _uintToString(actionId);
-        uint256 reservedWithoutSymbol = _testPrefixBytes() + bytes(managerPrefix).length + bytes(actionIdLabel).length
-            + 1 + GROUP_NAME_RANDOM_HEX_LENGTH;
-        if (reservedWithoutSymbol > MAX_GROUP_NAME_LENGTH) {
-            uint256 maxActionIdBytes =
-                _remainingNameBytes(_testPrefixBytes() + bytes(managerPrefix).length + 1 + GROUP_NAME_RANDOM_HEX_LENGTH);
-            actionIdLabel = _truncateAscii(actionIdLabel, maxActionIdBytes);
-        }
-
-        uint256 reservedWithSymbol = _testPrefixBytes() + bytes(managerPrefix).length + bytes(actionIdLabel).length + 2
-            + GROUP_NAME_RANDOM_HEX_LENGTH;
-        string memory tokenSymbol = _tokenSymbolLabel(token, _remainingNameBytes(reservedWithSymbol));
+        string memory tokenSymbol = _tokenSymbolLabel(token);
         if (bytes(tokenSymbol).length == 0) {
             return string(abi.encodePacked(managerPrefix, actionIdLabel));
         }
@@ -168,18 +157,11 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
     function _nextGroupName(string memory groupNameStem) internal returns (string memory) {
         bool requiresTestPrefix = _love20TokenRequiresTestPrefix();
         for (uint256 i = 0; i < 8; i++) {
+            string memory randomHex = _hexString(
+                keccak256(abi.encodePacked(block.chainid, address(this), msg.sender, block.number, _mintNonce))
+            );
             string memory groupName = _canonicalizeGroupName(
-                string(
-                    abi.encodePacked(
-                        groupNameStem,
-                        "_",
-                        _hexString(
-                            keccak256(
-                                abi.encodePacked(block.chainid, address(this), msg.sender, block.number, _mintNonce)
-                            )
-                        )
-                    )
-                ),
+                string(abi.encodePacked(_fitGroupNameStem(groupNameStem, requiresTestPrefix), "_", randomHex)),
                 requiresTestPrefix
             );
             unchecked {
@@ -192,11 +174,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
         revert ManagerGroupNameUnavailable();
     }
 
-    function _tokenSymbolLabel(address token, uint256 maxBytes) internal view returns (string memory) {
-        if (maxBytes == 0) {
-            return "";
-        }
-
+    function _tokenSymbolLabel(address token) internal view returns (string memory) {
         bytes memory sanitized = FALLBACK_TOKEN_SYMBOL;
         if (token.code.length != 0) {
             try IERC20Symbol(token).symbol() returns (string memory resolvedSymbol) {
@@ -207,7 +185,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
             } catch {}
         }
 
-        return _truncateAscii(string(sanitized), maxBytes);
+        return string(sanitized);
     }
 
     function _love20TokenRequiresTestPrefix() internal view returns (bool) {
@@ -272,15 +250,17 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
         return string(buffer);
     }
 
-    function _testPrefixBytes() internal view returns (uint256) {
-        return _love20TokenRequiresTestPrefix() ? 4 : 0;
-    }
-
-    function _remainingNameBytes(uint256 reservedBytes) internal view returns (uint256) {
-        if (reservedBytes >= MAX_GROUP_NAME_LENGTH) {
-            return 0;
+    function _fitGroupNameStem(string memory groupNameStem, bool requiresTestPrefix)
+        internal
+        view
+        returns (string memory)
+    {
+        uint256 reservedBytes = GROUP_NAME_SEPARATOR_BYTES + GROUP_NAME_RANDOM_HEX_LENGTH;
+        if (requiresTestPrefix && !_hasTestPrefix(groupNameStem)) {
+            reservedBytes += 4;
         }
-        return MAX_GROUP_NAME_LENGTH - reservedBytes;
+        uint256 maxStemBytes = MAX_GROUP_NAME_LENGTH > reservedBytes ? MAX_GROUP_NAME_LENGTH - reservedBytes : 0;
+        return _truncateAscii(groupNameStem, maxStemBytes);
     }
 
     function _canonicalizeGroupName(string memory groupName, bool requiresTestPrefix)

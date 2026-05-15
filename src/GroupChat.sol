@@ -100,15 +100,12 @@ contract GroupChat is IGroupChat {
             revert ChatAlreadyActivated();
         }
 
-        bytes32[] memory metaHashes = _validateMetaInput(metaKeys_, metaValues_);
+        _validateMetaInput(metaKeys_, metaValues_);
         _validateSourceAddress(scopeSource_);
         _validateSourceAddress(denySource_);
         _validatePluginAddress(beforePostPlugin_);
         _validatePluginAddress(afterPostPlugin_);
         _validateDelegateId(groupId, delegateId_);
-
-        uint256 newVersion = _nextConfigVersion(config);
-        uint256 prevDelegateId = _delegateIdOf(config, owner);
 
         config.firstActivatedOwner = owner;
         config.firstActivatedBlockNumber = block.number;
@@ -117,18 +114,31 @@ contract GroupChat is IGroupChat {
 
         config.activated = true;
         config.postingAllowed = true;
-
-        _applyActivateMeta(groupId, metaKeys_, metaValues_, metaHashes, newVersion);
-        _applyActivateDelegateId(groupId, config, owner, delegateId_, newVersion, prevDelegateId);
-        _applyActivateSource(groupId, config.scopeSource, scopeSource_, newVersion, true);
-        _applyActivateSource(groupId, config.denySource, denySource_, newVersion, false);
-        _applyActivatePlugin(groupId, config.beforePostPlugin, beforePostPlugin_, newVersion, true);
-        _applyActivatePlugin(groupId, config.afterPostPlugin, afterPostPlugin_, newVersion, false);
-
         config.scopeSource = scopeSource_;
         config.denySource = denySource_;
         config.beforePostPlugin = beforePostPlugin_;
         config.afterPostPlugin = afterPostPlugin_;
+
+        uint256 newVersion = _nextConfigVersion(config);
+
+        _initActivateMeta(groupId, metaKeys_, metaValues_, newVersion);
+        if (delegateId_ != 0) {
+            config.delegateId = delegateId_;
+            config.delegateOwnerSnapshot = owner;
+            emit DelegateIdSet(groupId, owner, delegateId_, newVersion, 0);
+        }
+        if (scopeSource_ != address(0)) {
+            emit ScopeSourceSet(groupId, scopeSource_, msg.sender, newVersion, address(0));
+        }
+        if (denySource_ != address(0)) {
+            emit DenySourceSet(groupId, denySource_, msg.sender, newVersion, address(0));
+        }
+        if (beforePostPlugin_ != address(0)) {
+            emit BeforePostPluginSet(groupId, beforePostPlugin_, msg.sender, newVersion, address(0));
+        }
+        if (afterPostPlugin_ != address(0)) {
+            emit AfterPostPluginSet(groupId, afterPostPlugin_, msg.sender, newVersion, address(0));
+        }
         emit Activate(groupId, owner, newVersion);
     }
 
@@ -149,35 +159,12 @@ contract GroupChat is IGroupChat {
         _requireOwnerOrDelegateAndActivated(groupId);
         _validateMetaKey(key);
 
-        ChatConfig storage config = _chatConfigs[groupId];
         bytes32 hash = _metaHash(key);
-        MetaState storage item = _metaStates[groupId][hash];
+        _validateMetaChange(groupId, hash, value);
 
-        if (value.length == 0) {
-            if (!item.exists) {
-                revert MetaKeyNotFound();
-            }
-            bytes memory prevValue = item.value;
-            _removeMeta(groupId, hash);
-            uint256 newVersion = _nextConfigVersion(config);
-            emit MetaSet(groupId, msg.sender, newVersion, key, "", prevValue);
-            return;
-        }
-
-        if (item.exists) {
-            if (_bytesEqual(item.value, value)) {
-                revert MetaValueUnchanged();
-            }
-            bytes memory prevValue = item.value;
-            item.value = value;
-            uint256 newVersion = _nextConfigVersion(config);
-            emit MetaSet(groupId, msg.sender, newVersion, key, value, prevValue);
-            return;
-        }
-
-        _addMeta(groupId, key, value);
-        uint256 newVersion2 = _nextConfigVersion(config);
-        emit MetaSet(groupId, msg.sender, newVersion2, key, value, "");
+        ChatConfig storage config = _chatConfigs[groupId];
+        uint256 newVersion = _nextConfigVersion(config);
+        _applyMetaChange(groupId, key, hash, value, newVersion);
     }
 
     function setMetaBatch(uint256 groupId, string[] calldata keys, bytes[] calldata values) external nonReentrant {
@@ -193,32 +180,13 @@ contract GroupChat is IGroupChat {
         ChatConfig storage config = _chatConfigs[groupId];
 
         for (uint256 i = 0; i < keys.length; i++) {
-            MetaState storage item = _metaStates[groupId][hashes[i]];
-            if (values[i].length == 0) {
-                if (!item.exists) {
-                    revert MetaKeyNotFound();
-                }
-            } else if (item.exists && _bytesEqual(item.value, values[i])) {
-                revert MetaValueUnchanged();
-            }
+            _validateMetaChange(groupId, hashes[i], values[i]);
         }
 
         uint256 newVersion = _nextConfigVersion(config);
 
         for (uint256 i = 0; i < keys.length; i++) {
-            MetaState storage item = _metaStates[groupId][hashes[i]];
-            if (values[i].length == 0) {
-                bytes memory prevValue = item.value;
-                _removeMeta(groupId, hashes[i]);
-                emit MetaSet(groupId, msg.sender, newVersion, keys[i], "", prevValue);
-            } else if (item.exists) {
-                bytes memory prevValue2 = item.value;
-                item.value = values[i];
-                emit MetaSet(groupId, msg.sender, newVersion, keys[i], values[i], prevValue2);
-            } else {
-                _addMeta(groupId, keys[i], values[i]);
-                emit MetaSet(groupId, msg.sender, newVersion, keys[i], values[i], "");
-            }
+            _applyMetaChange(groupId, keys[i], hashes[i], values[i], newVersion);
         }
     }
 
@@ -637,101 +605,18 @@ contract GroupChat is IGroupChat {
         return result;
     }
 
-    function _applyActivateMeta(
+    function _initActivateMeta(
         uint256 groupId,
         string[] calldata newKeys,
         bytes[] calldata newValues,
-        bytes32[] memory newHashes,
         uint256 newVersion
     ) internal {
-        string[] storage existingKeys = _metaKeys[groupId];
-        string[] memory deleteKeys = new string[](existingKeys.length);
-        uint256 deleteCount;
-
-        for (uint256 i = 0; i < existingKeys.length; i++) {
-            string storage key = existingKeys[i];
-            bytes32 hash = _metaHash(key);
-            if (!_containsNonEmptyHash(newHashes, newValues, hash)) {
-                deleteKeys[deleteCount++] = key;
-            }
-        }
-
-        for (uint256 i = 0; i < deleteCount; i++) {
-            bytes32 hash = _metaHash(deleteKeys[i]);
-            bytes memory prevValue = _metaStates[groupId][hash].value;
-            _removeMeta(groupId, hash);
-            emit MetaSet(groupId, msg.sender, newVersion, deleteKeys[i], "", prevValue);
-        }
-
         for (uint256 i = 0; i < newKeys.length; i++) {
             if (newValues[i].length == 0) {
                 continue;
             }
-            MetaState storage item = _metaStates[groupId][newHashes[i]];
-            if (item.exists) {
-                if (!_bytesEqual(item.value, newValues[i])) {
-                    bytes memory prevValue = item.value;
-                    item.value = newValues[i];
-                    emit MetaSet(groupId, msg.sender, newVersion, newKeys[i], newValues[i], prevValue);
-                }
-            } else {
-                _addMeta(groupId, newKeys[i], newValues[i]);
-                emit MetaSet(groupId, msg.sender, newVersion, newKeys[i], newValues[i], "");
-            }
-        }
-    }
-
-    function _applyActivateDelegateId(
-        uint256 groupId,
-        ChatConfig storage config,
-        address owner,
-        uint256 delegateId_,
-        uint256 newVersion,
-        uint256 prevDelegateId
-    ) internal {
-        address targetSnapshot = delegateId_ == 0 ? address(0) : owner;
-        if (config.delegateId == delegateId_ && config.delegateOwnerSnapshot == targetSnapshot) {
-            return;
-        }
-
-        config.delegateId = delegateId_;
-        config.delegateOwnerSnapshot = targetSnapshot;
-        emit DelegateIdSet(groupId, owner, delegateId_, newVersion, prevDelegateId);
-    }
-
-    function _applyActivateSource(
-        uint256 groupId,
-        address currentSource,
-        address newSource,
-        uint256 newVersion,
-        bool isScope
-    ) internal {
-        if (currentSource == newSource) {
-            return;
-        }
-
-        if (isScope) {
-            emit ScopeSourceSet(groupId, newSource, msg.sender, newVersion, currentSource);
-        } else {
-            emit DenySourceSet(groupId, newSource, msg.sender, newVersion, currentSource);
-        }
-    }
-
-    function _applyActivatePlugin(
-        uint256 groupId,
-        address currentPlugin,
-        address newPlugin,
-        uint256 newVersion,
-        bool isBefore
-    ) internal {
-        if (currentPlugin == newPlugin) {
-            return;
-        }
-
-        if (isBefore) {
-            emit BeforePostPluginSet(groupId, newPlugin, msg.sender, newVersion, currentPlugin);
-        } else {
-            emit AfterPostPluginSet(groupId, newPlugin, msg.sender, newVersion, currentPlugin);
+            _addMeta(groupId, newKeys[i], newValues[i]);
+            emit MetaSet(groupId, msg.sender, newVersion, newKeys[i], newValues[i], "");
         }
     }
 
@@ -805,6 +690,44 @@ contract GroupChat is IGroupChat {
         bytes32 hash = _metaHash(key);
         _metaStates[groupId][hash] = MetaState({exists: true, index: _metaKeys[groupId].length, value: value});
         _metaKeys[groupId].push(key);
+    }
+
+    function _validateMetaChange(uint256 groupId, bytes32 hash, bytes calldata value) internal view {
+        MetaState storage item = _metaStates[groupId][hash];
+        if (value.length == 0) {
+            if (!item.exists) {
+                revert MetaKeyNotFound();
+            }
+            return;
+        }
+        if (item.exists && _bytesEqual(item.value, value)) {
+            revert MetaValueUnchanged();
+        }
+    }
+
+    function _applyMetaChange(
+        uint256 groupId,
+        string calldata key,
+        bytes32 hash,
+        bytes calldata value,
+        uint256 newVersion
+    ) internal {
+        MetaState storage item = _metaStates[groupId][hash];
+        if (value.length == 0) {
+            bytes memory prevValue = item.value;
+            _removeMeta(groupId, hash);
+            emit MetaSet(groupId, msg.sender, newVersion, key, "", prevValue);
+            return;
+        }
+        if (item.exists) {
+            bytes memory prevValue2 = item.value;
+            item.value = value;
+            emit MetaSet(groupId, msg.sender, newVersion, key, value, prevValue2);
+            return;
+        }
+
+        _addMeta(groupId, key, value);
+        emit MetaSet(groupId, msg.sender, newVersion, key, value, "");
     }
 
     function _removeMeta(uint256 groupId, bytes32 hash) internal {
@@ -1153,28 +1076,6 @@ contract GroupChat is IGroupChat {
         for (uint256 i = 0; i < source.mentionedSenderIds.length; i++) {
             result.mentionedSenderIds[i] = source.mentionedSenderIds[i];
         }
-    }
-
-    function _containsHash(bytes32[] memory hashes, bytes32 target) internal pure returns (bool) {
-        for (uint256 i = 0; i < hashes.length; i++) {
-            if (hashes[i] == target) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function _containsNonEmptyHash(bytes32[] memory hashes, bytes[] calldata values, bytes32 target)
-        internal
-        pure
-        returns (bool)
-    {
-        for (uint256 i = 0; i < hashes.length; i++) {
-            if (hashes[i] == target && values[i].length != 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     function _bytesEqual(bytes memory left, bytes memory right) internal pure returns (bool) {
