@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {BaseManager} from "../src/managers/BaseManager.sol";
+import {IBaseManager} from "../src/interfaces/managers/IBaseManager.sol";
 
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
 import {TokenActionMainManager} from "../src/managers/TokenActionMainManager.sol";
@@ -52,7 +52,7 @@ contract TypedManagersTest is GroupChatFixture {
         protocol.setExtensionJoined(token, 101, senderOwner, true);
         assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
 
-        vm.expectRevert(BaseManager.AlreadyManaged.selector);
+        vm.expectRevert(IBaseManager.AlreadyManaged.selector);
         manager.activate(token);
     }
 
@@ -88,10 +88,10 @@ contract TypedManagersTest is GroupChatFixture {
         TokenActionGovManager manager =
             new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
 
-        vm.expectRevert(BaseManager.RecentRoundsZero.selector);
+        vm.expectRevert(IBaseManager.RecentRoundsZero.selector);
         new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 0);
 
-        vm.expectRevert(BaseManager.ActionIdNotExist.selector);
+        vm.expectRevert(IBaseManager.ActionIdNotExist.selector);
         manager.activate(token, 42);
 
         protocol.setActionsCount(token, 44);
@@ -295,10 +295,10 @@ contract TypedManagersTest is GroupChatFixture {
     }
 
     function testT114_typedManagerProtocolDependenciesRequireCode() public {
-        vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
+        vm.expectRevert(IBaseManager.ManagerAddressHasNoCode.selector);
         new TokenGovManager(address(chat), address(0), address(0), address(0), other);
 
-        vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
+        vm.expectRevert(IBaseManager.ManagerAddressHasNoCode.selector);
         new TokenMainManager(address(chat), address(0), address(0), address(0), other);
 
         MockLOVE20Protocols protocol = new MockLOVE20Protocols();
@@ -307,7 +307,7 @@ contract TypedManagersTest is GroupChatFixture {
         TokenGovManager manager =
             new TokenGovManager(address(chat), address(0), address(0), address(0), address(protocol));
 
-        vm.expectRevert(BaseManager.TokenNotLOVE20.selector);
+        vm.expectRevert(IBaseManager.TokenNotLOVE20.selector);
         manager.activate(token);
     }
 

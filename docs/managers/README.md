@@ -4,7 +4,7 @@ Manager 用于去中心化群聊。
 
 接口位于 `src/interfaces/managers/`。公共面分三层：
 
-- `IBaseManager`：所有 Manager 共同配置、scope、deny、ERC721 接收面。
+- `IBaseManager`：所有 Manager 共同配置、`ExtensionCenter`、scope、deny、ERC721 接收面。
 - `IBaseTokenScopeManager`：token 类共同激活和查询面。
 - `IBaseTokenActionScopeManager`：action 类共同激活和查询面。
 

@@ -9,7 +9,6 @@ import {BaseManager} from "./BaseManager.sol";
 abstract contract BaseTokenManager is BaseManager {
     address internal immutable LAUNCH_ADDRESS;
     address internal immutable STAKE_ADDRESS;
-    address public immutable EXTENSION_CENTER_ADDRESS;
 
     constructor(
         address groupChat_,
@@ -17,9 +16,7 @@ abstract contract BaseTokenManager is BaseManager {
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_) {
-        _requireCode(extensionCenter_);
-
+    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         address launch = IExtensionCenter(extensionCenter_).launchAddress();
         address stake = IExtensionCenter(extensionCenter_).stakeAddress();
         _requireCode(launch);
@@ -27,7 +24,6 @@ abstract contract BaseTokenManager is BaseManager {
 
         LAUNCH_ADDRESS = launch;
         STAKE_ADDRESS = stake;
-        EXTENSION_CENTER_ADDRESS = extensionCenter_;
     }
 
     function _tokenGovVoteWeight(address token, address account) internal view returns (uint256) {

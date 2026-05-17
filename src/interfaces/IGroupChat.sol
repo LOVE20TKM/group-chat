@@ -10,6 +10,7 @@ interface IGroupChatErrors {
     error NotChatOwnerOrDelegateIdOwner();
     error SenderAddressNotSenderIdOwner();
     error RoundNotStarted();
+    error Reentrant();
     error PhaseBlocksZero();
     error MetaKeyEmpty();
     error TooManyMetaKeys(uint256 length, uint256 maxLength);

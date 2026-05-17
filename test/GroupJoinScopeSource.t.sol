@@ -2,6 +2,7 @@
 pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
+import {IGroupJoinScopeSource} from "../src/interfaces/sources/scope/IGroupJoinScopeSource.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
@@ -29,7 +30,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     }
 
     function testT130_constructorRequiresGroupJoinCode() public {
-        vm.expectRevert(GroupJoinScopeSource.GroupJoinScopeSourceAddressHasNoCode.selector);
+        vm.expectRevert(IGroupJoinScopeSource.GroupJoinScopeSourceAddressHasNoCode.selector);
         new GroupJoinScopeSource(address(0x1234));
     }
 

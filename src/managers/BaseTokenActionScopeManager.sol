@@ -6,11 +6,10 @@ import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
 import {ILOVE20Submit} from "../interfaces/external/ILOVE20Submit.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
+import {IBaseTokenActionScopeManager} from "../interfaces/managers/IBaseTokenActionScopeManager.sol";
 import {BaseTokenManager} from "./BaseTokenManager.sol";
 
-abstract contract BaseTokenActionScopeManager is BaseTokenManager {
-    event Activate(address indexed token, uint256 indexed actionId, uint256 indexed groupId, address operator);
-
+abstract contract BaseTokenActionScopeManager is BaseTokenManager, IBaseTokenActionScopeManager {
     struct ManagedAction {
         address token;
         uint256 actionId;

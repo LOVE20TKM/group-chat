@@ -5,60 +5,12 @@ import {IGroupChat} from "../../interfaces/IGroupChat.sol";
 
 import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
-import {IPostDenySource} from "../../interfaces/sources/IPostDenySource.sol";
+import {IAdminDenySource} from "../../interfaces/sources/deny/IAdminDenySource.sol";
 import {EnumerableSets} from "../../libraries/EnumerableSets.sol";
 
-contract AdminDenySource is IPostDenySource {
+contract AdminDenySource is IAdminDenySource {
     using EnumerableSets for EnumerableSets.AddressSet;
     using EnumerableSets for EnumerableSets.UintSet;
-
-    error AdminDenySourceAddressHasNoCode();
-    error UnauthorizedDenySourceManager();
-    error GroupNotExist();
-    error DuplicateAdminId();
-    error AdminIdsLimitExceeded();
-    error MaxAdminIdsZero();
-    error TargetAddressZero();
-    error TargetSenderIdZero();
-    error SenderPairLengthMismatch();
-
-    event AdminSet(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed adminId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
-    );
-
-    event AddressDenySet(
-        uint256 indexed groupId,
-        address indexed operator,
-        address indexed targetAddress,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
-    );
-
-    event SenderIdDenySet(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed targetSenderId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
-    );
-
-    event SenderIdExemptSet(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed targetSenderId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
-    );
-
-    event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
     uint8 internal constant _ROLE_OWNER = 1;
     uint8 internal constant _ROLE_DELEGATE = 2;

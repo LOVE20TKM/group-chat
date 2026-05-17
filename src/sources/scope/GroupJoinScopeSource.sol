@@ -2,11 +2,9 @@
 pragma solidity =0.8.17;
 
 import {IGroupJoin} from "../../interfaces/external/IGroupJoin.sol";
-import {IPostScopeSource} from "../../interfaces/sources/IPostScopeSource.sol";
+import {IGroupJoinScopeSource} from "../../interfaces/sources/scope/IGroupJoinScopeSource.sol";
 
-contract GroupJoinScopeSource is IPostScopeSource {
-    error GroupJoinScopeSourceAddressHasNoCode();
-
+contract GroupJoinScopeSource is IGroupJoinScopeSource {
     address public immutable GROUP_JOIN_ADDRESS;
 
     constructor(address groupJoin_) {

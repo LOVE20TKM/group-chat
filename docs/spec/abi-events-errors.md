@@ -173,6 +173,7 @@ Manager 事件：
 - `NotChatOwnerOrDelegateIdOwner`
 - `SenderAddressNotSenderIdOwner`
 - `RoundNotStarted`
+- `Reentrant`
 - `PhaseBlocksZero`
 
 Meta 错误：

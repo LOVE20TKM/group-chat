@@ -3,50 +3,13 @@ pragma solidity =0.8.17;
 
 import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
 
-import {IPostDenySource} from "../../interfaces/sources/IPostDenySource.sol";
 import {IDenyVoteWeightSource} from "../../interfaces/sources/deny/IDenyVoteWeightSource.sol";
+import {IGovVotedDenySource} from "../../interfaces/sources/deny/IGovVotedDenySource.sol";
 import {EnumerableSets} from "../../libraries/EnumerableSets.sol";
 
-contract GovVotedDenySource is IPostDenySource {
+contract GovVotedDenySource is IGovVotedDenySource {
     using EnumerableSets for EnumerableSets.AddressSet;
     using EnumerableSets for EnumerableSets.UintSet;
-
-    error GovVotedDenySourceAddressHasNoCode();
-    error DenyVoteWeightSourceUnavailable();
-    error TargetAddressZero();
-    error TargetSenderIdZero();
-    error VoteWeightZero();
-    error VoteUnchanged();
-    error VoteNotFound();
-    error DenyThresholdTooHigh();
-
-    event AddressDenyVoteSet(
-        uint256 indexed groupId,
-        address indexed targetAddress,
-        address indexed voter,
-        bool supportDeny,
-        uint256 settledWeight,
-        uint256 supportWeight,
-        uint256 opposeWeight,
-        uint256 stateVersion
-    );
-
-    event SenderIdDenyVoteSet(
-        uint256 indexed groupId,
-        uint256 indexed targetSenderId,
-        address indexed voter,
-        bool supportDeny,
-        uint256 settledWeight,
-        uint256 supportWeight,
-        uint256 opposeWeight,
-        uint256 stateVersion
-    );
-
-    event AddressDenySet(uint256 indexed groupId, address indexed targetAddress, bool listed, uint256 stateVersion);
-
-    event SenderIdDenySet(uint256 indexed groupId, uint256 indexed targetSenderId, bool listed, uint256 stateVersion);
-
-    event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
     address public immutable GROUP_ADDRESS;
     uint256 public constant PRECISION = 1e18;

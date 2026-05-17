@@ -12,6 +12,7 @@ interface ILOVE20Group {
 
     function isGroupNameUsed(string calldata groupName) external view returns (bool);
 
+    // GroupChat assumes token IDs are minted consecutively from 1 and are never burned.
     function totalSupply() external view returns (uint256);
 
     function ownerOf(uint256 tokenId) external view returns (address owner);

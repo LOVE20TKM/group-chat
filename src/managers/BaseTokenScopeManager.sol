@@ -2,11 +2,10 @@
 pragma solidity =0.8.17;
 
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
+import {IBaseTokenScopeManager} from "../interfaces/managers/IBaseTokenScopeManager.sol";
 import {BaseTokenManager} from "./BaseTokenManager.sol";
 
-abstract contract BaseTokenScopeManager is BaseTokenManager {
-    event Activate(address indexed token, uint256 indexed groupId, address indexed operator);
-
+abstract contract BaseTokenScopeManager is BaseTokenManager, IBaseTokenScopeManager {
     mapping(uint256 => address) public tokenOfGroup;
     mapping(address => uint256) public groupIdOfToken;
     address[] internal _tokens;

@@ -22,6 +22,8 @@ interface IBaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiv
 
     function GROUP_ADDRESS() external view returns (address);
 
+    function EXTENSION_CENTER_ADDRESS() external view returns (address);
+
     function DENY_SOURCE_ADDRESS() external view returns (address);
 
     function BEFORE_POST_PLUGIN_ADDRESS() external view returns (address);

@@ -3,7 +3,7 @@ pragma solidity =0.8.17;
 
 import {DeployGroupChat} from "../script/DeployGroupChat.s.sol";
 import {IGroupChat} from "../src/interfaces/IGroupChat.sol";
-import {BaseManager} from "../src/managers/BaseManager.sol";
+import {IBaseManager} from "../src/interfaces/managers/IBaseManager.sol";
 import {BaseTokenActionScopeManager} from "../src/managers/BaseTokenActionScopeManager.sol";
 import {BaseTokenScopeManager} from "../src/managers/BaseTokenScopeManager.sol";
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
@@ -209,10 +209,10 @@ contract DeployGroupChatTest is TestBase {
     }
 
     function _assertManagerCommon(address manager, DeployGroupChat.DeployedAddresses memory deployed) internal view {
-        assertEq(BaseManager(manager).GROUP_CHAT_ADDRESS(), deployed.groupChat);
-        assertEq(BaseManager(manager).DENY_SOURCE_ADDRESS(), deployed.groupChatDenySource);
-        assertEq(BaseManager(manager).BEFORE_POST_PLUGIN_ADDRESS(), address(0));
-        assertEq(BaseManager(manager).AFTER_POST_PLUGIN_ADDRESS(), address(0));
+        assertEq(IBaseManager(manager).GROUP_CHAT_ADDRESS(), deployed.groupChat);
+        assertEq(IBaseManager(manager).DENY_SOURCE_ADDRESS(), deployed.groupChatDenySource);
+        assertEq(IBaseManager(manager).BEFORE_POST_PLUGIN_ADDRESS(), address(0));
+        assertEq(IBaseManager(manager).AFTER_POST_PLUGIN_ADDRESS(), address(0));
     }
 
     function _assertTokenMainManagerDerivedAddressGettersHidden(address manager) internal {

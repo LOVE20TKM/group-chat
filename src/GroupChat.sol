@@ -76,7 +76,9 @@ contract GroupChat is IGroupChat {
     }
 
     modifier nonReentrant() {
-        require(_entered == 0, "REENTRANT");
+        if (_entered != 0) {
+            revert Reentrant();
+        }
         _entered = 1;
         _;
         _entered = 0;
@@ -186,9 +188,11 @@ contract GroupChat is IGroupChat {
         bytes32[] memory hashes = _validateMetaInput(keys, values);
         ChatConfig storage config = _chatConfigs[groupId];
 
+        bool[] memory changed = new bool[](keys.length);
         bool hasChange;
         for (uint256 i = 0; i < keys.length; i++) {
             if (_metaChangeNeeded(groupId, hashes[i], values[i])) {
+                changed[i] = true;
                 hasChange = true;
             }
         }
@@ -200,7 +204,7 @@ contract GroupChat is IGroupChat {
         uint256 newVersion = _nextConfigVersion(config);
 
         for (uint256 i = 0; i < keys.length; i++) {
-            if (_metaChangeNeeded(groupId, hashes[i], values[i])) {
+            if (changed[i]) {
                 _applyMetaChange(groupId, keys[i], hashes[i], values[i], newVersion);
             }
         }
@@ -1047,6 +1051,7 @@ contract GroupChat is IGroupChat {
         if (mentionedSenderIds.length > MAX_MENTIONED_SENDER_IDS) {
             revert TooManyMentionedSenderIds(mentionedSenderIds.length, MAX_MENTIONED_SENDER_IDS);
         }
+        // LOVE20Group mints token IDs as 1..totalSupply and does not expose an NFT burn path.
         uint256 mintedCount = ILOVE20Group(GROUP_ADDRESS).totalSupply();
         for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
             uint256 mentionedSenderId = mentionedSenderIds[i];

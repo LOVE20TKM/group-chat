@@ -2,6 +2,7 @@
 pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
+import {IGovVotedDenySource} from "../src/interfaces/sources/deny/IGovVotedDenySource.sol";
 
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
 import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
@@ -121,7 +122,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         _activateTokenGovManager();
 
         vm.prank(senderOwner);
-        vm.expectRevert(GovVotedDenySource.VoteWeightZero.selector);
+        vm.expectRevert(IGovVotedDenySource.VoteWeightZero.selector);
         deny.voteBySenderAddress(groupId, senderOwner, true);
 
         protocol.setGovVotes(token, senderOwner, 3);
@@ -129,22 +130,22 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         deny.voteBySenderAddress(groupId, senderOwner, true);
 
         vm.prank(senderOwner);
-        vm.expectRevert(GovVotedDenySource.VoteUnchanged.selector);
+        vm.expectRevert(IGovVotedDenySource.VoteUnchanged.selector);
         deny.voteBySenderAddress(groupId, senderOwner, true);
 
-        vm.expectRevert(GovVotedDenySource.VoteNotFound.selector);
+        vm.expectRevert(IGovVotedDenySource.VoteNotFound.selector);
         deny.refreshVoteBySenderAddress(groupId, other, senderOwner);
 
         vm.prank(voter2);
-        vm.expectRevert(GovVotedDenySource.VoteNotFound.selector);
+        vm.expectRevert(IGovVotedDenySource.VoteNotFound.selector);
         deny.clearVoteBySenderAddress(groupId, senderOwner);
 
         vm.prank(senderOwner);
-        vm.expectRevert(GovVotedDenySource.TargetSenderIdZero.selector);
+        vm.expectRevert(IGovVotedDenySource.TargetSenderIdZero.selector);
         deny.voteBySender(groupId, 0, senderOwner, true);
 
         vm.prank(senderOwner);
-        vm.expectRevert(GovVotedDenySource.TargetAddressZero.selector);
+        vm.expectRevert(IGovVotedDenySource.TargetAddressZero.selector);
         deny.voteBySender(groupId, senderId, address(0), true);
     }
 
@@ -170,7 +171,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(voterOpposeWeights.length, 0);
 
         vm.prank(senderOwner);
-        vm.expectRevert(GovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
+        vm.expectRevert(IGovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
         deny.voteBySenderAddress(groupId, senderOwner, true);
     }
 
@@ -211,7 +212,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertTrue(!deny.isDenied(managedGroupId, senderId, senderOwner));
 
         vm.prank(senderOwner);
-        vm.expectRevert(GovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
+        vm.expectRevert(IGovVotedDenySource.DenyVoteWeightSourceUnavailable.selector);
         deny.voteBySenderAddress(managedGroupId, senderOwner, true);
     }
 

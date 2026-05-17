@@ -3,18 +3,27 @@ pragma solidity =0.8.17;
 
 import {IGroupChat, IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IERC721Receiver} from "../src/interfaces/external/IERC721Receiver.sol";
-import {BaseManager} from "../src/managers/BaseManager.sol";
+import {IBaseManager} from "../src/interfaces/managers/IBaseManager.sol";
 
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
+import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {MockManager} from "./mocks/MockManagers.sol";
 import {MockBeforePostRejectPlugin, MockPostDenySource} from "./mocks/MockPlugins.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract ManagerTest is GroupChatFixture {
+    MockLOVE20Protocols internal managerCenter;
+
+    function setUp() public override {
+        super.setUp();
+        managerCenter = new MockLOVE20Protocols();
+    }
+
     function testT100_managerActivatesChatWithImmutableConfigAndNoDelegate() public {
         MockPostDenySource deny = new MockPostDenySource();
         MockBeforePostRejectPlugin beforePlugin = new MockBeforePostRejectPlugin();
-        MockManager manager = new MockManager(address(chat), address(deny), address(beforePlugin), address(0));
+        MockManager manager =
+            new MockManager(address(chat), address(deny), address(beforePlugin), address(0), address(managerCenter));
 
         groupId = manager.activateMockManagedGroup();
         assertEq(chat.chatInfo(groupId).owner, address(manager));
@@ -34,7 +43,7 @@ contract ManagerTest is GroupChatFixture {
     }
 
     function testT101_managerOwnerCannotStopPostingThroughGroupChat() public {
-        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0));
+        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0), address(managerCenter));
 
         groupId = manager.activateMockManagedGroup();
 
@@ -44,7 +53,7 @@ contract ManagerTest is GroupChatFixture {
     }
 
     function testT102_managerDoesNotExposeReconfigureEntrypoints() public {
-        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0));
+        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0), address(managerCenter));
 
         _expectUnknownSelector(
             address(manager), abi.encodeWithSignature("setPostingAllowed(uint256,bool)", groupId, false)
@@ -65,7 +74,7 @@ contract ManagerTest is GroupChatFixture {
     }
 
     function testT103_managerDoesNotExposeGenericCallEntrypoints() public {
-        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0));
+        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0), address(managerCenter));
 
         _expectUnknownSelector(address(manager), abi.encodeWithSignature("call(address,bytes)", other, ""));
         _expectUnknownSelector(address(manager), abi.encodeWithSignature("delegatecall(address,bytes)", other, ""));
@@ -75,19 +84,22 @@ contract ManagerTest is GroupChatFixture {
     }
 
     function testT104_managerConstructorRejectsNoCodeAddressesAndReceivesErc721() public {
-        vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
-        new MockManager(other, address(0), address(0), address(0));
+        vm.expectRevert(IBaseManager.ManagerAddressHasNoCode.selector);
+        new MockManager(other, address(0), address(0), address(0), address(managerCenter));
 
-        vm.expectRevert(BaseManager.ManagerAddressHasNoCode.selector);
-        new MockManager(address(chat), other, address(0), address(0));
+        vm.expectRevert(IBaseManager.ManagerAddressHasNoCode.selector);
+        new MockManager(address(chat), other, address(0), address(0), address(managerCenter));
 
-        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0));
+        vm.expectRevert(IBaseManager.ManagerAddressHasNoCode.selector);
+        new MockManager(address(chat), address(0), address(0), address(0), other);
 
-        vm.expectRevert(BaseManager.UnexpectedManagerERC721Received.selector);
+        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0), address(managerCenter));
+
+        vm.expectRevert(IBaseManager.UnexpectedManagerERC721Received.selector);
         manager.onERC721Received(chatOwner, address(0), groupId, "");
 
         vm.prank(address(groupNft));
-        vm.expectRevert(BaseManager.UnexpectedManagerERC721Received.selector);
+        vm.expectRevert(IBaseManager.UnexpectedManagerERC721Received.selector);
         manager.onERC721Received(chatOwner, chatOwner, groupId, "");
 
         vm.prank(address(groupNft));
@@ -100,7 +112,7 @@ contract ManagerTest is GroupChatFixture {
         groupNft.setMintPayment(address(token), 10);
         token.mint(address(this), 10);
 
-        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0));
+        MockManager manager = new MockManager(address(chat), address(0), address(0), address(0), address(managerCenter));
         token.approve(address(manager), 10);
 
         groupId = manager.activateMockManagedGroup();

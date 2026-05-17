@@ -94,6 +94,7 @@ DenySourceFailed.selector          denySource 调用失败
 - 不允许重复。
 - 允许提及自己。
 - `mentionAll` 只记录声明语义，主协议不做许可判断。
+- 当前存在性校验依赖 `LOVE20Group` 的 `tokenId` 从 `1` 连续铸造且不 burn；若上游改成非连续或可 burn，必须改为 `ownerOf` 校验。
 
 ## 引用
 

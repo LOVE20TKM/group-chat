@@ -7,25 +7,13 @@ import {IERC20Payment} from "../interfaces/external/IERC20Payment.sol";
 import {IERC20Symbol} from "../interfaces/external/IERC20Symbol.sol";
 import {IERC721Receiver} from "../interfaces/external/IERC721Receiver.sol";
 import {ILOVE20Group} from "../interfaces/external/ILOVE20Group.sol";
+import {IBaseManager} from "../interfaces/managers/IBaseManager.sol";
 
-import {IPostScopeSource} from "../interfaces/sources/IPostScopeSource.sol";
-import {IDenyVoteWeightSource} from "../interfaces/sources/deny/IDenyVoteWeightSource.sol";
-
-abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiver {
-    error ManagerAddressHasNoCode();
-    error AlreadyManaged();
-    error RecentRoundsZero();
-    error ManagerGroupNameUnavailable();
-    error ManagerMintCostChanged();
-    error ManagerPaymentFailed();
-    error ManagerApprovalFailed();
-    error TokenNotLOVE20();
-    error UnexpectedManagerERC721Received();
-    error ActionIdNotExist();
-
+abstract contract BaseManager is IBaseManager {
     address public immutable GROUP_CHAT_ADDRESS;
     address public immutable GROUP_ADDRESS;
     uint256 internal immutable MAX_GROUP_NAME_LENGTH;
+    address public immutable EXTENSION_CENTER_ADDRESS;
     address public immutable DENY_SOURCE_ADDRESS;
     address public immutable BEFORE_POST_PLUGIN_ADDRESS;
     address public immutable AFTER_POST_PLUGIN_ADDRESS;
@@ -38,11 +26,18 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
 
     uint256 internal _mintNonce;
 
-    constructor(address groupChat_, address denySource_, address beforePostPlugin_, address afterPostPlugin_) {
+    constructor(
+        address groupChat_,
+        address denySource_,
+        address beforePostPlugin_,
+        address afterPostPlugin_,
+        address extensionCenter_
+    ) {
         _requireCode(groupChat_);
         _requireOptionalCode(denySource_);
         _requireOptionalCode(beforePostPlugin_);
         _requireOptionalCode(afterPostPlugin_);
+        _requireCode(extensionCenter_);
 
         address love20Group = IGroupChat(groupChat_).GROUP_ADDRESS();
         _requireCode(love20Group);
@@ -50,6 +45,7 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
         GROUP_CHAT_ADDRESS = groupChat_;
         GROUP_ADDRESS = love20Group;
         MAX_GROUP_NAME_LENGTH = ILOVE20Group(love20Group).MAX_GROUP_NAME_LENGTH();
+        EXTENSION_CENTER_ADDRESS = extensionCenter_;
         DENY_SOURCE_ADDRESS = denySource_;
         BEFORE_POST_PLUGIN_ADDRESS = beforePostPlugin_;
         AFTER_POST_PLUGIN_ADDRESS = afterPostPlugin_;

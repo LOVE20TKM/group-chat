@@ -2,6 +2,7 @@
 pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
+import {IAdminDenySource} from "../src/interfaces/sources/deny/IAdminDenySource.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
@@ -31,7 +32,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertEq(deny.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.denyBySenderAddresses(groupId, accounts);
 
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
@@ -44,7 +45,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertEq(deny.stateVersion(groupId), 2);
 
         vm.prank(delegateIdOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.denyBySenderAddresses(groupId, accounts);
     }
 
@@ -57,7 +58,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertTrue(deny.isAdminId(groupId, adminId));
 
         vm.prank(adminOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.denyBySenderAddresses(groupId, accounts);
 
         vm.prank(adminOwner);
@@ -68,11 +69,11 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertTrue(deny.isAddressDenied(groupId, senderOwner));
 
         vm.prank(adminOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.exemptSenderIds(groupId, _uints(senderId));
 
         vm.prank(adminOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.setAdmins(groupId, new uint256[](0));
     }
 
@@ -142,11 +143,11 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertEq(deny.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
-        vm.expectRevert(AdminDenySource.DuplicateAdminId.selector);
+        vm.expectRevert(IAdminDenySource.DuplicateAdminId.selector);
         deny.setAdmins(groupId, _uints(adminId, adminId));
 
         vm.prank(chatOwner);
-        vm.expectRevert(AdminDenySource.GroupNotExist.selector);
+        vm.expectRevert(IAdminDenySource.GroupNotExist.selector);
         deny.setAdmins(groupId, _uints(999999));
 
         vm.prank(adminOwner);
@@ -160,12 +161,12 @@ contract AdminDenySourceTest is GroupChatFixture {
         groupNft.transferFrom(adminOwner, stranger, adminId);
 
         vm.prank(adminOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.denyBySenderIds(groupId, _uints(otherGroupId));
     }
 
     function testT124B_setAdminsRejectsAdminCountAboveLimit() public {
-        vm.expectRevert(AdminDenySource.MaxAdminIdsZero.selector);
+        vm.expectRevert(IAdminDenySource.MaxAdminIdsZero.selector);
         new AdminDenySource(address(chat), 0);
 
         uint256[] memory admins = new uint256[](MAX_ADMIN_IDS + 1);
@@ -174,7 +175,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         }
 
         vm.prank(chatOwner);
-        vm.expectRevert(AdminDenySource.AdminIdsLimitExceeded.selector);
+        vm.expectRevert(IAdminDenySource.AdminIdsLimitExceeded.selector);
         deny.setAdmins(groupId, admins);
     }
 
@@ -233,11 +234,11 @@ contract AdminDenySourceTest is GroupChatFixture {
         uint256 baseVersion = deny.stateVersion(groupId);
 
         vm.prank(stranger);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.denyBySenders(groupId, _uints(senderId), _addresses(senderOwner, other));
 
         vm.prank(adminOwner);
-        vm.expectRevert(AdminDenySource.SenderPairLengthMismatch.selector);
+        vm.expectRevert(IAdminDenySource.SenderPairLengthMismatch.selector);
         deny.denyBySenders(groupId, _uints(senderId), _addresses(senderOwner, other));
 
         vm.prank(adminOwner);
@@ -264,7 +265,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         deny.setAdmins(groupId, _uints(groupId));
 
         vm.prank(chatOwner);
-        vm.expectRevert(AdminDenySource.UnauthorizedDenySourceManager.selector);
+        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
         deny.denyBySenderAddresses(groupId, _addresses(senderOwner));
 
         vm.prank(chatOwner);

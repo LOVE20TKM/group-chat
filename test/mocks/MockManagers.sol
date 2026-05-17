@@ -7,9 +7,13 @@ contract MockManager is BaseManager {
     bool public postAllowed = true;
     uint256 public voteWeight = 1;
 
-    constructor(address groupChat_, address denySource_, address beforePostPlugin_, address afterPostPlugin_)
-        BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_)
-    {}
+    constructor(
+        address groupChat_,
+        address denySource_,
+        address beforePostPlugin_,
+        address afterPostPlugin_,
+        address extensionCenter_
+    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
 
     function activateMockManagedGroup() external returns (uint256 groupId) {
         groupId = _mintManagedGroup("mock_manager");
