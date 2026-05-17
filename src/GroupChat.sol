@@ -48,7 +48,6 @@ contract GroupChat is IGroupChat {
     struct StoredMessage {
         uint256 senderId;
         address senderAddress;
-        uint256 round;
         string content;
         uint256 blockNumber;
         uint256 timestamp;
@@ -65,7 +64,6 @@ contract GroupChat is IGroupChat {
     mapping(uint256 => mapping(uint256 => uint256[])) internal _mentionMessageIndexes;
     mapping(uint256 => uint256[]) internal _mentionAllMessageIndexes;
     mapping(uint256 => uint256[]) internal _senderIdsByChat;
-    mapping(uint256 => mapping(uint256 => bool)) internal _senderTracked;
     mapping(uint256 => mapping(uint256 => RoundState)) internal _roundStates;
     mapping(uint256 => uint256[]) internal _roundListByChat;
     uint256[] internal _groupIds;
@@ -327,13 +325,12 @@ contract GroupChat is IGroupChat {
         }
 
         uint256 messageIndex =
-            _storeMessage(groupId, senderId, round, content, mentionedSenderIds, mentionAll, quotedMessageId);
+            _storeMessage(groupId, senderId, content, mentionedSenderIds, mentionAll, quotedMessageId);
 
-        _senderMessageIndexes[groupId][senderId].push(messageIndex);
-        if (!_senderTracked[groupId][senderId]) {
-            _senderTracked[groupId][senderId] = true;
+        if (_senderMessageIndexes[groupId][senderId].length == 0) {
             _senderIdsByChat[groupId].push(senderId);
         }
+        _senderMessageIndexes[groupId][senderId].push(messageIndex);
 
         _recordRound(groupId, round, messageIndex);
 
@@ -454,7 +451,7 @@ contract GroupChat is IGroupChat {
         if (block.number < originBlocks) {
             revert RoundNotStarted();
         }
-        return (block.number - originBlocks) / phaseBlocks;
+        return _roundByBlockNumber(block.number);
     }
 
     function messagesCount(uint256 groupId) external view returns (uint256) {
@@ -1095,7 +1092,6 @@ contract GroupChat is IGroupChat {
     function _storeMessage(
         uint256 groupId,
         uint256 senderId,
-        uint256 round,
         string calldata content,
         uint256[] calldata mentionedSenderIds,
         bool mentionAll,
@@ -1107,7 +1103,6 @@ contract GroupChat is IGroupChat {
         StoredMessage storage message_ = _messagesByChat[groupId][messageIndex];
         message_.senderId = senderId;
         message_.senderAddress = msg.sender;
-        message_.round = round;
         message_.content = content;
         message_.blockNumber = block.number;
         message_.timestamp = block.timestamp;
@@ -1146,6 +1141,10 @@ contract GroupChat is IGroupChat {
         return total - 1 - offset - index;
     }
 
+    function _roundByBlockNumber(uint256 blockNumber) internal view returns (uint256) {
+        return (blockNumber - originBlocks) / phaseBlocks;
+    }
+
     function _roundSpan(uint256 groupId, uint256 round) internal view returns (RoundSpan memory) {
         RoundState storage state = _roundStates[groupId][round];
         uint256 startIndex = state.startIndexPlusOne - 1;
@@ -1173,7 +1172,7 @@ contract GroupChat is IGroupChat {
         result.groupId = groupId;
         result.senderId = source.senderId;
         result.senderAddress = source.senderAddress;
-        result.round = source.round;
+        result.round = _roundByBlockNumber(source.blockNumber);
         result.messageId = messageIndex + 1;
         result.content = source.content;
         result.blockNumber = source.blockNumber;
