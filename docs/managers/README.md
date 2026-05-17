@@ -46,10 +46,10 @@ Manager 用于去中心化群聊。
 
 | Manager | 激活入参 | 发言资格 | 黑名单票权 |
 | --- | --- | --- | --- |
-| [TokenMainManager](./token-main.md) | `token` | 持币 / 参与代币行动 / 有治理票 | token 治理票 |
+| [TokenMainManager](./token-main.md) | `token` | 持币 / 主协议行动参与 / 有治理票 | token 治理票 |
 | [TokenGovManager](./token-gov.md) | `token` | 有 token 治理票 | token 治理票 |
-| [TokenActionMainManager](./token-action-main.md) | `token, actionId` | 近期投票 / 参与行动 | 当前行动轮投票数 |
-| [TokenActionGovManager](./token-action-gov.md) | `token, actionId` | 近期给行动投票 | 当前行动轮投票数 |
+| [TokenActionMainManager](./token-action-main.md) | `token, actionId` | 近期投票 / 参与行动 | 当前行动轮投票数；阈值分母为全 token 治理票 |
+| [TokenActionGovManager](./token-action-gov.md) | `token, actionId` | 近期给行动投票 | 当前行动轮投票数；阈值分母为全 token 治理票 |
 
 `activate(...)` 返回新铸造并激活的 `groupId`。
 

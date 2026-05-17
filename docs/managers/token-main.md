@@ -39,7 +39,6 @@ function activate(address token) external returns (uint256 groupId);
 - `IERC20Balance(token).balanceOf(account) > 1`
 - `ILOVE20Stake.validGovVotes(token, account) != 0`
 - `ILOVE20Join.amountByAccount(token, account) != 0`
-- 当前 round 已投行动中，`ExtensionCenter.isAccountJoined(token, actionId, account) == true`
 
 ## 黑名单票权
 
@@ -57,7 +56,6 @@ totalVoteWeight(groupId) = ILOVE20Stake.govVotesNum(token)
 - `STAKE_ADDRESS`
 - `LAUNCH_ADDRESS`
 - `JOIN_ADDRESS`
-- `VOTE_ADDRESS`
 
 ## 状态
 
@@ -74,5 +72,4 @@ totalVoteWeight(groupId) = ILOVE20Stake.govVotesNum(token)
 ## Review 重点
 
 - 持币阈值是 `> 1`，不是 `> 0`。
-- extension action participation 只检查当前 `Join.currentRound()` 的已投行动。
-- extension 参与状态以 `ExtensionCenter` 为准。
+- token 主群不把 extension 参与状态作为发言资格，避免按当前轮行动列表做无界扫描。

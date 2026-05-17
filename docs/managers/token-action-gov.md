@@ -62,6 +62,8 @@ voteWeightOf(groupId, voter) =
 totalVoteWeight(groupId) = ILOVE20Stake.govVotesNum(token)
 ```
 
+其中 `voteWeightOf` 是投票人对当前行动在当前轮的票数；`totalVoteWeight` 是全 token 治理票总量，所以默认 `0.3%` 阈值按全 token 治理票计算。
+
 未激活时返回 `0`。
 
 ## 依赖
@@ -100,4 +102,4 @@ uint256 public immutable RECENT_ROUNDS;
 
 - 这是行动投票治理者群，不是行动参与者群。
 - 发言资格只来自近期投票。
-- 黑名单票权只看当前行动轮投票数，不看历史轮。
+- 黑名单投票人权重只看当前行动轮投票数，不看历史轮；阈值分母使用全 token 治理票。

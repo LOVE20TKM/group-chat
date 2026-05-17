@@ -153,6 +153,23 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(info.configVersion, 3);
     }
 
+    function testT015_managementWritesRejectNonexistentGroup() public {
+        uint256 missingGroupId = 999_999;
+        (string[] memory keys, bytes[] memory values) = _emptyMeta();
+
+        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
+        chat.setPostingAllowed(missingGroupId, false);
+
+        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
+        chat.setMeta(missingGroupId, "k", bytes("v"));
+
+        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
+        chat.setMetaBatch(missingGroupId, keys, values);
+
+        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
+        chat.setScopeSource(missingGroupId, address(0));
+    }
+
     function testT016_groupDiscoveryIndexesTrackActivatedChats() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 

@@ -48,15 +48,9 @@ contract TypedManagersTest is GroupChatFixture {
         protocol.setJoinedAmountByAccount(token, senderOwner, 1);
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setJoinedAmountByAccount(token, senderOwner, 0);
-        protocol.setCurrentRound(20);
-        protocol.setExtensionJoinedAmount(senderOwner, 1);
-        protocol.setVotedAction(token, 19, 99, address(protocol));
-        assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
-        protocol.setVotedAction(token, 20, 100, other);
-        assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
         protocol.setVotedAction(token, 20, 101, address(protocol));
         protocol.setExtensionJoined(token, 101, senderOwner, true);
-        assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
+        assertTrue(!_canPostAllowed(groupId, senderId, senderOwner));
 
         vm.expectRevert(BaseManager.AlreadyManaged.selector);
         manager.activate(token);

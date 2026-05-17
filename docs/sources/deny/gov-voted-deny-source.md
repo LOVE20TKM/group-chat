@@ -60,6 +60,7 @@ GroupChat.denySource = GovVotedDenySource
   - `supportWeight / totalVoteWeight(groupId) >= DENY_THRESHOLD_RATIO / PRECISION`
 - `DENY_THRESHOLD_RATIO` 只在投票、反对、撤票、刷新等写入/结算路径读取；`isDenied(...)` 仅读取已结算名单。
 - 地址黑名单或 `senderId` 黑名单任一命中，`isDenied(...)` 返回 `true`。
+- 票权或总票权变化后的刷新责任交给社区自行决定；合约只提供可由任何人调用的 `refreshVoteBy*`，不内置 keeper 或自动重算。
 
 ## 投票模型
 
@@ -82,7 +83,7 @@ GroupChat.denySource = GovVotedDenySource
 - 地址目标读取票权时调用 `voteWeightOf(groupId, voter)`。
 - `senderId` 目标读取票权时调用 `voteWeightOf(groupId, voter)`。
 - 禁言阈值的分母读取 `totalVoteWeight(groupId)`。
-- 四个 typed Manager 的 `totalVoteWeight(groupId)` 均返回 `ILOVE20Stake.govVotesNum(token)`。
+- 四个 typed Manager 的 `totalVoteWeight(groupId)` 均返回 `ILOVE20Stake.govVotesNum(token)`；因此默认 `0.3%` 阈值始终按全 token 治理票计算。
 
 ## 最小接口
 

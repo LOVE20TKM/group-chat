@@ -4,12 +4,10 @@ pragma solidity =0.8.17;
 import {IERC20Balance} from "../interfaces/external/IERC20Balance.sol";
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../interfaces/external/ILOVE20Join.sol";
-import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 import {BaseTokenScopeManager} from "./BaseTokenScopeManager.sol";
 
 contract TokenMainManager is BaseTokenScopeManager {
     address internal immutable JOIN_ADDRESS;
-    address internal immutable VOTE_ADDRESS;
 
     constructor(
         address groupChat_,
@@ -19,12 +17,9 @@ contract TokenMainManager is BaseTokenScopeManager {
         address extensionCenter_
     ) BaseTokenScopeManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         address join = IExtensionCenter(extensionCenter_).joinAddress();
-        address vote = IExtensionCenter(extensionCenter_).voteAddress();
         _requireCode(join);
-        _requireCode(vote);
 
         JOIN_ADDRESS = join;
-        VOTE_ADDRESS = vote;
     }
 
     function activate(address token) external returns (uint256 groupId) {
@@ -45,25 +40,6 @@ contract TokenMainManager is BaseTokenScopeManager {
     }
 
     function _hasTokenActionParticipation(address token, address account) internal view returns (bool) {
-        return ILOVE20Join(JOIN_ADDRESS).amountByAccount(token, account) != 0
-            || _hasCurrentRoundExtensionActionParticipation(token, account);
-    }
-
-    function _hasCurrentRoundExtensionActionParticipation(address token, address account)
-        internal
-        view
-        returns (bool)
-    {
-        uint256 round = ILOVE20Join(JOIN_ADDRESS).currentRound();
-        uint256 count = ILOVE20Vote(VOTE_ADDRESS).votedActionIdsCount(token, round);
-
-        for (uint256 i = 0; i < count; i++) {
-            uint256 actionId = ILOVE20Vote(VOTE_ADDRESS).votedActionIdsAtIndex(token, round, i);
-            if (IExtensionCenter(EXTENSION_CENTER_ADDRESS).isAccountJoined(token, actionId, account)) {
-                return true;
-            }
-        }
-
-        return false;
+        return ILOVE20Join(JOIN_ADDRESS).amountByAccount(token, account) != 0;
     }
 }

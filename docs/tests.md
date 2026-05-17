@@ -85,3 +85,9 @@ Source：
 ```bash
 forge test
 ```
+
+生产合约体积检查只看 `src`，不把 `script` / `test` 产物计入：
+
+```bash
+forge build src --sizes
+```

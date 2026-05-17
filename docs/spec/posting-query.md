@@ -74,7 +74,7 @@ DenySourceFailed.selector          denySource 调用失败
 
 - `content` 类型为 `string`。
 - 空消息必须 revert。
-- 单条消息上限固定为 `16384` bytes。
+- 单条消息上限固定为 `4096` bytes。
 - 消息只能新增，不能编辑或删除。
 - `MessagePost` 事件不带完整正文，正文以 view 读取为准。
 

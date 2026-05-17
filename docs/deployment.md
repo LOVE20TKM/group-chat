@@ -118,6 +118,7 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 - `GroupChat.GROUP_ADDRESS`
 - `originBlocks` 对齐 core Join
 - `phaseBlocks` 对齐 core Join
+- `GroupChat.currentRound()` 与 core Join 当前轮一致
 - `AdminDenySource` 固定依赖
 - `AdminDenySource.MAX_ADMIN_IDS`
 - `GovVotedDenySource` 固定依赖

@@ -10,7 +10,7 @@ import {IPostDenySource} from "./interfaces/sources/IPostDenySource.sol";
 import {IPostScopeSource} from "./interfaces/sources/IPostScopeSource.sol";
 
 contract GroupChat is IGroupChat {
-    uint256 public constant MAX_CONTENT_LENGTH = 16384;
+    uint256 public constant MAX_CONTENT_LENGTH = 4096;
     uint256 public constant MAX_MENTIONED_SENDER_IDS = 32;
 
     address public immutable GROUP_ADDRESS;
@@ -808,11 +808,12 @@ contract GroupChat is IGroupChat {
     }
 
     function _requireOwnerOrDelegateAndActivated(uint256 groupId) internal view {
+        address owner = _ownerOfOrRevert(groupId);
         ChatConfig storage config = _chatConfigs[groupId];
         if (!config.activated) {
             revert ChatNotActivated();
         }
-        if (!_isOwnerOrDelegateIdOwner(groupId, config, msg.sender)) {
+        if (!_isOwnerOrDelegateIdOwner(config, owner, msg.sender)) {
             revert NotChatOwnerOrDelegateIdOwner();
         }
     }
@@ -943,12 +944,11 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _isOwnerOrDelegateIdOwner(uint256 groupId, ChatConfig storage config, address operator)
+    function _isOwnerOrDelegateIdOwner(ChatConfig storage config, address owner, address operator)
         internal
         view
         returns (bool)
     {
-        address owner = _ownerOfOrRevert(groupId);
         if (operator == owner) {
             return true;
         }
