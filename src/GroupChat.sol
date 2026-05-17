@@ -822,13 +822,23 @@ contract GroupChat is IGroupChat {
         view
     {
         if (config.scopeSource != address(0)) {
-            if (!IPostScopeSource(config.scopeSource).canPost(groupId, senderId, senderAddress)) {
-                revert ScopeRejected();
+            try IPostScopeSource(config.scopeSource).canPost(groupId, senderId, senderAddress) returns (
+                bool sourceAllowed
+            ) {
+                if (!sourceAllowed) {
+                    revert ScopeRejected();
+                }
+            } catch {
+                revert ScopeSourceFailed();
             }
         }
         if (config.denySource != address(0)) {
-            if (IPostDenySource(config.denySource).isDenied(groupId, senderId, senderAddress)) {
-                revert DenyRejected();
+            try IPostDenySource(config.denySource).isDenied(groupId, senderId, senderAddress) returns (bool denied) {
+                if (denied) {
+                    revert DenyRejected();
+                }
+            } catch {
+                revert DenySourceFailed();
             }
         }
     }

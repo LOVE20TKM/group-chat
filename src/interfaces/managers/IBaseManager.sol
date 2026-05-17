@@ -15,6 +15,8 @@ interface IBaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC721Receiv
     error ManagerPaymentFailed();
     error ManagerApprovalFailed();
     error TokenNotLOVE20();
+    error UnexpectedManagerERC721Received();
+    error ActionIdNotExist();
 
     function GROUP_CHAT_ADDRESS() external view returns (address);
 

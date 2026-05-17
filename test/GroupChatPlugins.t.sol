@@ -148,7 +148,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
 
         vm.roll(originBlocks);
         vm.prank(senderOwner);
-        vm.expectRevert(MockPostScopeFailSource.ScopeSourceBoom.selector);
+        vm.expectRevert(IGroupChatErrors.ScopeSourceFailed.selector);
         _post(groupId, senderId, "scope-boom");
 
         vm.prank(chatOwner);
@@ -163,7 +163,7 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(reasonCode, IGroupChatErrors.DenySourceFailed.selector);
 
         vm.prank(senderOwner);
-        vm.expectRevert(MockPostDenyFailSource.DenySourceBoom.selector);
+        vm.expectRevert(IGroupChatErrors.DenySourceFailed.selector);
         _post(groupId, senderId, "deny-boom");
     }
 

@@ -20,6 +20,7 @@ function activate(
 流程：
 
 - 校验 `Launch.isLOVE20Token(token) == true`
+- 校验 `actionId < Submit.actionsCount(token)`，即行动已在 core Submit 合约中存在
 - Manager 生成群 NFT 名：`mgr_action_gov_[symbol]_[actionId]_[xxxxxx]`
 - 从调用者拉取 GroupNFT 铸造所需 LOVE20
 - 调用 `GroupNFT.mint(...)` 得到 `groupId`
@@ -86,6 +87,7 @@ uint256 public immutable RECENT_ROUNDS;
 ```
 
 `actionOfGroup(groupId).token == address(0)` 表示未激活。
+`actionId = 0` 是合法行动 ID，不作为未激活哨兵。
 
 ## 列表查询
 

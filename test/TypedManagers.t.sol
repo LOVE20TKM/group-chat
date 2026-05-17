@@ -97,6 +97,10 @@ contract TypedManagersTest is GroupChatFixture {
         vm.expectRevert(BaseManager.RecentRoundsZero.selector);
         new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 0);
 
+        vm.expectRevert(BaseManager.ActionIdNotExist.selector);
+        manager.activate(token, 42);
+
+        protocol.setActionsCount(token, 44);
         protocol.setCurrentRound(7);
         vm.recordLogs();
         groupId = manager.activate(token, 42);
@@ -154,6 +158,7 @@ contract TypedManagersTest is GroupChatFixture {
         address token = address(protocol);
         TokenActionMainManager manager =
             new TokenActionMainManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
+        protocol.setActionsCount(token, 90);
         protocol.setCurrentRound(10);
         groupId = manager.activate(token, 88);
 
@@ -209,6 +214,47 @@ contract TypedManagersTest is GroupChatFixture {
         assertEq(actionIds[0], 89);
         assertEq(actionGroupIds.length, 1);
         assertEq(actionGroupIds[0], secondGroupId);
+    }
+
+    function testT113B_tokenActionManagersAcceptZeroActionId() public {
+        MockLOVE20Protocols protocol = new MockLOVE20Protocols();
+        address token = address(protocol);
+        protocol.setActionsCount(token, 1);
+        protocol.setCurrentRound(3);
+
+        TokenActionGovManager govManager =
+            new TokenActionGovManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
+        uint256 govGroupId = govManager.activate(token, 0);
+
+        (address govToken, uint256 govActionId) = govManager.actionOfGroup(govGroupId);
+        assertEq(govToken, token);
+        assertEq(govActionId, 0);
+        assertEq(govManager.groupIdOfAction(token, 0), govGroupId);
+
+        uint256[] memory queryActionIds = new uint256[](1);
+        queryActionIds[0] = 0;
+        uint256[] memory groupIds = govManager.groupIdsOfActions(token, queryActionIds);
+        assertEq(groupIds.length, 1);
+        assertEq(groupIds[0], govGroupId);
+
+        (uint256[] memory actionIds, uint256[] memory actionGroupIds) = govManager.actionsByToken(token, 0, 10, false);
+        assertEq(actionIds.length, 1);
+        assertEq(actionIds[0], 0);
+        assertEq(actionGroupIds.length, 1);
+        assertEq(actionGroupIds[0], govGroupId);
+
+        protocol.setActionVotes(token, 3, senderOwner, 0, 1);
+        assertTrue(_canPostAllowed(govGroupId, senderId, senderOwner));
+
+        TokenActionMainManager mainManager =
+            new TokenActionMainManager(address(chat), address(0), address(0), address(0), address(protocol), 3);
+        uint256 mainGroupId = mainManager.activate(token, 0);
+
+        (address mainToken, uint256 mainActionId) = mainManager.actionOfGroup(mainGroupId);
+        assertEq(mainToken, token);
+        assertEq(mainActionId, 0);
+        assertEq(mainManager.groupIdOfAction(token, 0), mainGroupId);
+        assertTrue(_canPostAllowed(mainGroupId, senderId, senderOwner));
     }
 
     function testT116_tokenMainManagersPageTokens() public {

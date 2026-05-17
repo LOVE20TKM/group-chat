@@ -12,6 +12,7 @@ Manager 用于去中心化群聊。
 
 - 铸造并持有对应 `GroupNFT`。
 - 只允许 `Launch.isLOVE20Token(token) == true` 的 LOVE20 协议代币激活 typed chat。
+- Action 类 Manager 只允许已存在于 core `Submit.actionsCount(token)` 范围内的 `actionId` 激活 typed chat。
 - 通过 `activate(...)` 激活对应类型的 chat。
 - 激活时一次性写入 `scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin`。
 - 激活时 `delegateId = 0`。

@@ -15,6 +15,7 @@ contract MockLOVE20Protocols {
     mapping(address => mapping(uint256 => mapping(address => mapping(uint256 => uint256)))) public actionVotes;
     mapping(address => mapping(uint256 => mapping(address => bool))) public extensionJoined;
     mapping(address => uint256) public extensionJoinedAmounts;
+    mapping(address => uint256) public actionCounts;
     mapping(address => mapping(uint256 => uint256[])) internal _votedActionIds;
     mapping(address => uint8) internal _love20TokenFlags;
 
@@ -38,6 +39,10 @@ contract MockLOVE20Protocols {
 
     function setLOVE20Token(address token, bool listed) external {
         _love20TokenFlags[token] = listed ? 1 : 2;
+    }
+
+    function setActionsCount(address token, uint256 count) external {
+        actionCounts[token] = count;
     }
 
     function setJoinedAmount(address token, uint256 actionId, address account, uint256 amount) external {
@@ -146,6 +151,10 @@ contract MockLOVE20Protocols {
 
     function joinedAmountByAccount(address account) external view returns (uint256) {
         return extensionJoinedAmounts[account];
+    }
+
+    function actionsCount(address tokenAddress) external view returns (uint256) {
+        return actionCounts[tokenAddress];
     }
 
     function isAccountJoined(address tokenAddress, uint256 actionId, address account) external view returns (bool) {

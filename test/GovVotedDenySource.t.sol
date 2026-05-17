@@ -176,6 +176,7 @@ contract GovVotedDenySourceTest is GroupChatFixture {
 
     function testT134_actionGovManagerActsAsWeightSource() public {
         protocol.setCurrentRound(7);
+        protocol.setActionsCount(token, 43);
         groupId = actionGovManager.activate(token, 42);
 
         protocol.setActionVotes(token, 7, senderOwner, 42, 11);

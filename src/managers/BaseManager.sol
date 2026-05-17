@@ -20,6 +20,8 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
     error ManagerPaymentFailed();
     error ManagerApprovalFailed();
     error TokenNotLOVE20();
+    error UnexpectedManagerERC721Received();
+    error ActionIdNotExist();
 
     address public immutable GROUP_CHAT_ADDRESS;
     address public immutable GROUP_ADDRESS;
@@ -53,7 +55,10 @@ abstract contract BaseManager is IPostScopeSource, IDenyVoteWeightSource, IERC72
         AFTER_POST_PLUGIN_ADDRESS = afterPostPlugin_;
     }
 
-    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+    function onERC721Received(address, address from, uint256, bytes calldata) external view returns (bytes4) {
+        if (msg.sender != GROUP_ADDRESS || from != address(0)) {
+            revert UnexpectedManagerERC721Received();
+        }
         return IERC721Receiver.onERC721Received.selector;
     }
 

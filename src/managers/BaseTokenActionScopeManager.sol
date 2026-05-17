@@ -2,7 +2,9 @@
 pragma solidity =0.8.17;
 
 import {IExtensionCenter} from "../interfaces/external/IExtensionCenter.sol";
+
 import {ILOVE20Stake} from "../interfaces/external/ILOVE20Stake.sol";
+import {ILOVE20Submit} from "../interfaces/external/ILOVE20Submit.sol";
 import {ILOVE20Vote} from "../interfaces/external/ILOVE20Vote.sol";
 import {BaseTokenManager} from "./BaseTokenManager.sol";
 
@@ -15,6 +17,7 @@ abstract contract BaseTokenActionScopeManager is BaseTokenManager {
     }
 
     address internal immutable VOTE_ADDRESS;
+    address internal immutable SUBMIT_ADDRESS;
     uint256 public immutable RECENT_ROUNDS;
 
     mapping(uint256 => ManagedAction) public actionOfGroup;
@@ -32,9 +35,12 @@ abstract contract BaseTokenActionScopeManager is BaseTokenManager {
         _requireRecentRounds(recentRounds_);
 
         address vote = IExtensionCenter(extensionCenter_).voteAddress();
+        address submit = IExtensionCenter(extensionCenter_).submitAddress();
         _requireCode(vote);
+        _requireCode(submit);
 
         VOTE_ADDRESS = vote;
+        SUBMIT_ADDRESS = submit;
         RECENT_ROUNDS = recentRounds_;
     }
 
@@ -107,6 +113,7 @@ abstract contract BaseTokenActionScopeManager is BaseTokenManager {
         returns (uint256 groupId)
     {
         _requireLOVE20Token(token);
+        _requireExistingAction(token, actionId);
         _requireNotManaged(groupIdOfAction[token][actionId] != 0);
 
         groupId = _mintManagedGroup(_tokenActionGroupNameStem(managerPrefix, token, actionId));
@@ -115,6 +122,12 @@ abstract contract BaseTokenActionScopeManager is BaseTokenManager {
         _actionIdsByToken[token].push(actionId);
         _activateManagedGroup(groupId);
         emit Activate(token, actionId, groupId, msg.sender);
+    }
+
+    function _requireExistingAction(address token, uint256 actionId) internal view {
+        if (actionId >= ILOVE20Submit(SUBMIT_ADDRESS).actionsCount(token)) {
+            revert ActionIdNotExist();
+        }
     }
 
     function _hasRecentActionVote(address token, uint256 actionId, address account) internal view returns (bool) {

@@ -82,7 +82,16 @@ contract ManagerTest is GroupChatFixture {
         new MockManager(address(chat), other, address(0), address(0));
 
         MockManager manager = new MockManager(address(chat), address(0), address(0), address(0));
-        bytes4 received = manager.onERC721Received(chatOwner, chatOwner, groupId, "");
+
+        vm.expectRevert(BaseManager.UnexpectedManagerERC721Received.selector);
+        manager.onERC721Received(chatOwner, address(0), groupId, "");
+
+        vm.prank(address(groupNft));
+        vm.expectRevert(BaseManager.UnexpectedManagerERC721Received.selector);
+        manager.onERC721Received(chatOwner, chatOwner, groupId, "");
+
+        vm.prank(address(groupNft));
+        bytes4 received = manager.onERC721Received(chatOwner, address(0), groupId, "");
         assertEq(received, IERC721Receiver.onERC721Received.selector);
     }
 
