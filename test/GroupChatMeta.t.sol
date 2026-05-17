@@ -200,4 +200,127 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(_decodeMetaConfigVersion(logs2[0].data), versionAfterBatch);
         assertEq(_decodeMetaConfigVersion(logs2[1].data), versionAfterBatch);
     }
+
+    function testT091_metaLimitsRejectActivationAndOversizedValue() public {
+        uint256 maxKeys = chat.MAX_META_KEYS();
+        assertEq(maxKeys, 32);
+        assertEq(chat.MAX_META_VALUE_LENGTH(), 4096);
+
+        (string[] memory tooManyKeys, bytes[] memory tooManyValues) = _filledMeta(maxKeys + 1, bytes("v"));
+        vm.prank(chatOwner);
+        vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMetaKeys.selector, maxKeys + 1, maxKeys));
+        chat.activateChat(groupId, tooManyKeys, tooManyValues, address(0), address(0), address(0), address(0), 0);
+
+        _activateEmpty();
+
+        uint256 maxValueLength = chat.MAX_META_VALUE_LENGTH();
+        bytes memory tooLongValue = new bytes(maxValueLength + 1);
+        vm.prank(chatOwner);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGroupChatErrors.MetaValueTooLong.selector, maxValueLength + 1, maxValueLength
+            )
+        );
+        chat.setMeta(groupId, "long", tooLongValue);
+    }
+
+    function testT092_metaKeyLimitAllowsUpdateDeleteAndFinalBatchLength() public {
+        _activateEmpty();
+
+        uint256 maxKeys = chat.MAX_META_KEYS();
+        (string[] memory keys, bytes[] memory values) = _filledMeta(maxKeys, bytes("v"));
+        vm.prank(chatOwner);
+        chat.setMetaBatch(groupId, keys, values);
+        assertEq(chat.metaEntriesCount(groupId), maxKeys);
+
+        vm.prank(chatOwner);
+        chat.setMeta(groupId, "k0", bytes("v2"));
+        assertEq(chat.metaEntriesCount(groupId), maxKeys);
+        assertEq(chat.metaValue(groupId, "k0"), bytes("v2"));
+
+        vm.prank(chatOwner);
+        vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMetaKeys.selector, maxKeys + 1, maxKeys));
+        chat.setMeta(groupId, "overflow", bytes("v"));
+
+        string[] memory replaceKeys = new string[](2);
+        bytes[] memory replaceValues = new bytes[](2);
+        replaceKeys[0] = "replacement";
+        replaceValues[0] = bytes("v");
+        replaceKeys[1] = "k0";
+        replaceValues[1] = bytes("");
+
+        vm.prank(chatOwner);
+        chat.setMetaBatch(groupId, replaceKeys, replaceValues);
+        assertEq(chat.metaEntriesCount(groupId), maxKeys);
+        assertEq(chat.metaValue(groupId, "k0"), bytes(""));
+        assertEq(chat.metaValue(groupId, "replacement"), bytes("v"));
+
+        vm.prank(chatOwner);
+        chat.setMeta(groupId, "k1", bytes(""));
+        assertEq(chat.metaEntriesCount(groupId), maxKeys - 1);
+
+        vm.prank(chatOwner);
+        chat.setMeta(groupId, "replacement2", bytes("v"));
+        assertEq(chat.metaEntriesCount(groupId), maxKeys);
+    }
+
+    function testT093_metaBatchLimitChecksFinalLengthBeforeWriting() public {
+        _activateEmpty();
+
+        uint256 maxKeys = chat.MAX_META_KEYS();
+        (string[] memory keys, bytes[] memory values) = _filledMeta(maxKeys - 1, bytes("v"));
+        vm.prank(chatOwner);
+        chat.setMetaBatch(groupId, keys, values);
+
+        string[] memory batchKeys = new string[](2);
+        bytes[] memory batchValues = new bytes[](2);
+        batchKeys[0] = "extra1";
+        batchValues[0] = bytes("v");
+        batchKeys[1] = "extra2";
+        batchValues[1] = bytes("v");
+
+        uint256 versionBefore = chat.chatInfo(groupId).configVersion;
+        vm.prank(chatOwner);
+        vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMetaKeys.selector, maxKeys + 1, maxKeys));
+        chat.setMetaBatch(groupId, batchKeys, batchValues);
+
+        assertEq(chat.metaEntriesCount(groupId), maxKeys - 1);
+        assertEq(chat.metaValue(groupId, "extra1"), bytes(""));
+        assertEq(chat.metaValue(groupId, "extra2"), bytes(""));
+        assertEq(chat.chatInfo(groupId).configVersion, versionBefore);
+    }
+
+    function _filledMeta(uint256 count, bytes memory value)
+        internal
+        pure
+        returns (string[] memory keys, bytes[] memory values)
+    {
+        keys = new string[](count);
+        values = new bytes[](count);
+        for (uint256 i = 0; i < count; i++) {
+            keys[i] = string(abi.encodePacked("k", _uintToString(i)));
+            values[i] = value;
+        }
+    }
+
+    function _uintToString(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits--;
+            buffer[digits] = bytes1(uint8(48 + value % 10));
+            value /= 10;
+        }
+        return string(buffer);
+    }
 }

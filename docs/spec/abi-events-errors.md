@@ -12,6 +12,8 @@
 - `phaseBlocks`
 - `MAX_CONTENT_LENGTH`
 - `MAX_MENTIONED_SENDER_IDS`
+- `MAX_META_KEYS`
+- `MAX_META_VALUE_LENGTH`
 - `activateChat`
 - `setPostingAllowed`
 - `postingAllowed`
@@ -177,6 +179,8 @@ Manager 事件：
 Meta 错误：
 
 - `MetaKeyEmpty`
+- `TooManyMetaKeys`
+- `MetaValueTooLong`
 - `MetaArrayLengthMismatch`
 - `DuplicateMetaKey`
 - `MetaValueUnchanged`

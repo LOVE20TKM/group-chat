@@ -13,6 +13,8 @@ interface IGroupChatErrors {
     error RoundNotStarted();
     error PhaseBlocksZero();
     error MetaKeyEmpty();
+    error TooManyMetaKeys(uint256 length, uint256 maxLength);
+    error MetaValueTooLong(uint256 length, uint256 maxLength);
     error MetaArrayLengthMismatch();
     error DuplicateMetaKey();
     error MetaValueUnchanged();
@@ -163,6 +165,10 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
     function MAX_CONTENT_LENGTH() external view returns (uint256);
 
     function MAX_MENTIONED_SENDER_IDS() external view returns (uint256);
+
+    function MAX_META_KEYS() external view returns (uint256);
+
+    function MAX_META_VALUE_LENGTH() external view returns (uint256);
 
     function activateChat(
         uint256 groupId,

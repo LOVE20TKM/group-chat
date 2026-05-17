@@ -12,6 +12,8 @@ import {IPostScopeSource} from "./interfaces/sources/IPostScopeSource.sol";
 contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 4096;
     uint256 public constant MAX_MENTIONED_SENDER_IDS = 32;
+    uint256 public constant MAX_META_KEYS = 32;
+    uint256 public constant MAX_META_VALUE_LENGTH = 4096;
 
     address public immutable GROUP_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
@@ -101,6 +103,7 @@ contract GroupChat is IGroupChat {
         }
 
         _validateMetaInput(metaKeys_, metaValues_);
+        _validateInitialMetaCapacity(metaValues_);
         _validateSourceAddress(scopeSource_);
         _validateSourceAddress(denySource_);
         _validatePluginAddress(beforePostPlugin_);
@@ -158,9 +161,11 @@ contract GroupChat is IGroupChat {
     function setMeta(uint256 groupId, string calldata key, bytes calldata value) external nonReentrant {
         _requireOwnerOrDelegateAndActivated(groupId);
         _validateMetaKey(key);
+        _validateMetaValue(value);
 
         bytes32 hash = _metaHash(key);
         _validateMetaChange(groupId, hash, value);
+        _validateSingleMetaCapacity(groupId, hash, value);
 
         ChatConfig storage config = _chatConfigs[groupId];
         uint256 newVersion = _nextConfigVersion(config);
@@ -182,6 +187,7 @@ contract GroupChat is IGroupChat {
         for (uint256 i = 0; i < keys.length; i++) {
             _validateMetaChange(groupId, hashes[i], values[i]);
         }
+        _validateMetaBatchCapacity(groupId, hashes, values);
 
         uint256 newVersion = _nextConfigVersion(config);
 
@@ -705,6 +711,47 @@ contract GroupChat is IGroupChat {
         }
     }
 
+    function _validateSingleMetaCapacity(uint256 groupId, bytes32 hash, bytes calldata value) internal view {
+        if (value.length == 0 || _metaStates[groupId][hash].exists) {
+            return;
+        }
+        uint256 newLength = _metaKeys[groupId].length + 1;
+        if (newLength > MAX_META_KEYS) {
+            revert TooManyMetaKeys(newLength, MAX_META_KEYS);
+        }
+    }
+
+    function _validateInitialMetaCapacity(bytes[] calldata values) internal pure {
+        uint256 liveKeyCount;
+        for (uint256 i = 0; i < values.length; i++) {
+            if (values[i].length == 0) {
+                continue;
+            }
+            liveKeyCount++;
+        }
+        if (liveKeyCount > MAX_META_KEYS) {
+            revert TooManyMetaKeys(liveKeyCount, MAX_META_KEYS);
+        }
+    }
+
+    function _validateMetaBatchCapacity(uint256 groupId, bytes32[] memory hashes, bytes[] calldata values)
+        internal
+        view
+    {
+        uint256 finalLength = _metaKeys[groupId].length;
+        for (uint256 i = 0; i < values.length; i++) {
+            bool exists = _metaStates[groupId][hashes[i]].exists;
+            if (values[i].length == 0) {
+                finalLength--;
+            } else if (!exists) {
+                finalLength++;
+            }
+        }
+        if (finalLength > MAX_META_KEYS) {
+            revert TooManyMetaKeys(finalLength, MAX_META_KEYS);
+        }
+    }
+
     function _applyMetaChange(
         uint256 groupId,
         string calldata key,
@@ -973,12 +1020,19 @@ contract GroupChat is IGroupChat {
         hashes = new bytes32[](keys.length);
         for (uint256 i = 0; i < keys.length; i++) {
             _validateMetaKey(keys[i]);
+            _validateMetaValue(values[i]);
             hashes[i] = keccak256(bytes(keys[i]));
             for (uint256 j = 0; j < i; j++) {
                 if (hashes[j] == hashes[i]) {
                     revert DuplicateMetaKey();
                 }
             }
+        }
+    }
+
+    function _validateMetaValue(bytes calldata value) internal pure {
+        if (value.length > MAX_META_VALUE_LENGTH) {
+            revert MetaValueTooLong(value.length, MAX_META_VALUE_LENGTH);
         }
     }
 

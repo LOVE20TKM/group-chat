@@ -30,7 +30,10 @@ Meta：
 
 - 新增、更新、删除。
 - 空 key、重复 key、相同值、删除不存在 key 必须 revert。
+- live key 总数超过 `MAX_META_KEYS` 必须 revert。
+- 非空 value 超过 `MAX_META_VALUE_LENGTH` 必须 revert。
 - 批量写只递增一次 `configVersion`。
+- 批量写按最终 live key 总数校验 `MAX_META_KEYS`，失败时不得产生部分写入。
 
 Delegate：
 

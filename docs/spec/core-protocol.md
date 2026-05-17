@@ -73,11 +73,14 @@
 
 - `key` 是 `string`，不能为空。
 - `value` 是 `bytes`，`value.length == 0` 表示删除。
+- 当前 live `meta` key 总数最多 `MAX_META_KEYS = 32`。
+- 非空 `value` 最多 `MAX_META_VALUE_LENGTH = 4096` bytes。
 - 链上只保留当前值，历史变化看 `MetaSet`。
 - `metaEntriesCount` 返回当前 live key 总数。
 - `metaEntries` 按当前 live key 插入顺序分页。
 - 更新已有 key 不改变位置；删除后重写视为新 key。
 - `setMetaBatch` 同一笔交易只递增一次 `configVersion`。
+- `setMetaBatch` 按本次交易执行后的 live key 总数校验 `MAX_META_KEYS`，允许同一批里删除旧 key 并新增新 key。
 
 ## DelegateGroup
 
