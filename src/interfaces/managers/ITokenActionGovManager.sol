@@ -1,6 +1,0 @@
-// SPDX-License-Identifier: MIT
-pragma solidity =0.8.17;
-
-import {IBaseTokenActionScopeManager} from "./IBaseTokenActionScopeManager.sol";
-
-interface ITokenActionGovManager is IBaseTokenActionScopeManager {}

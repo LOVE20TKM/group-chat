@@ -191,9 +191,13 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(prevScope1, address(0));
         assertEq(chat.scopeSource(groupId), address(scope1));
 
+        uint256 versionBeforeSameScope = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setScopeSource(groupId, address(scope1));
+        Vm.Log[] memory sameScopeLogs = vm.getRecordedLogs();
+        assertEq(sameScopeLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeSameScope);
 
         vm.recordLogs();
         vm.prank(chatOwner);
@@ -206,9 +210,13 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setScopeSource(groupId, address(0));
 
+        uint256 versionBeforeZeroScope = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setScopeSource(groupId, address(0));
+        Vm.Log[] memory zeroScopeLogs = vm.getRecordedLogs();
+        assertEq(zeroScopeLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeZeroScope);
 
         vm.prank(chatOwner);
         chat.setPostingAllowed(groupId, false);
@@ -242,9 +250,13 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(prevDeny1, address(0));
         assertEq(chat.denySource(groupId), address(deny1));
 
+        uint256 versionBeforeSameDeny = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setDenySource(groupId, address(deny1));
+        Vm.Log[] memory sameDenyLogs = vm.getRecordedLogs();
+        assertEq(sameDenyLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeSameDeny);
 
         vm.recordLogs();
         vm.prank(chatOwner);
@@ -257,9 +269,13 @@ contract GroupChatPluginsTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setDenySource(groupId, address(0));
 
+        uint256 versionBeforeZeroDeny = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.SourceAddressUnchanged.selector);
         chat.setDenySource(groupId, address(0));
+        Vm.Log[] memory zeroDenyLogs = vm.getRecordedLogs();
+        assertEq(zeroDenyLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeZeroDeny);
 
         vm.prank(chatOwner);
         chat.setPostingAllowed(groupId, false);

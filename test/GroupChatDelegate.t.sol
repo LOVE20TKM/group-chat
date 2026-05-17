@@ -3,6 +3,7 @@ pragma solidity =0.8.17;
 
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
+import {Vm} from "./utils/TestBase.sol";
 
 contract GroupChatDelegateTest is GroupChatFixture {
     function testT030AndT034AndT035_delegateIdInvalidatesAndRestoresAcrossTransfer() public {
@@ -35,9 +36,13 @@ contract GroupChatDelegateTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setDelegateId(groupId, delegateId);
 
+        uint256 versionBeforeNoop = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.DelegateIdUnchanged.selector);
         chat.setDelegateId(groupId, delegateId);
+        Vm.Log[] memory noopLogs = vm.getRecordedLogs();
+        assertEq(noopLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeNoop);
 
         vm.prank(chatOwner);
         chat.setDelegateId(groupId, 0);

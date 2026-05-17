@@ -6,7 +6,6 @@ interface IGroupChatErrors {
     error ChatAlreadyActivated();
     error ChatNotActivated();
     error PostingNotAllowed();
-    error PostingAllowedUnchanged();
     error NotChatOwner();
     error NotChatOwnerOrDelegateIdOwner();
     error SenderAddressNotSenderIdOwner();
@@ -17,14 +16,9 @@ interface IGroupChatErrors {
     error MetaValueTooLong(uint256 length, uint256 maxLength);
     error MetaArrayLengthMismatch();
     error DuplicateMetaKey();
-    error MetaValueUnchanged();
-    error MetaKeyNotFound();
     error DelegateIdCannotBeGroupId();
-    error DelegateIdUnchanged();
     error SourceAddressHasNoCode();
-    error SourceAddressUnchanged();
     error PluginAddressHasNoCode();
-    error PluginAddressUnchanged();
     error ContentEmpty();
     error ContentTooLong(uint256 length, uint256 maxLength);
     error TooManyMentionedSenderIds(uint256 length, uint256 maxLength);

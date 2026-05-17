@@ -143,6 +143,12 @@ contract GroupChatMessagesTest is GroupChatFixture {
         assertEq(messageIds[0], 1);
         assertEq(chat.messagesByMention(groupId, 999999, 0, 10, false).length, 0);
         assertEq(chat.messageIdsByMention(groupId, 999999, 0, 10, false).length, 0);
+
+        uint256[] memory futureMentionedSenderIds = new uint256[](1);
+        futureMentionedSenderIds[0] = 999999;
+        vm.prank(senderOwner);
+        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
+        _postWithMentionedSenderIds(groupId, senderId, "future mention", futureMentionedSenderIds, false);
     }
 
     function testT049_postRejectsDuplicateMentionedSenderIdsAndTracksMentionAll() public {

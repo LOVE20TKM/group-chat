@@ -29,7 +29,7 @@
 Meta：
 
 - 新增、更新、删除。
-- 空 key、重复 key、相同值、删除不存在 key 必须 revert。
+- 空 key、重复 key 必须 revert；相同值、删除不存在 key 必须 no-op。
 - live key 总数超过 `MAX_META_KEYS` 必须 revert。
 - 非空 value 超过 `MAX_META_VALUE_LENGTH` 必须 revert。
 - 批量写只递增一次 `configVersion`。

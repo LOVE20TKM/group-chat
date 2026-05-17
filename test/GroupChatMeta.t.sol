@@ -56,9 +56,13 @@ contract GroupChatMetaTest is GroupChatFixture {
     function testT023T024T025T026_metaInvalidCasesRevert() public {
         _activateEmpty();
 
+        uint256 versionBeforeMissingDelete = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.MetaKeyNotFound.selector);
         chat.setMeta(groupId, "missing", bytes(""));
+        Vm.Log[] memory missingDeleteLogs = vm.getRecordedLogs();
+        assertEq(missingDeleteLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeMissingDelete);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.MetaKeyEmpty.selector);
@@ -67,9 +71,13 @@ contract GroupChatMetaTest is GroupChatFixture {
         vm.prank(chatOwner);
         chat.setMeta(groupId, "same", bytes("v1"));
 
+        uint256 versionBeforeSameValue = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.MetaValueUnchanged.selector);
         chat.setMeta(groupId, "same", bytes("v1"));
+        Vm.Log[] memory sameValueLogs = vm.getRecordedLogs();
+        assertEq(sameValueLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeSameValue);
 
         string[] memory batchKeys = new string[](2);
         bytes[] memory batchValues = new bytes[](2);
@@ -169,6 +177,52 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(_decodeMetaKey(logs[0].data), "a");
         assertEq(_decodeMetaValue(logs[0].data), bytes(""));
         assertEq(_decodeMetaPrevValue(logs[0].data), bytes("1"));
+    }
+
+    function testT094_setMetaBatchSkipsNoopEntriesWhenOtherEntriesChange() public {
+        string[] memory keys1 = new string[](2);
+        bytes[] memory values1 = new bytes[](2);
+        keys1[0] = "a";
+        values1[0] = bytes("1");
+        keys1[1] = "b";
+        values1[1] = bytes("2");
+
+        vm.prank(chatOwner);
+        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
+
+        string[] memory batchKeys = new string[](3);
+        bytes[] memory batchValues = new bytes[](3);
+        batchKeys[0] = "missing";
+        batchValues[0] = bytes("");
+        batchKeys[1] = "b";
+        batchValues[1] = bytes("2");
+        batchKeys[2] = "c";
+        batchValues[2] = bytes("3");
+
+        vm.recordLogs();
+        vm.prank(chatOwner);
+        chat.setMetaBatch(groupId, batchKeys, batchValues);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        (string[] memory entryKeys, bytes[] memory entryValues) = chat.metaEntries(groupId, 0, 10, false);
+        assertEq(entryKeys.length, 3);
+        assertEq(entryValues.length, 3);
+        assertEq(chat.metaEntriesCount(groupId), 3);
+        assertEq(entryKeys[0], "a");
+        assertEq(entryValues[0], bytes("1"));
+        assertEq(entryKeys[1], "b");
+        assertEq(entryValues[1], bytes("2"));
+        assertEq(entryKeys[2], "c");
+        assertEq(entryValues[2], bytes("3"));
+        assertEq(chat.metaValue(groupId, "a"), bytes("1"));
+        assertEq(chat.metaValue(groupId, "missing"), bytes(""));
+
+        assertEq(logs.length, 1);
+        assertEq(logs[0].topics[0], META_SET_SIG);
+        assertEq(_decodeMetaConfigVersion(logs[0].data), 2);
+        assertEq(_decodeMetaKey(logs[0].data), "c");
+        assertEq(_decodeMetaValue(logs[0].data), bytes("3"));
+        assertEq(_decodeMetaPrevValue(logs[0].data), bytes(""));
     }
 
     function testT080T081_versionsStayConsistentAcrossConfigWrites() public {

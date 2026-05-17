@@ -106,7 +106,7 @@
 - `scopeSource=0` 表示默认开放发言。
 - `denySource=0` 表示无黑名单。
 - 非零地址必须有代码。
-- 重复设置为当前值必须 revert。
+- 重复设置为当前值直接 no-op，不递增 `configVersion`，不发事件。
 
 调用顺序：
 

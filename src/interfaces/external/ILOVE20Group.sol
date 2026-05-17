@@ -12,5 +12,7 @@ interface ILOVE20Group {
 
     function isGroupNameUsed(string calldata groupName) external view returns (bool);
 
+    function totalSupply() external view returns (uint256);
+
     function ownerOf(uint256 tokenId) external view returns (address owner);
 }

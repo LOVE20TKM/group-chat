@@ -134,9 +134,13 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateIdOwner.selector);
         chat.setPostingAllowed(groupId, false);
 
+        uint256 versionBeforeNoop = chat.chatInfo(groupId).configVersion;
+        vm.recordLogs();
         vm.prank(chatOwner);
-        vm.expectRevert(IGroupChatErrors.PostingAllowedUnchanged.selector);
         chat.setPostingAllowed(groupId, true);
+        Vm.Log[] memory noopLogs = vm.getRecordedLogs();
+        assertEq(noopLogs.length, 0);
+        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeNoop);
 
         vm.prank(chatOwner);
         chat.setDelegateId(groupId, delegateId);

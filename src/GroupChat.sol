@@ -150,7 +150,7 @@ contract GroupChat is IGroupChat {
 
         ChatConfig storage config = _chatConfigs[groupId];
         if (config.postingAllowed == postingAllowed_) {
-            revert PostingAllowedUnchanged();
+            return;
         }
 
         config.postingAllowed = postingAllowed_;
@@ -164,7 +164,9 @@ contract GroupChat is IGroupChat {
         _validateMetaValue(value);
 
         bytes32 hash = _metaHash(key);
-        _validateMetaChange(groupId, hash, value);
+        if (!_metaChangeNeeded(groupId, hash, value)) {
+            return;
+        }
         _validateSingleMetaCapacity(groupId, hash, value);
 
         ChatConfig storage config = _chatConfigs[groupId];
@@ -184,15 +186,23 @@ contract GroupChat is IGroupChat {
         bytes32[] memory hashes = _validateMetaInput(keys, values);
         ChatConfig storage config = _chatConfigs[groupId];
 
+        bool hasChange;
         for (uint256 i = 0; i < keys.length; i++) {
-            _validateMetaChange(groupId, hashes[i], values[i]);
+            if (_metaChangeNeeded(groupId, hashes[i], values[i])) {
+                hasChange = true;
+            }
+        }
+        if (!hasChange) {
+            return;
         }
         _validateMetaBatchCapacity(groupId, hashes, values);
 
         uint256 newVersion = _nextConfigVersion(config);
 
         for (uint256 i = 0; i < keys.length; i++) {
-            _applyMetaChange(groupId, keys[i], hashes[i], values[i], newVersion);
+            if (_metaChangeNeeded(groupId, hashes[i], values[i])) {
+                _applyMetaChange(groupId, keys[i], hashes[i], values[i], newVersion);
+            }
         }
     }
 
@@ -210,7 +220,7 @@ contract GroupChat is IGroupChat {
 
         address targetSnapshot = delegateId_ == 0 ? address(0) : owner;
         if (config.delegateId == delegateId_ && config.delegateOwnerSnapshot == targetSnapshot) {
-            revert DelegateIdUnchanged();
+            return;
         }
 
         uint256 prevDelegateId = _delegateIdOf(config, owner);
@@ -633,7 +643,7 @@ contract GroupChat is IGroupChat {
         ChatConfig storage config = _chatConfigs[groupId];
         address prevSourceAddress = isScope ? config.scopeSource : config.denySource;
         if (prevSourceAddress == sourceAddress) {
-            revert SourceAddressUnchanged();
+            return;
         }
 
         if (isScope) {
@@ -657,7 +667,7 @@ contract GroupChat is IGroupChat {
         ChatConfig storage config = _chatConfigs[groupId];
         address prevPluginAddress = isBefore ? config.beforePostPlugin : config.afterPostPlugin;
         if (prevPluginAddress == pluginAddress) {
-            revert PluginAddressUnchanged();
+            return;
         }
 
         if (isBefore) {
@@ -698,17 +708,12 @@ contract GroupChat is IGroupChat {
         _metaKeys[groupId].push(key);
     }
 
-    function _validateMetaChange(uint256 groupId, bytes32 hash, bytes calldata value) internal view {
+    function _metaChangeNeeded(uint256 groupId, bytes32 hash, bytes calldata value) internal view returns (bool) {
         MetaState storage item = _metaStates[groupId][hash];
         if (value.length == 0) {
-            if (!item.exists) {
-                revert MetaKeyNotFound();
-            }
-            return;
+            return item.exists;
         }
-        if (item.exists && _bytesEqual(item.value, value)) {
-            revert MetaValueUnchanged();
-        }
+        return !item.exists || !_bytesEqual(item.value, value);
     }
 
     function _validateSingleMetaCapacity(uint256 groupId, bytes32 hash, bytes calldata value) internal view {
@@ -742,7 +747,9 @@ contract GroupChat is IGroupChat {
         for (uint256 i = 0; i < values.length; i++) {
             bool exists = _metaStates[groupId][hashes[i]].exists;
             if (values[i].length == 0) {
-                finalLength--;
+                if (exists) {
+                    finalLength--;
+                }
             } else if (!exists) {
                 finalLength++;
             }
@@ -1040,10 +1047,14 @@ contract GroupChat is IGroupChat {
         if (mentionedSenderIds.length > MAX_MENTIONED_SENDER_IDS) {
             revert TooManyMentionedSenderIds(mentionedSenderIds.length, MAX_MENTIONED_SENDER_IDS);
         }
+        uint256 mintedCount = ILOVE20Group(GROUP_ADDRESS).totalSupply();
         for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
-            _ownerOfOrRevert(mentionedSenderIds[i]);
+            uint256 mentionedSenderId = mentionedSenderIds[i];
+            if (mentionedSenderId == 0 || mentionedSenderId > mintedCount) {
+                revert GroupNotExist();
+            }
             for (uint256 j = 0; j < i; j++) {
-                if (mentionedSenderIds[j] == mentionedSenderIds[i]) {
+                if (mentionedSenderIds[j] == mentionedSenderId) {
                     revert DuplicateMentionedSenderId();
                 }
             }

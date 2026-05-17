@@ -169,7 +169,6 @@ Manager 事件：
 - `ChatAlreadyActivated`
 - `ChatNotActivated`
 - `PostingNotAllowed`
-- `PostingAllowedUnchanged`
 - `NotChatOwner`
 - `NotChatOwnerOrDelegateIdOwner`
 - `SenderAddressNotSenderIdOwner`
@@ -183,20 +182,15 @@ Meta 错误：
 - `MetaValueTooLong`
 - `MetaArrayLengthMismatch`
 - `DuplicateMetaKey`
-- `MetaValueUnchanged`
-- `MetaKeyNotFound`
 
 Delegate 错误：
 
 - `DelegateIdCannotBeGroupId`
-- `DelegateIdUnchanged`
 
 Rule slot 错误：
 
 - `SourceAddressHasNoCode`
-- `SourceAddressUnchanged`
 - `PluginAddressHasNoCode`
-- `PluginAddressUnchanged`
 - `ScopeRejected`
 - `DenyRejected`
 - `ScopeSourceFailed`

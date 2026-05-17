@@ -57,6 +57,10 @@ contract MockLOVE20Group {
         return _groupNames[tokenId];
     }
 
+    function totalSupply() external view returns (uint256) {
+        return _nextTokenId - 1;
+    }
+
     function ownerOf(uint256 tokenId) external view returns (address owner) {
         owner = _owners[tokenId];
         require(owner != address(0), "NOT_MINTED");
