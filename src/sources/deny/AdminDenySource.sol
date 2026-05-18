@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IGroupChat} from "../../interfaces/IGroupChat.sol";
-
-import {IGroupDefaults} from "../../interfaces/external/IGroupDefaults.sol";
-import {ILOVE20Group} from "../../interfaces/external/ILOVE20Group.sol";
+import {IGroupAdmin} from "../../interfaces/IGroupAdmin.sol";
 import {IAdminDenySource} from "../../interfaces/sources/deny/IAdminDenySource.sol";
 import {EnumerableSets} from "../../libraries/EnumerableSets.sol";
 
@@ -12,15 +9,13 @@ contract AdminDenySource is IAdminDenySource {
     using EnumerableSets for EnumerableSets.AddressSet;
     using EnumerableSets for EnumerableSets.UintSet;
 
-    uint8 internal constant _ROLE_OWNER = 1;
-    uint8 internal constant _ROLE_DELEGATE = 2;
+    address public immutable GROUP_ADMIN_ADDRESS;
     address public immutable GROUP_CHAT_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
     address public immutable GROUP_ADDRESS;
     uint256 public immutable MAX_ADMIN_IDS;
 
     struct ChatState {
-        EnumerableSets.UintSet adminIds;
         EnumerableSets.AddressSet addressDenyList;
         EnumerableSets.UintSet senderIdDenyList;
         EnumerableSets.UintSet senderIdExemptList;
@@ -29,51 +24,15 @@ contract AdminDenySource is IAdminDenySource {
 
     mapping(uint256 => ChatState) internal _states;
 
-    constructor(address groupChat_, uint256 maxAdminIds_) {
-        if (maxAdminIds_ == 0) {
-            revert MaxAdminIdsZero();
+    constructor(address groupAdmin_) {
+        if (groupAdmin_.code.length == 0) {
+            revert AdminDenySourceAddressHasNoCode();
         }
-        _requireCode(groupChat_);
-        address groupDefaults = IGroupChat(groupChat_).GROUP_DEFAULTS_ADDRESS();
-        address love20Group = IGroupChat(groupChat_).GROUP_ADDRESS();
-        _requireCode(groupDefaults);
-        _requireCode(love20Group);
-
-        GROUP_CHAT_ADDRESS = groupChat_;
-        GROUP_DEFAULTS_ADDRESS = groupDefaults;
-        GROUP_ADDRESS = love20Group;
-        MAX_ADMIN_IDS = maxAdminIds_;
-    }
-
-    function setAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
-        (uint8 role, uint256 operatorId) = _roleOf(groupId);
-        _requireOwnerOrDelegate(role);
-        if (adminIdList.length > MAX_ADMIN_IDS) {
-            revert AdminIdsLimitExceeded();
-        }
-        _validateAdminIds(adminIdList);
-
-        ChatState storage state = _states[groupId];
-        uint256 newVersion;
-        uint256 i;
-        while (i < state.adminIds.values.length) {
-            uint256 adminId = state.adminIds.values[i];
-            if (_contains(adminIdList, adminId)) {
-                i++;
-                continue;
-            }
-            state.adminIds.remove(adminId);
-            newVersion = _ensureStateVersion(state, newVersion);
-            _emitAdminSet(groupId, operatorId, adminId, false, newVersion);
-        }
-
-        for (i = 0; i < adminIdList.length; i++) {
-            if (state.adminIds.add(adminIdList[i])) {
-                newVersion = _ensureStateVersion(state, newVersion);
-                _emitAdminSet(groupId, operatorId, adminIdList[i], true, newVersion);
-            }
-        }
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        GROUP_ADMIN_ADDRESS = groupAdmin_;
+        GROUP_CHAT_ADDRESS = IGroupAdmin(groupAdmin_).GROUP_CHAT_ADDRESS();
+        GROUP_DEFAULTS_ADDRESS = IGroupAdmin(groupAdmin_).GROUP_DEFAULTS_ADDRESS();
+        GROUP_ADDRESS = IGroupAdmin(groupAdmin_).GROUP_ADDRESS();
+        MAX_ADMIN_IDS = IGroupAdmin(groupAdmin_).MAX_ADMIN_IDS();
     }
 
     function denyBySenderIds(uint256 groupId, uint256[] calldata senderIds) external {
@@ -133,21 +92,15 @@ contract AdminDenySource is IAdminDenySource {
     }
 
     function exemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external {
-        (uint8 role, uint256 operatorId) = _roleOf(groupId);
-        _requireOwnerOrDelegate(role);
+        uint256 operatorId = _requireOwnerOrDelegate(groupId);
         uint256 newVersion = _setSenderIdExemptTargets(groupId, operatorId, senderIds, true);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
     function unexemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external {
-        (uint8 role, uint256 operatorId) = _roleOf(groupId);
-        _requireOwnerOrDelegate(role);
+        uint256 operatorId = _requireOwnerOrDelegate(groupId);
         uint256 newVersion = _setSenderIdExemptTargets(groupId, operatorId, senderIds, false);
         _emitStateVersionChangedIfChanged(groupId, newVersion);
-    }
-
-    function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool) {
-        return _states[groupId].adminIds.contains(adminId);
     }
 
     function isAddressDenied(uint256 groupId, address account) external view returns (bool) {
@@ -196,10 +149,6 @@ contract AdminDenySource is IAdminDenySource {
         for (uint256 i = 0; i < senderIds.length; i++) {
             exempt[i] = state.senderIdExemptList.contains(senderIds[i]);
         }
-    }
-
-    function adminIds(uint256 groupId) external view returns (uint256[] memory) {
-        return _states[groupId].adminIds.values;
     }
 
     function addressDenyListCount(uint256 groupId) external view returns (uint256) {
@@ -350,42 +299,17 @@ contract AdminDenySource is IAdminDenySource {
         }
     }
 
-    function _roleOf(uint256 groupId) internal view returns (uint8 role, uint256 operatorId) {
-        address chatOwner = _ownerOfOrRevert(groupId);
-        if (msg.sender == chatOwner) {
-            return (_ROLE_OWNER, groupId);
-        }
-
-        uint256 delegateId = IGroupChat(GROUP_CHAT_ADDRESS).delegateIdOf(groupId);
-        if (delegateId != 0 && msg.sender == _tryOwnerOf(delegateId)) {
-            return (_ROLE_DELEGATE, delegateId);
-        }
-
-        return (0, IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(msg.sender));
-    }
-
-    function _requireOwnerOrDelegate(uint8 role) internal pure {
-        if (role != _ROLE_OWNER && role != _ROLE_DELEGATE) {
-            revert UnauthorizedDenySourceManager();
-        }
-    }
-
     function _requireAdmin(uint256 groupId) internal view returns (uint256 operatorId) {
-        _ownerOfOrRevert(groupId);
-        operatorId = _validDefaultGroupIdOf(msg.sender);
-        if (operatorId == 0 || !_states[groupId].adminIds.contains(operatorId)) {
+        operatorId = IGroupAdmin(GROUP_ADMIN_ADDRESS).adminIdOf(groupId, msg.sender);
+        if (operatorId == 0) {
             revert UnauthorizedDenySourceManager();
         }
     }
 
-    function _validateAdminIds(uint256[] calldata adminIdList) internal view {
-        for (uint256 i = 0; i < adminIdList.length; i++) {
-            _ownerOfOrRevert(adminIdList[i]);
-            for (uint256 j = 0; j < i; j++) {
-                if (adminIdList[i] == adminIdList[j]) {
-                    revert DuplicateAdminId();
-                }
-            }
+    function _requireOwnerOrDelegate(uint256 groupId) internal view returns (uint256 operatorId) {
+        operatorId = IGroupAdmin(GROUP_ADMIN_ADDRESS).ownerOrDelegateIdOf(groupId, msg.sender);
+        if (operatorId == 0) {
+            revert UnauthorizedDenySourceManager();
         }
     }
 
@@ -400,12 +324,6 @@ contract AdminDenySource is IAdminDenySource {
         if (newVersion != 0) {
             emit StateVersionChanged(groupId, newVersion);
         }
-    }
-
-    function _emitAdminSet(uint256 groupId, uint256 operatorId, uint256 adminId, bool listed, uint256 newVersion)
-        internal
-    {
-        emit AdminSet(groupId, msg.sender, adminId, operatorId, listed, newVersion);
     }
 
     function _emitAddressDenySet(uint256 groupId, uint256 operatorId, address account, bool listed, uint256 newVersion)
@@ -427,43 +345,5 @@ contract AdminDenySource is IAdminDenySource {
         } else {
             emit SenderIdExemptSet(groupId, msg.sender, senderId, operatorId, listed, newVersion);
         }
-    }
-
-    function _requireCode(address target) internal view {
-        if (target.code.length == 0) {
-            revert AdminDenySourceAddressHasNoCode();
-        }
-    }
-
-    function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
-            return resolved;
-        } catch {
-            revert GroupNotExist();
-        }
-    }
-
-    function _tryOwnerOf(uint256 groupId) internal view returns (address owner) {
-        try ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId) returns (address resolved) {
-            return resolved;
-        } catch {
-            return address(0);
-        }
-    }
-
-    function _validDefaultGroupIdOf(address account) internal view returns (uint256 groupId) {
-        groupId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(account);
-        if (groupId == 0 || _tryOwnerOf(groupId) != account) {
-            return 0;
-        }
-    }
-
-    function _contains(uint256[] calldata values, uint256 target) internal pure returns (bool) {
-        for (uint256 i = 0; i < values.length; i++) {
-            if (values[i] == target) {
-                return true;
-            }
-        }
-        return false;
     }
 }

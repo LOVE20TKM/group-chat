@@ -6,22 +6,9 @@ import {IPostDenySource} from "../IPostDenySource.sol";
 interface IAdminDenySource is IPostDenySource {
     error AdminDenySourceAddressHasNoCode();
     error UnauthorizedDenySourceManager();
-    error GroupNotExist();
-    error DuplicateAdminId();
-    error AdminIdsLimitExceeded();
-    error MaxAdminIdsZero();
     error TargetAddressZero();
     error TargetSenderIdZero();
     error SenderPairLengthMismatch();
-
-    event AdminSet(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed adminId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
-    );
 
     event AddressDenySet(
         uint256 indexed groupId,
@@ -52,6 +39,8 @@ interface IAdminDenySource is IPostDenySource {
 
     event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
+    function GROUP_ADMIN_ADDRESS() external view returns (address);
+
     function GROUP_CHAT_ADDRESS() external view returns (address);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
@@ -59,12 +48,6 @@ interface IAdminDenySource is IPostDenySource {
     function GROUP_ADDRESS() external view returns (address);
 
     function MAX_ADMIN_IDS() external view returns (uint256);
-
-    function setAdmins(uint256 groupId, uint256[] calldata adminIdList) external;
-
-    function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool);
-
-    function adminIds(uint256 groupId) external view returns (uint256[] memory);
 
     function isAddressDenied(uint256 groupId, address account) external view returns (bool);
 

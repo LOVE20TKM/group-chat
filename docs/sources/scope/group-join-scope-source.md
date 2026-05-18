@@ -2,35 +2,36 @@
 
 - 模块：链群参与资格 ScopeSource
 - 类型：`scopeSource`
-- 定位：判断发送地址当前是否属于某个链群
+- 定位：允许成员 NFT 或链群行动参与地址发言
 
 ## 1. 语义
 
-`GroupJoinScopeSource` 不维护成员表，只读取链群扩展 `GroupJoin` 的全局 g 索引：
+`GroupJoinScopeSource` 组合两种资格：
 
 ```text
+GroupMemberScope.canPost(groupId, senderId, senderAddress)
+||
 GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 ```
 
 含义：
 
-- `groupId` 直接对应链群 `groupId`
-- `senderAddress` 当前在该链群下参与至少一个代币社区行动时，可发言
-- 退出最后一个相关行动后，`GroupJoin` 会移除 g 索引，发言资格随之失效
+- `senderId` 被加入 `GroupMemberScope` 成员 NFT 名单时，可发言。
+- `senderAddress` 当前在该链群下参与至少一个代币社区行动时，也可发言。
+- 手工成员资格随 NFT 转移；链群行动资格随 `GroupJoin` 地址索引实时变化。
 
 ## 2. 边界
 
-- 不检查 `senderId`；主协议已保证 `senderAddress` 是 `senderId` 当前 owner。
+- 不自己维护成员名单，只读取已部署的 `GroupMemberScope`。
 - 不处理黑名单；黑名单应挂 `AdminDenySource`。
-- 不处理链群服务者管理权限；管理权限仍由 `GroupChat` owner / delegate 与 `AdminDenySource` 处理。
-- 不区分具体 token / action；只判断当前是否属于该链群。
+- 不区分具体 token / action；链群行动资格只判断当前是否属于该链群。
 
 ## 3. 配置
 
 构造参数：
 
 ```solidity
-constructor(address groupJoin)
+constructor(address groupMemberScope, address groupJoin)
 ```
 
 挂载方式：
@@ -39,6 +40,8 @@ constructor(address groupJoin)
 GroupChat.scopeSource = GroupJoinScopeSource
 GroupChat.denySource = AdminDenySource
 ```
+
+链群服务者也可以改挂 `GroupMemberScope`，得到纯手工成员制发言资格。
 
 ## 4. 接口
 
@@ -50,4 +53,7 @@ function canPost(
 ) external view returns (bool);
 ```
 
-`senderId` 被忽略。
+附加依赖查询：
+
+- `GROUP_MEMBER_SCOPE_ADDRESS()`
+- `GROUP_JOIN_ADDRESS()`

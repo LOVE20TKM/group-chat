@@ -230,12 +230,15 @@ const requiredAppJs = [
   'resolveOptionalKnownNftInput',
   'managementNotice',
   'renderAdminIdControls',
+  'renderMemberIdControls',
   'setAdminIdQueryType',
-  'resolveAdminIdQuery',
+  'setMemberIdQueryType',
   '按名称',
   '按编号',
   'queryAdminSelf',
   'queryAdminId',
+  'queryMemberSelf',
+  'queryMemberId',
   'ruleSlotDisplay',
   'admin-nft-row',
   'renderBlacklistControls',
@@ -260,10 +263,14 @@ const requiredAppJs = [
   'canEditRules',
   'canEditAdminDeny',
   'canEditExempt',
+  'canEditMemberScope',
+  'groupAdminState',
+  'groupMemberScopeState',
   'activateChat',
   '配置入参',
   'setRuleSlot',
   'MessagePost',
+  'GroupMemberScope.addMemberIds',
 ];
 
 for (const needle of requiredAppJs) {
@@ -280,9 +287,13 @@ const requiredDataJs = [
   'TokenGovManager',
   'TokenActionMainManager',
   'TokenActionGovManager',
+  'GroupMemberScope',
   'GroupJoinScopeSource',
   'AdminDenySource',
   'GovVotedDenySource',
+  'groupAdmin',
+  'groupMemberScope',
+  'memberIds',
   'groupOwners',
   'defaultGroupIdsByAddress',
   'activationTabs',
@@ -339,6 +350,17 @@ for (const chat of initialState.chats) {
     }
   }
   if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
+  if (chat.blacklistMode === 'admin') {
+    if (!chat.groupAdmin) throw new Error(`Admin chat ${chat.groupId} missing groupAdmin`);
+    if (!Array.isArray(chat.groupAdmin.adminIds)) throw new Error(`Admin chat ${chat.groupId} groupAdmin.adminIds must be an array`);
+    if ('adminIds' in chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} must not store adminIds under adminDeny`);
+  }
+  if (chat.model === 'chain-service') {
+    if (!chat.groupMemberScope) throw new Error(`Chain service chat ${chat.groupId} missing groupMemberScope`);
+    if (!Array.isArray(chat.groupMemberScope.memberIds)) {
+      throw new Error(`Chain service chat ${chat.groupId} groupMemberScope.memberIds must be an array`);
+    }
+  }
   if (chat.params?.token !== undefined) {
     if (!/^0x[a-fA-F0-9]{40}$/.test(chat.params.token)) {
       throw new Error(`Chat ${chat.groupId} params.token must be a token contract address`);
@@ -391,6 +413,9 @@ const requiredProtocolCopy = [
   'addressDenyList',
   'senderIdDenyList',
   'senderIdExemptList',
+  'GroupAdmin',
+  'GroupMemberScope',
+  'memberIds',
   'voteWeight',
   'tokenAddress',
   'revalidate',
@@ -602,6 +627,8 @@ const adminIdQueryHarness = new Function(
     extractFunctionSource(js, 'activeChat'),
     extractFunctionSource(js, 'nftProfile'),
     extractFunctionSource(js, 'resolveNftInput'),
+    extractFunctionSource(js, 'groupAdminState'),
+    extractFunctionSource(js, 'groupAdminIds'),
     extractFunctionSource(js, 'queryAdminIdValue'),
     'return { queryAdminIdValue };',
   ].join('\n'),
@@ -613,7 +640,7 @@ adminIdQueryState.adminIdQueryType = 'name';
 let adminIdQueryRenderCount = 0;
 adminIdQueryHarness(adminIdQueryState, () => { adminIdQueryRenderCount += 1; }).queryAdminIdValue('链群管理员', true);
 if (!adminIdQueryState.adminIdQueryResult.includes('NFT #1310')
-  || !adminIdQueryState.adminIdQueryResult.includes('已在管理员名单')
+  || !adminIdQueryState.adminIdQueryResult.includes('已在 GroupAdmin 管理员名单')
   || adminIdQueryRenderCount !== 1) {
   throw new Error('queryAdminIdValue must render the resolved admin NFT status');
 }
@@ -629,6 +656,7 @@ const managerActivateHarness = new Function(
     'function activationBlocker() { return ""; }',
     'function activationPreview(chat, draft) { const values = Object.keys(chat.params).map((key) => draft[key]).join(", "); return `${chat.manager}.activate(${values})`; }',
     'function resolveOptionalKnownNftInput(value) { return value; }',
+    'function refreshManualMemberScopeAllowed() {}',
     extractFunctionSource(js, 'activateChat'),
     'return { activateChat };',
   ].join('\n'),

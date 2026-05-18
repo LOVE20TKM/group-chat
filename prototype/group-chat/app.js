@@ -227,6 +227,7 @@ function ruleSlotOptions(slot) {
   const options = {
     scopeSource: [
       { value: 'address(0)', label: '不设置' },
+      { value: 'GroupMemberScope', label: 'GroupMemberScope' },
       { value: 'GroupJoinScopeSource', label: 'GroupJoinScopeSource' },
     ],
     denySource: [
@@ -288,12 +289,43 @@ function canEditRules(chat) {
   return chat && ['owner', 'delegate'].includes(chat.role);
 }
 
+function groupAdminState(chat) {
+  return chat?.groupAdmin || { stateVersion: 0, adminIds: [] };
+}
+
+function ensureGroupAdminState(chat) {
+  if (!chat.groupAdmin) chat.groupAdmin = { stateVersion: 0, adminIds: [] };
+  return chat.groupAdmin;
+}
+
+function groupAdminIds(chat) {
+  return groupAdminState(chat).adminIds || [];
+}
+
+function groupMemberScopeState(chat) {
+  return chat?.groupMemberScope || { stateVersion: 0, memberIds: [] };
+}
+
+function ensureGroupMemberScopeState(chat) {
+  if (!chat.groupMemberScope) chat.groupMemberScope = { stateVersion: 0, memberIds: [] };
+  return chat.groupMemberScope;
+}
+
+function refreshManualMemberScopeAllowed(chat) {
+  if (chat?.chatInfo?.scopeSource !== 'GroupMemberScope') return;
+  chat.scopeAllowed = groupMemberScopeState(chat).memberIds.includes(String(currentDefaultGroupId()));
+}
+
 function isAdminDenyOperator(chat) {
-  return Boolean(chat?.adminDeny?.adminIds.includes(String(currentDefaultGroupId())));
+  return Boolean(groupAdminIds(chat).includes(String(currentDefaultGroupId())));
 }
 
 function canEditAdminDeny(chat) {
   return chat && chat.blacklistMode === 'admin' && isAdminDenyOperator(chat);
+}
+
+function canEditMemberScope(chat) {
+  return Boolean(chat?.groupMemberScope) && isAdminDenyOperator(chat);
 }
 
 function canEditExempt(chat) {
@@ -656,7 +688,7 @@ function renderChainActivation(chat) {
       <div class="muted">一个代币社区可有多个链群服务者管理群</div>
       <div class="inline-actions">
         <button type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" ${chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`}>${chat.activated ? '进入' : '配置'}</button>
-        ${chat.activated && canEditRules(chat) ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">群管理</button>` : ''}
+        ${chat.activated && (canEditRules(chat) || canEditMemberScope(chat)) ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">群管理</button>` : ''}
         ${chat.activated ? `<button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
       </div>
     </article>
@@ -785,6 +817,7 @@ function renderDecentralizedManagement(chat) {
 }
 
 function renderChainServiceManagement(chat) {
+  const memberScope = groupMemberScopeState(chat);
   const ruleEditor = canEditRules(chat) ? `
     <section class="workspace-band">
       <h2>owner / delegate 配置</h2>
@@ -796,10 +829,18 @@ function renderChainServiceManagement(chat) {
       ${renderDelegateInput(chat)}
     </section>
     <section class="workspace-band">
-      <h2>管理员 NFT</h2>
+      <h2>GroupAdmin 管理员 NFT</h2>
       ${renderAdminIdControls(chat)}
       ${state.adminIdQueryResult ? `<div class="query-result">${escapeHtml(state.adminIdQueryResult)}</div>` : ''}
-      ${renderAdminList(chat.adminDeny.adminIds, 'adminIds', canEditRules(chat))}
+      ${renderAdminList(groupAdminIds(chat), 'adminIds', canEditRules(chat))}
+    </section>
+  ` : '';
+  const memberEditor = chat.groupMemberScope ? `
+    <section class="workspace-band">
+      <h2>GroupMemberScope 成员 NFT</h2>
+      ${renderMemberIdControls(chat)}
+      ${state.memberIdQueryResult ? `<div class="query-result">${escapeHtml(state.memberIdQueryResult)}</div>` : ''}
+      ${renderAdminList(memberScope.memberIds, 'memberIds', canEditMemberScope(chat))}
     </section>
   ` : '';
 
@@ -812,6 +853,7 @@ function renderChainServiceManagement(chat) {
       <div class="notice-row">${managementNotice(chat)}</div>
     </section>
     ${ruleEditor}
+    ${memberEditor}
   `;
 }
 
@@ -867,8 +909,8 @@ function renderDelegateInput(chat) {
 }
 
 function managementNotice(chat) {
-  if (canEditRules(chat)) return 'owner/delegate 可管理群聊设置、管理员 NFT 和豁免名单。黑名单仅管理员 NFT 可维护。';
-  if (canEditAdminDeny(chat)) return '当前默认 NFT 命中管理员名单，可维护黑名单。';
+  if (canEditRules(chat)) return 'owner/delegate 可管理群聊设置、GroupAdmin 管理员 NFT 和豁免名单。黑名单与成员 NFT 由管理员 NFT 维护。';
+  if (canEditMemberScope(chat)) return '当前默认 NFT 命中 GroupAdmin 管理员名单，可维护黑名单与成员 NFT。';
   return '当前地址只读。';
 }
 
@@ -899,6 +941,25 @@ function renderAdminIdControls(chat) {
         <button class="sheet-button" type="button" data-action="query-admin-self">查自己</button>
         <button class="sheet-button" type="button" data-action="query-admin-id" data-input="admin-id-input">查询</button>
         <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="adminIds" data-input="admin-id-input" ${canEditRules(chat) ? '' : 'disabled'}>加入名单</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderMemberIdControls(chat) {
+  const placeholder = state.memberIdQueryType === 'name' ? '输入 NFT 名称' : '输入 NFT 编号';
+  const inputMode = state.memberIdQueryType === 'name' ? 'text' : 'numeric';
+  return `
+    <div class="admin-id-controls">
+      <div class="filter-tabs admin-query-tabs">
+        <button class="filter-tab${state.memberIdQueryType === 'name' ? ' active' : ''}" type="button" data-action="set-member-query-type" data-query-type="name">按名称</button>
+        <button class="filter-tab${state.memberIdQueryType === 'id' ? ' active' : ''}" type="button" data-action="set-member-query-type" data-query-type="id">按编号</button>
+      </div>
+      <input id="member-id-input" value="${escapeHtml(state.memberIdQuery)}" placeholder="${placeholder}" inputmode="${inputMode}">
+      <div class="admin-action-row">
+        <button class="sheet-button" type="button" data-action="query-member-self">查自己</button>
+        <button class="sheet-button" type="button" data-action="query-member-id" data-input="member-id-input">查询</button>
+        <button class="sheet-button primary" type="button" data-action="admin-list-add" data-list="memberIds" data-input="member-id-input" ${canEditMemberScope(chat) ? '' : 'disabled'}>加入成员</button>
       </div>
     </div>
   `;
@@ -1223,9 +1284,9 @@ function renderChatTools(chat) {
     ? `<button type="button" data-action="open-exempt" data-group-id="${chat.groupId}">豁免名单</button>`
     : '';
   const blacklistLabel = '黑名单';
-  const manageMenuItem = canEditRules(chat)
+  const manageMenuItem = canEditRules(chat) || canEditMemberScope(chat)
     ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>`
-    : '<button type="button" disabled title="仅 NFT 拥有者或代理可以进">管理</button>';
+    : '<button type="button" disabled title="仅 owner/delegate 或 GroupAdmin 管理员 NFT 可以进">管理</button>';
   const menu = state.activeGroupMenuId === chat.groupId ? `
     <div class="chat-menu">
       <button type="button" data-action="open-details" data-group-id="${chat.groupId}">群设置</button>
@@ -1281,7 +1342,8 @@ function scopeSourceReason(chat) {
     TokenGovManager: 'scopeSource 会检查当前地址是否有这个代币治理群的发言资格；当前地址不满足。',
     TokenActionMainManager: 'scopeSource 会检查当前地址是否属于这个行动群的参与范围；当前地址不在范围内。',
     TokenActionGovManager: 'scopeSource 会检查当前地址是否有这个行动治理群的发言资格；当前地址不满足。',
-    GroupJoinScopeSource: 'scopeSource 会检查当前地址是否在该链群下参与至少一个代币社区行动；当前地址不满足。',
+    GroupMemberScope: 'scopeSource 会检查当前 senderId 是否在 GroupMemberScope 成员 NFT 名单；当前 NFT 不在名单内。',
+    GroupJoinScopeSource: 'scopeSource 会先检查 GroupMemberScope 成员 NFT，再检查当前地址是否在该链群下参与至少一个代币社区行动；两者都不满足。',
   };
   return messages[source] || `${source} 判断当前地址没有这个群聊的发言资格。`;
 }
@@ -1396,7 +1458,7 @@ function renderGroupDetails() {
     </section>
     ${chat ? renderMessagePreferenceControl(chat) : ''}
     <div class="close-row status-actions">
-      ${chat && canEditRules(chat) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>` : ''}
+      ${chat && (canEditRules(chat) || canEditMemberScope(chat)) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>` : ''}
       ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
     </div>
   `;
@@ -1726,6 +1788,7 @@ function activateChat(groupId) {
   chat.activated = true;
   chat.postingAllowed = true;
   chat.lastMessageId = 0;
+  refreshManualMemberScopeAllowed(chat);
   state.activeGroupNumericId = chat.groupId;
   state.activeGroupId = String(chat.groupId);
   state.view = 'chat';
@@ -1775,6 +1838,7 @@ function setRuleSlot(slot, inputId) {
   }
   if (!value) return;
   chat.chatInfo[slot] = value;
+  refreshManualMemberScopeAllowed(chat);
   state.syncHint = `${slot} 已更新为 ${value}`;
   render();
 }
@@ -1785,6 +1849,7 @@ function setRuleSlotOption(slot, value) {
   if (!chat || !options || !canEditRules(chat)) return;
   if (!options.some((option) => option.value === value)) return;
   chat.chatInfo[slot] = value;
+  refreshManualMemberScopeAllowed(chat);
   state.syncHint = `${slot} 已更新为 ${value}`;
   render();
 }
@@ -1802,15 +1867,46 @@ function addAdminList(listName, inputId) {
   const chat = activeChat();
   const input = document.getElementById(inputId);
   const value = input.value.trim();
-  if (!chat || !chat.adminDeny || !value) return;
+  if (!chat || !value) return;
+  const isGroupAdminList = listName === 'adminIds';
+  const isMemberList = listName === 'memberIds';
   if (listName.includes('Exempt') && !canEditExempt(chat)) return;
-  if (!listName.includes('Exempt') && listName !== 'adminIds' && !canEditAdminDeny(chat)) return;
-  if (listName === 'adminIds' && !canEditRules(chat)) return;
-  const nftList = ['adminIds', 'senderIdDenyList', 'senderIdExemptList'].includes(listName);
-  const targetValue = nftList ? resolveNftInput(value, listName === 'adminIds' ? state.adminIdQueryType : state.nftInputMode) : value;
+  if (!listName.includes('Exempt') && !isGroupAdminList && !isMemberList && !canEditAdminDeny(chat)) return;
+  if (isGroupAdminList && !canEditRules(chat)) return;
+  if (isMemberList && !canEditMemberScope(chat)) return;
+  if (!isGroupAdminList && !isMemberList && !chat.adminDeny) return;
+  const nftList = ['adminIds', 'memberIds', 'senderIdDenyList', 'senderIdExemptList'].includes(listName);
+  const queryMode = isGroupAdminList ? state.adminIdQueryType : isMemberList ? state.memberIdQueryType : state.nftInputMode;
+  const targetValue = nftList ? resolveNftInput(value, queryMode) : value;
   if (!targetValue) {
-    if (listName === 'adminIds') state.adminIdQueryResult = `未找到 NFT：${value}`;
+    if (isGroupAdminList) state.adminIdQueryResult = `未找到 NFT：${value}`;
+    else if (isMemberList) state.memberIdQueryResult = `未找到 NFT：${value}`;
     else state.syncHint = `未找到 NFT：${value}`;
+    render();
+    return;
+  }
+  if (isGroupAdminList) {
+    const groupAdmin = ensureGroupAdminState(chat);
+    if (!groupAdmin.adminIds.includes(targetValue)) {
+      groupAdmin.adminIds.push(targetValue);
+      groupAdmin.stateVersion += 1;
+      state.syncHint = `GroupAdmin.setAdmins([...${targetValue}]) 已模拟`;
+    }
+    state.adminIdQuery = value;
+    queryAdminIdValue(value, false);
+    render();
+    return;
+  }
+  if (isMemberList) {
+    const memberScope = ensureGroupMemberScopeState(chat);
+    if (!memberScope.memberIds.includes(targetValue)) {
+      memberScope.memberIds.push(targetValue);
+      memberScope.stateVersion += 1;
+      state.syncHint = `GroupMemberScope.addMemberIds([${targetValue}]) 已模拟`;
+    }
+    refreshManualMemberScopeAllowed(chat);
+    state.memberIdQuery = value;
+    queryMemberIdValue(value, false);
     render();
     return;
   }
@@ -1837,12 +1933,6 @@ function addAdminList(listName, inputId) {
     chat.adminDeny.stateVersion += 1;
     state.syncHint = `${listName} 新增 ${targetValue}`;
   }
-  if (listName === 'adminIds') {
-    state.adminIdQuery = value;
-    queryAdminIdValue(value, false);
-    render();
-    return;
-  }
   render();
 }
 
@@ -1850,6 +1940,13 @@ function setAdminIdQueryType(queryType) {
   state.adminIdQueryType = queryType === 'id' ? 'id' : 'name';
   state.adminIdQuery = '';
   state.adminIdQueryResult = '';
+  render();
+}
+
+function setMemberIdQueryType(queryType) {
+  state.memberIdQueryType = queryType === 'id' ? 'id' : 'name';
+  state.memberIdQuery = '';
+  state.memberIdQueryResult = '';
   render();
 }
 
@@ -1879,30 +1976,74 @@ function queryAdminId(inputId) {
 
 function queryAdminIdValue(value, shouldRender) {
   const chat = activeChat();
-  if (!chat || !chat.adminDeny || !value) return;
+  if (!chat || !value) return;
   const groupId = resolveNftInput(value, state.adminIdQueryType);
   if (!groupId) {
     state.adminIdQueryResult = `未找到 NFT：${value}`;
     if (shouldRender) render();
     return;
   }
-  const inList = chat.adminDeny.adminIds.includes(groupId);
+  const inList = groupAdminIds(chat).includes(groupId);
   const profile = nftProfile(groupId);
-  state.adminIdQueryResult = `NFT #${groupId} · ${profile.name} · ${inList ? '已在管理员名单' : '不在管理员名单'}`;
+  state.adminIdQueryResult = `NFT #${groupId} · ${profile.name} · ${inList ? '已在 GroupAdmin 管理员名单' : '不在 GroupAdmin 管理员名单'}`;
   if (shouldRender) render();
 }
 
-function resolveAdminIdQuery(value) {
-  return resolveNftInput(value, state.adminIdQueryType);
+function queryMemberSelf() {
+  state.memberIdQuery = state.memberIdQueryType === 'name'
+    ? nftProfile(currentDefaultGroupId()).name
+    : String(currentDefaultGroupId());
+  queryMemberIdValue(state.memberIdQuery, true);
+}
+
+function queryMemberId(inputId) {
+  const input = document.getElementById(inputId);
+  state.memberIdQuery = input.value.trim();
+  queryMemberIdValue(state.memberIdQuery, true);
+}
+
+function queryMemberIdValue(value, shouldRender) {
+  const chat = activeChat();
+  if (!chat || !value) return;
+  const groupId = resolveNftInput(value, state.memberIdQueryType);
+  if (!groupId) {
+    state.memberIdQueryResult = `未找到 NFT：${value}`;
+    if (shouldRender) render();
+    return;
+  }
+  const memberScope = groupMemberScopeState(chat);
+  const inList = memberScope.memberIds.includes(groupId);
+  const profile = nftProfile(groupId);
+  state.memberIdQueryResult = `NFT #${groupId} · ${profile.name} · ${inList ? '已在 GroupMemberScope 成员名单' : '不在 GroupMemberScope 成员名单'}`;
+  if (shouldRender) render();
 }
 
 function removeAdminList(listName, value) {
   const chat = activeChat();
-  if (!chat || !chat.adminDeny) return;
+  if (!chat) return;
+  const isGroupAdminList = listName === 'adminIds';
+  const isMemberList = listName === 'memberIds';
   if (listName.includes('Exempt') && !canEditExempt(chat)) return;
-  if (!listName.includes('Exempt') && listName !== 'adminIds' && !canEditAdminDeny(chat)) return;
-  if (listName === 'adminIds' && !canEditRules(chat)) return;
-  if (listName === 'senderIdDenyList') {
+  if (!listName.includes('Exempt') && !isGroupAdminList && !isMemberList && !canEditAdminDeny(chat)) return;
+  if (isGroupAdminList && !canEditRules(chat)) return;
+  if (isMemberList && !canEditMemberScope(chat)) return;
+  if (!isGroupAdminList && !isMemberList && !chat.adminDeny) return;
+  if (isGroupAdminList) {
+    const groupAdmin = ensureGroupAdminState(chat);
+    if (groupAdmin.adminIds.includes(value)) {
+      groupAdmin.adminIds = groupAdmin.adminIds.filter((item) => item !== value);
+      groupAdmin.stateVersion += 1;
+      state.syncHint = `GroupAdmin.setAdmins([...]) 已模拟，移除 ${value}`;
+    }
+  } else if (isMemberList) {
+    const memberScope = ensureGroupMemberScopeState(chat);
+    if (memberScope.memberIds.includes(value)) {
+      memberScope.memberIds = memberScope.memberIds.filter((item) => item !== value);
+      memberScope.stateVersion += 1;
+      state.syncHint = `GroupMemberScope.removeMemberIds([${value}]) 已模拟`;
+    }
+    refreshManualMemberScopeAllowed(chat);
+  } else if (listName === 'senderIdDenyList') {
     if (chat.adminDeny.senderIdDenyList.includes(value)) {
       chat.adminDeny.senderIdDenyList = chat.adminDeny.senderIdDenyList.filter((item) => item !== value);
       chat.adminDeny.stateVersion += 1;
@@ -2494,9 +2635,12 @@ document.addEventListener('click', (event) => {
   if (action === 'admin-list-add') addAdminList(target.dataset.list, target.dataset.input);
   if (action === 'admin-list-remove') removeAdminList(target.dataset.list, target.dataset.value);
   if (action === 'set-admin-query-type') setAdminIdQueryType(target.dataset.queryType);
+  if (action === 'set-member-query-type') setMemberIdQueryType(target.dataset.queryType);
   if (action === 'set-nft-input-mode') setNftInputMode(target.dataset.mode);
   if (action === 'query-admin-self') queryAdminSelf();
   if (action === 'query-admin-id') queryAdminId(target.dataset.input);
+  if (action === 'query-member-self') queryMemberSelf();
+  if (action === 'query-member-id') queryMemberId(target.dataset.input);
   if (action === 'gov-add-target') addGovTarget(target.dataset.targetType, target.dataset.input);
   if (action === 'gov-vote') voteGovTarget(target.dataset.targetType, target.dataset.target, target.dataset.stance);
   if (action === 'open-gov-voters') openGovVoters(target.dataset.targetType, target.dataset.target);

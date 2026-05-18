@@ -12,8 +12,10 @@
 - `test/GroupChatDefaultSender.t.sol`：默认发言身份
 - `test/Manager.t.sol`：Manager 共同约束
 - `test/TypedManagers.t.sol`：四个 typed Manager
+- `test/GroupAdmin.t.sol`：共享管理员 NFT 配置
 - `test/AdminDenySource.t.sol`：中心化 deny source
 - `test/GovVotedDenySource.t.sol`：治理投票 deny source
+- `test/GroupMemberScope.t.sol`：成员 NFT scope source
 - `test/GroupJoinScopeSource.t.sol`：链群成员 scope source
 - `test/DeployGroupChat.t.sol`：部署产物与地址文件
 
@@ -74,13 +76,15 @@ Manager：
 
 Source：
 
-- `GroupJoinScopeSource` 只读 `GroupJoin` g 索引。
+- `GroupAdmin` 统一 owner / delegate 配管理员 NFT。
+- `GroupMemberScope` 使用成员 NFT 名单控制发言资格。
+- `GroupJoinScopeSource` 组合 `GroupMemberScope` 与 `GroupJoin` g 索引。
 - `AdminDenySource` 可与 `GroupJoinScopeSource` 组合使用。
 - `GovVotedDenySource` 按治理投票权重和黑名单生效阈值判定。
 
 部署：
 
-- 固定部署 `AdminDenySource`、`GovVotedDenySource`、`GroupJoinScopeSource`。
+- 固定部署 `GroupAdmin`、`AdminDenySource`、`GovVotedDenySource`、`GroupMemberScope`、`GroupJoinScopeSource`。
 - 地址文件只包含当前仓库部署产物字段；上游依赖地址不写入 `address.group.chat.params`。
 
 ## 当前验证命令

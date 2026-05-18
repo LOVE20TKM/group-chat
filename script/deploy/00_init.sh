@@ -60,6 +60,14 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
     fi
 
+    if [ -n "$groupAdminAddress" ]; then
+        export GROUP_ADMIN_ADDRESS=$groupAdminAddress
+    fi
+
+    if [ -n "$groupMemberScopeAddress" ]; then
+        export GROUP_MEMBER_SCOPE_ADDRESS=$groupMemberScopeAddress
+    fi
+
     if [ -n "$groupJoinScopeSourceAddress" ]; then
         export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
     fi
@@ -126,6 +134,14 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_DENY_SOURCE_ADDRESS=""
     fi
 
+    if [ -z "$GROUP_ADMIN_ADDRESS" ]; then
+        export GROUP_ADMIN_ADDRESS=""
+    fi
+
+    if [ -z "$GROUP_MEMBER_SCOPE_ADDRESS" ]; then
+        export GROUP_MEMBER_SCOPE_ADDRESS=""
+    fi
+
     if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ]; then
         export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=""
     fi
@@ -146,6 +162,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_DEFAULTS_ADDRESS
     export EXTENSION_CENTER_ADDRESS
     export GROUP_JOIN_ADDRESS
+    export GROUP_ADMIN_ADDRESS
+    export GROUP_MEMBER_SCOPE_ADDRESS
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
     export ADMIN_DENY_SOURCE_ADDRESS
     export GROUP_CHAT_DENY_SOURCE_ADDRESS
@@ -162,6 +180,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  GroupDefaults: $GROUP_DEFAULTS_ADDRESS"
     echo "  ExtensionCenter: $EXTENSION_CENTER_ADDRESS"
     echo "  GroupJoin: $GROUP_JOIN_ADDRESS"
+    echo "  GroupAdmin: $GROUP_ADMIN_ADDRESS"
+    echo "  GroupMemberScope: $GROUP_MEMBER_SCOPE_ADDRESS"
     echo "  GroupJoinScopeSource: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
     echo "  AdminDenySource: $ADMIN_DENY_SOURCE_ADDRESS"
     echo "  DenySource: $GROUP_CHAT_DENY_SOURCE_ADDRESS"

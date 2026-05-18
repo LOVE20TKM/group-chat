@@ -16,8 +16,10 @@ fi
 
 if [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$groupChatAddress" ] || \
+    [ -z "$groupAdminAddress" ] || \
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$groupChatDenySourceAddress" ] || \
+    [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
     [ -z "$tokenMainManagerAddress" ] || \
     [ -z "$tokenGovManagerAddress" ] || \
@@ -30,6 +32,16 @@ fi
 if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
     GROUP_JOIN_ADDRESS=$groupJoinAddress
     export GROUP_JOIN_ADDRESS
+fi
+
+if [ -z "$GROUP_ADMIN_ADDRESS" ] && [ -n "$groupAdminAddress" ]; then
+    GROUP_ADMIN_ADDRESS=$groupAdminAddress
+    export GROUP_ADMIN_ADDRESS
+fi
+
+if [ -z "$GROUP_MEMBER_SCOPE_ADDRESS" ] && [ -n "$groupMemberScopeAddress" ]; then
+    GROUP_MEMBER_SCOPE_ADDRESS=$groupMemberScopeAddress
+    export GROUP_MEMBER_SCOPE_ADDRESS
 fi
 
 if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddress" ]; then
@@ -96,9 +108,18 @@ if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
     GROUP_CHAT_MAX_ADMIN_IDS=20
 fi
 
-admin_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
+group_admin_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
     $groupChatAddress \
     $GROUP_CHAT_MAX_ADMIN_IDS)
+verify_contract \
+    $groupAdminAddress \
+    "GroupAdmin" \
+    "src/GroupAdmin.sol" \
+    $group_admin_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+admin_deny_source_constructor_args=$(cast abi-encode "constructor(address)" \
+    $groupAdminAddress)
 verify_contract \
     $adminDenySourceAddress \
     "AdminDenySource" \
@@ -120,7 +141,17 @@ verify_contract \
     $gov_deny_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-group_join_scope_source_constructor_args=$(cast abi-encode "constructor(address)" $GROUP_JOIN_ADDRESS)
+group_member_scope_constructor_args=$(cast abi-encode "constructor(address)" $groupAdminAddress)
+verify_contract \
+    $groupMemberScopeAddress \
+    "GroupMemberScope" \
+    "src/sources/scope/GroupMemberScope.sol" \
+    $group_member_scope_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+group_join_scope_source_constructor_args=$(cast abi-encode "constructor(address,address)" \
+    $groupMemberScopeAddress \
+    $GROUP_JOIN_ADDRESS)
 verify_contract \
     $groupJoinScopeSourceAddress \
     "GroupJoinScopeSource" \

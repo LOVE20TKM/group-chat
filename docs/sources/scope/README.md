@@ -28,17 +28,18 @@ function canPost(
 
 ## 当前实现
 
-当前实现的 `ScopeSource` 包括四个 typed Manager 与 `GroupJoinScopeSource`：
+当前实现的 `ScopeSource` 包括四个 typed Manager、`GroupMemberScope` 与 `GroupJoinScopeSource`：
 
 - [TokenMainManager](../../managers/token-main.md)
 - [TokenGovManager](../../managers/token-gov.md)
 - [TokenActionMainManager](../../managers/token-action-main.md)
 - [TokenActionGovManager](../../managers/token-action-gov.md)
+- [GroupMemberScope](./group-member-scope.md)
 - [GroupJoinScopeSource](./group-join-scope-source.md)
 
-链群服务者管理型群聊不使用 Manager。其 `scopeSource` 应挂载 `GroupJoinScopeSource`，用于判断发送地址是否当前属于该链群。
+链群服务者管理型群聊不使用 Manager。其 `scopeSource` 可挂载 `GroupMemberScope`，用于纯手工成员 NFT 名单；也可挂载 `GroupJoinScopeSource`，用于“手工成员 NFT 或链群行动参与者”。
 
-专用接口位于 `src/interfaces/sources/scope/IGroupJoinScopeSource.sol`。
+专用接口位于 `src/interfaces/sources/scope/IGroupMemberScope.sol` 与 `src/interfaces/sources/scope/IGroupJoinScopeSource.sol`。
 
 详见：[群聊类型](../../chat-types.md)。
 

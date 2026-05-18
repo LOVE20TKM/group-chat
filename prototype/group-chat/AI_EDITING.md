@@ -44,7 +44,8 @@
 - `message.groupId` 必须指向已存在的 `chat.groupId`。
 - `action.actionGroupId` 和 `action.actionGovGroupId` 必须指向已存在的 chat。
 - `blacklistMode = "gov"` 必须有 `govDeny`。
-- `blacklistMode = "admin"` 必须有 `adminDeny`。
+- `blacklistMode = "admin"` 必须有 `groupAdmin` 与 `adminDeny`；管理员 NFT 放在 `groupAdmin.adminIds`，不要放回 `adminDeny`。
+- 链群服务者管理型群聊必须有 `groupMemberScope.memberIds`，用于 `GroupMemberScope` 手工成员 NFT 名单。
 - `chatInfo` 至少保留 `scopeSource/denySource/beforePostPlugin/afterPostPlugin/delegateId`。
 
 ## 验收

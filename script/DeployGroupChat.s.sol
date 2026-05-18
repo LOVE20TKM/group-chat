@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {GroupAdmin} from "../src/GroupAdmin.sol";
 import {GroupChat} from "../src/GroupChat.sol";
 import {IExtensionCenter} from "../src/interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../src/interfaces/external/ILOVE20Join.sol";
@@ -11,6 +12,7 @@ import {TokenMainManager} from "../src/managers/TokenMainManager.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
+import {GroupMemberScope} from "../src/sources/scope/GroupMemberScope.sol";
 import {ScriptBase} from "./ScriptBase.sol";
 
 contract DeployGroupChat is ScriptBase {
@@ -31,8 +33,10 @@ contract DeployGroupChat is ScriptBase {
 
     struct DeployedAddresses {
         address groupChat;
+        address groupAdmin;
         address adminDenySource;
         address groupChatDenySource;
+        address groupMemberScope;
         address groupJoinScopeSource;
         address tokenMainManager;
         address tokenGovManager;
@@ -91,10 +95,12 @@ contract DeployGroupChat is ScriptBase {
     function _deploy(DeployConfig memory config) internal returns (DeployedAddresses memory deployed) {
         GroupChat groupChat = new GroupChat(config.groupDefaults, config.originBlocks, config.phaseBlocks);
         deployed.groupChat = address(groupChat);
-        deployed.adminDenySource = address(new AdminDenySource(address(groupChat), config.maxAdminIds));
+        deployed.groupAdmin = address(new GroupAdmin(address(groupChat), config.maxAdminIds));
+        deployed.adminDenySource = address(new AdminDenySource(deployed.groupAdmin));
         deployed.groupChatDenySource =
             address(new GovVotedDenySource(groupChat.GROUP_ADDRESS(), config.denyThresholdRatio));
-        deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(config.groupJoin));
+        deployed.groupMemberScope = address(new GroupMemberScope(deployed.groupAdmin));
+        deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(deployed.groupMemberScope, config.groupJoin));
 
         TokenMainManager tokenMainManager = new TokenMainManager(
             address(groupChat),
@@ -145,8 +151,10 @@ contract DeployGroupChat is ScriptBase {
         returns (string memory)
     {
         string memory content = string.concat(
+            _addressLine("groupAdminAddress", deployed.groupAdmin),
             _addressLine("adminDenySourceAddress", deployed.adminDenySource),
             _addressLine("groupChatDenySourceAddress", deployed.groupChatDenySource),
+            _addressLine("groupMemberScopeAddress", deployed.groupMemberScope),
             _addressLine("groupJoinScopeSourceAddress", deployed.groupJoinScopeSource)
         );
         content = string.concat(

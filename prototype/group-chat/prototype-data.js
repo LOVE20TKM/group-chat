@@ -21,10 +21,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   activeBlacklistMenuKey: null,
   activeExemptMenuKey: null,
   adminIdQueryType: 'name',
+  memberIdQueryType: 'name',
   nftInputMode: 'name',
   delegateQueryResult: '',
   adminIdQuery: '',
   adminIdQueryResult: '',
+  memberIdQuery: '',
+  memberIdQueryResult: '',
   activeGovVoterTargetType: null,
   activeGovVoterTarget: null,
   voterPage: 1,
@@ -387,9 +390,16 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '1309',
       },
       blacklistMode: 'admin',
+      groupAdmin: {
+        stateVersion: 3,
+        adminIds: ['1308', '1310'],
+      },
+      groupMemberScope: {
+        stateVersion: 2,
+        memberIds: ['1308', '1309'],
+      },
       adminDeny: {
         stateVersion: 12,
-        adminIds: ['1308', '1310'],
         addressDenyList: ['0x66...d0'],
         senderIdDenyList: ['9017'],
         senderIdExemptList: ['1309'],
@@ -422,9 +432,16 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'admin',
+      groupAdmin: {
+        stateVersion: 1,
+        adminIds: ['9007'],
+      },
+      groupMemberScope: {
+        stateVersion: 1,
+        memberIds: ['9007', '9050'],
+      },
       adminDeny: {
         stateVersion: 4,
-        adminIds: ['9007'],
         addressDenyList: [],
         senderIdDenyList: ['9050'],
         senderIdExemptList: [],
@@ -457,9 +474,16 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         delegateId: '0',
       },
       blacklistMode: 'admin',
-      adminDeny: {
+      groupAdmin: {
         stateVersion: 0,
         adminIds: [],
+      },
+      groupMemberScope: {
+        stateVersion: 0,
+        memberIds: [],
+      },
+      adminDeny: {
+        stateVersion: 0,
         addressDenyList: [],
         senderIdDenyList: [],
         senderIdExemptList: [],
@@ -477,7 +501,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       role: 'delegate',
       manager: 'GroupChat owner / delegate',
       activationCall: 'activateChat(...)',
-      params: { groupId: '1304', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      params: { groupId: '1304', scopeSource: 'GroupMemberScope', denySource: 'AdminDenySource' },
       activated: true,
       postingAllowed: true,
       immutableAfterActivate: false,
@@ -485,16 +509,23 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       lastMessageId: 6,
       scopeAllowed: true,
       chatInfo: {
-        scopeSource: 'GroupJoinScopeSource',
+        scopeSource: 'GroupMemberScope',
         denySource: 'AdminDenySource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '9007',
       },
       blacklistMode: 'admin',
+      groupAdmin: {
+        stateVersion: 2,
+        adminIds: ['9007'],
+      },
+      groupMemberScope: {
+        stateVersion: 3,
+        memberIds: ['9007', '1309'],
+      },
       adminDeny: {
         stateVersion: 5,
-        adminIds: ['9007'],
         addressDenyList: [],
         senderIdDenyList: [],
         senderIdExemptList: ['9007'],

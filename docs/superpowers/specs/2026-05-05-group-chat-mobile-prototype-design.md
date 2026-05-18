@@ -39,7 +39,7 @@
 - 私聊。
 - 消息编辑、删除、撤回。
 - 协议外阅读权限。
-- 完整 AdminDenySource 或 GovVotedDenySource 后台。
+- 完整 GroupAdmin、GroupMemberScope、AdminDenySource 或 GovVotedDenySource 后台。
 - 真实钱包交易接入。原型只模拟交互与状态。
 
 ## 协议映射
@@ -58,6 +58,9 @@
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
 | 规则槽 | `chatInfo(groupId)`：`delegateId`、`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
+| 共享管理员 | `GroupAdmin.adminIds(groupId)`、`GroupAdmin.adminIdOf(groupId, account)` |
+| 手工成员发言资格 | `GroupMemberScope.memberIds(groupId, offset, limit)`、`GroupMemberScope.canPost(groupId, senderId, senderAddress)` |
+| 链群发言资格 | `GroupJoinScopeSource.canPost(...) = GroupMemberScope.canPost(...) || GroupJoin.gTokenAddressesByGroupIdByAccountCount(...) > 0` |
 
 ## 信息架构
 
@@ -85,12 +88,12 @@
    - 输入框字号至少 `16px`，避免移动端浏览器自动缩放。
    - 用户直接输入 `@姓名` 生成 `mentionedSenderIds`，直接输入 `@全部` 生成 `mentionAll=true`。
    - 长按头像可把对应 `@姓名` 插入输入框。
-   - 点击头像时，若当前地址默认 NFT 是该 chat 的管理员 NFT，则弹出拉黑 sender 菜单。
+   - 点击头像时，若当前地址默认 NFT 命中 `GroupAdmin` 管理员名单，则弹出拉黑 sender 菜单。
    - 发送按钮触发模拟 `post`。
 
 5. `...` 群菜单与详情页
    - 详情页展示当前 `defaultGroupId` 与不可发言原因。
-   - 管理页展示 `scopeSource` / `denySource` / plugin。
+   - 管理页展示 `scopeSource` / `denySource` / plugin、`GroupAdmin` 管理员 NFT 和 `GroupMemberScope` 成员 NFT。
    - 黑名单页展示治理禁言或管理员禁言状态。
 
 ### 桌面端
@@ -110,6 +113,7 @@
 - 引用 `messageId > 0` 的消息后发送。
 - 输入框自动解析 mention 与 mentionAll。
 - 从 `MessagePost` 发现缺口后补拉区间的提示。
+- `GroupMemberScope`：成员 NFT 名单可增删，且成员资格随 NFT 而不是地址移动。
 
 ## 组件边界
 

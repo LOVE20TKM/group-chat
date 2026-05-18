@@ -17,8 +17,10 @@ source ./one_click_deploy.sh <network>
 同次部署：
 
 - `GroupChat`
+- `GroupAdmin`
 - `AdminDenySource`
 - `GovVotedDenySource`
+- `GroupMemberScope`
 - `GroupJoinScopeSource`
 - `TokenMainManager`
 - `TokenGovManager`
@@ -39,18 +41,19 @@ source ./one_click_deploy.sh <network>
 
 - `GROUP_ADDRESS`：仅用于部署后校验。
 - `GROUP_CHAT_DENY_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
-- `GROUP_CHAT_MAX_ADMIN_IDS`：`AdminDenySource.setAdmins` 单组最多管理员 NFT 数，默认 `20`。
+- `GROUP_CHAT_MAX_ADMIN_IDS`：`GroupAdmin.setAdmins` 单组最多管理员 NFT 数，默认 `20`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
 `GroupChat.originBlocks` 与 `GroupChat.phaseBlocks` 部署时直接读取 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约，保证 `currentRound()` 对齐 Join 合约。
 
-`DeployGroupChat` 固定部署 `AdminDenySource` 与 `GovVotedDenySource`。
+`DeployGroupChat` 固定部署 `GroupAdmin`、`AdminDenySource` 与 `GovVotedDenySource`。
 `GovVotedDenySource` 构造参数固定写入黑名单生效阈值。
-`DeployGroupChat` 固定部署 `GroupJoinScopeSource`，构造参数为 `GROUP_JOIN_ADDRESS`。
+`DeployGroupChat` 固定部署 `GroupMemberScope` 与 `GroupJoinScopeSource`。
 四个 typed Manager 的 `DENY_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedDenySource`。
+`GroupAdmin` 是 owner-admin 管理型模块共享的管理员名单。
 `AdminDenySource` 作为中心化 / 链群等 owner-admin 管理型 deny source 产物写入地址文件，不自动挂到 typed Manager。
-`GroupJoinScopeSource` 作为链群服务者管理型群聊的 scope source 产物写入地址文件，不自动挂到 typed Manager。
+`GroupMemberScope` 与 `GroupJoinScopeSource` 作为链群服务者可选 scope source 产物写入地址文件，不自动挂到 typed Manager。
 
 ## 参数文件
 
@@ -70,8 +73,10 @@ source ./one_click_deploy.sh <network>
 
 结果字段只包含当前仓库本次部署产物；上游依赖地址继续从 `address.group.params`、`address.group.defaults.params` 与 `group.chat.params` 读取。
 
+- `groupAdminAddress`
 - `adminDenySourceAddress`
 - `groupChatDenySourceAddress`
+- `groupMemberScopeAddress`
 - `groupJoinScopeSourceAddress`
 - `groupChatAddress`
 - `tokenMainManagerAddress`
@@ -86,8 +91,10 @@ source ./one_click_deploy.sh <network>
 `script/deploy/02_verify.sh` 会验证：
 
 - `GroupChat`
+- `GroupAdmin`
 - `AdminDenySource`
 - `GovVotedDenySource`
+- `GroupMemberScope`
 - `GroupJoinScopeSource`
 - 四个 typed Manager
 
@@ -119,10 +126,13 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 - `originBlocks` 对齐 core Join
 - `phaseBlocks` 对齐 core Join
 - `GroupChat.currentRound()` 与 core Join 当前轮一致
+- `GroupAdmin` 固定依赖
+- `GroupAdmin.MAX_ADMIN_IDS`
 - `AdminDenySource` 固定依赖
-- `AdminDenySource.MAX_ADMIN_IDS`
 - `GovVotedDenySource` 固定依赖
 - `GovVotedDenySource` 禁言阈值
+- `GroupMemberScope.GROUP_ADMIN_ADDRESS`
+- `GroupJoinScopeSource.GROUP_MEMBER_SCOPE_ADDRESS`
 - `GroupJoinScopeSource.GROUP_JOIN_ADDRESS`
 - 四个 Manager 的 `GROUP_CHAT_ADDRESS`
 - 四个 Manager 的固定规则槽

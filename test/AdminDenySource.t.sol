@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {GroupAdmin} from "../src/GroupAdmin.sol";
+import {IGroupAdmin} from "../src/interfaces/IGroupAdmin.sol";
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IAdminDenySource} from "../src/interfaces/sources/deny/IAdminDenySource.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
@@ -9,6 +11,7 @@ import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 contract AdminDenySourceTest is GroupChatFixture {
     uint256 internal constant MAX_ADMIN_IDS = 20;
 
+    GroupAdmin internal groupAdmin;
     AdminDenySource internal deny;
     address internal adminOwner = address(0xAD11);
     address internal secondAdminOwner = address(0xAD12);
@@ -20,16 +23,17 @@ contract AdminDenySourceTest is GroupChatFixture {
         super.setUp();
         adminId = groupNft.mint(adminOwner);
         secondAdminId = groupNft.mint(secondAdminOwner);
-        deny = new AdminDenySource(address(chat), MAX_ADMIN_IDS);
+        groupAdmin = new GroupAdmin(address(chat), MAX_ADMIN_IDS);
+        deny = new AdminDenySource(address(groupAdmin));
     }
 
     function testT120_ownerAndDelegateCanConfigureAdminsAndExemptButNotDenyLists() public {
         address[] memory accounts = _addresses(senderOwner);
 
         vm.prank(chatOwner);
-        deny.setAdmins(groupId, _uints(adminId));
-        assertTrue(deny.isAdminId(groupId, adminId));
-        assertEq(deny.stateVersion(groupId), 1);
+        groupAdmin.setAdmins(groupId, _uints(adminId));
+        assertTrue(groupAdmin.isAdminId(groupId, adminId));
+        assertEq(groupAdmin.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
         vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
@@ -42,7 +46,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         vm.prank(delegateIdOwner);
         deny.exemptSenderIds(groupId, _uints(senderId));
         assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
-        assertEq(deny.stateVersion(groupId), 2);
+        assertEq(deny.stateVersion(groupId), 1);
 
         vm.prank(delegateIdOwner);
         vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
@@ -54,8 +58,8 @@ contract AdminDenySourceTest is GroupChatFixture {
         address[] memory accounts = _addresses(senderOwner);
 
         vm.prank(chatOwner);
-        deny.setAdmins(groupId, admins);
-        assertTrue(deny.isAdminId(groupId, adminId));
+        groupAdmin.setAdmins(groupId, admins);
+        assertTrue(groupAdmin.isAdminId(groupId, adminId));
 
         vm.prank(adminOwner);
         vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
@@ -73,8 +77,8 @@ contract AdminDenySourceTest is GroupChatFixture {
         deny.exemptSenderIds(groupId, _uints(senderId));
 
         vm.prank(adminOwner);
-        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.setAdmins(groupId, new uint256[](0));
+        vm.expectRevert(IGroupAdmin.UnauthorizedGroupAdminManager.selector);
+        groupAdmin.setAdmins(groupId, new uint256[](0));
     }
 
     function testT122_denySourceBlocksPostsAndExemptListWins() public {
@@ -135,20 +139,20 @@ contract AdminDenySourceTest is GroupChatFixture {
 
     function testT124_setAdminsReplacesValidatesAndTransferRevokesAdmin() public {
         vm.prank(chatOwner);
-        deny.setAdmins(groupId, _uints(adminId, secondAdminId));
-        uint256[] memory admins = deny.adminIds(groupId);
+        groupAdmin.setAdmins(groupId, _uints(adminId, secondAdminId));
+        uint256[] memory admins = groupAdmin.adminIds(groupId);
         assertEq(admins.length, 2);
         assertEq(admins[0], adminId);
         assertEq(admins[1], secondAdminId);
-        assertEq(deny.stateVersion(groupId), 1);
+        assertEq(groupAdmin.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
-        vm.expectRevert(IAdminDenySource.DuplicateAdminId.selector);
-        deny.setAdmins(groupId, _uints(adminId, adminId));
+        vm.expectRevert(IGroupAdmin.DuplicateAdminId.selector);
+        groupAdmin.setAdmins(groupId, _uints(adminId, adminId));
 
         vm.prank(chatOwner);
-        vm.expectRevert(IAdminDenySource.GroupNotExist.selector);
-        deny.setAdmins(groupId, _uints(999999));
+        vm.expectRevert(IGroupAdmin.GroupNotExist.selector);
+        groupAdmin.setAdmins(groupId, _uints(999999));
 
         vm.prank(adminOwner);
         groupDefaults.setDefaultGroupId(adminId);
@@ -166,8 +170,8 @@ contract AdminDenySourceTest is GroupChatFixture {
     }
 
     function testT124B_setAdminsRejectsAdminCountAboveLimit() public {
-        vm.expectRevert(IAdminDenySource.MaxAdminIdsZero.selector);
-        new AdminDenySource(address(chat), 0);
+        vm.expectRevert(IGroupAdmin.MaxAdminIdsZero.selector);
+        new GroupAdmin(address(chat), 0);
 
         uint256[] memory admins = new uint256[](MAX_ADMIN_IDS + 1);
         for (uint256 i = 0; i < admins.length; i++) {
@@ -175,8 +179,8 @@ contract AdminDenySourceTest is GroupChatFixture {
         }
 
         vm.prank(chatOwner);
-        vm.expectRevert(IAdminDenySource.AdminIdsLimitExceeded.selector);
-        deny.setAdmins(groupId, admins);
+        vm.expectRevert(IGroupAdmin.AdminIdsLimitExceeded.selector);
+        groupAdmin.setAdmins(groupId, admins);
     }
 
     function testT125_senderIdDenyListsOnlyAffectSenderIds() public {
@@ -262,7 +266,7 @@ contract AdminDenySourceTest is GroupChatFixture {
 
     function testT127_ownerCanManageDenyListsOnlyThroughAdminNftList() public {
         vm.prank(chatOwner);
-        deny.setAdmins(groupId, _uints(groupId));
+        groupAdmin.setAdmins(groupId, _uints(groupId));
 
         vm.prank(chatOwner);
         vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
@@ -308,7 +312,7 @@ contract AdminDenySourceTest is GroupChatFixture {
 
     function _configureAdmin() internal {
         vm.prank(chatOwner);
-        deny.setAdmins(groupId, _uints(adminId));
+        groupAdmin.setAdmins(groupId, _uints(adminId));
 
         vm.prank(adminOwner);
         groupDefaults.setDefaultGroupId(adminId);

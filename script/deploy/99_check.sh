@@ -6,8 +6,10 @@ echo "========================================="
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$groupChatAddress" ] || \
+    [ -z "$groupAdminAddress" ] || \
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$groupChatDenySourceAddress" ] || \
+    [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
     [ -z "$tokenMainManagerAddress" ] || \
     [ -z "$tokenGovManagerAddress" ] || \
@@ -55,6 +57,16 @@ fi
 if [ -n "$groupChatDenySourceAddress" ]; then
     GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
     export GROUP_CHAT_DENY_SOURCE_ADDRESS
+fi
+
+if [ -n "$groupAdminAddress" ]; then
+    GROUP_ADMIN_ADDRESS=$groupAdminAddress
+    export GROUP_ADMIN_ADDRESS
+fi
+
+if [ -n "$groupMemberScopeAddress" ]; then
+    GROUP_MEMBER_SCOPE_ADDRESS=$groupMemberScopeAddress
+    export GROUP_MEMBER_SCOPE_ADDRESS
 fi
 
 if [ -n "$groupJoinScopeSourceAddress" ]; then
@@ -152,6 +164,16 @@ if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
     ((missing_params++))
 fi
 
+if [ -z "$GROUP_ADMIN_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_ADMIN_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$GROUP_MEMBER_SCOPE_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_MEMBER_SCOPE_ADDRESS not set"
+    ((missing_params++))
+fi
+
 if [ -z "$GROUP_JOIN_ADDRESS" ]; then
     echo -e "\033[31m✗\033[0m GROUP_JOIN_ADDRESS not set"
     ((missing_params++))
@@ -207,8 +229,10 @@ echo -e "\033[32m✓\033[0m All initialization parameters are set"
 echo ""
 
 echo -e "GroupChat Address: $groupChatAddress\n"
+echo -e "GroupAdmin Address: $GROUP_ADMIN_ADDRESS"
 echo -e "AdminDenySource Address: $ADMIN_DENY_SOURCE_ADDRESS"
 echo -e "GovVotedDenySource Address: $GROUP_CHAT_DENY_SOURCE_ADDRESS\n"
+echo -e "GroupMemberScope Address: $GROUP_MEMBER_SCOPE_ADDRESS"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
 echo -e "Deny Threshold Ratio: $GROUP_CHAT_DENY_THRESHOLD_RATIO\n"
@@ -297,7 +321,20 @@ else
 fi
 echo ""
 
+echo "Verifying GroupAdmin configuration..."
+check_equal "GroupAdmin: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_CHAT_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GroupAdmin: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GroupAdmin: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GroupAdmin: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_call $GROUP_ADMIN_ADDRESS "MAX_ADMIN_IDS()(uint256)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
 echo "Verifying AdminDenySource configuration..."
+check_equal "AdminDenySource: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
 check_equal "AdminDenySource: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_CHAT_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "AdminDenySource: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
@@ -317,7 +354,16 @@ check_equal "GovVotedDenySource: DENY_THRESHOLD_RATIO" $GROUP_CHAT_DENY_THRESHOL
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
+echo "Verifying GroupMemberScope configuration..."
+check_equal "GroupMemberScope: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $GROUP_MEMBER_SCOPE_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GroupMemberScope: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_MEMBER_SCOPE_ADDRESS "GROUP_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
 echo "Verifying GroupJoinScopeSource configuration..."
+check_equal "GroupJoinScopeSource: GROUP_MEMBER_SCOPE_ADDRESS" $GROUP_MEMBER_SCOPE_ADDRESS $(cast_call $GROUP_JOIN_SCOPE_SOURCE_ADDRESS "GROUP_MEMBER_SCOPE_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
 check_equal "GroupJoinScopeSource: GROUP_JOIN_ADDRESS" $GROUP_JOIN_ADDRESS $(cast_call $GROUP_JOIN_SCOPE_SOURCE_ADDRESS "GROUP_JOIN_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
