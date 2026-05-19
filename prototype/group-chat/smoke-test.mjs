@@ -122,7 +122,10 @@ if (dataScriptIndex === -1 || appScriptIndex === -1 || dataScriptIndex > appScri
 }
 
 const requiredCss = [
-  '--primary: #0f766e',
+  '--primary: #191c1f',
+  '--primary-action: #1e3a8a',
+  '--secondary: #2926e8',
+  '--greyscale-200: #e1e6ea',
   '.bottom-nav',
   '.conversation-row',
   '.conversation-row.group-row',
