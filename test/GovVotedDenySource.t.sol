@@ -95,17 +95,21 @@ contract GovVotedDenySourceTest is GroupChatFixture {
 
         protocol.setGovVotes(token, senderOwner, 4);
         deny.refreshVoteBySenderId(groupId, senderId, senderOwner);
-        (uint256 supportWeight, uint256 opposeWeight) =
-            deny.voteWeightsBySenderIdByVoter(groupId, senderId, senderOwner);
-        assertEq(supportWeight, 4);
-        assertEq(opposeWeight, 0);
+        uint256[] memory senderIds = new uint256[](1);
+        senderIds[0] = senderId;
+        (uint256[] memory supportWeights, uint256[] memory opposeWeights) =
+            deny.voteWeightsBySenderIdsByVoter(groupId, senderIds, senderOwner);
+        assertEq(supportWeights.length, 1);
+        assertEq(opposeWeights.length, 1);
+        assertEq(supportWeights[0], 4);
+        assertEq(opposeWeights[0], 0);
         assertEq(deny.stateVersion(groupId), 2);
 
         protocol.setGovVotes(token, senderOwner, 0);
         deny.refreshVoteBySenderId(groupId, senderId, senderOwner);
-        (supportWeight, opposeWeight) = deny.voteWeightsBySenderIdByVoter(groupId, senderId, senderOwner);
-        assertEq(supportWeight, 0);
-        assertEq(opposeWeight, 0);
+        (supportWeights, opposeWeights) = deny.voteWeightsBySenderIdsByVoter(groupId, senderIds, senderOwner);
+        assertEq(supportWeights[0], 0);
+        assertEq(opposeWeights[0], 0);
         assertEq(deny.votedSenderIdsCount(groupId), 0);
         assertEq(deny.stateVersion(groupId), 3);
 
@@ -158,13 +162,15 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertTrue(!denied);
         assertEq(supportWeight, 0);
         assertEq(opposeWeight, 0);
-        (uint256 voterSupportWeight, uint256 voterOpposeWeight) =
-            deny.voteWeightsBySenderAddressByVoter(groupId, senderOwner, senderOwner);
-        assertEq(voterSupportWeight, 0);
-        assertEq(voterOpposeWeight, 0);
+        address[] memory senderAddresses = new address[](1);
+        senderAddresses[0] = senderOwner;
+        (uint256[] memory voterSupportWeights, uint256[] memory voterOpposeWeights) =
+            deny.voteWeightsBySenderAddressesByVoter(groupId, senderAddresses, senderOwner);
+        assertEq(voterSupportWeights.length, 1);
+        assertEq(voterOpposeWeights.length, 1);
+        assertEq(voterSupportWeights[0], 0);
+        assertEq(voterOpposeWeights[0], 0);
         address[] memory voters;
-        uint256[] memory voterSupportWeights;
-        uint256[] memory voterOpposeWeights;
         (voters, voterSupportWeights, voterOpposeWeights) = deny.votersBySenderAddress(groupId, senderOwner, 0, 10);
         assertEq(voters.length, 0);
         assertEq(voterSupportWeights.length, 0);
@@ -270,6 +276,21 @@ contract GovVotedDenySourceTest is GroupChatFixture {
         assertEq(voters[1], voter2);
         assertEq(voterSupportWeights[1], 0);
         assertEq(voterOpposeWeights[1], 4);
+
+        address[] memory queriedSenderAddresses = new address[](3);
+        queriedSenderAddresses[0] = senderOwner;
+        queriedSenderAddresses[1] = other;
+        queriedSenderAddresses[2] = address(0x9999);
+        (voterSupportWeights, voterOpposeWeights) =
+            deny.voteWeightsBySenderAddressesByVoter(groupId, queriedSenderAddresses, senderOwner);
+        assertEq(voterSupportWeights.length, 3);
+        assertEq(voterOpposeWeights.length, 3);
+        assertEq(voterSupportWeights[0], 2);
+        assertEq(voterOpposeWeights[0], 0);
+        assertEq(voterSupportWeights[1], 2);
+        assertEq(voterOpposeWeights[1], 0);
+        assertEq(voterSupportWeights[2], 0);
+        assertEq(voterOpposeWeights[2], 0);
     }
 
     function testT136_senderVoteUsesExplicitSnapshotAndSurvivesNftTransfer() public {

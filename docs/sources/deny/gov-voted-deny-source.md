@@ -142,17 +142,17 @@ function refreshVoteBySender(
     address voter
 ) external;
 
-function voteWeightsBySenderAddressByVoter(
+function voteWeightsBySenderAddressesByVoter(
     uint256 groupId,
-    address senderAddress,
+    address[] calldata senderAddresses,
     address voter
-) external view returns (uint256 supportWeight, uint256 opposeWeight);
+) external view returns (uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-function voteWeightsBySenderIdByVoter(
+function voteWeightsBySenderIdsByVoter(
     uint256 groupId,
-    uint256 senderId,
+    uint256[] calldata senderIds,
     address voter
-) external view returns (uint256 supportWeight, uint256 opposeWeight);
+) external view returns (uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
 function voteStatusBySenderAddress(
     uint256 groupId,
@@ -280,7 +280,7 @@ function stateVersion(
 - 票权源固定为 `ILOVE20Group(GROUP_ADDRESS).ownerOf(groupId)`。
 - 票权源必须是合约，并实现 `IDenyVoteWeightSource`；这是 Manager 与部署测试约束。
 - 票权源不可用时，投票、反对、撤票、刷新写接口必须拒绝。
-- 票权源不可用时，即 `ownerOf(groupId)` 失败或 owner 无代码，`voteWeightsBySender*ByVoter(...)` 返回 `0, 0`，`voteStatusBySender*(...)` 返回 `false, 0, 0`，投票分页接口返回空。
+- 票权源不可用时，即 `ownerOf(groupId)` 失败或 owner 无代码，`voteWeightsBySender*ByVoter(...)` 返回与入参数组等长的 `0` 数组，`voteStatusBySender*(...)` 返回 `false, 0, 0`，投票分页接口返回空。
 - `isDenied(...)`、`isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)` 仅读取已结算名单，不重新读取总票权。
 - 通用批量黑名单读接口只返回发言 / 隐藏判断所需的布尔状态，不返回治理票数。
 - 如果前端需要按指定地址或 `senderId` 解释治理黑名单原因，单个目标使用 `voteStatusBySenderAddress(...)` / `voteStatusBySenderId(...)`，批量目标使用 `voteStatusBySenderAddresses(...)` / `voteStatusBySenderIds(...)`，读取 `denied`、`supportWeight`、`opposeWeight`。
@@ -288,8 +288,8 @@ function stateVersion(
 - 如果前端需要目标列表或投票人明细，继续使用 `votedSenderAddresses(...)`、`votedSenderIds(...)` 或对应 voters 分页。
 - `senderAddress == address(0)` 必须拒绝。
 - `senderId == 0` 必须拒绝。
-- 单个 voter 当前无票时，`voteWeightsBySender*ByVoter(...)` 返回 `supportWeight=0, opposeWeight=0`。
-- 单个 voter 当前有票时，只会有一侧权重大于 `0`：支持拉黑票返回 `supportWeight > 0`，反对拉黑票返回 `opposeWeight > 0`。
+- 单个 voter 对某个目标当前无票时，`voteWeightsBySender*ByVoter(...)` 对应下标返回 `supportWeight=0, opposeWeight=0`。
+- 单个 voter 对某个目标当前有票时，对应下标只会有一侧权重大于 `0`：支持拉黑票返回 `supportWeight > 0`，反对拉黑票返回 `opposeWeight > 0`。
 - `voteBy*` 读取到的当前票权必须 `> 0`，否则拒绝。
 - 重复投相同立场且票权未变化时必须拒绝。
 - 已无当前票时调用 `clearVoteBy*(...)` 必须拒绝。
@@ -298,6 +298,7 @@ function stateVersion(
 - `refreshVoteBy*(...)` 读取到当前票权未变化，但总票权阈值导致黑名单结果变化时，必须更新已结算名单并递增 `stateVersion`。
 - 单目标是否命中由写入/刷新路径根据 `supportWeight > opposeWeight` 与全局阈值同步到已结算名单。
 - `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)` 返回顺序必须与入参数组顺序一致。
+- `voteWeightsBySenderAddressesByVoter(...)`、`voteWeightsBySenderIdsByVoter(...)` 返回的两组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `supportWeight=0, opposeWeight=0`。
 - `voteStatusBySenderAddresses(...)`、`voteStatusBySenderIds(...)` 返回的三组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `denied=false, supportWeight=0, opposeWeight=0`。
 - `GovVotedDenySource` 没有豁免名单；豁免是 `AdminDenySource` 的专用展示 / 管理语义。
 - 分页接口 `limit == 0` 或 `offset` 越界时返回空数组。

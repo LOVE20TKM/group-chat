@@ -100,28 +100,38 @@ contract GovVotedDenySource is IGovVotedDenySource {
         _refreshSenderVote(groupId, senderId, senderAddress, voter);
     }
 
-    function voteWeightsBySenderAddressByVoter(uint256 groupId, address senderAddress, address voter)
+    function voteWeightsBySenderAddressesByVoter(uint256 groupId, address[] calldata senderAddresses, address voter)
         external
         view
-        returns (uint256 supportWeight, uint256 opposeWeight)
+        returns (uint256[] memory supportWeights, uint256[] memory opposeWeights)
     {
+        supportWeights = new uint256[](senderAddresses.length);
+        opposeWeights = new uint256[](senderAddresses.length);
         if (!_sourceHasCode(groupId)) {
-            return (0, 0);
+            return (supportWeights, opposeWeights);
         }
-        VoteState storage vote = _states[groupId].addressTargetStates[senderAddress].votes[voter];
-        return _voteWeights(vote);
+        ChatState storage state = _states[groupId];
+        for (uint256 i = 0; i < senderAddresses.length; i++) {
+            VoteState storage vote = state.addressTargetStates[senderAddresses[i]].votes[voter];
+            (supportWeights[i], opposeWeights[i]) = _voteWeights(vote);
+        }
     }
 
-    function voteWeightsBySenderIdByVoter(uint256 groupId, uint256 senderId, address voter)
+    function voteWeightsBySenderIdsByVoter(uint256 groupId, uint256[] calldata senderIds, address voter)
         external
         view
-        returns (uint256 supportWeight, uint256 opposeWeight)
+        returns (uint256[] memory supportWeights, uint256[] memory opposeWeights)
     {
+        supportWeights = new uint256[](senderIds.length);
+        opposeWeights = new uint256[](senderIds.length);
         if (!_sourceHasCode(groupId)) {
-            return (0, 0);
+            return (supportWeights, opposeWeights);
         }
-        VoteState storage vote = _states[groupId].senderIdTargetStates[senderId].votes[voter];
-        return _voteWeights(vote);
+        ChatState storage state = _states[groupId];
+        for (uint256 i = 0; i < senderIds.length; i++) {
+            VoteState storage vote = state.senderIdTargetStates[senderIds[i]].votes[voter];
+            (supportWeights[i], opposeWeights[i]) = _voteWeights(vote);
+        }
     }
 
     function voteStatusBySenderAddress(uint256 groupId, address senderAddress)

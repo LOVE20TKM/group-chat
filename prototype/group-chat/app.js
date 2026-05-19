@@ -153,12 +153,18 @@ function clearActiveQuote() {
 }
 
 function chatDisplayName(chat) {
-  if (chat.type === 'token-community') return `大群 ${chatTokenSymbol(chat)}`;
-  if (chat.type === 'token-gov') return `治理群 ${chatTokenSymbol(chat)}`;
-  if (chat.type === 'action') return `行动大群 #${chat.actionId}-${actionTitle(chat)}`;
-  if (chat.type === 'action-gov') return `行动治理群 #${chat.actionId}-${actionTitle(chat)}`;
-  if (chat.type === 'chain-service') return `链群#${chat.groupId}-${chat.chainName || chat.shortTitle}`;
+  if (chat.type === 'token-community') return `${chatTokenSymbol(chat)} 主群`;
+  if (chat.type === 'token-gov') return `${chatTokenSymbol(chat)} 治理群`;
+  if (chat.type === 'action') return `${chatTokenSymbol(chat)} 行动主群-No.${chat.actionId}-${actionTitle(chat)}`;
+  if (chat.type === 'action-gov') return `${chatTokenSymbol(chat)} 行动治理群-No.${chat.actionId}-${actionTitle(chat)}`;
+  if (chat.type === 'chain-service') return `链群-${chat.chainName || chat.groupId}`;
   return chat.title;
+}
+
+function chatListTitle(chat) {
+  if (chat.type === 'action' || chat.type === 'action-gov') return `No.${chat.actionId} ${actionTitle(chat)}`;
+  if (chat.type === 'chain-service') return chat.chainName || chat.shortTitle || String(chat.groupId);
+  return chatDisplayName(chat);
 }
 
 function chatTokenSymbol(chat) {
@@ -170,15 +176,33 @@ function actionTitle(chat) {
   return action ? action.title : '行动';
 }
 
-function chatIconLabel(chat) {
+function chatTypeLabel(chat) {
   const labels = {
-    'token-community': '大',
-    'token-gov': '治',
-    action: '行',
-    'action-gov': '审',
-    'chain-service': '链',
+    'token-community': '主群',
+    'token-gov': '治理',
+    action: '行动主群',
+    'action-gov': '行动治理',
+    'chain-service': '链群',
   };
-  return labels[chat.type] || '群';
+  return labels[chat.type] || '群聊';
+}
+
+function renderChatListHeader(chat, reminders) {
+  const reminderText = reminders.length ? ` ${reminders.map((item) => item.label).join(' ')}` : '';
+  const tokenPill = chat.type === 'chain-service'
+    ? ''
+    : `<span class="conversation-pill token">${escapeHtml(chatTokenSymbol(chat))}</span>`;
+  const headerLabel = chat.type === 'chain-service'
+    ? `${chatTypeLabel(chat)} G#${chat.groupId}${reminderText}`
+    : `${chatTokenSymbol(chat)} ${chatTypeLabel(chat)} G#${chat.groupId}${reminderText}`;
+  return `
+    <div class="conversation-kicker" aria-label="${escapeHtml(headerLabel)}">
+      ${tokenPill}
+      <span class="conversation-pill type">${escapeHtml(chatTypeLabel(chat))}</span>
+      <span class="conversation-pill id">G#${escapeHtml(chat.groupId)}</span>
+      ${reminders.map((item) => item.html).join('')}
+    </div>
+  `;
 }
 
 function isPinnedConversation(groupId) {
@@ -583,11 +607,11 @@ function renderConversationRow(entry) {
   const rowAction = chat.activated ? 'open-chat' : 'open-activation';
   const rowTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   const status = conversationStatus(chat);
-  const badges = [];
+  const reminders = [];
   const pinned = isPinnedConversation(chat.groupId);
-  if (status.hasMentionMe) badges.push('<span class="conversation-badge mention-me">@我</span>');
-  if (status.hasMentionAll) badges.push('<span class="conversation-badge mention-all">@全部</span>');
-  const unread = status.unreadCount > 0 ? `<span class="unread">${status.unreadCount}</span>` : '';
+  if (status.unreadCount > 0) reminders.push({ label: `未读 ${status.unreadCount}`, html: `<span class="conversation-badge unread-meta">未读 ${status.unreadCount}</span>` });
+  if (status.hasMentionMe) reminders.push({ label: '@我', html: '<span class="conversation-badge mention-me">@我</span>' });
+  if (status.hasMentionAll) reminders.push({ label: '@全部', html: '<span class="conversation-badge mention-all">@全部</span>' });
   const menu = state.activeConversationMenuGroupId === chat.groupId ? `
     <div class="conversation-menu">
       <button type="button" data-action="toggle-conversation-pin" data-group-id="${chat.groupId}">${pinned ? '取消置顶' : '置顶'}</button>
@@ -595,13 +619,12 @@ function renderConversationRow(entry) {
   ` : '';
 
   return `
-    <article class="conversation-row group-row${pinned ? ' pinned' : ''}" data-action="${rowAction}" ${rowTarget} data-long-press-conversation data-menu-open="${state.activeConversationMenuGroupId === chat.groupId ? 'true' : 'false'}">
-      <div class="avatar group group-icon group-icon-${chat.type}">${chatIconLabel(chat)}</div>
+    <article class="conversation-row group-row conversation-type-${chat.type}${pinned ? ' pinned' : ''}" data-action="${rowAction}" ${rowTarget} data-long-press-conversation data-menu-open="${state.activeConversationMenuGroupId === chat.groupId ? 'true' : 'false'}">
+      <div class="conversation-type-rail" aria-hidden="true"></div>
       <div class="conversation-main">
-        <div class="conversation-title">${escapeHtml(chatDisplayName(chat))}</div>
-        ${badges.length ? `<div class="conversation-badges">${badges.join('')}</div>` : ''}
+        <div class="conversation-title">${escapeHtml(chatListTitle(chat))}</div>
+        ${renderChatListHeader(chat, reminders)}
       </div>
-      ${unread}
       ${menu}
     </article>
   `;

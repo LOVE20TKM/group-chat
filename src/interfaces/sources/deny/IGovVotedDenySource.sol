@@ -65,10 +65,10 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function refreshVoteBySender(uint256 groupId, uint256 senderId, address senderAddress, address voter) external;
 
-    function voteWeightsBySenderAddressByVoter(uint256 groupId, address senderAddress, address voter)
+    function voteWeightsBySenderAddressesByVoter(uint256 groupId, address[] calldata senderAddresses, address voter)
         external
         view
-        returns (uint256 supportWeight, uint256 opposeWeight);
+        returns (uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
     function voteStatusBySenderAddress(uint256 groupId, address senderAddress)
         external
@@ -106,10 +106,10 @@ interface IGovVotedDenySource is IPostDenySource {
         view
         returns (address[] memory voters, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-    function voteWeightsBySenderIdByVoter(uint256 groupId, uint256 senderId, address voter)
+    function voteWeightsBySenderIdsByVoter(uint256 groupId, uint256[] calldata senderIds, address voter)
         external
         view
-        returns (uint256 supportWeight, uint256 opposeWeight);
+        returns (uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
     function voteStatusBySenderId(uint256 groupId, uint256 senderId)
         external

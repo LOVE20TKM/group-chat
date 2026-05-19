@@ -69,6 +69,22 @@ if (data.includes('inboxFilters') || data.includes('inboxFilter') || js.includes
   throw new Error('Inbox list must use pinned/recommended sections, not filter tabs');
 }
 
+if (prototypeSource.includes('group-icon') || js.includes('chatIconLabel')) {
+  throw new Error('Inbox conversation rows must not render group icons');
+}
+
+if (prototypeSource.includes('conversation-group-id') || prototypeSource.includes('conversation-side')) {
+  throw new Error('Inbox conversation rows must not render right-side group id');
+}
+
+if (prototypeSource.includes('type-meta') || js.includes('chatAccessLabel') || js.includes('chatControlLabel')) {
+  throw new Error('Inbox reminder row must not include posting or manager status badges');
+}
+
+if (prototypeSource.includes('conversation-badges')) {
+  throw new Error('Inbox reminders must render in the first row, not as a third row');
+}
+
 if (js.includes('state.senderId')) {
   throw new Error('Current account posting identity must use defaultGroupId');
 }
@@ -100,6 +116,11 @@ const cssOpenBraces = (css.match(/\{/g) || []).length;
 const cssCloseBraces = (css.match(/\}/g) || []).length;
 if (cssOpenBraces !== cssCloseBraces) {
   throw new Error(`CSS brace mismatch: ${cssOpenBraces} "{" vs ${cssCloseBraces} "}"`);
+}
+
+const conversationRowBlock = css.match(/\.conversation-row \{([\s\S]*?)\n\}/)?.[1] || '';
+if (conversationRowBlock.includes('border-radius') || conversationRowBlock.includes('box-shadow')) {
+  throw new Error('Inbox conversation rows must render as a flat list, not rounded cards');
 }
 
 const requiredHtml = [
@@ -137,11 +158,6 @@ const requiredCss = [
   '.conversation-menu',
   '.conversation-badge.mention-me',
   '.conversation-badge.mention-all',
-  '.group-icon-token-community',
-  '.group-icon-token-gov',
-  '.group-icon-action',
-  '.group-icon-action-gov',
-  '.group-icon-chain-service',
   '.chat-menu-button',
   '.chat-menu',
   '.message-mention',
@@ -173,7 +189,6 @@ const requiredAppJs = [
   'renderInbox',
   'renderConversationSection',
   'chatDisplayName',
-  'chatIconLabel',
   'activationTypeForChat',
   'renderActivationSection',
   'set-activation-type',
@@ -441,11 +456,11 @@ const requiredProtocolCopy = [
   'revalidate',
   '激活群聊',
   '代币群',
-  '大群 ${chatTokenSymbol(chat)}',
-  '治理群 ${chatTokenSymbol(chat)}',
-  '行动大群',
-  '行动治理群',
-  '链群#${chat.groupId}',
+  '${chatTokenSymbol(chat)} 主群',
+  '${chatTokenSymbol(chat)} 治理群',
+  '行动主群-No.',
+  '行动治理群-No.',
+  '链群-${chat.chainName || chat.groupId}',
   '春节公益铸造',
   '雪松节点',
 ];
@@ -711,12 +726,16 @@ const managerActivateHarness = new Function(
 );
 
 const managerActivationState = JSON.parse(JSON.stringify(initialState));
+const managerActivationTarget = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && !chat.activated);
+if (!managerActivationTarget) {
+  throw new Error('Fixture must include an inactive action-gov chat for manager activation');
+}
 const expectedMintedGroupId =
   managerActivationState.chats.reduce((maxId, chat) => Math.max(maxId, Number(chat.groupId) || 0), 0) + 1;
-managerActivateHarness(managerActivationState, () => {}).activateChat(1189);
+managerActivateHarness(managerActivationState, () => {}).activateChat(managerActivationTarget.groupId);
 
-const activatedActionGovChat = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && chat.actionId === '77');
-const linkedAction = managerActivationState.actions.find((action) => action.token === 'LOVE20A' && action.actionId === '77');
+const activatedActionGovChat = managerActivationState.chats.find((chat) => chat.type === 'action-gov' && chat.actionId === managerActivationTarget.actionId);
+const linkedAction = managerActivationState.actions.find((action) => action.token === managerActivationTarget.token && action.actionId === managerActivationTarget.actionId);
 if (!activatedActionGovChat || !activatedActionGovChat.activated || !activatedActionGovChat.postingAllowed) {
   throw new Error('Manager activation must mark the chat activated and postingAllowed');
 }
