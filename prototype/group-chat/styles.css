@@ -80,7 +80,8 @@ button:disabled {
 .picker-button,
 .inline-actions button,
 .row-actions button,
-.tag button {
+.tag button,
+.conversation-menu button {
   touch-action: manipulation;
 }
 
@@ -173,23 +174,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.inbox-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.inbox-filter-row .filter-tabs {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-}
-
-.inbox-filter-row .sheet-button {
-  flex: 0 0 auto;
-}
-
 .filter-tabs,
 .chat-picker {
   display: flex;
@@ -225,7 +209,46 @@ button:disabled {
   font-weight: 700;
 }
 
-.conversation-list,
+.conversation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.inbox-action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.conversation-section {
+  display: grid;
+  gap: 8px;
+}
+
+.conversation-section-label {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--greyscale-500);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.conversation-section-label strong {
+  color: var(--greyscale-700);
+  font-size: 13px;
+}
+
+.conversation-section-label span {
+  color: var(--greyscale-400);
+  font-weight: 600;
+}
+
+.conversation-section .empty-state {
+  margin-top: 0;
+}
+
 .activation-list {
   display: grid;
   gap: 8px;
@@ -244,11 +267,17 @@ button:disabled {
 }
 
 .conversation-row {
+  position: relative;
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: start;
   padding: 10px 11px;
+}
+
+.conversation-row.pinned,
+.conversation-row[data-menu-open="true"] {
+  border-color: var(--secondary-100);
 }
 
 .conversation-row.group-row {
@@ -297,6 +326,33 @@ button:disabled {
 .conversation-badge.mention-all {
   background: #eff6ff;
   color: var(--accent);
+}
+
+.conversation-menu {
+  position: absolute;
+  top: 46px;
+  right: 8px;
+  z-index: 5;
+  min-width: 116px;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(25, 28, 31, 0.14);
+}
+
+.conversation-menu button {
+  min-height: 30px;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--greyscale-700);
+  padding: 0 8px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .conversation-main small,

@@ -7,7 +7,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   defaultGroupId: 9007,
   bottomTab: 'chat',
   view: 'inbox',
-  inboxFilter: 'all',
+  pinnedGroupIds: [1024, 1188],
   activationType: 'token',
   activationDrafts: {},
   activeToken: 'LOVE20A',
@@ -45,6 +45,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   mentionAll: false,
   activeMenuMessageId: null,
   activeAvatarMenuKey: null,
+  activeConversationMenuGroupId: null,
   activeGroupMenuId: null,
   syncHint: '',
   nftProfiles: {
@@ -548,12 +549,6 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   { id: 'actions', label: '行动' },
   { id: 'discover', label: '发现' },
   { id: 'me', label: '我的' },
-],
-
-  inboxFilters: [
-  { id: 'all', label: '推荐' },
-  { id: 'group', label: '群聊' },
-  { id: 'managed', label: '我的' },
 ],
 
   activationTabs: [

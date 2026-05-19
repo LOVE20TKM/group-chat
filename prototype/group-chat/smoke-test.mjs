@@ -65,6 +65,10 @@ if (data.includes('indexMode') || js.includes('setIndexMode') || js.includes('se
   throw new Error('Index mode switch is not part of the current prototype interaction');
 }
 
+if (data.includes('inboxFilters') || data.includes('inboxFilter') || js.includes('set-inbox-filter')) {
+  throw new Error('Inbox list must use pinned/recommended sections, not filter tabs');
+}
+
 if (js.includes('state.senderId')) {
   throw new Error('Current account posting identity must use defaultGroupId');
 }
@@ -129,6 +133,8 @@ const requiredCss = [
   '.bottom-nav',
   '.conversation-row',
   '.conversation-row.group-row',
+  '.conversation-section-label',
+  '.conversation-menu',
   '.conversation-badge.mention-me',
   '.conversation-badge.mention-all',
   '.group-icon-token-community',
@@ -142,7 +148,7 @@ const requiredCss = [
   '.blacklist-row',
   '.blacklist-menu',
   '.pager-row',
-  '.inbox-filter-row',
+  '.inbox-action-row',
   '.filter-tabs',
   '.action-row',
   '.query-row',
@@ -165,12 +171,15 @@ const requiredAppJs = [
   'Load prototype-data.js before app.js',
   'prototypeData.initialState',
   'renderInbox',
+  'renderConversationSection',
   'chatDisplayName',
   'chatIconLabel',
   'activationTypeForChat',
   'renderActivationSection',
   'set-activation-type',
   'toggleChatMenu',
+  'toggleConversationPin',
+  'activeConversationMenuGroupId',
   'activeGroupMenuId',
   'pageReturnStack',
   'renderGroupDetails',
@@ -189,6 +198,7 @@ const requiredAppJs = [
   'activeExemptMenuKey',
   'data-action="copy-message"',
   'data-long-press-mention',
+  'data-long-press-conversation',
   'data-action="toggle-avatar-menu"',
   'activeAvatarMenuKey',
   'toggleAvatarMenu',
@@ -372,6 +382,13 @@ for (const chat of initialState.chats) {
       throw new Error(`Chat ${chat.groupId} tokenAddress must match params.token`);
     }
   }
+}
+
+if (!Array.isArray(initialState.pinnedGroupIds)) {
+  throw new Error('initialState.pinnedGroupIds must be an array');
+}
+for (const groupId of initialState.pinnedGroupIds) {
+  if (!chatIds.has(Number(groupId))) throw new Error(`Pinned chat groupId not found: ${groupId}`);
 }
 
 for (const action of initialState.actions) {
@@ -621,6 +638,34 @@ if (chatMenuState.activeGroupMenuId !== 1301 || chatMenuRenderCount !== 1) {
 toggleChatMenu('1301');
 if (chatMenuState.activeGroupMenuId !== null || chatMenuRenderCount !== 2) {
   throw new Error('toggleChatMenu must close the active groupId menu');
+}
+
+const conversationPinHarness = new Function(
+  'state',
+  'render',
+  [
+    extractFunctionSource(js, 'chatById'),
+    'let suppressConversationClick = true;',
+    extractFunctionSource(js, 'toggleConversationPin'),
+    'return { toggleConversationPin, getSuppressConversationClick: () => suppressConversationClick };',
+  ].join('\n'),
+);
+
+const conversationPinState = JSON.parse(JSON.stringify(initialState));
+conversationPinState.pinnedGroupIds = [1024];
+conversationPinState.activeConversationMenuGroupId = 1301;
+let conversationPinRenderCount = 0;
+const conversationPin = conversationPinHarness(conversationPinState, () => { conversationPinRenderCount += 1; });
+conversationPin.toggleConversationPin('1301');
+if (!conversationPinState.pinnedGroupIds.includes(1301) || conversationPinState.activeConversationMenuGroupId !== null) {
+  throw new Error('toggleConversationPin must pin the requested groupId and close the menu');
+}
+conversationPin.toggleConversationPin('1024');
+if (conversationPinState.pinnedGroupIds.includes(1024) || conversationPin.getSuppressConversationClick()) {
+  throw new Error('toggleConversationPin must unpin existing groupIds and clear suppressed row clicks');
+}
+if (conversationPinRenderCount !== 2) {
+  throw new Error('toggleConversationPin must render after pin state changes');
 }
 
 const adminIdQueryHarness = new Function(

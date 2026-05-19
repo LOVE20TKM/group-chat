@@ -7,12 +7,15 @@ if (!prototypeData) {
 const messagePreferenceStorageKey = 'love20-chat:message-preferences:v1';
 const state = JSON.parse(JSON.stringify(prototypeData.initialState));
 state.localMessagePreferences = readLocalMessagePreferences();
-const { bottomTabs, inboxFilters, activationTabs } = prototypeData;
+const { bottomTabs, activationTabs } = prototypeData;
 const blacklistPageSize = prototypeData.pageSizes.blacklist;
 const voterPageSize = prototypeData.pageSizes.voter;
 const avatarLongPressMs = 520;
+const conversationLongPressMs = 520;
 let avatarPressState = null;
+let conversationPressState = null;
 let suppressAvatarClick = false;
+let suppressConversationClick = false;
 
 function escapeHtml(value) {
   return String(value)
@@ -178,6 +181,10 @@ function chatIconLabel(chat) {
   return labels[chat.type] || '群';
 }
 
+function isPinnedConversation(groupId) {
+  return (state.pinnedGroupIds || []).map(Number).includes(Number(groupId));
+}
+
 function activationTypeForChat(chat) {
   if (!chat) return 'token';
   if (['token-community', 'token-gov'].includes(chat.type)) return 'token';
@@ -279,10 +286,6 @@ function activationPreview(chat, draft) {
 
 function manageableRole(chat) {
   return chat && ['owner', 'delegate', 'admin'].includes(chat.role);
-}
-
-function myChainServiceRole(chat) {
-  return chat && ['owner', 'delegate'].includes(chat.role);
 }
 
 function canEditRules(chat) {
@@ -537,30 +540,42 @@ function renderPlaceholder() {
 
 function renderInbox() {
   return `
-    <div class="inbox-filter-row">
-      <div class="filter-tabs">
-        ${inboxFilters
-          .map((filter) => `<button class="filter-tab${state.inboxFilter === filter.id ? ' active' : ''}" type="button" data-action="set-inbox-filter" data-filter="${filter.id}">${filter.label}</button>`)
-          .join('')}
-      </div>
+    <section class="conversation-list">${renderConversationRows()}</section>
+    <div class="inbox-action-row">
       <button class="sheet-button primary" type="button" data-action="set-view" data-view="activate">群聊激活</button>
     </div>
-    <section class="conversation-list">${renderConversationRows()}</section>
   `;
 }
 
 function inboxConversations() {
   const groups = state.chats.map((item) => ({ kind: 'group', item }));
-
-  if (state.inboxFilter === 'group') return groups.filter((entry) => entry.item.activated);
-  if (state.inboxFilter === 'managed') return groups.filter((entry) => entry.item.activated && myChainServiceRole(entry.item));
   return groups.filter((entry) => entry.item.activated);
 }
 
 function renderConversationRows() {
   const rows = inboxConversations();
   if (!rows.length) return '<div class="empty-state">暂无会话</div>';
-  return rows.map(renderConversationRow).join('');
+  const pinnedRows = rows.filter((entry) => isPinnedConversation(entry.item.groupId));
+  const recommendedRows = rows.filter((entry) => !isPinnedConversation(entry.item.groupId));
+
+  return [
+    renderConversationSection('置顶群聊', pinnedRows, '暂无置顶群聊'),
+    renderConversationSection('推荐群聊', recommendedRows, '暂无更多推荐群聊'),
+  ].join('');
+}
+
+function renderConversationSection(label, rows, emptyText) {
+  const count = rows.length ? `<span>${rows.length} 个</span>` : '';
+  const content = rows.length
+    ? rows.map(renderConversationRow).join('')
+    : `<div class="empty-state compact">${emptyText}</div>`;
+
+  return `
+    <div class="conversation-section">
+      <div class="conversation-section-label"><strong>${label}</strong>${count}</div>
+      ${content}
+    </div>
+  `;
 }
 
 function renderConversationRow(entry) {
@@ -569,18 +584,25 @@ function renderConversationRow(entry) {
   const rowTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   const status = conversationStatus(chat);
   const badges = [];
+  const pinned = isPinnedConversation(chat.groupId);
   if (status.hasMentionMe) badges.push('<span class="conversation-badge mention-me">@我</span>');
   if (status.hasMentionAll) badges.push('<span class="conversation-badge mention-all">@全部</span>');
   const unread = status.unreadCount > 0 ? `<span class="unread">${status.unreadCount}</span>` : '';
+  const menu = state.activeConversationMenuGroupId === chat.groupId ? `
+    <div class="conversation-menu">
+      <button type="button" data-action="toggle-conversation-pin" data-group-id="${chat.groupId}">${pinned ? '取消置顶' : '置顶'}</button>
+    </div>
+  ` : '';
 
   return `
-    <article class="conversation-row group-row" data-action="${rowAction}" ${rowTarget}>
+    <article class="conversation-row group-row${pinned ? ' pinned' : ''}" data-action="${rowAction}" ${rowTarget} data-long-press-conversation data-menu-open="${state.activeConversationMenuGroupId === chat.groupId ? 'true' : 'false'}">
       <div class="avatar group group-icon group-icon-${chat.type}">${chatIconLabel(chat)}</div>
       <div class="conversation-main">
         <div class="conversation-title">${escapeHtml(chatDisplayName(chat))}</div>
         ${badges.length ? `<div class="conversation-badges">${badges.join('')}</div>` : ''}
       </div>
       ${unread}
+      ${menu}
     </article>
   `;
 }
@@ -1512,12 +1534,14 @@ function setBottomTab(tab) {
   state.bottomTab = tab;
   if (tab === 'chat') state.view = 'inbox';
   state.pageReturnStack = [];
+  state.activeConversationMenuGroupId = null;
   render();
 }
 
 function setView(view) {
   state.pageReturnStack = [];
   state.view = view;
+  state.activeConversationMenuGroupId = null;
   render();
 }
 
@@ -1529,6 +1553,7 @@ function goBack() {
     state.activeGroupId = previous.activeGroupId;
     state.activeGroupNumericId = previous.activeGroupNumericId;
     state.activeGroupMenuId = null;
+    state.activeConversationMenuGroupId = null;
   } else if (state.bottomTab !== 'chat') {
     state.bottomTab = 'chat';
     state.view = 'inbox';
@@ -1539,6 +1564,7 @@ function goBack() {
   } else if (state.view !== 'inbox') {
     state.view = 'inbox';
   }
+  state.activeConversationMenuGroupId = null;
   render();
 }
 
@@ -1563,6 +1589,7 @@ function selectChat(groupId) {
   state.adminIdQuery = '';
   state.adminIdQueryResult = '';
   state.activeAvatarMenuKey = null;
+  state.activeConversationMenuGroupId = null;
   state.syncHint = `已选择 groupId #${chat.groupId}`;
   render();
 }
@@ -1572,6 +1599,7 @@ function openActivation(groupId) {
     openActivationForm(groupId);
     return;
   }
+  state.activeConversationMenuGroupId = null;
   state.view = 'activate';
   render();
 }
@@ -1584,6 +1612,7 @@ function openActivationForm(groupId) {
     state.activeToken = chat.token;
     state.activationType = activationTypeForChat(chat);
   }
+  state.activeConversationMenuGroupId = null;
   state.view = 'activate-form';
   render();
 }
@@ -1596,8 +1625,23 @@ function openChat(groupId) {
   state.view = 'chat';
   state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
+  state.activeConversationMenuGroupId = null;
   state.activeGroupMenuId = null;
   state.pageReturnStack = [];
+  render();
+}
+
+function toggleConversationPin(groupId) {
+  const numericGroupId = Number(groupId);
+  if (!chatById(numericGroupId)) return;
+  const pinnedGroupIds = (state.pinnedGroupIds || []).map(Number);
+  const isPinned = pinnedGroupIds.includes(numericGroupId);
+  state.pinnedGroupIds = isPinned
+    ? pinnedGroupIds.filter((id) => id !== numericGroupId)
+    : [numericGroupId, ...pinnedGroupIds];
+  state.activeConversationMenuGroupId = null;
+  suppressConversationClick = false;
+  state.syncHint = isPinned ? `已取消置顶 groupId #${numericGroupId}` : `已置顶 groupId #${numericGroupId}`;
   render();
 }
 
@@ -2560,7 +2604,31 @@ function clearAvatarPress() {
   avatarPressState = null;
 }
 
+function clearConversationPress() {
+  if (conversationPressState) clearTimeout(conversationPressState.timer);
+  conversationPressState = null;
+}
+
 document.addEventListener('pointerdown', (event) => {
+  const conversation = event.target.closest('[data-long-press-conversation]');
+  if (conversation && event.button === 0 && !event.target.closest('.conversation-menu')) {
+    clearConversationPress();
+    conversationPressState = {
+      pointerId: event.pointerId,
+      groupId: conversation.dataset.groupId,
+      x: event.clientX,
+      y: event.clientY,
+      timer: setTimeout(() => {
+        const groupId = Number(conversationPressState?.groupId);
+        conversationPressState = null;
+        if (!groupId) return;
+        suppressConversationClick = true;
+        state.activeConversationMenuGroupId = state.activeConversationMenuGroupId === groupId ? null : groupId;
+        render();
+      }, conversationLongPressMs),
+    };
+  }
+
   const avatar = event.target.closest('[data-long-press-mention]');
   if (!avatar || event.button !== 0) return;
   clearAvatarPress();
@@ -2584,17 +2652,38 @@ document.addEventListener('pointermove', (event) => {
   if (moved) clearAvatarPress();
 });
 
+document.addEventListener('pointermove', (event) => {
+  if (!conversationPressState || event.pointerId !== conversationPressState.pointerId) return;
+  const moved = Math.abs(event.clientX - conversationPressState.x) > 10 || Math.abs(event.clientY - conversationPressState.y) > 10;
+  if (moved) clearConversationPress();
+});
+
 document.addEventListener('pointerup', clearAvatarPress);
 document.addEventListener('pointercancel', clearAvatarPress);
+document.addEventListener('pointerup', clearConversationPress);
+document.addEventListener('pointercancel', clearConversationPress);
 document.addEventListener('contextmenu', (event) => {
-  if (event.target.closest('[data-long-press-mention]')) event.preventDefault();
+  if (event.target.closest('[data-long-press-mention], [data-long-press-conversation]')) event.preventDefault();
 });
 
 document.addEventListener('click', (event) => {
   const target = event.target.closest('[data-action]');
-  if (!target) return;
+  if (!target) {
+    suppressConversationClick = false;
+    if (state.activeConversationMenuGroupId !== null) {
+      state.activeConversationMenuGroupId = null;
+      render();
+    }
+    return;
+  }
   const action = target.dataset.action;
   if (action !== 'toggle-avatar-menu') suppressAvatarClick = false;
+  if (['open-chat', 'open-activation', 'open-activation-form'].includes(action) && suppressConversationClick) {
+    suppressConversationClick = false;
+    return;
+  }
+  if (action !== 'toggle-conversation-pin') suppressConversationClick = false;
+  if (action !== 'toggle-conversation-pin') state.activeConversationMenuGroupId = null;
 
   if (action === 'set-bottom-tab') setBottomTab(target.dataset.tab);
   if (action === 'go-back') goBack();
@@ -2603,10 +2692,6 @@ document.addEventListener('click', (event) => {
     render();
   }
   if (action === 'set-view') setView(target.dataset.view);
-  if (action === 'set-inbox-filter') {
-    state.inboxFilter = target.dataset.filter;
-    render();
-  }
   if (action === 'set-blacklist-query-type') setBlacklistQueryType(target.dataset.queryType);
   if (action === 'set-blacklist-page') setBlacklistPage(target.dataset.page);
   if (action === 'toggle-blacklist-menu') toggleBlacklistMenu(target.dataset.targetType, target.dataset.target);
@@ -2619,6 +2704,7 @@ document.addEventListener('click', (event) => {
   if (action === 'open-activation') openActivation(target.dataset.groupId);
   if (action === 'open-activation-form') openActivationForm(target.dataset.groupId);
   if (action === 'open-chat') openChat(target.dataset.groupId);
+  if (action === 'toggle-conversation-pin') toggleConversationPin(target.dataset.groupId);
   if (action === 'activate-chat') activateChat(target.dataset.groupId);
   if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
   if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.groupId);
