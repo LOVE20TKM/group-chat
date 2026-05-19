@@ -30,7 +30,7 @@
 - 消息流：普通消息、自己消息、引用消息、mentionedSenderIds、mentionAll 标识。
 - 底部输入栏：内容输入、引用 chip、发送按钮；`@姓名` 与 `@全部` 由输入框文本自动解析。
 - 点击消息菜单：`messageId > 0` 可引用；`0` 只表示无引用。
-- 顶部 `...` 群菜单：详情、黑名单、豁免名单、管理入口、模拟 `MessagePost` 缺口。
+- 顶部 `...` 群菜单：详情、黑名单、管理入口、模拟 `MessagePost` 缺口。
 - 不可发言状态：显示产品化错误名 / reasonCode 对应中文原因。
 - 桌面自适应：居中手机壳预览，保持同一移动端交互。
 
@@ -123,7 +123,7 @@
 - `MessageList`：消息渲染和分页状态。
 - `MessageBubble`：气泡、引用、mention 标记、长按菜单。
 - `Composer`：输入栏、引用 chip、自动解析 `@姓名` / `@全部`、发送按钮。
-- `GroupMenu`：详情、黑名单、豁免名单、管理入口。
+- `GroupMenu`：详情、黑名单、管理入口。
 - `GroupDetails`：当前 `defaultGroupId`、`canPost` 和错误原因。
 - `MockProtocolState`：原型用 mock 数据和状态切换。
 

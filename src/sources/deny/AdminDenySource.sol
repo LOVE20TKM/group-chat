@@ -15,10 +15,16 @@ contract AdminDenySource is IAdminDenySource {
     address public immutable GROUP_ADDRESS;
     uint256 public immutable MAX_ADMIN_IDS;
 
+    struct DenyOperatorState {
+        address operatorAddress;
+        uint256 operatorId;
+    }
+
     struct ChatState {
         EnumerableSets.AddressSet addressDenyList;
         EnumerableSets.UintSet senderIdDenyList;
-        EnumerableSets.UintSet senderIdExemptList;
+        mapping(address => DenyOperatorState) addressDenyOperatorStates;
+        mapping(uint256 => DenyOperatorState) senderIdDenyOperatorStates;
         uint256 stateVersion;
     }
 
@@ -91,63 +97,45 @@ contract AdminDenySource is IAdminDenySource {
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
-    function exemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external {
-        uint256 operatorId = _requireOwnerOrDelegate(groupId);
-        uint256 newVersion = _setSenderIdExemptTargets(groupId, operatorId, senderIds, true);
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
-    }
-
-    function unexemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external {
-        uint256 operatorId = _requireOwnerOrDelegate(groupId);
-        uint256 newVersion = _setSenderIdExemptTargets(groupId, operatorId, senderIds, false);
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
-    }
-
-    function isAddressDenied(uint256 groupId, address account) external view returns (bool) {
-        return _states[groupId].addressDenyList.contains(account);
+    function isAddressDenied(uint256 groupId, address senderAddress) external view returns (bool) {
+        return _states[groupId].addressDenyList.contains(senderAddress);
     }
 
     function isSenderIdDenied(uint256 groupId, uint256 senderId) external view returns (bool) {
         return _states[groupId].senderIdDenyList.contains(senderId);
     }
 
-    function isSenderIdExempt(uint256 groupId, uint256 senderId) external view returns (bool) {
-        return _states[groupId].senderIdExemptList.contains(senderId);
-    }
-
-    function isAddressDeniedBatch(uint256 groupId, address[] calldata accounts)
+    function addressDenyDetails(uint256 groupId, address[] calldata senderAddresses)
         external
         view
-        returns (bool[] memory denied)
+        returns (bool[] memory denied, address[] memory operatorAddresses, uint256[] memory operatorIds)
     {
         ChatState storage state = _states[groupId];
-        denied = new bool[](accounts.length);
-        for (uint256 i = 0; i < accounts.length; i++) {
-            denied[i] = state.addressDenyList.contains(accounts[i]);
+        denied = new bool[](senderAddresses.length);
+        operatorAddresses = new address[](senderAddresses.length);
+        operatorIds = new uint256[](senderAddresses.length);
+        for (uint256 i = 0; i < senderAddresses.length; i++) {
+            denied[i] = state.addressDenyList.contains(senderAddresses[i]);
+            DenyOperatorState storage operatorState = state.addressDenyOperatorStates[senderAddresses[i]];
+            operatorAddresses[i] = operatorState.operatorAddress;
+            operatorIds[i] = operatorState.operatorId;
         }
     }
 
-    function isSenderIdDeniedBatch(uint256 groupId, uint256[] calldata senderIds)
+    function senderIdDenyDetails(uint256 groupId, uint256[] calldata senderIds)
         external
         view
-        returns (bool[] memory denied)
+        returns (bool[] memory denied, address[] memory operatorAddresses, uint256[] memory operatorIds)
     {
         ChatState storage state = _states[groupId];
         denied = new bool[](senderIds.length);
+        operatorAddresses = new address[](senderIds.length);
+        operatorIds = new uint256[](senderIds.length);
         for (uint256 i = 0; i < senderIds.length; i++) {
             denied[i] = state.senderIdDenyList.contains(senderIds[i]);
-        }
-    }
-
-    function isSenderIdExemptBatch(uint256 groupId, uint256[] calldata senderIds)
-        external
-        view
-        returns (bool[] memory exempt)
-    {
-        ChatState storage state = _states[groupId];
-        exempt = new bool[](senderIds.length);
-        for (uint256 i = 0; i < senderIds.length; i++) {
-            exempt[i] = state.senderIdExemptList.contains(senderIds[i]);
+            DenyOperatorState storage operatorState = state.senderIdDenyOperatorStates[senderIds[i]];
+            operatorAddresses[i] = operatorState.operatorAddress;
+            operatorIds[i] = operatorState.operatorId;
         }
     }
 
@@ -155,8 +143,20 @@ contract AdminDenySource is IAdminDenySource {
         return _states[groupId].addressDenyList.values.length;
     }
 
-    function addressDenyList(uint256 groupId, uint256 offset, uint256 limit) external view returns (address[] memory) {
-        return _states[groupId].addressDenyList.page(offset, limit);
+    function addressDenyList(uint256 groupId, uint256 offset, uint256 limit)
+        external
+        view
+        returns (address[] memory senderAddresses, address[] memory operatorAddresses, uint256[] memory operatorIds)
+    {
+        ChatState storage state = _states[groupId];
+        senderAddresses = state.addressDenyList.page(offset, limit);
+        operatorAddresses = new address[](senderAddresses.length);
+        operatorIds = new uint256[](senderAddresses.length);
+        for (uint256 i = 0; i < senderAddresses.length; i++) {
+            DenyOperatorState storage operatorState = state.addressDenyOperatorStates[senderAddresses[i]];
+            operatorAddresses[i] = operatorState.operatorAddress;
+            operatorIds[i] = operatorState.operatorId;
+        }
     }
 
     function senderIdDenyListCount(uint256 groupId) external view returns (uint256) {
@@ -166,21 +166,17 @@ contract AdminDenySource is IAdminDenySource {
     function senderIdDenyList(uint256 groupId, uint256 offset, uint256 limit)
         external
         view
-        returns (uint256[] memory)
+        returns (uint256[] memory senderIds, address[] memory operatorAddresses, uint256[] memory operatorIds)
     {
-        return _states[groupId].senderIdDenyList.page(offset, limit);
-    }
-
-    function senderIdExemptListCount(uint256 groupId) external view returns (uint256) {
-        return _states[groupId].senderIdExemptList.values.length;
-    }
-
-    function senderIdExemptList(uint256 groupId, uint256 offset, uint256 limit)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return _states[groupId].senderIdExemptList.page(offset, limit);
+        ChatState storage state = _states[groupId];
+        senderIds = state.senderIdDenyList.page(offset, limit);
+        operatorAddresses = new address[](senderIds.length);
+        operatorIds = new uint256[](senderIds.length);
+        for (uint256 i = 0; i < senderIds.length; i++) {
+            DenyOperatorState storage operatorState = state.senderIdDenyOperatorStates[senderIds[i]];
+            operatorAddresses[i] = operatorState.operatorAddress;
+            operatorIds[i] = operatorState.operatorId;
+        }
     }
 
     function isDenied(uint256 groupId, uint256 senderId, address senderAddress) external view returns (bool) {
@@ -188,30 +184,11 @@ contract AdminDenySource is IAdminDenySource {
     }
 
     function _isDenied(ChatState storage state, uint256 senderId, address senderAddress) internal view returns (bool) {
-        if (state.senderIdExemptList.contains(senderId)) {
-            return false;
-        }
         return state.addressDenyList.contains(senderAddress) || state.senderIdDenyList.contains(senderId);
     }
 
     function stateVersion(uint256 groupId) external view returns (uint256) {
         return _states[groupId].stateVersion;
-    }
-
-    function _setSenderIdExemptTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds, bool listed)
-        internal
-        returns (uint256 newVersion)
-    {
-        ChatState storage state = _states[groupId];
-        for (uint256 i = 0; i < senderIds.length; i++) {
-            uint256 senderId = senderIds[i];
-            _requireSenderIdTarget(senderId);
-            bool changed = _setSenderIdList(state.senderIdExemptList, senderId, listed);
-            if (changed) {
-                newVersion = _ensureStateVersion(state, newVersion);
-                _emitSenderIdSet(groupId, operatorId, senderId, listed, false, newVersion);
-            }
-        }
     }
 
     function _setSenderIdDenyTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds, bool listed)
@@ -223,8 +200,9 @@ contract AdminDenySource is IAdminDenySource {
             uint256 senderId = senderIds[i];
             _requireSenderIdTarget(senderId);
             if (_setSenderIdList(state.senderIdDenyList, senderId, listed)) {
+                _setSenderIdDenyOperatorState(state, senderId, operatorId, listed);
                 newVersion = _ensureStateVersion(state, newVersion);
-                _emitSenderIdSet(groupId, operatorId, senderId, listed, true, newVersion);
+                _emitSenderIdSet(groupId, operatorId, senderId, listed, newVersion);
             }
         }
     }
@@ -240,6 +218,7 @@ contract AdminDenySource is IAdminDenySource {
             address senderAddress = senderAddresses[i];
             _requireAddressTarget(senderAddress);
             if (_setAddressList(state.addressDenyList, senderAddress, listed)) {
+                _setAddressDenyOperatorState(state, senderAddress, operatorId, listed);
                 newVersion = _ensureStateVersion(state, newVersion);
                 _emitAddressDenySet(groupId, operatorId, senderAddress, listed, newVersion);
             }
@@ -263,14 +242,39 @@ contract AdminDenySource is IAdminDenySource {
         }
 
         if (_setAddressList(state.addressDenyList, senderAddress, listed)) {
+            _setAddressDenyOperatorState(state, senderAddress, operatorId, listed);
             newVersion = _ensureStateVersion(state, newVersion);
             _emitAddressDenySet(groupId, operatorId, senderAddress, listed, newVersion);
         }
         if (_setSenderIdList(state.senderIdDenyList, senderId, listed)) {
+            _setSenderIdDenyOperatorState(state, senderId, operatorId, listed);
             newVersion = _ensureStateVersion(state, newVersion);
-            _emitSenderIdSet(groupId, operatorId, senderId, listed, true, newVersion);
+            _emitSenderIdSet(groupId, operatorId, senderId, listed, newVersion);
         }
         return newVersion;
+    }
+
+    function _setAddressDenyOperatorState(
+        ChatState storage state,
+        address senderAddress,
+        uint256 operatorId,
+        bool listed
+    ) internal {
+        if (listed) {
+            state.addressDenyOperatorStates[senderAddress] = DenyOperatorState(msg.sender, operatorId);
+        } else {
+            delete state.addressDenyOperatorStates[senderAddress];
+        }
+    }
+
+    function _setSenderIdDenyOperatorState(ChatState storage state, uint256 senderId, uint256 operatorId, bool listed)
+        internal
+    {
+        if (listed) {
+            state.senderIdDenyOperatorStates[senderId] = DenyOperatorState(msg.sender, operatorId);
+        } else {
+            delete state.senderIdDenyOperatorStates[senderId];
+        }
     }
 
     function _setSenderIdList(EnumerableSets.UintSet storage set, uint256 senderId, bool listed)
@@ -306,13 +310,6 @@ contract AdminDenySource is IAdminDenySource {
         }
     }
 
-    function _requireOwnerOrDelegate(uint256 groupId) internal view returns (uint256 operatorId) {
-        operatorId = IGroupAdmin(GROUP_ADMIN_ADDRESS).ownerOrDelegateIdOf(groupId, msg.sender);
-        if (operatorId == 0) {
-            revert UnauthorizedDenySourceManager();
-        }
-    }
-
     function _ensureStateVersion(ChatState storage state, uint256 newVersion) internal returns (uint256) {
         if (newVersion == 0) {
             newVersion = ++state.stateVersion;
@@ -326,24 +323,19 @@ contract AdminDenySource is IAdminDenySource {
         }
     }
 
-    function _emitAddressDenySet(uint256 groupId, uint256 operatorId, address account, bool listed, uint256 newVersion)
-        internal
-    {
-        emit AddressDenySet(groupId, msg.sender, account, operatorId, listed, newVersion);
-    }
-
-    function _emitSenderIdSet(
+    function _emitAddressDenySet(
         uint256 groupId,
         uint256 operatorId,
-        uint256 senderId,
+        address senderAddress,
         bool listed,
-        bool isDeny,
         uint256 newVersion
     ) internal {
-        if (isDeny) {
-            emit SenderIdDenySet(groupId, msg.sender, senderId, operatorId, listed, newVersion);
-        } else {
-            emit SenderIdExemptSet(groupId, msg.sender, senderId, operatorId, listed, newVersion);
-        }
+        emit AddressDenySet(groupId, msg.sender, senderAddress, operatorId, listed, newVersion);
+    }
+
+    function _emitSenderIdSet(uint256 groupId, uint256 operatorId, uint256 senderId, bool listed, uint256 newVersion)
+        internal
+    {
+        emit SenderIdDenySet(groupId, msg.sender, senderId, operatorId, listed, newVersion);
     }
 }

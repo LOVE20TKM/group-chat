@@ -35,7 +35,7 @@ function beforePost(
 ## 不适用场景
 
 - 基础发言资格：用 `scopeSource`
-- 黑名单 / 豁免名单：用 `denySource`
+- 黑名单：用 `denySource`
 - 消息落链后观察：用 `afterPostPlugin`
 
 ## Review 重点

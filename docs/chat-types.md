@@ -134,10 +134,9 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 
 权限模型：
 
-- owner / delegate 通过 `GroupAdmin` 配置管理员，并可维护豁免名单。
+- owner / delegate 通过 `GroupAdmin` 配置管理员。
 - admin 管理黑名单；owner / delegate 要管理黑名单，需将自己的默认身份 NFT 加入管理员集合。
-- 黑名单支持地址维度与 `senderId` 维度；豁免名单只支持 `senderId` 维度。
-- 豁免名单只豁免黑名单，不增加基础发言资格。
+- 黑名单支持地址维度与 `senderId` 维度。
 
 链群服务者管理型群聊不使用治理投票黑名单。
 
@@ -175,5 +174,5 @@ owner 可通过主协议更新：
 
 - 需要不可由 Manager 停止发言、不可重配、治理投票禁言：使用四种 typed Manager 群聊。
 - 需要链群服务者按链群运营实际管理禁言：使用链群服务者管理型群聊。
-- 成员资格必须放在 `scopeSource`，不要放进 `AdminDenySource` 的豁免名单。
+- 成员资格必须放在 `scopeSource`，不要放进 `AdminDenySource`。
 - 黑名单只回答“是否被拒绝发言”，不回答“是否本来有资格发言”。

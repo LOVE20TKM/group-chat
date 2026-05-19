@@ -203,14 +203,14 @@ const requiredAppJs = [
   'scopeSourceReason',
   'blacklistQueryType',
   'blacklistRows',
+  'govMyVoteDetail',
+  'adminDenyListPage',
+  'adminDenyRowsFromPage',
+  'setAdminDenyOperator',
   'setBlacklistQueryType',
   'setNftInputMode',
   'setBlacklistPage',
   'toggleBlacklistMenu',
-  'renderExemptList',
-  'openExempt',
-  'toggleExemptMenu',
-  'activeExemptMenuKey',
   'data-action="copy-message"',
   'data-long-press-mention',
   'data-long-press-conversation',
@@ -272,7 +272,6 @@ const requiredAppJs = [
   'renderBlacklistControls',
   'blacklist-controls',
   '黑名单',
-  '豁免名单',
   'renderGovBlacklist',
   'renderAdminBlacklist',
   'queryBlacklist',
@@ -290,7 +289,6 @@ const requiredAppJs = [
   'revalidateGovVote',
   'canEditRules',
   'canEditAdminDeny',
-  'canEditExempt',
   'canEditMemberScope',
   'groupAdminState',
   'groupMemberScopeState',
@@ -321,6 +319,8 @@ const requiredDataJs = [
   'GovVotedDenySource',
   'groupAdmin',
   'groupMemberScope',
+  'addressDenyOperatorStates',
+  'senderIdDenyOperatorStates',
   'memberIds',
   'groupOwners',
   'defaultGroupIdsByAddress',
@@ -382,6 +382,11 @@ for (const chat of initialState.chats) {
     if (!chat.groupAdmin) throw new Error(`Admin chat ${chat.groupId} missing groupAdmin`);
     if (!Array.isArray(chat.groupAdmin.adminIds)) throw new Error(`Admin chat ${chat.groupId} groupAdmin.adminIds must be an array`);
     if ('adminIds' in chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} must not store adminIds under adminDeny`);
+    for (const field of ['addressDenyOperatorStates', 'senderIdDenyOperatorStates']) {
+      if (!chat.adminDeny[field] || typeof chat.adminDeny[field] !== 'object' || Array.isArray(chat.adminDeny[field])) {
+        throw new Error(`Admin chat ${chat.groupId} adminDeny.${field} must be an object`);
+      }
+    }
   }
   if (chat.model === 'chain-service') {
     if (!chat.groupMemberScope) throw new Error(`Chain service chat ${chat.groupId} missing groupMemberScope`);
@@ -447,7 +452,8 @@ const requiredProtocolCopy = [
   'totalWeight',
   'addressDenyList',
   'senderIdDenyList',
-  'senderIdExemptList',
+  'addressDenyOperatorStates',
+  'senderIdDenyOperatorStates',
   'GroupAdmin',
   'GroupMemberScope',
   'memberIds',
@@ -463,6 +469,8 @@ const requiredProtocolCopy = [
   '链群-${chat.chainName || chat.groupId}',
   '春节公益铸造',
   '雪松节点',
+  '我的投票：',
+  '拉黑人：',
 ];
 
 for (const needle of requiredProtocolCopy) {
@@ -554,6 +562,50 @@ if (!blacklistApi.showBlacklistedMessages('1024')) {
 }
 if (blacklistApi.shouldHideMessage(blacklistChat, blacklistedMessage)) {
   throw new Error('Blacklisted sender message must show after local preference is enabled');
+}
+
+const blacklistRowsHarness = new Function(
+  'state',
+  [
+    extractFunctionSource(js, 'nftProfile'),
+    extractFunctionSource(js, 'sameAddress'),
+    extractFunctionSource(js, 'normalizeBlacklistTargetType'),
+    extractFunctionSource(js, 'govAddressDenied'),
+    extractFunctionSource(js, 'govSenderIdDenied'),
+    extractFunctionSource(js, 'govMyVoteDetail'),
+    extractFunctionSource(js, 'adminDenyOperatorRecord'),
+    extractFunctionSource(js, 'adminDenyOperatorDetailFromValues'),
+    extractFunctionSource(js, 'adminDenyTargets'),
+    extractFunctionSource(js, 'adminDenyListPage'),
+    extractFunctionSource(js, 'adminDenyRowsFromPage'),
+    extractFunctionSource(js, 'blacklistRows'),
+    'return { blacklistRows, govMyVoteDetail, adminDenyListPage, adminDenyRowsFromPage };',
+  ].join('\n'),
+);
+
+const blacklistRowsApi = blacklistRowsHarness(JSON.parse(JSON.stringify(initialState)));
+const govRows = blacklistRowsApi.blacklistRows(initialState.chats.find((chat) => chat.groupId === 1024));
+const govSenderRow = govRows.find((row) => row.type === 'nft' && row.target === '9011');
+const govAddressRow = govRows.find((row) => row.type === 'address' && row.target === '0x44...aa');
+if (!govSenderRow?.detail.includes('我的投票：支持 18') || !govAddressRow?.detail.includes('我的投票：未投票')) {
+  throw new Error('Gov blacklist rows must show the current account vote state');
+}
+const adminRows = blacklistRowsApi.blacklistRows(initialState.chats.find((chat) => chat.groupId === 1301));
+const adminAddressRow = adminRows.find((row) => row.type === 'address' && row.target === '0x66...d0');
+const adminSenderRow = adminRows.find((row) => row.type === 'nft' && row.target === '9017');
+if (!adminAddressRow?.detail.includes('NFT #1308') || !adminAddressRow?.detail.includes('0x21...ce')) {
+  throw new Error('Admin address deny rows must show who added the blacklist entry');
+}
+if (!adminSenderRow?.detail.includes('NFT #1310') || !adminSenderRow?.detail.includes('0x31...10')) {
+  throw new Error('Admin senderId deny rows must show who added the blacklist entry');
+}
+const adminAddressPage = blacklistRowsApi.adminDenyListPage(initialState.chats.find((chat) => chat.groupId === 1301), 'address', 0, 1);
+if (adminAddressPage.targets[0] !== '0x66...d0' || adminAddressPage.operatorAddresses[0] !== '0x21...ce' || adminAddressPage.operatorIds[0] !== '1308') {
+  throw new Error('Admin address deny list page must return target, operatorAddress, and operatorId together');
+}
+const adminSenderRows = blacklistRowsApi.adminDenyRowsFromPage(initialState.chats.find((chat) => chat.groupId === 1301), 'nft', 0, 1);
+if (!adminSenderRows[0]?.detail.includes('NFT #1310')) {
+  throw new Error('Admin senderId rows must be derived from the paged tuple response');
 }
 
 const sendHarness = new Function(

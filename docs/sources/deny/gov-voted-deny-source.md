@@ -300,7 +300,6 @@ function stateVersion(
 - `isAddressDeniedBatch(...)`、`isSenderIdDeniedBatch(...)` 返回顺序必须与入参数组顺序一致。
 - `voteWeightsBySenderAddressesByVoter(...)`、`voteWeightsBySenderIdsByVoter(...)` 返回的两组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `supportWeight=0, opposeWeight=0`。
 - `voteStatusBySenderAddresses(...)`、`voteStatusBySenderIds(...)` 返回的三组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `denied=false, supportWeight=0, opposeWeight=0`。
-- `GovVotedDenySource` 没有豁免名单；豁免是 `AdminDenySource` 的专用展示 / 管理语义。
 - 分页接口 `limit == 0` 或 `offset` 越界时返回空数组。
 - 同一分页接口返回的数组长度必须一致。
 - voted sender 与投票人列表必须去重，返回顺序不作协议承诺。

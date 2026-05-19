@@ -27,7 +27,7 @@ contract AdminDenySourceTest is GroupChatFixture {
         deny = new AdminDenySource(address(groupAdmin));
     }
 
-    function testT120_ownerAndDelegateCanConfigureAdminsAndExemptButNotDenyLists() public {
+    function testT120_ownerAndDelegateCanConfigureAdminsButNotDenyLists() public {
         address[] memory accounts = _addresses(senderOwner);
 
         vm.prank(chatOwner);
@@ -42,11 +42,6 @@ contract AdminDenySourceTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
         chat.activateChat(groupId, keys, values, address(0), address(deny), address(0), address(0), delegateId);
-
-        vm.prank(delegateIdOwner);
-        deny.exemptSenderIds(groupId, _uints(senderId));
-        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
-        assertEq(deny.stateVersion(groupId), 1);
 
         vm.prank(delegateIdOwner);
         vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
@@ -73,15 +68,11 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertTrue(deny.isAddressDenied(groupId, senderOwner));
 
         vm.prank(adminOwner);
-        vm.expectRevert(IAdminDenySource.UnauthorizedDenySourceManager.selector);
-        deny.exemptSenderIds(groupId, _uints(senderId));
-
-        vm.prank(adminOwner);
         vm.expectRevert(IGroupAdmin.UnauthorizedGroupAdminManager.selector);
         groupAdmin.setAdmins(groupId, new uint256[](0));
     }
 
-    function testT122_denySourceBlocksPostsAndExemptListWins() public {
+    function testT122_denySourceBlocksPostsAndUndenyRestoresPosting() public {
         _configureAdmin();
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
@@ -99,8 +90,8 @@ contract AdminDenySourceTest is GroupChatFixture {
         vm.expectRevert(IGroupChatErrors.DenyRejected.selector);
         _post(groupId, senderId, "blocked");
 
-        vm.prank(chatOwner);
-        deny.exemptSenderIds(groupId, _uints(senderId));
+        vm.prank(adminOwner);
+        deny.undenyBySenderIds(groupId, _uints(senderId));
 
         assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
         vm.prank(senderOwner);
@@ -121,13 +112,23 @@ contract AdminDenySourceTest is GroupChatFixture {
         deny.denyBySenderAddresses(groupId, _addresses(address(0x101)));
         assertEq(deny.stateVersion(groupId), baseVersion + 1);
 
-        address[] memory page = deny.addressDenyList(groupId, 1, 2);
+        (address[] memory page, address[] memory operatorAddresses, uint256[] memory operatorIds) =
+            deny.addressDenyList(groupId, 1, 2);
         assertEq(page.length, 2);
+        assertEq(operatorAddresses.length, 2);
+        assertEq(operatorIds.length, 2);
         assertEq(page[0], address(0x102));
         assertEq(page[1], address(0x103));
+        assertEq(operatorAddresses[0], adminOwner);
+        assertEq(operatorAddresses[1], adminOwner);
+        assertEq(operatorIds[0], adminId);
+        assertEq(operatorIds[1], adminId);
 
-        address[] memory empty = deny.addressDenyList(groupId, 99, 1);
+        (address[] memory empty, address[] memory emptyOperatorAddresses, uint256[] memory emptyOperatorIds) =
+            deny.addressDenyList(groupId, 99, 1);
         assertEq(empty.length, 0);
+        assertEq(emptyOperatorAddresses.length, 0);
+        assertEq(emptyOperatorIds.length, 0);
         assertEq(deny.addressDenyListCount(otherGroupId), 0);
 
         vm.prank(adminOwner);
@@ -280,34 +281,119 @@ contract AdminDenySourceTest is GroupChatFixture {
         assertTrue(deny.isAddressDenied(groupId, senderOwner));
     }
 
-    function testT128_batchListChecksReturnIndependentCacheSlices() public {
+    function testT128_denyDetailsReturnIndependentCacheSlicesAndOperators() public {
         _configureAdmin();
 
         vm.prank(adminOwner);
         deny.denyBySenderIds(groupId, _uints(senderId));
 
-        bool[] memory addressDenied = deny.isAddressDeniedBatch(groupId, _addresses(senderOwner, other));
+        (bool[] memory addressDenied, address[] memory addressOperatorAddresses, uint256[] memory addressOperatorIds) =
+            deny.addressDenyDetails(groupId, _addresses(senderOwner, other));
         assertEq(addressDenied.length, 2);
+        assertEq(addressOperatorAddresses.length, 2);
+        assertEq(addressOperatorIds.length, 2);
         assertTrue(!addressDenied[0]);
         assertTrue(!addressDenied[1]);
+        assertEq(addressOperatorAddresses[0], address(0));
+        assertEq(addressOperatorAddresses[1], address(0));
+        assertEq(addressOperatorIds[0], 0);
+        assertEq(addressOperatorIds[1], 0);
 
-        bool[] memory senderIdDenied = deny.isSenderIdDeniedBatch(groupId, _uints(senderId, otherGroupId));
+        (bool[] memory senderIdDenied, address[] memory senderIdOperatorAddresses, uint256[] memory senderIdOperatorIds)
+        = deny.senderIdDenyDetails(groupId, _uints(senderId, otherGroupId));
         assertEq(senderIdDenied.length, 2);
+        assertEq(senderIdOperatorAddresses.length, 2);
+        assertEq(senderIdOperatorIds.length, 2);
         assertTrue(senderIdDenied[0]);
         assertTrue(!senderIdDenied[1]);
+        assertEq(senderIdOperatorAddresses[0], adminOwner);
+        assertEq(senderIdOperatorAddresses[1], address(0));
+        assertEq(senderIdOperatorIds[0], adminId);
+        assertEq(senderIdOperatorIds[1], 0);
 
-        bool[] memory senderIdExempt = deny.isSenderIdExemptBatch(groupId, _uints(senderId, otherGroupId));
-        assertEq(senderIdExempt.length, 2);
-        assertTrue(!senderIdExempt[0]);
-        assertTrue(!senderIdExempt[1]);
+        assertTrue(deny.isDenied(groupId, senderId, senderOwner));
+    }
+
+    function testT128B_denyListPagesReturnCurrentListerAndClearOnUndeny() public {
+        _configureAdmin();
+
+        vm.prank(adminOwner);
+        deny.denyBySenderAddresses(groupId, _addresses(senderOwner, other));
+
+        (address[] memory addressPage, address[] memory operatorAddresses, uint256[] memory operatorIds) =
+            deny.addressDenyList(groupId, 0, 2);
+        assertEq(addressPage.length, 2);
+        assertEq(operatorAddresses.length, 2);
+        assertEq(operatorIds.length, 2);
+        assertEq(addressPage[0], senderOwner);
+        assertEq(addressPage[1], other);
+        assertEq(operatorAddresses[0], adminOwner);
+        assertEq(operatorIds[0], adminId);
+        assertEq(operatorAddresses[1], adminOwner);
+        assertEq(operatorIds[1], adminId);
+
+        vm.prank(adminOwner);
+        deny.denyBySenderIds(groupId, _uints(senderId, otherGroupId));
+
+        (
+            uint256[] memory senderIdPage,
+            address[] memory senderIdPageOperatorAddresses,
+            uint256[] memory senderIdPageOperatorIds
+        ) = deny.senderIdDenyList(groupId, 0, 2);
+        assertEq(senderIdPage.length, 2);
+        assertEq(senderIdPageOperatorAddresses.length, 2);
+        assertEq(senderIdPageOperatorIds.length, 2);
+        assertEq(senderIdPage[0], senderId);
+        assertEq(senderIdPage[1], otherGroupId);
+        assertEq(senderIdPageOperatorAddresses[0], adminOwner);
+        assertEq(senderIdPageOperatorAddresses[1], adminOwner);
+        assertEq(senderIdPageOperatorIds[0], adminId);
+        assertEq(senderIdPageOperatorIds[1], adminId);
 
         vm.prank(chatOwner);
-        deny.exemptSenderIds(groupId, _uints(senderId));
+        groupAdmin.setAdmins(groupId, _uints(adminId, secondAdminId));
 
-        senderIdExempt = deny.isSenderIdExemptBatch(groupId, _uints(senderId, otherGroupId));
-        assertTrue(senderIdExempt[0]);
-        assertTrue(!senderIdExempt[1]);
-        assertTrue(!deny.isDenied(groupId, senderId, senderOwner));
+        vm.prank(secondAdminOwner);
+        groupDefaults.setDefaultGroupId(secondAdminId);
+
+        vm.prank(secondAdminOwner);
+        deny.denyBySenderAddresses(groupId, _addresses(other));
+
+        (addressPage, operatorAddresses, operatorIds) = deny.addressDenyList(groupId, 1, 1);
+        assertEq(addressPage[0], other);
+        assertEq(operatorAddresses[0], adminOwner);
+        assertEq(operatorIds[0], adminId);
+
+        vm.prank(adminOwner);
+        deny.undenyBySenderAddresses(groupId, _addresses(senderOwner));
+
+        vm.prank(secondAdminOwner);
+        deny.denyBySenderAddresses(groupId, _addresses(senderOwner));
+
+        (addressPage, operatorAddresses, operatorIds) = deny.addressDenyList(groupId, 0, 2);
+        assertEq(addressPage.length, 2);
+        _assertAddressPageOperator(addressPage, operatorAddresses, operatorIds, other, adminOwner, adminId);
+        _assertAddressPageOperator(
+            addressPage, operatorAddresses, operatorIds, senderOwner, secondAdminOwner, secondAdminId
+        );
+    }
+
+    function _assertAddressPageOperator(
+        address[] memory accounts,
+        address[] memory operatorAddresses,
+        uint256[] memory operatorIds,
+        address account,
+        address expectedOperatorAddress,
+        uint256 expectedOperatorId
+    ) internal pure {
+        for (uint256 i = 0; i < accounts.length; i++) {
+            if (accounts[i] == account) {
+                assertEq(operatorAddresses[i], expectedOperatorAddress);
+                assertEq(operatorIds[i], expectedOperatorId);
+                return;
+            }
+        }
+        assertTrue(false);
     }
 
     function _configureAdmin() internal {

@@ -19,7 +19,6 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   blacklistQueryResult: '',
   blacklistPage: 1,
   activeBlacklistMenuKey: null,
-  activeExemptMenuKey: null,
   adminIdQueryType: 'name',
   memberIdQueryType: 'name',
   nftInputMode: 'name',
@@ -403,7 +402,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 12,
         addressDenyList: ['0x66...d0'],
         senderIdDenyList: ['9017'],
-        senderIdExemptList: ['1309'],
+        addressDenyOperatorStates: {
+          '0x66...d0': { operatorAddress: '0x21...ce', operatorId: '1308' },
+        },
+        senderIdDenyOperatorStates: {
+          9017: { operatorAddress: '0x31...10', operatorId: '1310' },
+        },
       },
     },
     {
@@ -445,7 +449,10 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 4,
         addressDenyList: [],
         senderIdDenyList: ['9050'],
-        senderIdExemptList: [],
+        addressDenyOperatorStates: {},
+        senderIdDenyOperatorStates: {
+          9050: { operatorAddress: '0x8b...91', operatorId: '9007' },
+        },
       },
     },
     {
@@ -487,7 +494,8 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 0,
         addressDenyList: [],
         senderIdDenyList: [],
-        senderIdExemptList: [],
+        addressDenyOperatorStates: {},
+        senderIdDenyOperatorStates: {},
       },
     },
     {
@@ -529,7 +537,8 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 5,
         addressDenyList: [],
         senderIdDenyList: [],
-        senderIdExemptList: ['9007'],
+        addressDenyOperatorStates: {},
+        senderIdDenyOperatorStates: {},
       },
     },
   ],

@@ -12,7 +12,7 @@ interface IAdminDenySource is IPostDenySource {
 
     event AddressDenySet(
         uint256 indexed groupId,
-        address indexed operator,
+        address indexed operatorAddress,
         address indexed targetAddress,
         uint256 operatorId,
         bool listed,
@@ -21,16 +21,7 @@ interface IAdminDenySource is IPostDenySource {
 
     event SenderIdDenySet(
         uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed targetSenderId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
-    );
-
-    event SenderIdExemptSet(
-        uint256 indexed groupId,
-        address indexed operator,
+        address indexed operatorAddress,
         uint256 indexed targetSenderId,
         uint256 operatorId,
         bool listed,
@@ -49,26 +40,19 @@ interface IAdminDenySource is IPostDenySource {
 
     function MAX_ADMIN_IDS() external view returns (uint256);
 
-    function isAddressDenied(uint256 groupId, address account) external view returns (bool);
+    function isAddressDenied(uint256 groupId, address senderAddress) external view returns (bool);
 
     function isSenderIdDenied(uint256 groupId, uint256 senderId) external view returns (bool);
 
-    function isSenderIdExempt(uint256 groupId, uint256 senderId) external view returns (bool);
-
-    function isAddressDeniedBatch(uint256 groupId, address[] calldata accounts)
+    function addressDenyDetails(uint256 groupId, address[] calldata senderAddresses)
         external
         view
-        returns (bool[] memory denied);
+        returns (bool[] memory denied, address[] memory operatorAddresses, uint256[] memory operatorIds);
 
-    function isSenderIdDeniedBatch(uint256 groupId, uint256[] calldata senderIds)
+    function senderIdDenyDetails(uint256 groupId, uint256[] calldata senderIds)
         external
         view
-        returns (bool[] memory denied);
-
-    function isSenderIdExemptBatch(uint256 groupId, uint256[] calldata senderIds)
-        external
-        view
-        returns (bool[] memory exempt);
+        returns (bool[] memory denied, address[] memory operatorAddresses, uint256[] memory operatorIds);
 
     function denyBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external;
 
@@ -76,7 +60,10 @@ interface IAdminDenySource is IPostDenySource {
 
     function addressDenyListCount(uint256 groupId) external view returns (uint256);
 
-    function addressDenyList(uint256 groupId, uint256 offset, uint256 limit) external view returns (address[] memory);
+    function addressDenyList(uint256 groupId, uint256 offset, uint256 limit)
+        external
+        view
+        returns (address[] memory senderAddresses, address[] memory operatorAddresses, uint256[] memory operatorIds);
 
     function denyBySenderIds(uint256 groupId, uint256[] calldata senderIds) external;
 
@@ -93,18 +80,7 @@ interface IAdminDenySource is IPostDenySource {
     function senderIdDenyList(uint256 groupId, uint256 offset, uint256 limit)
         external
         view
-        returns (uint256[] memory);
-
-    function exemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external;
-
-    function unexemptSenderIds(uint256 groupId, uint256[] calldata senderIds) external;
-
-    function senderIdExemptListCount(uint256 groupId) external view returns (uint256);
-
-    function senderIdExemptList(uint256 groupId, uint256 offset, uint256 limit)
-        external
-        view
-        returns (uint256[] memory);
+        returns (uint256[] memory senderIds, address[] memory operatorAddresses, uint256[] memory operatorIds);
 
     function stateVersion(uint256 groupId) external view returns (uint256);
 }

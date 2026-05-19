@@ -115,7 +115,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
 
         vm.prank(chatOwner);
-        deny.exemptSenderIds(groupId, _uints(senderId));
+        deny.undenyBySenderIds(groupId, _uints(senderId));
 
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
     }
