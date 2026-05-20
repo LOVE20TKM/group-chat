@@ -30,7 +30,7 @@
 - 消息流：普通消息、自己消息、引用消息、mentionedSenderIds、mentionAll 标识。
 - 底部输入栏：内容输入、引用 chip、发送按钮；`@姓名` 与 `@全部` 由输入框文本自动解析。
 - 点击消息菜单：`messageId > 0` 可引用；`0` 只表示无引用。
-- 顶部 `...` 群菜单：详情、黑名单、管理入口、模拟 `MessagePost` 缺口。
+- 顶部 `...` 群菜单：详情、黑名单、管理入口。
 - 不可发言状态：显示产品化错误名 / reasonCode 对应中文原因。
 - 桌面自适应：居中手机壳预览，保持同一移动端交互。
 
@@ -112,7 +112,6 @@
 - `SenderAddressNotSenderIdOwner`：当前钱包不是 `defaultGroupId` owner。
 - 引用 `messageId > 0` 的消息后发送。
 - 输入框自动解析 mention 与 mentionAll。
-- 从 `MessagePost` 发现缺口后补拉区间的提示。
 - `GroupMemberScope`：成员 NFT 名单可增删，且成员资格随 NFT 而不是地址移动。
 
 ## 组件边界

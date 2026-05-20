@@ -614,6 +614,10 @@ function renderWorkspace() {
   if (state.view === 'activate') workspace.innerHTML = renderActivationHub();
   if (state.view === 'activate-form') workspace.innerHTML = renderActivationForm();
   if (state.view === 'details') workspace.innerHTML = renderGroupDetails();
+  if (state.view === 'preferences') workspace.innerHTML = renderGroupPreferences();
+  if (state.view === 'members') workspace.innerHTML = renderGroupMembers();
+  if (state.view === 'admins') workspace.innerHTML = renderGroupAdmins();
+  if (state.view === 'settings') workspace.innerHTML = renderGroupSettings();
   if (state.view === 'manage') workspace.innerHTML = renderManagement();
   if (state.view === 'blacklist') workspace.innerHTML = renderBlacklist();
   if (chatView) renderMessages();
@@ -905,6 +909,10 @@ function renderParams(params) {
 }
 
 function renderManagement() {
+  return renderGroupSettings();
+}
+
+function renderGroupSettings() {
   const chat = activeChat();
   if (!chat) return '<div class="empty-state">请选择群聊</div>';
   if (chat.model === 'decentralized') return renderDecentralizedManagement(chat);
@@ -914,87 +922,65 @@ function renderManagement() {
 function renderDecentralizedManagement(chat) {
   return `
     <section class="workspace-band">
-      <div class="screen-heading">
-        <h1>${escapeHtml(chat.shortTitle)}</h1>
-        <span class="pill pill-ok">Manager 持有 NFT</span>
-      </div>
+      ${renderGroupDetailHeader(chat, '群设置', 'Manager 持有 NFT')}
       <div class="rule-table">${renderRuleRows(chat)}</div>
-      <div class="notice-row">去中心化群聊激活后不提供关闭、重配规则槽、改 token/action 的入口。</div>
-      <div class="card-actions single-action">
-        <button class="sheet-button primary" type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">治理黑名单</button>
-      </div>
+      ${renderPermissionNotice(false, '', '去中心化群聊由 Manager 持有群聊 NFT；激活后这里没有可修改的群设置。')}
     </section>
   `;
 }
 
 function renderChainServiceManagement(chat) {
-  const memberScope = groupMemberScopeState(chat);
-  const ruleEditor = canEditRules(chat) ? `
-    <section class="workspace-band">
-      <h2>owner / delegate 配置</h2>
-      ${renderPostingAllowedControl(chat)}
-      ${renderRuleInput(chat, 'scopeSource')}
-      ${renderRuleInput(chat, 'denySource')}
-      ${renderRuleInput(chat, 'beforePostPlugin')}
-      ${renderRuleInput(chat, 'afterPostPlugin')}
-      ${renderDelegateInput(chat)}
-    </section>
-    <section class="workspace-band">
-      <h2>GroupAdmin 管理员 NFT</h2>
-      ${renderAdminIdControls(chat)}
-      ${state.adminIdQueryResult ? `<div class="query-result">${escapeHtml(state.adminIdQueryResult)}</div>` : ''}
-      ${renderAdminList(groupAdminIds(chat), 'adminIds', canEditRules(chat))}
-    </section>
-  ` : '';
-  const memberEditor = chat.groupMemberScope ? `
-    <section class="workspace-band">
-      <h2>GroupMemberScope 成员 NFT</h2>
-      ${renderMemberIdControls(chat)}
-      ${state.memberIdQueryResult ? `<div class="query-result">${escapeHtml(state.memberIdQueryResult)}</div>` : ''}
-      ${renderAdminList(memberScope.memberIds, 'memberIds', canEditMemberScope(chat))}
-    </section>
-  ` : '';
+  const canEdit = canEditRules(chat);
 
   return `
     <section class="workspace-band">
-      <div class="screen-heading">
-        <h1>${escapeHtml(chat.shortTitle)}</h1>
-        <span class="pill ${manageableRole(chat) ? 'pill-ok' : 'pill-warn'}">${escapeHtml(chat.role)}</span>
-      </div>
-      <div class="notice-row">${managementNotice(chat)}</div>
+      ${renderGroupDetailHeader(chat, '群设置', chat.role)}
+      ${renderPermissionNotice(
+        canEdit,
+        '有权限：当前身份是 owner/delegate，可修改 postingAllowed、规则槽和代理 NFT。',
+        '无权限：群设置只允许当前 owner 或有效 delegate 修改；本页只读。',
+      )}
+      ${renderGroupStatusCard(chat)}
+      <section class="activation-section">
+        <h2>owner / delegate 配置</h2>
+        ${renderPostingAllowedControl(chat, canEdit)}
+        ${renderRuleInput(chat, 'scopeSource', canEdit)}
+        ${renderRuleInput(chat, 'denySource', canEdit)}
+        ${renderRuleInput(chat, 'beforePostPlugin', canEdit)}
+        ${renderRuleInput(chat, 'afterPostPlugin', canEdit)}
+        ${renderDelegateInput(chat, canEdit)}
+      </section>
     </section>
-    ${ruleEditor}
-    ${memberEditor}
   `;
 }
 
-function renderPostingAllowedControl(chat) {
+function renderPostingAllowedControl(chat, canEdit = canEditRules(chat)) {
   return `
     <div class="field-row activation-choice-row">
       <label>postingAllowed</label>
       <div class="choice-group">
-        <button class="picker-button${chat.postingAllowed ? ' active' : ''}" type="button" data-action="set-posting-allowed" data-value="true">允许发言</button>
-        <button class="picker-button${chat.postingAllowed ? '' : ' active'}" type="button" data-action="set-posting-allowed" data-value="false">停止发言</button>
+        <button class="picker-button${chat.postingAllowed ? ' active' : ''}" type="button" data-action="set-posting-allowed" data-value="true" ${canEdit ? '' : 'disabled'}>允许发言</button>
+        <button class="picker-button${chat.postingAllowed ? '' : ' active'}" type="button" data-action="set-posting-allowed" data-value="false" ${canEdit ? '' : 'disabled'}>停止发言</button>
       </div>
     </div>
   `;
 }
 
-function renderRuleInput(chat, slot) {
+function renderRuleInput(chat, slot, canEdit = canEditRules(chat)) {
   const options = ruleSlotOptions(slot);
-  if (options) return renderRuleChoice(chat, slot, options);
+  if (options) return renderRuleChoice(chat, slot, options, canEdit);
 
   const id = `${slot}-input`;
   return `
     <div class="field-row">
       <label for="${id}">${slot}</label>
-      <input id="${id}" value="${escapeHtml(chat.chatInfo[slot])}" inputmode="text">
-      <button class="sheet-button" type="button" data-action="set-rule-slot" data-slot="${slot}" data-input="${id}">更新</button>
+      <input id="${id}" value="${escapeHtml(chat.chatInfo[slot])}" inputmode="text" ${canEdit ? '' : 'readonly'}>
+      <button class="sheet-button" type="button" data-action="set-rule-slot" data-slot="${slot}" data-input="${id}" ${canEdit ? '' : 'disabled'}>更新</button>
     </div>
   `;
 }
 
-function renderDelegateInput(chat) {
+function renderDelegateInput(chat, canEdit = canEditRules(chat)) {
   const value = chat.chatInfo.delegateId || '0';
   const placeholder = state.nftInputMode === 'name' ? '输入代理 NFT 名称' : '输入代理 NFT 编号';
   const inputMode = state.nftInputMode === 'id' ? 'numeric' : 'text';
@@ -1010,8 +996,8 @@ function renderDelegateInput(chat) {
         <button class="filter-tab${state.nftInputMode === 'id' ? ' active' : ''}" type="button" data-action="set-nft-input-mode" data-mode="id">按编号</button>
       </div>
       <div class="query-row delegate-query-row">
-        <input id="delegateId-input" value="" inputmode="${inputMode}" placeholder="${placeholder}">
-        <button class="sheet-button primary" type="button" data-action="set-rule-slot" data-slot="delegateId" data-input="delegateId-input">确认</button>
+        <input id="delegateId-input" value="" inputmode="${inputMode}" placeholder="${placeholder}" ${canEdit ? '' : 'readonly'}>
+        <button class="sheet-button primary" type="button" data-action="set-rule-slot" data-slot="delegateId" data-input="delegateId-input" ${canEdit ? '' : 'disabled'}>确认</button>
       </div>
       <div class="muted">输入 0 表示不设置代理。</div>
       ${state.delegateQueryResult ? `<div class="query-result">${escapeHtml(state.delegateQueryResult)}</div>` : ''}
@@ -1025,13 +1011,13 @@ function managementNotice(chat) {
   return '当前地址只读。';
 }
 
-function renderRuleChoice(chat, slot, options) {
+function renderRuleChoice(chat, slot, options, canEdit = canEditRules(chat)) {
   return `
     <div class="field-row activation-choice-row">
       <label>${slot}</label>
       <div class="choice-group">
         ${options.map((option) => `
-          <button class="picker-button${chat.chatInfo[slot] === option.value ? ' active' : ''}" type="button" data-action="set-rule-slot-option" data-slot="${slot}" data-value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</button>
+          <button class="picker-button${chat.chatInfo[slot] === option.value ? ' active' : ''}" type="button" data-action="set-rule-slot-option" data-slot="${slot}" data-value="${escapeHtml(option.value)}" ${canEdit ? '' : 'disabled'}>${escapeHtml(option.label)}</button>
         `).join('')}
       </div>
     </div>
@@ -1146,11 +1132,9 @@ function renderBlacklistPanel(chat) {
   ` : '';
   return `
     <section class="workspace-band">
-      <div class="screen-heading">
-        <h1>群黑名单</h1>
-        <span>v${version}</span>
-      </div>
+      ${renderGroupDetailHeader(chat, '黑名单', `v${version}`)}
       <div class="muted">${escapeHtml(chatDisplayName(chat))}</div>
+      ${renderBlacklistPermissionNotice(chat)}
       <div class="filter-tabs blacklist-query-tabs">
         <button class="filter-tab${state.blacklistQueryType === 'address' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="address">按地址</button>
         <button class="filter-tab${state.blacklistQueryType === 'nft' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="nft">按NFT</button>
@@ -1163,6 +1147,26 @@ function renderBlacklistPanel(chat) {
       </div>
     </section>
   `;
+}
+
+function renderBlacklistPermissionNotice(chat) {
+  if (chat.blacklistMode === 'gov') {
+    return renderPermissionNotice(
+      chat.voteWeight > 0,
+      `有权限：当前地址有 ${chat.voteWeight} ${chat.voteWeightLabel}，可参与治理黑名单投票。`,
+      `无权限：当前地址没有 ${chat.voteWeightLabel}，只能查看和查询治理黑名单。`,
+    );
+  }
+
+  if (chat.blacklistMode === 'admin') {
+    return renderPermissionNotice(
+      canEditAdminDeny(chat),
+      '有权限：当前 defaultGroupId 命中 GroupAdmin 管理员名单，可维护黑名单。',
+      '无权限：当前 defaultGroupId 不在 GroupAdmin 管理员名单；本页只能查看和查询。',
+    );
+  }
+
+  return renderPermissionNotice(false, '', '当前群聊未启用黑名单源。');
 }
 
 function renderBlacklistControls(chat, placeholder, selfLabel) {
@@ -1325,17 +1329,9 @@ function renderMessages() {
 
 function renderChatTools(chat) {
   const showDenied = showBlacklistedMessages(chat.groupId);
-  const blacklistLabel = '黑名单';
-  const manageMenuItem = canEditRules(chat) || canEditMemberScope(chat)
-    ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>`
-    : '<button type="button" disabled title="仅 owner/delegate 或 GroupAdmin 管理员 NFT 可以进">管理</button>';
   const menu = state.activeGroupMenuId === chat.groupId ? `
     <div class="chat-menu">
-      <button type="button" data-action="open-details" data-group-id="${chat.groupId}">群设置</button>
-      <button type="button" data-action="simulate-message-gap" data-group-id="${chat.groupId}">模拟缺口</button>
-      <button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">${blacklistLabel}</button>
-      <button type="button" data-action="toggle-show-blacklisted" data-group-id="${chat.groupId}" aria-pressed="${showDenied ? 'true' : 'false'}">${showDenied ? '隐藏黑名单消息' : '显示黑名单消息'}</button>
-      ${manageMenuItem}
+      ${renderGroupDetailMenuButtons(chat)}
     </div>
   ` : '';
   return `
@@ -1344,6 +1340,49 @@ function renderChatTools(chat) {
       <span class="chat-preference-state">${showDenied ? '黑名单消息已显示' : '黑名单消息默认隐藏'}</span>
       <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-group-id="${chat.groupId}" aria-label="群聊菜单">...</button>
       ${menu}
+    </div>
+  `;
+}
+
+function renderGroupDetailMenuButtons(chat) {
+  return `
+    <button type="button" data-action="open-preferences" data-group-id="${chat.groupId}">偏好</button>
+    <button type="button" data-action="open-members" data-group-id="${chat.groupId}">群成员</button>
+    <button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>
+    <button type="button" data-action="open-admins" data-group-id="${chat.groupId}">管理员</button>
+    <button type="button" data-action="open-settings" data-group-id="${chat.groupId}">群设置</button>
+  `;
+}
+
+function renderGroupDetailHeader(chat, title, meta = '') {
+  const menu = chat && state.activeGroupMenuId === chat.groupId ? `
+    <div class="chat-menu group-detail-menu">
+      ${renderGroupDetailMenuButtons(chat)}
+    </div>
+  ` : '';
+  return `
+    <div class="screen-heading group-detail-heading">
+      <div class="group-detail-title">
+        <h1>${escapeHtml(title)}</h1>
+        ${chat ? `<span>${escapeHtml(chatDisplayName(chat))}</span>` : ''}
+      </div>
+      ${meta ? `<span class="pill ${groupDetailMetaClass(chat, meta)}">${escapeHtml(meta)}</span>` : ''}
+      ${chat ? `<button class="details-menu-button" type="button" data-action="toggle-chat-menu" data-group-id="${chat.groupId}" aria-label="群聊菜单">...</button>` : ''}
+      ${menu}
+    </div>
+  `;
+}
+
+function groupDetailMetaClass(chat, meta) {
+  if (meta === '只读') return 'pill-warn';
+  if (chat && meta === chat.role) return manageableRole(chat) ? 'pill-ok' : 'pill-warn';
+  return 'pill-ok';
+}
+
+function renderPermissionNotice(allowed, allowedText, deniedText) {
+  return `
+    <div class="notice-row permission-row ${allowed ? 'permission-ok' : 'permission-warn'}">
+      ${escapeHtml(allowed ? allowedText : deniedText)}
     </div>
   `;
 }
@@ -1458,11 +1497,76 @@ function renderStatus() {
 }
 
 function renderGroupDetails() {
-  const active = activeChatEntry();
-  const chat = active ? active.item : activeChat();
+  return renderGroupSettings();
+}
+
+function renderGroupPreferences() {
+  const chat = activeChat();
+  if (!chat) return '<div class="empty-state">请选择群聊</div>';
+  return `
+    <section class="workspace-band">
+      ${renderGroupDetailHeader(chat, '偏好', '本机')}
+    </section>
+    ${renderMessagePreferenceControl(chat)}
+  `;
+}
+
+function renderGroupMembers() {
+  const chat = activeChat();
+  if (!chat) return '<div class="empty-state">请选择群聊</div>';
+  const hasMemberScope = Boolean(chat.groupMemberScope);
+  const canEdit = canEditMemberScope(chat);
+  const memberScope = groupMemberScopeState(chat);
+  const permission = hasMemberScope
+    ? renderPermissionNotice(
+      canEdit,
+      '有权限：当前 defaultGroupId 命中 GroupAdmin 管理员名单，可维护成员 NFT。',
+      '无权限：当前 defaultGroupId 不在 GroupAdmin 管理员名单；本页只能查看和查询。',
+    )
+    : renderPermissionNotice(false, '', '当前群聊不使用 GroupMemberScope；群成员资格由 scopeSource 规则决定。');
+
+  return `
+    <section class="workspace-band">
+      ${renderGroupDetailHeader(chat, '群成员', hasMemberScope ? `v${memberScope.stateVersion}` : '只读')}
+      ${permission}
+      ${hasMemberScope ? `
+        ${renderMemberIdControls(chat)}
+        ${state.memberIdQueryResult ? `<div class="query-result">${escapeHtml(state.memberIdQueryResult)}</div>` : ''}
+        ${renderAdminList(memberScope.memberIds, 'memberIds', canEdit)}
+      ` : `<div class="rule-table">${renderRuleRows(chat)}</div>`}
+    </section>
+  `;
+}
+
+function renderGroupAdmins() {
+  const chat = activeChat();
+  if (!chat) return '<div class="empty-state">请选择群聊</div>';
+  const hasGroupAdmin = Boolean(chat.groupAdmin);
+  const canEdit = hasGroupAdmin && canEditRules(chat);
+  const groupAdmin = groupAdminState(chat);
+  const permission = hasGroupAdmin
+    ? renderPermissionNotice(
+      canEdit,
+      '有权限：当前身份是 owner/delegate，可维护 GroupAdmin 管理员 NFT。',
+      '无权限：管理员名单只允许当前 owner 或有效 delegate 修改；本页只能查看和查询。',
+    )
+    : renderPermissionNotice(false, '', '当前群聊不使用 GroupAdmin 管理员名单。');
+
+  return `
+    <section class="workspace-band">
+      ${renderGroupDetailHeader(chat, '管理员', hasGroupAdmin ? `v${groupAdmin.stateVersion}` : '只读')}
+      ${permission}
+      ${hasGroupAdmin ? `
+        ${renderAdminIdControls(chat)}
+        ${state.adminIdQueryResult ? `<div class="query-result">${escapeHtml(state.adminIdQueryResult)}</div>` : ''}
+        ${renderAdminList(groupAdminIds(chat), 'adminIds', canEdit)}
+      ` : `<div class="rule-table">${renderRuleRows(chat)}</div>`}
+    </section>
+  `;
+}
+
+function renderGroupStatusCard(chat) {
   const status = chatStatus(chat);
-  const className = status.allowed ? 'status-ok' : 'status-bad';
-  const statusBadge = status.allowed ? '' : `<span class="${className}">无法发言</span>`;
   const statusRows = status.allowed ? '' : `
       <dt>无法发言原因</dt>
       <dd>${escapeHtml(postBlockReason(chat, status))}</dd>
@@ -1483,11 +1587,6 @@ function renderGroupDetails() {
       <dd>底导航 爱聊 / LOVE20 Chat</dd>
   `;
   return `
-    <section class="workspace-band">
-      <div class="screen-heading">
-        <h1>群设置</h1>
-        ${statusBadge}
-      </div>
     <dl class="status-card">
       ${groupAbout}
       <dt>当前 defaultGroupId</dt>
@@ -1496,12 +1595,6 @@ function renderGroupDetails() {
       <dd>${escapeHtml(status.reasonCode)}</dd>
       ${statusRows}
     </dl>
-    </section>
-    ${chat ? renderMessagePreferenceControl(chat) : ''}
-    <div class="close-row status-actions">
-      ${chat && (canEditRules(chat) || canEditMemberScope(chat)) ? `<button type="button" class="sheet-button primary" data-action="open-manage" data-group-id="${chat.groupId}">管理</button>` : ''}
-      ${chat ? `<button type="button" class="sheet-button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
-    </div>
   `;
 }
 
@@ -1664,36 +1757,46 @@ function toggleConversationPin(groupId) {
 }
 
 function openManage(groupId) {
+  openSettings(groupId);
+}
+
+function openGroupDetailView(groupId, view) {
   const chat = chatById(groupId);
   state.activeGroupMenuId = null;
-  if (!canEditRules(chat)) {
-    state.syncHint = '仅 NFT 拥有者或代理可以进入管理。';
+  if (!chat) return;
+  if (state.bottomTab === 'chat' && state.view === view && state.activeGroupNumericId === chat.groupId) {
     render();
     return;
   }
   rememberPageReturn();
   selectChat(chat.groupId);
-  state.view = 'manage';
+  state.view = view;
   render();
+}
+
+function openPreferences(groupId) {
+  openGroupDetailView(groupId, 'preferences');
+}
+
+function openMembers(groupId) {
+  openGroupDetailView(groupId, 'members');
+}
+
+function openAdmins(groupId) {
+  openGroupDetailView(groupId, 'admins');
+}
+
+function openSettings(groupId) {
+  openGroupDetailView(groupId, 'settings');
 }
 
 function openBlacklist(groupId) {
-  state.activeGroupMenuId = null;
   state.activeBlacklistMenuKey = null;
-  rememberPageReturn();
-  selectChat(groupId);
-  state.view = 'blacklist';
-  render();
+  openGroupDetailView(groupId, 'blacklist');
 }
 
 function openDetails(groupId) {
-  const chat = chatById(groupId);
-  state.activeGroupMenuId = null;
-  if (!chat) return;
-  rememberPageReturn();
-  selectChat(chat.groupId);
-  state.view = 'details';
-  render();
+  openSettings(groupId);
 }
 
 function toggleChatMenu(groupId) {
@@ -2223,36 +2326,6 @@ function addSenderDenyFromMessage(messageId, groupId = state.activeGroupId) {
   render();
 }
 
-function simulateMessageGap(groupId) {
-  const chat = chatById(groupId);
-  if (!chat) return;
-  const resolvedGroupId = String(chat.groupId);
-  const visibleMessages = messagesForChat(resolvedGroupId);
-  const latestMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) : 0;
-  const eventMessageId = latestMessageId + 3;
-  const startMessageId = latestMessageId + 1;
-  for (let messageId = startMessageId; messageId <= eventMessageId; messageId++) {
-    state.messages.push({
-      groupId: resolvedGroupId,
-      senderId: 9101,
-      senderAddress: ownerOfGroupId(9101),
-      round: chat.round,
-      messageId,
-      content: `外部消息 #${messageId} 已通过 messages 区间补拉。`,
-      mentionedSenderIds: [],
-      mentionAll: false,
-      quotedMessageId: 0,
-      mine: false,
-    });
-  }
-  chat.lastMessageId = eventMessageId;
-  if (String(state.activeGroupId) === resolvedGroupId) markChatRead(resolvedGroupId);
-  state.activeGroupMenuId = null;
-  state.syncHint =
-    `MessagePost 发现 messageId #${eventMessageId}，本地最新 #${latestMessageId}，已通过 messages(${resolvedGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false) 补拉 #${startMessageId}-#${eventMessageId}。`;
-  render();
-}
-
 function openGovVoters(targetType, target) {
   const chat = activeChat();
   const item = chat && findGovTarget(chat, targetType, target);
@@ -2704,9 +2777,12 @@ document.addEventListener('click', (event) => {
   if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.groupId);
   if (action === 'toggle-show-blacklisted') toggleShowBlacklistedMessages(target.dataset.groupId);
   if (action === 'set-show-blacklisted') setShowBlacklistedMessagesPreference(target.dataset.groupId, target.dataset.value);
-  if (action === 'simulate-message-gap') simulateMessageGap(target.dataset.groupId);
   if (action === 'open-manage') openManage(target.dataset.groupId);
   if (action === 'open-details') openDetails(target.dataset.groupId);
+  if (action === 'open-preferences') openPreferences(target.dataset.groupId);
+  if (action === 'open-members') openMembers(target.dataset.groupId);
+  if (action === 'open-admins') openAdmins(target.dataset.groupId);
+  if (action === 'open-settings') openSettings(target.dataset.groupId);
   if (action === 'open-blacklist') openBlacklist(target.dataset.groupId);
   if (action === 'set-rule-slot') setRuleSlot(target.dataset.slot, target.dataset.input);
   if (action === 'set-rule-slot-option') setRuleSlotOption(target.dataset.slot, target.dataset.value);

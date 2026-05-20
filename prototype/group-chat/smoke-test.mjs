@@ -280,11 +280,8 @@ const requiredAppJs = [
   'addSenderDenyFromMessage',
   'denyBySenderIds',
   'denyBySenders',
-  'simulateMessageGap',
-  'simulate-message-gap',
   'conversationStatus',
   'unreadMessagesForChat',
-  'messages(${resolvedGroupId}, ${latestMessageId}, ${eventMessageId - latestMessageId}, false)',
   'data-action="add-sender-deny"',
   'revalidateGovVote',
   'canEditRules',
@@ -705,6 +702,41 @@ if (chatMenuState.activeGroupMenuId !== 1301 || chatMenuRenderCount !== 1) {
 toggleChatMenu('1301');
 if (chatMenuState.activeGroupMenuId !== null || chatMenuRenderCount !== 2) {
   throw new Error('toggleChatMenu must close the active groupId menu');
+}
+
+const groupDetailNavigationHarness = new Function(
+  'state',
+  'render',
+  [
+    extractFunctionSource(js, 'chatById'),
+    extractFunctionSource(js, 'rememberPageReturn'),
+    'function selectChat(groupId) { const chat = chatById(groupId); if (!chat) return; state.activeGroupNumericId = chat.groupId; state.activeGroupId = String(chat.groupId); render(); }',
+    extractFunctionSource(js, 'openGroupDetailView'),
+    'return { openGroupDetailView };',
+  ].join('\n'),
+);
+
+const groupDetailNavigationState = {
+  bottomTab: 'chat',
+  view: 'settings',
+  activeGroupId: '1301',
+  activeGroupNumericId: 1301,
+  activeGroupMenuId: 1301,
+  pageReturnStack: [],
+  chats: [{ groupId: 1301 }, { groupId: 1302 }],
+};
+let groupDetailNavigationRenderCount = 0;
+const groupDetailNavigation = groupDetailNavigationHarness(groupDetailNavigationState, () => { groupDetailNavigationRenderCount += 1; });
+groupDetailNavigation.openGroupDetailView('1301', 'settings');
+if (groupDetailNavigationState.pageReturnStack.length !== 0 || groupDetailNavigationState.activeGroupMenuId !== null) {
+  throw new Error('Opening the current group detail page must close the menu without pushing a duplicate return entry');
+}
+if (groupDetailNavigationRenderCount !== 1) {
+  throw new Error('Opening the current group detail page must render the closed menu state');
+}
+groupDetailNavigation.openGroupDetailView('1301', 'members');
+if (groupDetailNavigationState.pageReturnStack.length !== 1 || groupDetailNavigationState.view !== 'members') {
+  throw new Error('Opening a different group detail page must push the previous page and switch views');
 }
 
 const conversationPinHarness = new Function(

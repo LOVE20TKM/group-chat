@@ -492,7 +492,9 @@ button:disabled {
 
 .inline-actions button,
 .row-actions button,
-.chat-tools button {
+.chat-tools button,
+.details-menu-button,
+.chat-menu button {
   min-height: 30px;
   border: 1px solid var(--greyscale-200);
   border-radius: 6px;
@@ -698,6 +700,18 @@ button:disabled {
 .query-result {
   color: var(--greyscale-900);
   font-weight: 600;
+}
+
+.permission-row.permission-ok {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: var(--success);
+}
+
+.permission-row.permission-warn {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: var(--warning);
 }
 
 .field-row,
@@ -952,6 +966,31 @@ button:disabled {
   font-weight: 700;
 }
 
+.group-detail-heading {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 36px;
+  align-items: center;
+}
+
+.group-detail-title {
+  min-width: 0;
+}
+
+.group-detail-title h1,
+.group-detail-title span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.details-menu-button {
+  width: 36px;
+  padding: 0;
+  font-weight: 700;
+}
+
 .chat-menu {
   position: absolute;
   top: 44px;
@@ -970,6 +1009,11 @@ button:disabled {
 .chat-menu button {
   justify-content: flex-start;
   text-align: left;
+}
+
+.group-detail-menu {
+  top: 38px;
+  right: 0;
 }
 
 .cannot-post {
