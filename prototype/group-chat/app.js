@@ -187,20 +187,29 @@ function chatTypeLabel(chat) {
   return labels[chat.type] || '群聊';
 }
 
+function conversationReminders(status) {
+  const reminders = [];
+  if (status.hasMentionMe) reminders.push({ label: '@我', html: '<span class="conversation-badge mention-me">@我</span>' });
+  if (status.hasMentionAll) reminders.push({ label: '@全部', html: '<span class="conversation-badge mention-all">@全部</span>' });
+  if (status.unreadCount > 0) reminders.push({ label: `未读 ${status.unreadCount}`, html: `<span class="conversation-badge unread-meta">未读 ${status.unreadCount}</span>` });
+  return reminders;
+}
+
+function chatListMeta(chat) {
+  const meta = chat.type === 'chain-service'
+    ? [chatTypeLabel(chat), `G#${chat.groupId}`]
+    : [chatTokenSymbol(chat), chatTypeLabel(chat), `G#${chat.groupId}`];
+  return meta.join(' · ');
+}
+
 function renderChatListHeader(chat, reminders) {
+  const metaText = chatListMeta(chat);
   const reminderText = reminders.length ? ` ${reminders.map((item) => item.label).join(' ')}` : '';
-  const tokenPill = chat.type === 'chain-service'
-    ? ''
-    : `<span class="conversation-pill token">${escapeHtml(chatTokenSymbol(chat))}</span>`;
-  const headerLabel = chat.type === 'chain-service'
-    ? `${chatTypeLabel(chat)} G#${chat.groupId}${reminderText}`
-    : `${chatTokenSymbol(chat)} ${chatTypeLabel(chat)} G#${chat.groupId}${reminderText}`;
+  const headerLabel = `${metaText}${reminderText}`;
   return `
     <div class="conversation-kicker" aria-label="${escapeHtml(headerLabel)}">
-      ${tokenPill}
-      <span class="conversation-pill type">${escapeHtml(chatTypeLabel(chat))}</span>
-      <span class="conversation-pill id">G#${escapeHtml(chat.groupId)}</span>
-      ${reminders.map((item) => item.html).join('')}
+      <span class="conversation-meta-text">${escapeHtml(metaText)}</span>
+      ${reminders.length ? `<span class="conversation-reminders">${reminders.map((item) => item.html).join('')}</span>` : ''}
     </div>
   `;
 }
@@ -667,11 +676,8 @@ function renderConversationRow(entry) {
   const rowAction = chat.activated ? 'open-chat' : 'open-activation';
   const rowTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   const status = conversationStatus(chat);
-  const reminders = [];
+  const reminders = conversationReminders(status);
   const pinned = isPinnedConversation(chat.groupId);
-  if (status.unreadCount > 0) reminders.push({ label: `未读 ${status.unreadCount}`, html: `<span class="conversation-badge unread-meta">未读 ${status.unreadCount}</span>` });
-  if (status.hasMentionMe) reminders.push({ label: '@我', html: '<span class="conversation-badge mention-me">@我</span>' });
-  if (status.hasMentionAll) reminders.push({ label: '@全部', html: '<span class="conversation-badge mention-all">@全部</span>' });
   const menu = state.activeConversationMenuGroupId === chat.groupId ? `
     <div class="conversation-menu">
       <button type="button" data-action="toggle-conversation-pin" data-group-id="${chat.groupId}">${pinned ? '取消置顶' : '置顶'}</button>
