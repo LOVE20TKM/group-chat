@@ -59,8 +59,8 @@
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
 | 规则槽 | `chatInfo(groupId)`：`delegateId`、`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
 | 共享管理员 | `GroupAdmin.adminIds(groupId)`、`GroupAdmin.adminIdOf(groupId, account)` |
-| 手工成员发言资格 | `GroupMemberScope.memberIds(groupId, offset, limit)`、`GroupMemberScope.canPost(groupId, senderId, senderAddress)` |
-| 链群发言资格 | `GroupJoinScopeSource.canPost(...) = GroupMemberScope.canPost(...) || GroupJoin.gTokenAddressesByGroupIdByAccountCount(...) > 0` |
+| 手工成员发言资格 | `GroupMember.memberIds(groupId, offset, limit)`、`GroupMemberScope.canPost(groupId, senderId, senderAddress)` |
+| 链群发言资格 | `GroupJoinScopeSource.canPost(...) = GroupMember.isMemberId(...) || GroupJoin.gTokenAddressesByGroupIdByAccountCount(...) > 0` |
 
 ## 信息架构
 
@@ -93,7 +93,7 @@
 
 5. `...` 群菜单与详情页
    - 详情页展示当前 `defaultGroupId` 与不可发言原因。
-   - 管理页展示 `scopeSource` / `denySource` / plugin、`GroupAdmin` 管理员 NFT 和 `GroupMemberScope` 成员 NFT。
+   - 管理页展示 `scopeSource` / `denySource` / plugin、`GroupAdmin` 管理员 NFT 和 `GroupMember` 成员 NFT。
    - 黑名单页展示治理禁言或管理员禁言状态。
 
 ### 桌面端
@@ -112,7 +112,7 @@
 - `SenderAddressNotSenderIdOwner`：当前钱包不是 `defaultGroupId` owner。
 - 引用 `messageId > 0` 的消息后发送。
 - 输入框自动解析 mention 与 mentionAll。
-- `GroupMemberScope`：成员 NFT 名单可增删，且成员资格随 NFT 而不是地址移动。
+- `GroupMember`：成员 NFT 名单可增删，且成员资格随 NFT 而不是地址移动。
 
 ## 组件边界
 

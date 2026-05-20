@@ -37,7 +37,7 @@ function canPost(
 - [GroupMemberScope](./group-member-scope.md)
 - [GroupJoinScopeSource](./group-join-scope-source.md)
 
-链群服务者管理型群聊不使用 Manager。其 `scopeSource` 可挂载 `GroupMemberScope`，用于纯手工成员 NFT 名单；也可挂载 `GroupJoinScopeSource`，用于“手工成员 NFT 或链群行动参与者”。
+链群服务者管理型群聊不使用 Manager。其 `scopeSource` 可挂载 `GroupMemberScope`，用于读取 `GroupMember` 纯手工成员 NFT 名单；也可挂载 `GroupJoinScopeSource`，用于“手工成员 NFT 或链群行动参与者”。
 
 专用接口位于 `src/interfaces/sources/scope/IGroupMemberScope.sol` 与 `src/interfaces/sources/scope/IGroupJoinScopeSource.sol`。
 
@@ -46,4 +46,4 @@ function canPost(
 ## 前端规则
 
 - 未在可信地址表中的 source，不调用专用展示接口。
-- 可信 source 可选实现 `stateVersion(groupId)` 和 `StateVersionChanged`，供前端重拉专用状态。
+- 成员名单状态读取 `GroupMember.stateVersion(groupId)` 与 `GroupMember.StateVersionChanged`。

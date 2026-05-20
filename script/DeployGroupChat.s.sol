@@ -3,6 +3,7 @@ pragma solidity =0.8.17;
 
 import {GroupAdmin} from "../src/GroupAdmin.sol";
 import {GroupChat} from "../src/GroupChat.sol";
+import {GroupMember} from "../src/GroupMember.sol";
 import {IExtensionCenter} from "../src/interfaces/external/IExtensionCenter.sol";
 import {ILOVE20Join} from "../src/interfaces/external/ILOVE20Join.sol";
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
@@ -36,6 +37,7 @@ contract DeployGroupChat is ScriptBase {
         address groupAdmin;
         address adminDenySource;
         address govVotedDenySource;
+        address groupMember;
         address groupMemberScope;
         address groupJoinScopeSource;
         address tokenMainManager;
@@ -99,8 +101,9 @@ contract DeployGroupChat is ScriptBase {
         deployed.adminDenySource = address(new AdminDenySource(deployed.groupAdmin));
         deployed.govVotedDenySource =
             address(new GovVotedDenySource(groupChat.GROUP_ADDRESS(), config.denyThresholdRatio));
-        deployed.groupMemberScope = address(new GroupMemberScope(deployed.groupAdmin));
-        deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(deployed.groupMemberScope, config.groupJoin));
+        deployed.groupMember = address(new GroupMember(deployed.groupAdmin));
+        deployed.groupMemberScope = address(new GroupMemberScope(deployed.groupMember));
+        deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(deployed.groupMember, config.groupJoin));
 
         TokenMainManager tokenMainManager = new TokenMainManager(
             address(groupChat),
@@ -154,6 +157,7 @@ contract DeployGroupChat is ScriptBase {
             _addressLine("groupAdminAddress", deployed.groupAdmin),
             _addressLine("adminDenySourceAddress", deployed.adminDenySource),
             _addressLine("govVotedDenySourceAddress", deployed.govVotedDenySource),
+            _addressLine("groupMemberAddress", deployed.groupMember),
             _addressLine("groupMemberScopeAddress", deployed.groupMemberScope),
             _addressLine("groupJoinScopeSourceAddress", deployed.groupJoinScopeSource)
         );

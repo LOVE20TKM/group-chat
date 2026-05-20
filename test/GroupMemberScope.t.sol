@@ -2,14 +2,17 @@
 pragma solidity =0.8.17;
 
 import {GroupAdmin} from "../src/GroupAdmin.sol";
+import {GroupMember} from "../src/GroupMember.sol";
 import {IGroupAdmin} from "../src/interfaces/IGroupAdmin.sol";
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
+import {IGroupMember} from "../src/interfaces/IGroupMember.sol";
 import {IGroupMemberScope} from "../src/interfaces/sources/scope/IGroupMemberScope.sol";
 import {GroupMemberScope} from "../src/sources/scope/GroupMemberScope.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupMemberScopeTest is GroupChatFixture {
     GroupAdmin internal groupAdmin;
+    GroupMember internal member;
     GroupMemberScope internal scope;
     address internal adminOwner = address(0xAD11);
     uint256 internal adminId;
@@ -18,12 +21,17 @@ contract GroupMemberScopeTest is GroupChatFixture {
         super.setUp();
         adminId = groupNft.mint(adminOwner);
         groupAdmin = new GroupAdmin(address(chat), 20);
-        scope = new GroupMemberScope(address(groupAdmin));
+        member = new GroupMember(address(groupAdmin));
+        scope = new GroupMemberScope(address(member));
     }
 
-    function testT133A_constructorStoresDependenciesAndRejectsNoCodeAdmin() public {
-        assertEq(scope.GROUP_ADMIN_ADDRESS(), address(groupAdmin));
-        assertEq(scope.GROUP_ADDRESS(), address(groupNft));
+    function testT133A_constructorsStoreDependenciesAndRejectNoCodeDependencies() public {
+        assertEq(member.GROUP_ADMIN_ADDRESS(), address(groupAdmin));
+        assertEq(member.GROUP_ADDRESS(), address(groupNft));
+        assertEq(scope.GROUP_MEMBER_ADDRESS(), address(member));
+
+        vm.expectRevert(IGroupMember.GroupMemberAddressHasNoCode.selector);
+        new GroupMember(address(0x1234));
 
         vm.expectRevert(IGroupMemberScope.GroupMemberScopeAddressHasNoCode.selector);
         new GroupMemberScope(address(0x1234));
@@ -33,29 +41,29 @@ contract GroupMemberScopeTest is GroupChatFixture {
         _configureAdmin();
 
         vm.prank(adminOwner);
-        scope.addMemberIds(groupId, _uints(senderId, otherGroupId));
-        assertTrue(scope.isMemberId(groupId, senderId));
-        assertTrue(scope.isMemberId(groupId, otherGroupId));
-        assertEq(scope.memberIdsCount(groupId), 2);
-        assertEq(scope.stateVersion(groupId), 1);
+        member.addMemberIds(groupId, _uints(senderId, otherGroupId));
+        assertTrue(member.isMemberId(groupId, senderId));
+        assertTrue(member.isMemberId(groupId, otherGroupId));
+        assertEq(member.memberIdsCount(groupId), 2);
+        assertEq(member.stateVersion(groupId), 1);
 
         vm.prank(adminOwner);
-        scope.addMemberIds(groupId, _uints(senderId));
-        assertEq(scope.stateVersion(groupId), 1);
+        member.addMemberIds(groupId, _uints(senderId));
+        assertEq(member.stateVersion(groupId), 1);
 
-        uint256[] memory page = scope.memberIds(groupId, 1, 1);
+        uint256[] memory page = member.memberIds(groupId, 1, 1);
         assertEq(page.length, 1);
         assertEq(page[0], otherGroupId);
 
-        bool[] memory listed = scope.isMemberIdBatch(groupId, _uints(senderId, groupId));
+        bool[] memory listed = member.isMemberIdBatch(groupId, _uints(senderId, groupId));
         assertTrue(listed[0]);
         assertTrue(!listed[1]);
 
         vm.prank(adminOwner);
-        scope.removeMemberIds(groupId, _uints(senderId));
-        assertTrue(!scope.isMemberId(groupId, senderId));
-        assertTrue(scope.isMemberId(groupId, otherGroupId));
-        assertEq(scope.stateVersion(groupId), 2);
+        member.removeMemberIds(groupId, _uints(senderId));
+        assertTrue(!member.isMemberId(groupId, senderId));
+        assertTrue(member.isMemberId(groupId, otherGroupId));
+        assertEq(member.stateVersion(groupId), 2);
     }
 
     function testT133C_memberIdsControlGroupChatPostAndTransferFollowsNft() public {
@@ -69,7 +77,7 @@ contract GroupMemberScopeTest is GroupChatFixture {
         assertEq(reasonCode, IGroupChatErrors.ScopeRejected.selector);
 
         vm.prank(adminOwner);
-        scope.addMemberIds(groupId, _uints(senderId));
+        member.addMemberIds(groupId, _uints(senderId));
 
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
 
@@ -84,29 +92,29 @@ contract GroupMemberScopeTest is GroupChatFixture {
         groupAdmin.setAdmins(groupId, _uints(adminId));
 
         vm.prank(adminOwner);
-        vm.expectRevert(IGroupMemberScope.UnauthorizedGroupMemberScopeManager.selector);
-        scope.addMemberIds(groupId, _uints(senderId));
+        vm.expectRevert(IGroupMember.UnauthorizedGroupMemberManager.selector);
+        member.addMemberIds(groupId, _uints(senderId));
 
         vm.prank(adminOwner);
         groupDefaults.setDefaultGroupId(adminId);
 
         vm.prank(adminOwner);
-        vm.expectRevert(IGroupMemberScope.TargetMemberIdZero.selector);
-        scope.addMemberIds(groupId, _uints(0));
+        vm.expectRevert(IGroupMember.TargetMemberIdZero.selector);
+        member.addMemberIds(groupId, _uints(0));
 
         vm.prank(adminOwner);
-        vm.expectRevert(IGroupMemberScope.GroupNotExist.selector);
-        scope.addMemberIds(groupId, _uints(999999));
+        vm.expectRevert(IGroupMember.GroupNotExist.selector);
+        member.addMemberIds(groupId, _uints(999999));
 
         vm.prank(adminOwner);
-        scope.addMemberIds(groupId, _uints(senderId));
+        member.addMemberIds(groupId, _uints(senderId));
 
-        assertTrue(scope.isMemberId(groupId, senderId));
-        assertTrue(!scope.isMemberId(otherGroupId, senderId));
+        assertTrue(member.isMemberId(groupId, senderId));
+        assertTrue(!member.isMemberId(otherGroupId, senderId));
 
         vm.prank(adminOwner);
-        vm.expectRevert(IGroupMemberScope.UnauthorizedGroupMemberScopeManager.selector);
-        scope.addMemberIds(otherGroupId, _uints(senderId));
+        vm.expectRevert(IGroupMember.UnauthorizedGroupMemberManager.selector);
+        member.addMemberIds(otherGroupId, _uints(senderId));
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupAdmin.UnauthorizedGroupAdminManager.selector);

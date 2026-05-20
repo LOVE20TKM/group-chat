@@ -3,6 +3,7 @@ pragma solidity =0.8.17;
 
 import {DeployGroupChat} from "../script/DeployGroupChat.s.sol";
 import {GroupAdmin} from "../src/GroupAdmin.sol";
+import {GroupMember} from "../src/GroupMember.sol";
 import {IGroupChat} from "../src/interfaces/IGroupChat.sol";
 import {IBaseManager} from "../src/interfaces/managers/IBaseManager.sol";
 import {BaseTokenActionScopeManager} from "../src/managers/BaseTokenActionScopeManager.sol";
@@ -98,6 +99,7 @@ contract DeployGroupChatTest is TestBase {
         assertTrue(deployed.groupAdmin.code.length != 0);
         assertTrue(deployed.adminDenySource.code.length != 0);
         assertTrue(deployed.govVotedDenySource.code.length != 0);
+        assertTrue(deployed.groupMember.code.length != 0);
         assertTrue(deployed.groupMemberScope.code.length != 0);
         assertTrue(deployed.groupJoinScopeSource.code.length != 0);
         assertTrue(deployed.tokenMainManager.code.length != 0);
@@ -122,11 +124,10 @@ contract DeployGroupChatTest is TestBase {
         assertEq(GovVotedDenySource(deployed.govVotedDenySource).GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedDenySource(deployed.govVotedDenySource).PRECISION(), 1e18);
         assertEq(GovVotedDenySource(deployed.govVotedDenySource).DENY_THRESHOLD_RATIO(), DENY_THRESHOLD_RATIO);
-        assertEq(GroupMemberScope(deployed.groupMemberScope).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
-        assertEq(GroupMemberScope(deployed.groupMemberScope).GROUP_ADDRESS(), address(groupNft));
-        assertEq(
-            GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_MEMBER_SCOPE_ADDRESS(), deployed.groupMemberScope
-        );
+        assertEq(GroupMember(deployed.groupMember).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
+        assertEq(GroupMember(deployed.groupMember).GROUP_ADDRESS(), address(groupNft));
+        assertEq(GroupMemberScope(deployed.groupMemberScope).GROUP_MEMBER_ADDRESS(), deployed.groupMember);
+        assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_MEMBER_ADDRESS(), deployed.groupMember);
         assertEq(GroupJoinScopeSource(deployed.groupJoinScopeSource).GROUP_JOIN_ADDRESS(), address(groupJoin));
 
         _assertManagerCommon(deployed.tokenMainManager, deployed);
@@ -196,12 +197,13 @@ contract DeployGroupChatTest is TestBase {
             groupAdmin: address(0x102),
             adminDenySource: address(0x103),
             govVotedDenySource: address(0x104),
-            groupMemberScope: address(0x105),
-            groupJoinScopeSource: address(0x106),
-            tokenMainManager: address(0x107),
-            tokenGovManager: address(0x108),
-            tokenActionGovManager: address(0x109),
-            tokenActionMainManager: address(0x10A)
+            groupMember: address(0x105),
+            groupMemberScope: address(0x106),
+            groupJoinScopeSource: address(0x107),
+            tokenMainManager: address(0x108),
+            tokenGovManager: address(0x109),
+            tokenActionGovManager: address(0x10A),
+            tokenActionMainManager: address(0x10B)
         });
 
         string memory content = deployer.addressFileContentForTest(config, deployed);
@@ -209,6 +211,7 @@ contract DeployGroupChatTest is TestBase {
         _assertContains(content, "groupAdminAddress=");
         _assertContains(content, "adminDenySourceAddress=");
         _assertContains(content, "govVotedDenySourceAddress=");
+        _assertContains(content, "groupMemberAddress=");
         _assertContains(content, "groupMemberScopeAddress=");
         _assertContains(content, "groupJoinScopeSourceAddress=");
         _assertContains(content, "groupChatAddress=");

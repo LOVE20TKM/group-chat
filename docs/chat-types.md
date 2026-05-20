@@ -106,12 +106,12 @@ GroupChat.afterPostPlugin = 可选
 
 基础发言资格由 `scopeSource` 判断。
 
-链群群聊的 `scopeSource` 可使用 [GroupMemberScope](./sources/scope/group-member-scope.md) 或 [GroupJoinScopeSource](./sources/scope/group-join-scope-source.md)。
+链群群聊的 `scopeSource` 可使用 [GroupMemberScope](./sources/scope/group-member-scope.md) 或 [GroupJoinScopeSource](./sources/scope/group-join-scope-source.md)，成员名单由 [GroupMember](./group-member.md) 维护。
 
 `GroupMemberScope` 语义是：
 
 ```text
-memberIds[groupId].contains(senderId)
+GroupMember.isMemberId(groupId, senderId)
 ```
 
 即发送身份 NFT 被管理员加入成员名单后可发言，资格随 NFT 转移。
@@ -119,7 +119,7 @@ memberIds[groupId].contains(senderId)
 `GroupJoinScopeSource` 语义是：
 
 ```text
-GroupMemberScope.canPost(groupId, senderId, senderAddress)
+GroupMember.isMemberId(groupId, senderId)
 ||
 GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 ```

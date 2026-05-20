@@ -12,6 +12,7 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 - [ABI / 事件 / 错误](./docs/spec/abi-events-errors.md)
 - [群聊类型](./docs/chat-types.md)
 - [GroupAdmin](./docs/group-admin.md)
+- [GroupMember](./docs/group-member.md)
 - [Manager 总览](./docs/managers/README.md)
 - [ScopeSource 总览](./docs/sources/scope/README.md)
 - [DenySource 总览](./docs/sources/deny/README.md)
@@ -113,7 +114,7 @@ shell 一键部署：
 - 上游 `LOVE20Group` 地址可使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.params` 做校验
 - 当前仓库自身参数从 `script/network/<network>/group.chat.params` 读取
 - `DeployGroupChat` 固定同时部署 `GroupAdmin`、`AdminDenySource` 与 `GovVotedDenySource`
-- `DeployGroupChat` 固定同时部署 `GroupMemberScope` 与 `GroupJoinScopeSource`
+- `DeployGroupChat` 固定同时部署 `GroupMember`、`GroupMemberScope` 与 `GroupJoinScopeSource`
 - 四个 typed Manager 固定挂本次部署的 `GovVotedDenySource`
 - 部署会同时产出 `GroupChat` 与四个 typed Manager
 

@@ -2,11 +2,11 @@
 pragma solidity =0.8.17;
 
 import {GroupAdmin} from "../src/GroupAdmin.sol";
+import {GroupMember} from "../src/GroupMember.sol";
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IGroupJoinScopeSource} from "../src/interfaces/sources/scope/IGroupJoinScopeSource.sol";
 import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
-import {GroupMemberScope} from "../src/sources/scope/GroupMemberScope.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract MockGroupJoin {
@@ -23,21 +23,21 @@ contract MockGroupJoin {
 
 contract GroupJoinScopeSourceTest is GroupChatFixture {
     GroupAdmin internal groupAdmin;
-    GroupMemberScope internal memberScope;
+    GroupMember internal member;
     MockGroupJoin internal groupJoin;
     GroupJoinScopeSource internal scope;
 
     function setUp() public override {
         super.setUp();
         groupAdmin = new GroupAdmin(address(chat), 20);
-        memberScope = new GroupMemberScope(address(groupAdmin));
+        member = new GroupMember(address(groupAdmin));
         groupJoin = new MockGroupJoin();
-        scope = new GroupJoinScopeSource(address(memberScope), address(groupJoin));
+        scope = new GroupJoinScopeSource(address(member), address(groupJoin));
     }
 
     function testT130_constructorRequiresGroupJoinCode() public {
         vm.expectRevert(IGroupJoinScopeSource.GroupJoinScopeSourceAddressHasNoCode.selector);
-        new GroupJoinScopeSource(address(memberScope), address(0x1234));
+        new GroupJoinScopeSource(address(member), address(0x1234));
 
         vm.expectRevert(IGroupJoinScopeSource.GroupJoinScopeSourceAddressHasNoCode.selector);
         new GroupJoinScopeSource(address(0x1234), address(groupJoin));
@@ -82,7 +82,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(groupId);
 
         vm.prank(chatOwner);
-        memberScope.addMemberIds(groupId, _uints(senderId));
+        member.addMemberIds(groupId, _uints(senderId));
 
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
 
@@ -121,9 +121,9 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     }
 
     function testT133_exposesMemberScopeAndGroupJoinAddresses() public view {
-        assertEq(scope.GROUP_MEMBER_SCOPE_ADDRESS(), address(memberScope));
+        assertEq(scope.GROUP_MEMBER_ADDRESS(), address(member));
         assertEq(scope.GROUP_JOIN_ADDRESS(), address(groupJoin));
-        assertEq(memberScope.GROUP_ADMIN_ADDRESS(), address(groupAdmin));
+        assertEq(member.GROUP_ADMIN_ADDRESS(), address(groupAdmin));
         assertEq(groupAdmin.MAX_ADMIN_IDS(), 20);
     }
 

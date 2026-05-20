@@ -20,6 +20,7 @@ source ./one_click_deploy.sh <network>
 - `GroupAdmin`
 - `AdminDenySource`
 - `GovVotedDenySource`
+- `GroupMember`
 - `GroupMemberScope`
 - `GroupJoinScopeSource`
 - `TokenMainManager`
@@ -49,9 +50,10 @@ source ./one_click_deploy.sh <network>
 
 `DeployGroupChat` 固定部署 `GroupAdmin`、`AdminDenySource` 与 `GovVotedDenySource`。
 `GovVotedDenySource` 构造参数固定写入黑名单生效阈值。
-`DeployGroupChat` 固定部署 `GroupMemberScope` 与 `GroupJoinScopeSource`。
+`DeployGroupChat` 固定部署 `GroupMember`、`GroupMemberScope` 与 `GroupJoinScopeSource`。
 四个 typed Manager 的 `DENY_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedDenySource`。
 `GroupAdmin` 是 owner-admin 管理型模块共享的管理员名单。
+`GroupMember` 是链群服务者管理型模块共享的成员 NFT 名单。
 `AdminDenySource` 作为中心化 / 链群等 owner-admin 管理型 deny source 产物写入地址文件，不自动挂到 typed Manager。
 `GroupMemberScope` 与 `GroupJoinScopeSource` 作为链群服务者可选 scope source 产物写入地址文件，不自动挂到 typed Manager。
 
@@ -76,6 +78,7 @@ source ./one_click_deploy.sh <network>
 - `groupAdminAddress`
 - `adminDenySourceAddress`
 - `govVotedDenySourceAddress`
+- `groupMemberAddress`
 - `groupMemberScopeAddress`
 - `groupJoinScopeSourceAddress`
 - `groupChatAddress`
@@ -94,6 +97,7 @@ source ./one_click_deploy.sh <network>
 - `GroupAdmin`
 - `AdminDenySource`
 - `GovVotedDenySource`
+- `GroupMember`
 - `GroupMemberScope`
 - `GroupJoinScopeSource`
 - 四个 typed Manager
@@ -131,8 +135,10 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 - `AdminDenySource` 固定依赖
 - `GovVotedDenySource` 固定依赖
 - `GovVotedDenySource` 禁言阈值
-- `GroupMemberScope.GROUP_ADMIN_ADDRESS`
-- `GroupJoinScopeSource.GROUP_MEMBER_SCOPE_ADDRESS`
+- `GroupMember.GROUP_ADMIN_ADDRESS`
+- `GroupMember.GROUP_ADDRESS`
+- `GroupMemberScope.GROUP_MEMBER_ADDRESS`
+- `GroupJoinScopeSource.GROUP_MEMBER_ADDRESS`
 - `GroupJoinScopeSource.GROUP_JOIN_ADDRESS`
 - 四个 Manager 的 `GROUP_CHAT_ADDRESS`
 - 四个 Manager 的固定规则槽

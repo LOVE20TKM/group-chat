@@ -19,6 +19,7 @@ if [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$groupAdminAddress" ] || \
     [ -z "$adminDenySourceAddress" ] || \
     [ -z "$govVotedDenySourceAddress" ] || \
+    [ -z "$groupMemberAddress" ] || \
     [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
     [ -z "$tokenMainManagerAddress" ] || \
@@ -37,6 +38,11 @@ fi
 if [ -z "$GROUP_ADMIN_ADDRESS" ] && [ -n "$groupAdminAddress" ]; then
     GROUP_ADMIN_ADDRESS=$groupAdminAddress
     export GROUP_ADMIN_ADDRESS
+fi
+
+if [ -z "$GROUP_MEMBER_ADDRESS" ] && [ -n "$groupMemberAddress" ]; then
+    GROUP_MEMBER_ADDRESS=$groupMemberAddress
+    export GROUP_MEMBER_ADDRESS
 fi
 
 if [ -z "$GROUP_MEMBER_SCOPE_ADDRESS" ] && [ -n "$groupMemberScopeAddress" ]; then
@@ -138,7 +144,15 @@ verify_contract \
     $gov_deny_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-group_member_scope_constructor_args=$(cast abi-encode "constructor(address)" $groupAdminAddress)
+group_member_constructor_args=$(cast abi-encode "constructor(address)" $groupAdminAddress)
+verify_contract \
+    $groupMemberAddress \
+    "GroupMember" \
+    "src/GroupMember.sol" \
+    $group_member_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+group_member_scope_constructor_args=$(cast abi-encode "constructor(address)" $groupMemberAddress)
 verify_contract \
     $groupMemberScopeAddress \
     "GroupMemberScope" \
@@ -147,7 +161,7 @@ verify_contract \
 [ $? -ne 0 ] && ((failed_verifications++))
 
 group_join_scope_source_constructor_args=$(cast abi-encode "constructor(address,address)" \
-    $groupMemberScopeAddress \
+    $groupMemberAddress \
     $GROUP_JOIN_ADDRESS)
 verify_contract \
     $groupJoinScopeSourceAddress \
