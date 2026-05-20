@@ -75,7 +75,7 @@ source ./one_click_deploy.sh <network>
 
 - `groupAdminAddress`
 - `adminDenySourceAddress`
-- `groupChatDenySourceAddress`
+- `govVotedDenySourceAddress`
 - `groupMemberScopeAddress`
 - `groupJoinScopeSourceAddress`
 - `groupChatAddress`
@@ -102,7 +102,7 @@ source ./one_click_deploy.sh <network>
 
 ```text
 groupChatAddress
-groupChatDenySourceAddress
+govVotedDenySourceAddress
 GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
 GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 EXTENSION_CENTER_ADDRESS

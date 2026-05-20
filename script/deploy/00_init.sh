@@ -56,10 +56,6 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_JOIN_ADDRESS=$groupJoinAddress
     fi
 
-    if [ -n "$groupChatDenySourceAddress" ]; then
-        export GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
-    fi
-
     if [ -n "$groupAdminAddress" ]; then
         export GROUP_ADMIN_ADDRESS=$groupAdminAddress
     fi
@@ -130,10 +126,6 @@ if [ -f "$network_dir/group.chat.params" ]; then
 
     zero_address=0x0000000000000000000000000000000000000000
 
-    if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
-        export GROUP_CHAT_DENY_SOURCE_ADDRESS=""
-    fi
-
     if [ -z "$GROUP_ADMIN_ADDRESS" ]; then
         export GROUP_ADMIN_ADDRESS=""
     fi
@@ -166,7 +158,6 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_MEMBER_SCOPE_ADDRESS
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
     export ADMIN_DENY_SOURCE_ADDRESS
-    export GROUP_CHAT_DENY_SOURCE_ADDRESS
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
@@ -184,7 +175,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  GroupMemberScope: $GROUP_MEMBER_SCOPE_ADDRESS"
     echo "  GroupJoinScopeSource: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
     echo "  AdminDenySource: $ADMIN_DENY_SOURCE_ADDRESS"
-    echo "  DenySource: $GROUP_CHAT_DENY_SOURCE_ADDRESS"
+    echo "  GovVotedDenySource: $govVotedDenySourceAddress"
     echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"

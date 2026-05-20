@@ -35,7 +35,7 @@ contract DeployGroupChat is ScriptBase {
         address groupChat;
         address groupAdmin;
         address adminDenySource;
-        address groupChatDenySource;
+        address govVotedDenySource;
         address groupMemberScope;
         address groupJoinScopeSource;
         address tokenMainManager;
@@ -97,14 +97,14 @@ contract DeployGroupChat is ScriptBase {
         deployed.groupChat = address(groupChat);
         deployed.groupAdmin = address(new GroupAdmin(address(groupChat), config.maxAdminIds));
         deployed.adminDenySource = address(new AdminDenySource(deployed.groupAdmin));
-        deployed.groupChatDenySource =
+        deployed.govVotedDenySource =
             address(new GovVotedDenySource(groupChat.GROUP_ADDRESS(), config.denyThresholdRatio));
         deployed.groupMemberScope = address(new GroupMemberScope(deployed.groupAdmin));
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(deployed.groupMemberScope, config.groupJoin));
 
         TokenMainManager tokenMainManager = new TokenMainManager(
             address(groupChat),
-            deployed.groupChatDenySource,
+            deployed.govVotedDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
@@ -112,7 +112,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.tokenMainManager = address(tokenMainManager);
         TokenGovManager tokenGovManager = new TokenGovManager(
             address(groupChat),
-            deployed.groupChatDenySource,
+            deployed.govVotedDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
@@ -120,7 +120,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.tokenGovManager = address(tokenGovManager);
         TokenActionGovManager tokenActionGovManager = new TokenActionGovManager(
             address(groupChat),
-            deployed.groupChatDenySource,
+            deployed.govVotedDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter,
@@ -129,7 +129,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.tokenActionGovManager = address(tokenActionGovManager);
         TokenActionMainManager tokenActionMainManager = new TokenActionMainManager(
             address(groupChat),
-            deployed.groupChatDenySource,
+            deployed.govVotedDenySource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter,
@@ -153,7 +153,7 @@ contract DeployGroupChat is ScriptBase {
         string memory content = string.concat(
             _addressLine("groupAdminAddress", deployed.groupAdmin),
             _addressLine("adminDenySourceAddress", deployed.adminDenySource),
-            _addressLine("groupChatDenySourceAddress", deployed.groupChatDenySource),
+            _addressLine("govVotedDenySourceAddress", deployed.govVotedDenySource),
             _addressLine("groupMemberScopeAddress", deployed.groupMemberScope),
             _addressLine("groupJoinScopeSourceAddress", deployed.groupJoinScopeSource)
         );

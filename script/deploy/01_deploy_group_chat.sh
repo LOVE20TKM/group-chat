@@ -13,13 +13,12 @@ if [ $? -eq 0 ]; then
     source $network_dir/address.group.chat.params
     export GROUP_ADMIN_ADDRESS=$groupAdminAddress
     export ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
-    export GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
     export GROUP_MEMBER_SCOPE_ADDRESS=$groupMemberScopeAddress
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
     echo -e "\033[32m✓\033[0m GroupChat deployed at: $groupChatAddress"
     echo -e "\033[32m✓\033[0m GroupAdmin deployed at: $groupAdminAddress"
     echo -e "\033[32m✓\033[0m AdminDenySource deployed at: $adminDenySourceAddress"
-    echo -e "\033[32m✓\033[0m GovVotedDenySource deployed at: $groupChatDenySourceAddress"
+    echo -e "\033[32m✓\033[0m GovVotedDenySource deployed at: $govVotedDenySourceAddress"
     echo -e "\033[32m✓\033[0m GroupMemberScope deployed at: $groupMemberScopeAddress"
     echo -e "\033[32m✓\033[0m GroupJoinScopeSource deployed at: $groupJoinScopeSourceAddress"
     echo -e "\033[32m✓\033[0m TokenMainManager deployed at: $tokenMainManagerAddress"

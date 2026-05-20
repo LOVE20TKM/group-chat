@@ -8,7 +8,7 @@ if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && {
     [ -z "$groupChatAddress" ] || \
     [ -z "$groupAdminAddress" ] || \
     [ -z "$adminDenySourceAddress" ] || \
-    [ -z "$groupChatDenySourceAddress" ] || \
+    [ -z "$govVotedDenySourceAddress" ] || \
     [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
     [ -z "$tokenMainManagerAddress" ] || \
@@ -52,11 +52,6 @@ fi
 if [ -n "$groupJoinAddress" ]; then
     GROUP_JOIN_ADDRESS=$groupJoinAddress
     export GROUP_JOIN_ADDRESS
-fi
-
-if [ -n "$groupChatDenySourceAddress" ]; then
-    GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
-    export GROUP_CHAT_DENY_SOURCE_ADDRESS
 fi
 
 if [ -n "$groupAdminAddress" ]; then
@@ -159,8 +154,8 @@ if [ "$GROUP_CHAT_MAX_ADMIN_IDS" = "0" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ]; then
-    echo -e "\033[31m✗\033[0m GROUP_CHAT_DENY_SOURCE_ADDRESS not set"
+if [ -z "$govVotedDenySourceAddress" ]; then
+    echo -e "\033[31m✗\033[0m govVotedDenySourceAddress not set"
     ((missing_params++))
 fi
 
@@ -231,7 +226,7 @@ echo ""
 echo -e "GroupChat Address: $groupChatAddress\n"
 echo -e "GroupAdmin Address: $GROUP_ADMIN_ADDRESS"
 echo -e "AdminDenySource Address: $ADMIN_DENY_SOURCE_ADDRESS"
-echo -e "GovVotedDenySource Address: $GROUP_CHAT_DENY_SOURCE_ADDRESS\n"
+echo -e "GovVotedDenySource Address: $govVotedDenySourceAddress\n"
 echo -e "GroupMemberScope Address: $GROUP_MEMBER_SCOPE_ADDRESS"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
@@ -346,11 +341,11 @@ check_equal "AdminDenySource: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_ca
 echo ""
 
 echo "Verifying GovVotedDenySource configuration..."
-check_equal "GovVotedDenySource: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "GROUP_ADDRESS()(address)")
+check_equal "GovVotedDenySource: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $govVotedDenySourceAddress "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedDenySource: PRECISION" 1000000000000000000 $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "PRECISION()(uint256)")
+check_equal "GovVotedDenySource: PRECISION" 1000000000000000000 $(cast_call $govVotedDenySourceAddress "PRECISION()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedDenySource: DENY_THRESHOLD_RATIO" $GROUP_CHAT_DENY_THRESHOLD_RATIO $(cast_call $GROUP_CHAT_DENY_SOURCE_ADDRESS "DENY_THRESHOLD_RATIO()(uint256)")
+check_equal "GovVotedDenySource: DENY_THRESHOLD_RATIO" $GROUP_CHAT_DENY_THRESHOLD_RATIO $(cast_call $govVotedDenySourceAddress "DENY_THRESHOLD_RATIO()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -393,7 +388,7 @@ check_manager_common() {
     check_equal "$manager_name: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $manager_address "GROUP_CHAT_ADDRESS()(address)")
     [ $? -ne 0 ] && ((failed_checks++))
 
-    check_equal "$manager_name: DENY_SOURCE_ADDRESS" $GROUP_CHAT_DENY_SOURCE_ADDRESS $(cast_call $manager_address "DENY_SOURCE_ADDRESS()(address)")
+    check_equal "$manager_name: DENY_SOURCE_ADDRESS" $govVotedDenySourceAddress $(cast_call $manager_address "DENY_SOURCE_ADDRESS()(address)")
     [ $? -ne 0 ] && ((failed_checks++))
 
     check_equal "$manager_name: BEFORE_POST_PLUGIN_ADDRESS" $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS $(cast_call $manager_address "BEFORE_POST_PLUGIN_ADDRESS()(address)")

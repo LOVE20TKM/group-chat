@@ -18,7 +18,7 @@ if [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$groupChatAddress" ] || \
     [ -z "$groupAdminAddress" ] || \
     [ -z "$adminDenySourceAddress" ] || \
-    [ -z "$groupChatDenySourceAddress" ] || \
+    [ -z "$govVotedDenySourceAddress" ] || \
     [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
     [ -z "$tokenMainManagerAddress" ] || \
@@ -47,11 +47,6 @@ fi
 if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddress" ]; then
     GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
-fi
-
-if [ -z "$GROUP_CHAT_DENY_SOURCE_ADDRESS" ] && [ -n "$groupChatDenySourceAddress" ]; then
-    GROUP_CHAT_DENY_SOURCE_ADDRESS=$groupChatDenySourceAddress
-    export GROUP_CHAT_DENY_SOURCE_ADDRESS
 fi
 
 if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ] && [ -n "$adminDenySourceAddress" ]; then
@@ -92,7 +87,9 @@ verify_contract(){
 echo "verify_contract() loaded"
 
 group_chat_origin_blocks=$(cast call "$groupChatAddress" "originBlocks()(uint256)" --rpc-url "$RPC_URL")
+group_chat_origin_blocks=${group_chat_origin_blocks%% *}
 group_chat_phase_blocks=$(cast call "$groupChatAddress" "phaseBlocks()(uint256)" --rpc-url "$RPC_URL")
+group_chat_phase_blocks=${group_chat_phase_blocks%% *}
 
 constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
     $GROUP_DEFAULTS_ADDRESS \
@@ -135,7 +132,7 @@ gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)
     $GROUP_ADDRESS \
     $GROUP_CHAT_DENY_THRESHOLD_RATIO)
 verify_contract \
-    $groupChatDenySourceAddress \
+    $govVotedDenySourceAddress \
     "GovVotedDenySource" \
     "src/sources/deny/GovVotedDenySource.sol" \
     $gov_deny_source_constructor_args
@@ -161,21 +158,21 @@ verify_contract \
 
 token_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
     $groupChatAddress \
-    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $govVotedDenySourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS)
 
 token_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
     $groupChatAddress \
-    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $govVotedDenySourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS)
 
 token_action_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
     $groupChatAddress \
-    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $govVotedDenySourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS \
@@ -183,7 +180,7 @@ token_action_gov_manager_constructor_args=$(cast abi-encode "constructor(address
 
 token_action_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
     $groupChatAddress \
-    $GROUP_CHAT_DENY_SOURCE_ADDRESS \
+    $govVotedDenySourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS \
