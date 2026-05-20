@@ -191,6 +191,7 @@ const requiredAppJs = [
   'chatDisplayName',
   'activationTypeForChat',
   'renderActivationSection',
+  'renderChatMenuButtons',
   'set-activation-type',
   'toggleChatMenu',
   'toggleConversationPin',
@@ -209,6 +210,9 @@ const requiredAppJs = [
   'setAdminDenyOperator',
   'setBlacklistQueryType',
   'setNftInputMode',
+  'set-nft-input-mode-select',
+  'set-admin-query-type-select',
+  'set-member-query-type-select',
   'setBlacklistPage',
   'toggleBlacklistMenu',
   'data-action="copy-message"',
@@ -226,10 +230,8 @@ const requiredAppJs = [
   'showBlacklistedMessages',
   'messageSenderDenied',
   'shouldHideMessage',
-  'toggle-show-blacklisted',
   'set-show-blacklisted',
   '显示黑名单消息',
-  '黑名单消息默认隐藏',
   'quotedMessagesByGroupId',
   'activeQuotedMessageId',
   'clearActiveQuote',
@@ -241,7 +243,7 @@ const requiredAppJs = [
   'duplicateCount',
   'overLimitCount',
   'openGovVoters',
-  '查看voter列表',
+  '投票列表',
   'voterList',
   'setVoterPage',
   'queryVoter',
@@ -253,6 +255,7 @@ const requiredAppJs = [
   'setActivationOption',
   'renderChainServiceManagement',
   'renderDelegateInput',
+  'renderNftLookupControl',
   'delegateDisplay',
   'delegateQueryResult',
   'resolveOptionalKnownNftInput',
@@ -261,8 +264,8 @@ const requiredAppJs = [
   'renderMemberIdControls',
   'setAdminIdQueryType',
   'setMemberIdQueryType',
-  '按名称',
-  '按编号',
+  'NFT名称',
+  'NFT ID',
   'queryAdminSelf',
   'queryAdminId',
   'queryMemberSelf',
@@ -565,6 +568,7 @@ const blacklistRowsHarness = new Function(
   'state',
   [
     extractFunctionSource(js, 'nftProfile'),
+    extractFunctionSource(js, 'blacklistNftLabel'),
     extractFunctionSource(js, 'sameAddress'),
     extractFunctionSource(js, 'normalizeBlacklistTargetType'),
     extractFunctionSource(js, 'govAddressDenied'),
@@ -587,6 +591,9 @@ const govAddressRow = govRows.find((row) => row.type === 'address' && row.target
 if (!govSenderRow?.detail.includes('我的投票：支持 18') || !govAddressRow?.detail.includes('我的投票：未投票')) {
   throw new Error('Gov blacklist rows must show the current account vote state');
 }
+if (govSenderRow?.label !== '争议账号' || !govSenderRow.detail.includes('NFT #9011')) {
+  throw new Error('Gov NFT blacklist rows must show the NFT name and keep the token id in detail');
+}
 const adminRows = blacklistRowsApi.blacklistRows(initialState.chats.find((chat) => chat.groupId === 1301));
 const adminAddressRow = adminRows.find((row) => row.type === 'address' && row.target === '0x66...d0');
 const adminSenderRow = adminRows.find((row) => row.type === 'nft' && row.target === '9017');
@@ -596,13 +603,16 @@ if (!adminAddressRow?.detail.includes('NFT #1308') || !adminAddressRow?.detail.i
 if (!adminSenderRow?.detail.includes('NFT #1310') || !adminSenderRow?.detail.includes('0x31...10')) {
   throw new Error('Admin senderId deny rows must show who added the blacklist entry');
 }
+if (adminSenderRow?.label !== 'NFT #9017' || !adminSenderRow.detail.includes('NFT #9017')) {
+  throw new Error('Admin NFT blacklist rows must fall back to the token id when the NFT name is unavailable');
+}
 const adminAddressPage = blacklistRowsApi.adminDenyListPage(initialState.chats.find((chat) => chat.groupId === 1301), 'address', 0, 1);
 if (adminAddressPage.targets[0] !== '0x66...d0' || adminAddressPage.operatorAddresses[0] !== '0x21...ce' || adminAddressPage.operatorIds[0] !== '1308') {
   throw new Error('Admin address deny list page must return target, operatorAddress, and operatorId together');
 }
 const adminSenderRows = blacklistRowsApi.adminDenyRowsFromPage(initialState.chats.find((chat) => chat.groupId === 1301), 'nft', 0, 1);
-if (!adminSenderRows[0]?.detail.includes('NFT #1310')) {
-  throw new Error('Admin senderId rows must be derived from the paged tuple response');
+if (!adminSenderRows[0]?.detail.includes('NFT #9017') || !adminSenderRows[0]?.detail.includes('NFT #1310')) {
+  throw new Error('Admin senderId rows must be derived from the paged tuple response and keep both target and operator ids');
 }
 
 const sendHarness = new Function(
@@ -753,11 +763,16 @@ const conversationPinHarness = new Function(
 const conversationPinState = JSON.parse(JSON.stringify(initialState));
 conversationPinState.pinnedGroupIds = [1024];
 conversationPinState.activeConversationMenuGroupId = 1301;
+conversationPinState.activeGroupMenuId = 1301;
 let conversationPinRenderCount = 0;
 const conversationPin = conversationPinHarness(conversationPinState, () => { conversationPinRenderCount += 1; });
 conversationPin.toggleConversationPin('1301');
-if (!conversationPinState.pinnedGroupIds.includes(1301) || conversationPinState.activeConversationMenuGroupId !== null) {
-  throw new Error('toggleConversationPin must pin the requested groupId and close the menu');
+if (
+  !conversationPinState.pinnedGroupIds.includes(1301)
+  || conversationPinState.activeConversationMenuGroupId !== null
+  || conversationPinState.activeGroupMenuId !== null
+) {
+  throw new Error('toggleConversationPin must pin the requested groupId and close every open group menu');
 }
 conversationPin.toggleConversationPin('1024');
 if (conversationPinState.pinnedGroupIds.includes(1024) || conversationPin.getSuppressConversationClick()) {
@@ -765,6 +780,168 @@ if (conversationPinState.pinnedGroupIds.includes(1024) || conversationPin.getSup
 }
 if (conversationPinRenderCount !== 2) {
   throw new Error('toggleConversationPin must render after pin state changes');
+}
+
+const groupDetailMenuHarness = new Function(
+  'state',
+  [
+    extractFunctionSource(js, 'isPinnedConversation'),
+    extractFunctionSource(js, 'renderChatMenuButtons'),
+    'function escapeHtml(value) { return String(value); }',
+    'function chatDisplayName(chat) { return chat.title || String(chat.groupId); }',
+    extractFunctionSource(js, 'groupDetailMetaClass'),
+    extractFunctionSource(js, 'renderGroupDetailHeader'),
+    'return { renderChatMenuButtons, renderGroupDetailHeader };',
+  ].join('\n'),
+);
+
+const groupDetailMenuState = JSON.parse(JSON.stringify(initialState));
+const groupDetailMenuApi = groupDetailMenuHarness(groupDetailMenuState);
+const chatMenu = groupDetailMenuApi.renderChatMenuButtons({ groupId: 1301 });
+if (!chatMenu.includes('data-action="open-members" data-group-id="1301">群成员</button>')) {
+  throw new Error('Chat view menu must keep detail-page navigation entries');
+}
+const detailHeader = groupDetailMenuApi.renderGroupDetailHeader({ groupId: 1301, title: '示例群' }, '群成员', '本机');
+if (detailHeader.includes('data-action="toggle-chat-menu"') || detailHeader.includes('details-menu-button')) {
+  throw new Error('Group detail pages must not render a top-right menu button');
+}
+
+const blacklistPanelHarness = new Function(
+  'state',
+  [
+    'function escapeHtml(value) { return String(value); }',
+    'function chatDisplayName(chat) { return chat.title || String(chat.groupId); }',
+    extractFunctionSource(js, 'groupDetailMetaClass'),
+    extractFunctionSource(js, 'renderGroupDetailHeader'),
+    'function renderBlacklistPermissionNotice() { return "<div>permission</div>"; }',
+    'function renderBlacklistControls() { return "<div>controls</div>"; }',
+    'function renderBlacklistRows() { return "<div>rows</div>"; }',
+    extractFunctionSource(js, 'renderBlacklistPanel'),
+    'return { renderBlacklistPanel };',
+  ].join('\n'),
+);
+
+const blacklistPanelState = { blacklistQueryType: 'address', nftInputMode: 'id', blacklistQueryResult: '' };
+const blacklistPanelApi = blacklistPanelHarness(blacklistPanelState);
+const blacklistPanel = blacklistPanelApi.renderBlacklistPanel({ groupId: 1301, title: '示例群', blacklistMode: 'admin', adminDeny: { stateVersion: 3 } });
+if ((blacklistPanel.match(/示例群/g) || []).length !== 1) {
+  throw new Error('Blacklist page must not render the group name twice');
+}
+
+const blacklistControlsHarness = new Function(
+  'state',
+  [
+    'function escapeHtml(value) { return String(value); }',
+    extractFunctionSource(js, 'renderNftLookupControl'),
+    'function canEditAdminDeny(chat) { return Boolean(chat.canEditAdminDeny); }',
+    extractFunctionSource(js, 'renderBlacklistAddAction'),
+    extractFunctionSource(js, 'renderBlacklistControls'),
+    'return { renderBlacklistControls };',
+  ].join('\n'),
+);
+
+const blacklistControlsApi = blacklistControlsHarness({ blacklistQueryType: 'nft', nftInputMode: 'id', blacklistQuery: '' });
+const nftBlacklistControls = blacklistControlsApi.renderBlacklistControls({ blacklistMode: 'gov', voteWeight: 18 }, '请输入NFT ID', '我的');
+if (!nftBlacklistControls.includes('class="nft-lookup"') || !nftBlacklistControls.includes('data-action="set-nft-input-mode-select"')) {
+  throw new Error('NFT blacklist query must use the integrated lookup control style');
+}
+if (!nftBlacklistControls.includes('NFT名称') || !nftBlacklistControls.includes('NFT ID') || !nftBlacklistControls.includes('>我的</button>')) {
+  throw new Error('NFT blacklist query must expose name/id lookup modes inside the input control');
+}
+if (!nftBlacklistControls.includes('data-action="gov-add-target"') || !nftBlacklistControls.includes('>加入黑名单</button>')) {
+  throw new Error('Gov blacklist query must render the add-to-blacklist action');
+}
+
+const nftLookupHarness = new Function(
+  'state',
+  [
+    'function escapeHtml(value) { return String(value); }',
+    'function canEditRules() { return true; }',
+    'function canEditMemberScope() { return true; }',
+    'function delegateDisplay(value) { return value; }',
+    'function activationInputMode() { return "text"; }',
+    'function activationFieldLabel(field) { return field; }',
+    extractFunctionSource(js, 'renderNftLookupControl'),
+    extractFunctionSource(js, 'renderActivationTextInput'),
+    extractFunctionSource(js, 'renderDelegateInput'),
+    extractFunctionSource(js, 'renderAdminIdControls'),
+    extractFunctionSource(js, 'renderMemberIdControls'),
+    'return { renderActivationTextInput, renderDelegateInput, renderAdminIdControls, renderMemberIdControls };',
+  ].join('\n'),
+);
+
+const nftLookupApi = nftLookupHarness({
+  nftInputMode: 'id',
+  adminIdQueryType: 'id',
+  adminIdQuery: '',
+  memberIdQueryType: 'name',
+  memberIdQuery: '',
+  delegateQueryResult: '',
+});
+const activationDelegateInput = nftLookupApi.renderActivationTextInput('delegateId', '');
+if (!activationDelegateInput.includes('class="nft-lookup"')) {
+  throw new Error('Activation delegateId input must reuse the shared NFT lookup control');
+}
+if (!activationDelegateInput.includes('data-activation-field="delegateId"')) {
+  throw new Error('Activation delegateId lookup input must remain capturable by activation drafts');
+}
+if (!nftLookupApi.renderDelegateInput({ chatInfo: { delegateId: '0' } }, true).includes('data-action="set-nft-input-mode-select"')) {
+  throw new Error('Delegate editor must reuse the shared NFT lookup control');
+}
+if (!nftLookupApi.renderAdminIdControls({}).includes('data-action="set-admin-query-type-select"')) {
+  throw new Error('Admin NFT query must reuse the shared NFT lookup control');
+}
+if (!nftLookupApi.renderMemberIdControls({}).includes('data-action="set-member-query-type-select"')) {
+  throw new Error('Member NFT query must reuse the shared NFT lookup control');
+}
+
+const blacklistTextHarness = new Function(
+  'state',
+  [
+    'function renderPermissionNotice(allowed, allowedText, deniedText) { return allowed ? allowedText : deniedText; }',
+    'function canEditAdminDeny(chat) { return Boolean(chat.canEditAdminDeny); }',
+    'function escapeHtml(value) { return String(value); }',
+    'function blacklistRowKey(targetType, target) { return `${targetType}:${target}`; }',
+    'function renderBlacklistRowMenu() { return ""; }',
+    extractFunctionSource(js, 'renderBlacklistPermissionNotice'),
+    extractFunctionSource(js, 'renderBlacklistRow'),
+    'return { renderBlacklistPermissionNotice, renderBlacklistRow };',
+  ].join('\n'),
+);
+
+const blacklistTextApi = blacklistTextHarness({});
+const govPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'gov', voteWeight: 18, voteWeightLabel: '治理票' });
+if (govPermissionText.includes('有权限：') || govPermissionText.includes('无权限：')) {
+  throw new Error('Blacklist permission notice must not prefix texts with access labels');
+}
+const adminPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'admin', canEditAdminDeny: true });
+if (adminPermissionText.includes('有权限：') || adminPermissionText.includes('无权限：')) {
+  throw new Error('Admin blacklist permission notice must not prefix texts with access labels');
+}
+const addressBlacklistRow = blacklistTextApi.renderBlacklistRow(null, {
+  type: 'address',
+  target: '0xabc',
+  label: '0xabc',
+  detail: '支持 20 / 反对 1',
+  status: '已拉黑',
+  statusClass: 'pill-bad',
+});
+if (addressBlacklistRow.includes('<small>地址 ·')) {
+  throw new Error('Address blacklist rows must not repeat the type label in detail text');
+}
+const nftBlacklistRow = blacklistTextApi.renderBlacklistRow(null, {
+  type: 'nft',
+  target: '1024',
+  label: '治理观察员',
+  detail: '支持 20 / 反对 1',
+  status: '已拉黑',
+  statusClass: 'pill-bad',
+});
+if (nftBlacklistRow.includes('<small>NFT ·')) {
+  throw new Error('NFT blacklist rows must not repeat the type label in detail text');
+}
+if (!nftBlacklistRow.includes('<strong>治理观察员</strong>')) {
+  throw new Error('NFT blacklist rows must render the NFT name as the primary label');
 }
 
 const adminIdQueryHarness = new Function(

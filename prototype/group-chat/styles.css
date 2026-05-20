@@ -493,7 +493,6 @@ button:disabled {
 .inline-actions button,
 .row-actions button,
 .chat-tools button,
-.details-menu-button,
 .chat-menu button {
   min-height: 30px;
   border: 1px solid var(--greyscale-200);
@@ -785,6 +784,91 @@ button:disabled {
   margin-top: 8px;
 }
 
+.nft-lookup {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  height: 40px;
+  overflow: hidden;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.nft-lookup:focus-within {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px rgba(41, 38, 232, 0.12);
+}
+
+.nft-lookup-mode {
+  position: relative;
+  width: 76px;
+  flex: 0 0 76px;
+  border-right: 1px solid var(--greyscale-200);
+  background: var(--greyscale-50);
+}
+
+.nft-lookup-mode-select {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0 14px 0 8px;
+  background: transparent;
+  color: var(--greyscale-900);
+  font-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.nft-lookup-mode-select:focus {
+  outline: none;
+}
+
+.nft-lookup-mode-arrow {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid var(--greyscale-500);
+  border-bottom: 1.5px solid var(--greyscale-500);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+.nft-lookup-input,
+.nft-lookup-input:focus {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0 10px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.nft-lookup-input:focus {
+  outline: none;
+}
+
+.nft-lookup-input.is-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+.nft-lookup-input[readonly] {
+  background: var(--greyscale-50);
+  color: var(--greyscale-500);
+}
+
+.nft-lookup-mode-select:disabled {
+  color: var(--greyscale-500);
+}
+
 .blacklist-action-row {
   display: grid;
   gap: 7px;
@@ -937,7 +1021,7 @@ button:disabled {
 .chat-tools {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 36px;
+  grid-template-columns: minmax(0, 1fr) 36px;
   gap: 7px;
   align-items: center;
   margin-bottom: 10px;
@@ -954,12 +1038,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.chat-preference-state {
-  color: var(--greyscale-500);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .chat-tools .chat-menu-button {
   min-height: 30px;
   padding: 0;
@@ -967,9 +1045,8 @@ button:disabled {
 }
 
 .group-detail-heading {
-  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 36px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
 }
 
@@ -983,12 +1060,6 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.details-menu-button {
-  width: 36px;
-  padding: 0;
-  font-weight: 700;
 }
 
 .chat-menu {
@@ -1009,11 +1080,6 @@ button:disabled {
 .chat-menu button {
   justify-content: flex-start;
   text-align: left;
-}
-
-.group-detail-menu {
-  top: 38px;
-  right: 0;
 }
 
 .cannot-post {
@@ -1135,32 +1201,6 @@ button:disabled {
   background: var(--greyscale-50);
   color: var(--greyscale-700);
   font-size: 12px;
-}
-
-.hidden-message-notice {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border: 1px solid #fde68a;
-  border-radius: 8px;
-  background: #fffbeb;
-  color: #92400e;
-  font-size: 12px;
-}
-
-.hidden-message-notice button {
-  min-height: 24px;
-  border: 0;
-  border-radius: 5px;
-  background: #fef3c7;
-  color: #92400e;
-  padding: 0 8px;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .status-ok {
@@ -1455,10 +1495,6 @@ button:disabled {
 
   .chat-tools {
     grid-template-columns: minmax(0, 1fr) 36px;
-  }
-
-  .chat-preference-state {
-    grid-column: 1 / -1;
   }
 
   .conversation-row.group-row {
