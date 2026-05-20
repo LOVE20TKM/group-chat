@@ -27,7 +27,7 @@ function activate(address token) external returns (uint256 groupId);
 - `groupIdOfToken[token] = groupId`
 - `_tokens.push(token)`
 - `GroupChat.scopeSource = address(this)`
-- `GroupChat.denySource = DENY_SOURCE_ADDRESS`
+- `GroupChat.banSource = BAN_SOURCE_ADDRESS`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
 - `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN_ADDRESS`
 - `delegateId = 0`

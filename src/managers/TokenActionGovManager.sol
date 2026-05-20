@@ -6,7 +6,7 @@ import {BaseTokenActionScopeManager} from "./BaseTokenActionScopeManager.sol";
 contract TokenActionGovManager is BaseTokenActionScopeManager {
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_,
@@ -14,7 +14,7 @@ contract TokenActionGovManager is BaseTokenActionScopeManager {
     )
         BaseTokenActionScopeManager(
             groupChat_,
-            denySource_,
+            banSource_,
             beforePostPlugin_,
             afterPostPlugin_,
             extensionCenter_,

@@ -60,6 +60,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_ADMIN_ADDRESS=$groupAdminAddress
     fi
 
+    if [ -n "$groupBanListAddress" ]; then
+        export GROUP_BAN_LIST_ADDRESS=$groupBanListAddress
+    fi
+
     if [ -n "$groupMemberAddress" ]; then
         export GROUP_MEMBER_ADDRESS=$groupMemberAddress
     fi
@@ -72,8 +76,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=$groupJoinScopeSourceAddress
     fi
 
-    if [ -n "$adminDenySourceAddress" ]; then
-        export ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
+    if [ -n "$adminBanSourceAddress" ]; then
+        export ADMIN_BAN_SOURCE_ADDRESS=$adminBanSourceAddress
     fi
 
     if [ -n "$groupChatBeforePostPluginAddress" ]; then
@@ -88,8 +92,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_ACTION_RECENT_ROUNDS=$actionRecentRounds
     fi
 
-    if [ -n "$denyThresholdRatio" ]; then
-        export GROUP_CHAT_DENY_THRESHOLD_RATIO=$denyThresholdRatio
+    if [ -n "$banThresholdRatio" ]; then
+        export GROUP_CHAT_BAN_THRESHOLD_RATIO=$banThresholdRatio
     fi
 
     if [ -n "$maxAdminIds" ]; then
@@ -120,8 +124,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
         return 1
     fi
 
-    if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
-        export GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
+    if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
+        export GROUP_CHAT_BAN_THRESHOLD_RATIO=3000000000000000
     fi
 
     if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
@@ -132,6 +136,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
 
     if [ -z "$GROUP_ADMIN_ADDRESS" ]; then
         export GROUP_ADMIN_ADDRESS=""
+    fi
+
+    if [ -z "$GROUP_BAN_LIST_ADDRESS" ]; then
+        export GROUP_BAN_LIST_ADDRESS=""
     fi
 
     if [ -z "$GROUP_MEMBER_SCOPE_ADDRESS" ]; then
@@ -146,8 +154,8 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_JOIN_SCOPE_SOURCE_ADDRESS=""
     fi
 
-    if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ]; then
-        export ADMIN_DENY_SOURCE_ADDRESS=""
+    if [ -z "$ADMIN_BAN_SOURCE_ADDRESS" ]; then
+        export ADMIN_BAN_SOURCE_ADDRESS=""
     fi
 
     if [ -z "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" ]; then
@@ -163,14 +171,15 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export EXTENSION_CENTER_ADDRESS
     export GROUP_JOIN_ADDRESS
     export GROUP_ADMIN_ADDRESS
+    export GROUP_BAN_LIST_ADDRESS
     export GROUP_MEMBER_ADDRESS
     export GROUP_MEMBER_SCOPE_ADDRESS
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
-    export ADMIN_DENY_SOURCE_ADDRESS
+    export ADMIN_BAN_SOURCE_ADDRESS
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
-    export GROUP_CHAT_DENY_THRESHOLD_RATIO
+    export GROUP_CHAT_BAN_THRESHOLD_RATIO
     export GROUP_CHAT_MAX_ADMIN_IDS
 
     echo "GroupChat Configuration loaded:"
@@ -181,15 +190,16 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  ExtensionCenter: $EXTENSION_CENTER_ADDRESS"
     echo "  GroupJoin: $GROUP_JOIN_ADDRESS"
     echo "  GroupAdmin: $GROUP_ADMIN_ADDRESS"
+    echo "  GroupBanList: $GROUP_BAN_LIST_ADDRESS"
     echo "  GroupMember: $GROUP_MEMBER_ADDRESS"
     echo "  GroupMemberScope: $GROUP_MEMBER_SCOPE_ADDRESS"
     echo "  GroupJoinScopeSource: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
-    echo "  AdminDenySource: $ADMIN_DENY_SOURCE_ADDRESS"
-    echo "  GovVotedDenySource: $govVotedDenySourceAddress"
+    echo "  AdminBanSource: $ADMIN_BAN_SOURCE_ADDRESS"
+    echo "  GovVotedBanSource: $govVotedBanSourceAddress"
     echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"
-    echo "  DenyThresholdRatio: $GROUP_CHAT_DENY_THRESHOLD_RATIO"
+    echo "  BanThresholdRatio: $GROUP_CHAT_BAN_THRESHOLD_RATIO"
     echo "  MaxAdminIds: $GROUP_CHAT_MAX_ADMIN_IDS"
     echo "  RoundSource: ExtensionCenter.joinAddress().originBlocks/phaseBlocks"
 else

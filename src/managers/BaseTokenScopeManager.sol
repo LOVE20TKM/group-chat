@@ -12,11 +12,11 @@ abstract contract BaseTokenScopeManager is BaseTokenManager, IBaseTokenScopeMana
 
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseTokenManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
+    ) BaseTokenManager(groupChat_, banSource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
 
     function tokensCount() external view returns (uint256) {
         return _tokens.length;

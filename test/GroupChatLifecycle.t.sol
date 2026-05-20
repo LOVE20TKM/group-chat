@@ -47,7 +47,7 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(info.configVersion, 1);
         assertEq(info.delegateId, 0);
         assertEq(info.scopeSource, address(0));
-        assertEq(info.denySource, address(0));
+        assertEq(info.banSource, address(0));
         assertEq(info.beforePostPlugin, address(0));
         assertEq(info.afterPostPlugin, address(0));
         assertEq(info.firstActivatedOwner, chatOwner);

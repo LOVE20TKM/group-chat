@@ -5,10 +5,11 @@ echo "Verifying GroupChat Configuration"
 echo "========================================="
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && { \
-    [ -z "$groupChatAddress" ] || \
-    [ -z "$groupAdminAddress" ] || \
-    [ -z "$adminDenySourceAddress" ] || \
-    [ -z "$govVotedDenySourceAddress" ] || \
+	    [ -z "$groupChatAddress" ] || \
+	    [ -z "$groupAdminAddress" ] || \
+	    [ -z "$groupBanListAddress" ] || \
+	    [ -z "$adminBanSourceAddress" ] || \
+    [ -z "$govVotedBanSourceAddress" ] || \
     [ -z "$groupMemberAddress" ] || \
     [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
@@ -60,6 +61,11 @@ if [ -n "$groupAdminAddress" ]; then
     export GROUP_ADMIN_ADDRESS
 fi
 
+if [ -n "$groupBanListAddress" ]; then
+    GROUP_BAN_LIST_ADDRESS=$groupBanListAddress
+    export GROUP_BAN_LIST_ADDRESS
+fi
+
 if [ -n "$groupMemberAddress" ]; then
     GROUP_MEMBER_ADDRESS=$groupMemberAddress
     export GROUP_MEMBER_ADDRESS
@@ -75,9 +81,9 @@ if [ -n "$groupJoinScopeSourceAddress" ]; then
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
 fi
 
-if [ -n "$adminDenySourceAddress" ]; then
-    ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
-    export ADMIN_DENY_SOURCE_ADDRESS
+if [ -n "$adminBanSourceAddress" ]; then
+    ADMIN_BAN_SOURCE_ADDRESS=$adminBanSourceAddress
+    export ADMIN_BAN_SOURCE_ADDRESS
 fi
 
 if [ -n "$groupChatBeforePostPluginAddress" ]; then
@@ -95,9 +101,9 @@ if [ -n "$actionRecentRounds" ]; then
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
 fi
 
-if [ -n "$denyThresholdRatio" ]; then
-    GROUP_CHAT_DENY_THRESHOLD_RATIO=$denyThresholdRatio
-    export GROUP_CHAT_DENY_THRESHOLD_RATIO
+if [ -n "$banThresholdRatio" ]; then
+    GROUP_CHAT_BAN_THRESHOLD_RATIO=$banThresholdRatio
+    export GROUP_CHAT_BAN_THRESHOLD_RATIO
 fi
 
 if [ -n "$maxAdminIds" ]; then
@@ -117,9 +123,9 @@ if [ -z "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" ]; then
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 fi
 
-if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
-    GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
-    export GROUP_CHAT_DENY_THRESHOLD_RATIO
+if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
+    GROUP_CHAT_BAN_THRESHOLD_RATIO=3000000000000000
+    export GROUP_CHAT_BAN_THRESHOLD_RATIO
 fi
 
 if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
@@ -160,13 +166,18 @@ if [ "$GROUP_CHAT_MAX_ADMIN_IDS" = "0" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$govVotedDenySourceAddress" ]; then
-    echo -e "\033[31m✗\033[0m govVotedDenySourceAddress not set"
+if [ -z "$govVotedBanSourceAddress" ]; then
+    echo -e "\033[31m✗\033[0m govVotedBanSourceAddress not set"
     ((missing_params++))
 fi
 
 if [ -z "$GROUP_ADMIN_ADDRESS" ]; then
     echo -e "\033[31m✗\033[0m GROUP_ADMIN_ADDRESS not set"
+    ((missing_params++))
+fi
+
+if [ -z "$GROUP_BAN_LIST_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_BAN_LIST_ADDRESS not set"
     ((missing_params++))
 fi
 
@@ -190,8 +201,8 @@ if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ]; then
     ((missing_params++))
 fi
 
-if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ]; then
-    echo -e "\033[31m✗\033[0m ADMIN_DENY_SOURCE_ADDRESS not set"
+if [ -z "$ADMIN_BAN_SOURCE_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m ADMIN_BAN_SOURCE_ADDRESS not set"
     ((missing_params++))
 fi
 
@@ -236,13 +247,14 @@ echo ""
 
 echo -e "GroupChat Address: $groupChatAddress\n"
 echo -e "GroupAdmin Address: $GROUP_ADMIN_ADDRESS"
-echo -e "AdminDenySource Address: $ADMIN_DENY_SOURCE_ADDRESS"
-echo -e "GovVotedDenySource Address: $govVotedDenySourceAddress\n"
+echo -e "GroupBanList Address: $GROUP_BAN_LIST_ADDRESS"
+echo -e "AdminBanSource Address: $ADMIN_BAN_SOURCE_ADDRESS"
+echo -e "GovVotedBanSource Address: $govVotedBanSourceAddress\n"
 echo -e "GroupMember Address: $GROUP_MEMBER_ADDRESS"
 echo -e "GroupMemberScope Address: $GROUP_MEMBER_SCOPE_ADDRESS"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
-echo -e "Deny Threshold Ratio: $GROUP_CHAT_DENY_THRESHOLD_RATIO\n"
+echo -e "Ban Threshold Ratio: $GROUP_CHAT_BAN_THRESHOLD_RATIO\n"
 echo -e "Max Admin Ids: $GROUP_CHAT_MAX_ADMIN_IDS\n"
 echo -e "TokenMainManager Address: $tokenMainManagerAddress"
 echo -e "TokenGovManager Address: $tokenGovManagerAddress"
@@ -339,25 +351,30 @@ check_equal "GroupAdmin: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_call $G
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-echo "Verifying AdminDenySource configuration..."
-check_equal "AdminDenySource: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
+echo "Verifying GroupBanList configuration..."
+check_equal "GroupBanList: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "AdminDenySource: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_CHAT_ADDRESS()(address)")
+check_equal "GroupBanList: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_CHAT_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "AdminDenySource: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
+check_equal "GroupBanList: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "AdminDenySource: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "GROUP_ADDRESS()(address)")
+check_equal "GroupBanList: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "AdminDenySource: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_call $ADMIN_DENY_SOURCE_ADDRESS "MAX_ADMIN_IDS()(uint256)")
+check_equal "GroupBanList: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_call $GROUP_BAN_LIST_ADDRESS "MAX_ADMIN_IDS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-echo "Verifying GovVotedDenySource configuration..."
-check_equal "GovVotedDenySource: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $govVotedDenySourceAddress "GROUP_ADDRESS()(address)")
+echo "Verifying AdminBanSource configuration..."
+check_equal "AdminBanSource: GROUP_BAN_LIST_ADDRESS" $GROUP_BAN_LIST_ADDRESS $(cast_call $ADMIN_BAN_SOURCE_ADDRESS "GROUP_BAN_LIST_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedDenySource: PRECISION" 1000000000000000000 $(cast_call $govVotedDenySourceAddress "PRECISION()(uint256)")
+echo ""
+
+echo "Verifying GovVotedBanSource configuration..."
+check_equal "GovVotedBanSource: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $govVotedBanSourceAddress "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedDenySource: DENY_THRESHOLD_RATIO" $GROUP_CHAT_DENY_THRESHOLD_RATIO $(cast_call $govVotedDenySourceAddress "DENY_THRESHOLD_RATIO()(uint256)")
+check_equal "GovVotedBanSource: PRECISION" 1000000000000000000 $(cast_call $govVotedBanSourceAddress "PRECISION()(uint256)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GovVotedBanSource: BAN_THRESHOLD_RATIO" $GROUP_CHAT_BAN_THRESHOLD_RATIO $(cast_call $govVotedBanSourceAddress "BAN_THRESHOLD_RATIO()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -405,7 +422,7 @@ check_manager_common() {
     check_equal "$manager_name: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $manager_address "GROUP_CHAT_ADDRESS()(address)")
     [ $? -ne 0 ] && ((failed_checks++))
 
-    check_equal "$manager_name: DENY_SOURCE_ADDRESS" $govVotedDenySourceAddress $(cast_call $manager_address "DENY_SOURCE_ADDRESS()(address)")
+    check_equal "$manager_name: BAN_SOURCE_ADDRESS" $govVotedBanSourceAddress $(cast_call $manager_address "BAN_SOURCE_ADDRESS()(address)")
     [ $? -ne 0 ] && ((failed_checks++))
 
     check_equal "$manager_name: BEFORE_POST_PLUGIN_ADDRESS" $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS $(cast_call $manager_address "BEFORE_POST_PLUGIN_ADDRESS()(address)")

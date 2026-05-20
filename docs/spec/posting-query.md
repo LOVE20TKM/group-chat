@@ -32,7 +32,7 @@ senderAddress owns senderId
 content / mentionedSenderIds / quote core validation
 currentRound
 scopeSource.canPost
-denySource.isDenied
+banSource.isBanned
 beforePostPlugin.beforePost
 write message
 afterPostPlugin.afterPost
@@ -46,7 +46,7 @@ afterPostPlugin.afterPost
 - senderId exists
 - sender owner
 - `scopeSource`
-- `denySource`
+- `banSource`
 
 `canPost(...)` 不检查：
 
@@ -65,9 +65,9 @@ PostingNotAllowed.selector         chat 已停止发言
 GroupNotExist.selector             groupId 或 senderId 不存在
 SenderAddressNotSenderIdOwner.selector       senderAddress 不是 senderId 当前 owner
 ScopeRejected.selector             scopeSource 判定无资格
-DenyRejected.selector              denySource 判定被拒绝
+BanRejected.selector              banSource 判定被拒绝
 ScopeSourceFailed.selector         scopeSource 调用失败
-DenySourceFailed.selector          denySource 调用失败
+BanSourceFailed.selector          banSource 调用失败
 ```
 
 ## 消息内容

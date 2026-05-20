@@ -17,7 +17,7 @@
 - `metaValue` / `metaEntriesCount` / `metaEntries`
 - `setMeta` / `setMetaBatch`
 - `setDelegateId` / `delegateIdOf`
-- `setScopeSource` / `setDenySource`
+- `setScopeSource` / `setBanSource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
 - `canPost`
 - `post`
@@ -38,7 +38,7 @@
   - `interfaces/` 放本库协议接口与扩展点
   - `interfaces/external/` 放上游合约或通用标准的最小适配接口
   - `interfaces/plugins/` 放发帖前后插件接口
-  - `interfaces/sources/` 放 ScopeSource / DenySource 接口
+  - `interfaces/sources/` 放 ScopeSource / BanSource 接口
 - `test/`
   - 按主题拆分的 Foundry 测试
 - `script/`
@@ -69,7 +69,7 @@
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`
-- `GROUP_CHAT_DENY_THRESHOLD_RATIO`
+- `GROUP_CHAT_BAN_THRESHOLD_RATIO`
 - `network`
 
 可选变量：
@@ -79,7 +79,7 @@
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
 
-`GROUP_CHAT_DENY_THRESHOLD_RATIO` 缺省为 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
+`GROUP_CHAT_BAN_THRESHOLD_RATIO` 缺省为 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
 `GROUP_CHAT_MAX_ADMIN_IDS` 缺省为 `20`，写入 `GroupAdmin.MAX_ADMIN_IDS`，限制单个 `groupId` 的管理员 NFT 数量。
 
 直接 `forge script` 时也先从网络配置加载参数；round 参数由 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约读取：
@@ -96,10 +96,10 @@ shell 一键部署时：
 - 上游 `LOVE20Group` 地址可使用从 `group` 仓库复制过来的 `address.group.params` 做部署后校验
 - 上游 `GroupJoin` 地址来自 `extension-group` 仓库，用于部署链群 `scopeSource`
 - `DeployGroupChat` 不部署 `GroupDefaults`，只读取 `GROUP_DEFAULTS_ADDRESS`
-- `DeployGroupChat` 会同时部署 `GroupChat`、`GroupAdmin`、`AdminDenySource`、`GovVotedDenySource`、`GroupMember`、`GroupMemberScope`、`GroupJoinScopeSource` 与四个 typed Manager
+- `DeployGroupChat` 会同时部署 `GroupChat`、`GroupAdmin`、`GroupBanList`、`AdminBanSource`、`GovVotedBanSource`、`GroupMember`、`GroupMemberScope`、`GroupJoinScopeSource` 与四个 typed Manager
 - `GroupChat` 构造时通过 `GroupDefaults.GROUP_ADDRESS()` 派生 `GROUP_ADDRESS`
 - `GroupChat` 自身初始化参数与 Manager 依赖从 `group.chat.params` 读取
-- 四个 typed Manager 固定挂本次部署的 `GovVotedDenySource`
+- 四个 typed Manager 固定挂本次部署的 `GovVotedBanSource`
 
 部署完成后会写入 `script/network/<network>/address.group.chat.params`，只记录当前仓库本次部署产物；字段定义见 [deployment.md](./deployment.md)。
 

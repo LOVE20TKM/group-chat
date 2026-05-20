@@ -35,7 +35,7 @@
 - `configVersion`
 - `delegateId`，当前有效值
 - `scopeSource`
-- `denySource`
+- `banSource`
 - `beforePostPlugin`
 - `afterPostPlugin`
 - `firstActivatedOwner`
@@ -49,7 +49,7 @@
 - `meta`
 - `delegateId` 原始存储配置
 - `scopeSource`
-- `denySource`
+- `banSource`
 - `beforePostPlugin`
 - `afterPostPlugin`
 
@@ -96,7 +96,7 @@
 每个 chat 有四个规则槽：
 
 - `scopeSource`
-- `denySource`
+- `banSource`
 - `beforePostPlugin`
 - `afterPostPlugin`
 
@@ -104,7 +104,7 @@
 
 - `address(0)` 表示未挂载。
 - `scopeSource=0` 表示默认开放发言。
-- `denySource=0` 表示无黑名单。
+- `banSource=0` 表示无黑名单。
 - 非零地址必须有代码。
 - 重复设置为当前值直接 no-op，不递增 `configVersion`，不发事件。
 
@@ -113,7 +113,7 @@
 ```text
 核心校验
 -> scopeSource
--> denySource
+-> banSource
 -> beforePostPlugin
 -> 写消息
 -> afterPostPlugin

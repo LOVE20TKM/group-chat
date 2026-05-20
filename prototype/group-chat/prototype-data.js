@@ -105,18 +105,18 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: 'token 治理票',
       chatInfo: {
         scopeSource: 'TokenMainManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: {
+      govBan: {
         stateVersion: 7,
-        denyThresholdRatio: 3000000000000000,
+        banThresholdRatio: 3000000000000000,
         totalWeight: 1000,
-        addressDenyList: ['0x44...aa'],
-        senderIdDenyList: ['9011'],
+        addressBanList: ['0x44...aa'],
+        senderIdBanList: ['9011'],
         addressTargets: [
           { target: '0x44...aa', support: 43, oppose: 12, voters: 5, myVote: null, myWeight: 0, voterList: [
             { voter: '0x3a...02', stance: '支持', weight: 18 },
@@ -155,13 +155,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: 'token 治理票',
       chatInfo: {
         scopeSource: 'TokenGovManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govBan: { stateVersion: 0, banThresholdRatio: 3000000000000000, totalWeight: 1000, addressBanList: [], senderIdBanList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1188,
@@ -186,18 +186,18 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: '当前行动轮投票数',
       chatInfo: {
         scopeSource: 'TokenActionMainManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: {
+      govBan: {
         stateVersion: 3,
-        denyThresholdRatio: 3000000000000000,
+        banThresholdRatio: 3000000000000000,
         totalWeight: 1000,
-        addressDenyList: [],
-        senderIdDenyList: [],
+        addressBanList: [],
+        senderIdBanList: [],
         addressTargets: [],
         senderIdTargets: [
           { target: '9020', support: 13, oppose: 15, voters: 4, myVote: null, myWeight: 0, voterList: [
@@ -230,13 +230,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: '当前行动轮投票数',
       chatInfo: {
         scopeSource: 'TokenActionGovManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govBan: { stateVersion: 0, banThresholdRatio: 3000000000000000, totalWeight: 1000, addressBanList: [], senderIdBanList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1190,
@@ -261,13 +261,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: '当前行动轮投票数',
       chatInfo: {
         scopeSource: 'TokenActionMainManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govBan: { stateVersion: 0, banThresholdRatio: 3000000000000000, totalWeight: 1000, addressBanList: [], senderIdBanList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1191,
@@ -292,13 +292,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: '当前行动轮投票数',
       chatInfo: {
         scopeSource: 'TokenActionGovManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govBan: { stateVersion: 0, banThresholdRatio: 3000000000000000, totalWeight: 1000, addressBanList: [], senderIdBanList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 2190,
@@ -323,13 +323,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: '当前行动轮投票数',
       chatInfo: {
         scopeSource: 'TokenActionMainManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govBan: { stateVersion: 0, banThresholdRatio: 3000000000000000, totalWeight: 1000, addressBanList: [], senderIdBanList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 2191,
@@ -354,13 +354,13 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       voteWeightLabel: '当前行动轮投票数',
       chatInfo: {
         scopeSource: 'TokenActionGovManager',
-        denySource: 'GovVotedDenySource',
+        banSource: 'GovVotedBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
       },
       blacklistMode: 'gov',
-      govDeny: { stateVersion: 0, denyThresholdRatio: 3000000000000000, totalWeight: 1000, addressDenyList: [], senderIdDenyList: [], addressTargets: [], senderIdTargets: [] },
+      govBan: { stateVersion: 0, banThresholdRatio: 3000000000000000, totalWeight: 1000, addressBanList: [], senderIdBanList: [], addressTargets: [], senderIdTargets: [] },
     },
     {
       groupId: 1301,
@@ -374,7 +374,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       role: 'owner',
       manager: 'GroupChat owner / delegate',
       activationCall: 'activateChat(...)',
-      params: { groupId: '1301', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      params: { groupId: '1301', scopeSource: 'GroupJoinScopeSource', banSource: 'AdminBanSource' },
       activated: true,
       postingAllowed: true,
       defaultGroupOwnerMatches: false,
@@ -384,7 +384,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
-        denySource: 'AdminDenySource',
+        banSource: 'AdminBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '1309',
@@ -398,14 +398,14 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 2,
         memberIds: ['1308', '1309'],
       },
-      adminDeny: {
+      adminBan: {
         stateVersion: 12,
-        addressDenyList: ['0x66...d0'],
-        senderIdDenyList: ['9017'],
-        addressDenyOperatorStates: {
+        addressBanList: ['0x66...d0'],
+        senderIdBanList: ['9017'],
+        addressBanOperatorStates: {
           '0x66...d0': { operatorAddress: '0x21...ce', operatorId: '1308' },
         },
-        senderIdDenyOperatorStates: {
+        senderIdBanOperatorStates: {
           9017: { operatorAddress: '0x31...10', operatorId: '1310' },
         },
       },
@@ -422,7 +422,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       role: 'admin',
       manager: 'GroupChat owner / delegate',
       activationCall: 'activateChat(...)',
-      params: { groupId: '1302', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      params: { groupId: '1302', scopeSource: 'GroupJoinScopeSource', banSource: 'AdminBanSource' },
       activated: true,
       postingAllowed: true,
       immutableAfterActivate: false,
@@ -431,7 +431,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
-        denySource: 'AdminDenySource',
+        banSource: 'AdminBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
@@ -445,12 +445,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 1,
         memberIds: ['9007', '9050'],
       },
-      adminDeny: {
+      adminBan: {
         stateVersion: 4,
-        addressDenyList: [],
-        senderIdDenyList: ['9050'],
-        addressDenyOperatorStates: {},
-        senderIdDenyOperatorStates: {
+        addressBanList: [],
+        senderIdBanList: ['9050'],
+        addressBanOperatorStates: {},
+        senderIdBanOperatorStates: {
           9050: { operatorAddress: '0x8b...91', operatorId: '9007' },
         },
       },
@@ -467,7 +467,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       role: 'owner',
       manager: 'GroupChat owner / delegate',
       activationCall: 'activateChat(...)',
-      params: { groupId: '1303', scopeSource: 'GroupJoinScopeSource', denySource: 'AdminDenySource' },
+      params: { groupId: '1303', scopeSource: 'GroupJoinScopeSource', banSource: 'AdminBanSource' },
       activated: false,
       postingAllowed: false,
       immutableAfterActivate: false,
@@ -476,7 +476,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       chatInfo: {
         scopeSource: 'GroupJoinScopeSource',
-        denySource: 'AdminDenySource',
+        banSource: 'AdminBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '0',
@@ -490,12 +490,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 0,
         memberIds: [],
       },
-      adminDeny: {
+      adminBan: {
         stateVersion: 0,
-        addressDenyList: [],
-        senderIdDenyList: [],
-        addressDenyOperatorStates: {},
-        senderIdDenyOperatorStates: {},
+        addressBanList: [],
+        senderIdBanList: [],
+        addressBanOperatorStates: {},
+        senderIdBanOperatorStates: {},
       },
     },
     {
@@ -510,7 +510,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       role: 'delegate',
       manager: 'GroupChat owner / delegate',
       activationCall: 'activateChat(...)',
-      params: { groupId: '1304', scopeSource: 'GroupMemberScope', denySource: 'AdminDenySource' },
+      params: { groupId: '1304', scopeSource: 'GroupMemberScope', banSource: 'AdminBanSource' },
       activated: true,
       postingAllowed: true,
       immutableAfterActivate: false,
@@ -519,7 +519,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       scopeAllowed: true,
       chatInfo: {
         scopeSource: 'GroupMemberScope',
-        denySource: 'AdminDenySource',
+        banSource: 'AdminBanSource',
         beforePostPlugin: 'address(0)',
         afterPostPlugin: 'address(0)',
         delegateId: '9007',
@@ -533,12 +533,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
         stateVersion: 3,
         memberIds: ['9007', '1309'],
       },
-      adminDeny: {
+      adminBan: {
         stateVersion: 5,
-        addressDenyList: [],
-        senderIdDenyList: [],
-        addressDenyOperatorStates: {},
-        senderIdDenyOperatorStates: {},
+        addressBanList: [],
+        senderIdBanList: [],
+        addressBanOperatorStates: {},
+        senderIdBanOperatorStates: {},
       },
     },
   ],
@@ -550,7 +550,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
     { groupId: '1025', senderId: 9101, senderAddress: '0x77...10', round: 42, messageId: 1, content: '治理群只同步治理者可执行的讨论，避免和主群的社区入口混在一起。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1188', senderId: 9001, senderAddress: '0x3a...02', round: 42, messageId: 32, content: '@北极熊 行动 #77 需要你确认投票窗口。', mentionedSenderIds: [9007], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1189', senderId: 9001, senderAddress: '0x3a...02', round: 42, messageId: 1, content: '行动治理群只保留最近轮次行动投票者的治理讨论。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
-    { groupId: '1301', senderId: 1308, senderAddress: '0x21...ce', round: 42, messageId: 12, content: 'AdminDenySource 已按 groupId 隔离，黑名单只影响后续发言。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
+    { groupId: '1301', senderId: 1308, senderAddress: '0x21...ce', round: 42, messageId: 12, content: 'AdminBanSource 已按 groupId 隔离，黑名单只影响后续发言。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1302', senderId: 1308, senderAddress: '0x21...ce', round: 42, messageId: 4, content: '当前默认 NFT 是管理员时，点击头像可拉黑这个 sender。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
   ],
 },

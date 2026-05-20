@@ -38,7 +38,7 @@ constructor(address groupMember)
 
 ```text
 GroupChat.scopeSource = GroupMemberScope
-GroupChat.denySource = AdminDenySource
+GroupChat.banSource = AdminBanSource
 ```
 
 适合纯手工成员制群聊。若希望链群行动参与者也能发言，挂载 `GroupJoinScopeSource`。

@@ -12,10 +12,11 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 - [ABI / 事件 / 错误](./docs/spec/abi-events-errors.md)
 - [群聊类型](./docs/chat-types.md)
 - [GroupAdmin](./docs/group-admin.md)
+- [GroupBanList](./docs/group-ban-list.md)
 - [GroupMember](./docs/group-member.md)
 - [Manager 总览](./docs/managers/README.md)
 - [ScopeSource 总览](./docs/sources/scope/README.md)
-- [DenySource 总览](./docs/sources/deny/README.md)
+- [BanSource 总览](./docs/sources/ban/README.md)
 - [实现说明](./docs/implementation-notes.md)
 - [部署说明](./docs/deployment.md)
 - [测试矩阵](./docs/tests.md)
@@ -33,10 +34,10 @@ LOVE20 `GroupNFT` 群聊协议仓库。
   - `interfaces/`：本仓库协议接口与扩展点
   - `interfaces/external/`：上游合约或通用标准的最小适配接口
   - `interfaces/plugins/`：发帖前后插件接口
-  - `interfaces/sources/`：ScopeSource / DenySource 接口
+  - `interfaces/sources/`：ScopeSource / BanSource 接口
   - `GroupChat.sol`
   - `managers/`
-  - `sources/`：ScopeSource / DenySource 实现
+  - `sources/`：ScopeSource / BanSource 实现
 - `test/`
   - 详见 [测试矩阵](./docs/tests.md)
 - `script/`
@@ -95,7 +96,7 @@ python3 -m http.server 8012
 可选环境变量：
 
 - `GROUP_ADDRESS`
-- `GROUP_CHAT_DENY_THRESHOLD_RATIO`：默认 `3000000000000000`（`0.3%`）
+- `GROUP_CHAT_BAN_THRESHOLD_RATIO`：默认 `3000000000000000`（`0.3%`）
 - `GROUP_CHAT_MAX_ADMIN_IDS`
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
@@ -113,9 +114,9 @@ shell 一键部署：
 - 上游 `GroupDefaults` 地址使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.defaults.params`
 - 上游 `LOVE20Group` 地址可使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.params` 做校验
 - 当前仓库自身参数从 `script/network/<network>/group.chat.params` 读取
-- `DeployGroupChat` 固定同时部署 `GroupAdmin`、`AdminDenySource` 与 `GovVotedDenySource`
+- `DeployGroupChat` 固定同时部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource` 与 `GovVotedBanSource`
 - `DeployGroupChat` 固定同时部署 `GroupMember`、`GroupMemberScope` 与 `GroupJoinScopeSource`
-- 四个 typed Manager 固定挂本次部署的 `GovVotedDenySource`
+- 四个 typed Manager 固定挂本次部署的 `GovVotedBanSource`
 - 部署会同时产出 `GroupChat` 与四个 typed Manager
 
 ```bash

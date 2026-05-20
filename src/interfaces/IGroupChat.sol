@@ -29,9 +29,9 @@ interface IGroupChatErrors {
     error DefaultGroupIdNotSet();
     error GroupDefaultsHasNoCode();
     error ScopeRejected();
-    error DenyRejected();
+    error BanRejected();
     error ScopeSourceFailed();
-    error DenySourceFailed();
+    error BanSourceFailed();
 }
 
 interface IGroupChatEvents {
@@ -66,7 +66,7 @@ interface IGroupChatEvents {
         address prevSourceAddress
     );
 
-    event DenySourceSet(
+    event BanSourceSet(
         uint256 indexed groupId,
         address indexed sourceAddress,
         address indexed operator,
@@ -120,7 +120,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         uint256 configVersion;
         uint256 delegateId;
         address scopeSource;
-        address denySource;
+        address banSource;
         address beforePostPlugin;
         address afterPostPlugin;
         address firstActivatedOwner;
@@ -170,7 +170,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         string[] calldata metaKeys,
         bytes[] calldata metaValues,
         address scopeSource_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         uint256 delegateId_
@@ -186,7 +186,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function setScopeSource(uint256 groupId, address sourceAddress) external;
 
-    function setDenySource(uint256 groupId, address sourceAddress) external;
+    function setBanSource(uint256 groupId, address sourceAddress) external;
 
     function setBeforePostPlugin(uint256 groupId, address pluginAddress) external;
 
@@ -226,7 +226,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function scopeSource(uint256 groupId) external view returns (address);
 
-    function denySource(uint256 groupId) external view returns (address);
+    function banSource(uint256 groupId) external view returns (address);
 
     function beforePostPlugin(uint256 groupId) external view returns (address);
 

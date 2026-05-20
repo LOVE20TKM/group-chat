@@ -8,13 +8,13 @@
 - `test/GroupChatMeta.t.sol`：meta、批量写、`configVersion`
 - `test/GroupChatDelegate.t.sol`：delegate、NFT 转让失效 / 恢复
 - `test/GroupChatMessages.t.sol`：发言、mentionedSenderIds、mention 通知事件、quote、round、分页、sender 索引
-- `test/GroupChatPlugins.t.sol`：scope、deny、before / after plugin、重入
+- `test/GroupChatPlugins.t.sol`：scope、ban、before / after plugin、重入
 - `test/GroupChatDefaultSender.t.sol`：默认发言身份
 - `test/Manager.t.sol`：Manager 共同约束
 - `test/TypedManagers.t.sol`：四个 typed Manager
 - `test/GroupAdmin.t.sol`：共享管理员 NFT 配置
-- `test/AdminDenySource.t.sol`：中心化 deny source
-- `test/GovVotedDenySource.t.sol`：治理投票 deny source
+- `test/AdminBanSource.t.sol`：手工黑名单公共合约与中心化 ban source 适配器
+- `test/GovVotedBanSource.t.sol`：治理投票 ban source
 - `test/GroupMemberScope.t.sol`：成员 NFT 公共合约与 scope source 适配器
 - `test/GroupJoinScopeSource.t.sol`：链群成员 scope source
 - `test/DeployGroupChat.t.sol`：部署产物与地址文件
@@ -59,7 +59,7 @@ Delegate：
 规则槽：
 
 - `scopeSource=false` 拒绝发言。
-- `denySource=true` 拒绝发言。
+- `banSource=true` 拒绝发言。
 - source 失败返回对应 `canPost` reason。
 - 非零无代码地址必须 revert。
 - `beforePost` revert 回滚整笔消息。
@@ -79,12 +79,13 @@ Source：
 - `GroupAdmin` 统一 owner / delegate 配管理员 NFT。
 - `GroupMember` 维护成员 NFT 名单，`GroupMemberScope` 使用该名单控制发言资格。
 - `GroupJoinScopeSource` 组合 `GroupMember` 与 `GroupJoin` g 索引。
-- `AdminDenySource` 可与 `GroupJoinScopeSource` 组合使用。
-- `GovVotedDenySource` 按治理投票权重和黑名单生效阈值判定。
+- `GroupBanList` 维护手工黑名单，`AdminBanSource` 使用该名单控制发言资格。
+- `AdminBanSource` 可与 `GroupJoinScopeSource` 组合使用。
+- `GovVotedBanSource` 按治理投票权重和黑名单生效阈值判定。
 
 部署：
 
-- 固定部署 `GroupAdmin`、`AdminDenySource`、`GovVotedDenySource`、`GroupMember`、`GroupMemberScope`、`GroupJoinScopeSource`。
+- 固定部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource`、`GovVotedBanSource`、`GroupMember`、`GroupMemberScope`、`GroupJoinScopeSource`。
 - 地址文件只包含当前仓库部署产物字段；上游依赖地址不写入 `address.group.chat.params`。
 
 ## 当前验证命令

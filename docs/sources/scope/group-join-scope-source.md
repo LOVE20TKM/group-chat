@@ -23,7 +23,7 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 ## 2. 边界
 
 - 不自己维护成员名单，只读取已部署的 `GroupMember`。
-- 不处理黑名单；黑名单应挂 `AdminDenySource`。
+- 不处理黑名单；黑名单应挂 `AdminBanSource`。
 - 不区分具体 token / action；链群行动资格只判断当前是否属于该链群。
 
 ## 3. 配置
@@ -38,7 +38,7 @@ constructor(address groupMember, address groupJoin)
 
 ```text
 GroupChat.scopeSource = GroupJoinScopeSource
-GroupChat.denySource = AdminDenySource
+GroupChat.banSource = AdminBanSource
 ```
 
 链群服务者也可以改挂 `GroupMemberScope`，得到纯手工成员制发言资格。

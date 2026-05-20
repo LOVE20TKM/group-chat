@@ -71,7 +71,7 @@ for (const needle of requiredCss) {
 const requiredJs = [
   'canPostStatus',
   'ScopeRejected',
-  'DenyRejected',
+  'BanRejected',
   'SenderNotGroupOwner',
   'MessagePost',
   'quotedMessageIndex',
@@ -128,7 +128,7 @@ const requiredProtocolCopy = [
   'ruleSlots',
   'senderGroupId',
   'scopeSource',
-  'denySource',
+  'banSource',
   'quotedMessageIndex',
   'mentionedSenderIds',
   'mentionAll',
@@ -155,7 +155,7 @@ In `app.js`, define mock chats, messages, protocol statuses, and functions:
 const statusModes = {
   ok: { allowed: true, reasonCode: '0x00000000', label: '可发言' },
   ScopeRejected: { allowed: false, reasonCode: 'ScopeRejected', label: '无发言资格' },
-  DenyRejected: { allowed: false, reasonCode: 'DenyRejected', label: '已被禁言' },
+  BanRejected: { allowed: false, reasonCode: 'BanRejected', label: '已被禁言' },
   SenderNotGroupOwner: { allowed: false, reasonCode: 'SenderNotGroupOwner', label: '不是身份 owner' },
 };
 ```
@@ -224,7 +224,7 @@ Implement:
 - Typing `@姓名` maps to `mentionedSenderIds`.
 - Typing `@全部` maps to `mentionAll`.
 - Send appends a new mock message and shows `MessagePost` sync hint.
-- Status mode buttons simulate `OK`, `ScopeRejected`, `DenyRejected`, `SenderNotGroupOwner`.
+- Status mode buttons simulate `OK`, `ScopeRejected`, `BanRejected`, `SenderNotGroupOwner`.
 - Index mode buttons simulate `messages`, `messagesByRound`, `messagesBySender`, `messagesByMention`, `messagesByMentionAll`.
 
 - [ ] **Step 4: Run test and verify it passes**

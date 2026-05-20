@@ -1,43 +1,43 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {IPostDenySource} from "../IPostDenySource.sol";
+import {IPostBanSource} from "../IPostBanSource.sol";
 
-interface IGovVotedDenySource is IPostDenySource {
-    error GovVotedDenySourceAddressHasNoCode();
-    error DenyVoteWeightSourceUnavailable();
+interface IGovVotedBanSource is IPostBanSource {
+    error GovVotedBanSourceAddressHasNoCode();
+    error BanVoteWeightSourceUnavailable();
     error TargetAddressZero();
     error TargetSenderIdZero();
     error VoteWeightZero();
     error VoteUnchanged();
     error VoteNotFound();
-    error DenyThresholdTooHigh();
+    error BanThresholdTooHigh();
 
-    event AddressDenyVoteSet(
+    event AddressBanVoteSet(
         uint256 indexed groupId,
         address indexed targetAddress,
         address indexed voter,
-        bool supportDeny,
+        bool supportBan,
         uint256 settledWeight,
         uint256 supportWeight,
         uint256 opposeWeight,
         uint256 stateVersion
     );
 
-    event SenderIdDenyVoteSet(
+    event SenderIdBanVoteSet(
         uint256 indexed groupId,
         uint256 indexed targetSenderId,
         address indexed voter,
-        bool supportDeny,
+        bool supportBan,
         uint256 settledWeight,
         uint256 supportWeight,
         uint256 opposeWeight,
         uint256 stateVersion
     );
 
-    event AddressDenySet(uint256 indexed groupId, address indexed targetAddress, bool listed, uint256 stateVersion);
+    event AddressBanSet(uint256 indexed groupId, address indexed targetAddress, bool listed, uint256 stateVersion);
 
-    event SenderIdDenySet(uint256 indexed groupId, uint256 indexed targetSenderId, bool listed, uint256 stateVersion);
+    event SenderIdBanSet(uint256 indexed groupId, uint256 indexed targetSenderId, bool listed, uint256 stateVersion);
 
     event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
@@ -45,21 +45,21 @@ interface IGovVotedDenySource is IPostDenySource {
 
     function PRECISION() external view returns (uint256);
 
-    function DENY_THRESHOLD_RATIO() external view returns (uint256);
+    function BAN_THRESHOLD_RATIO() external view returns (uint256);
 
-    function voteBySenderAddress(uint256 groupId, address senderAddress, bool supportDeny) external;
+    function voteBySenderAddress(uint256 groupId, address senderAddress, bool supportBan) external;
 
     function clearVoteBySenderAddress(uint256 groupId, address senderAddress) external;
 
     function refreshVoteBySenderAddress(uint256 groupId, address senderAddress, address voter) external;
 
-    function voteBySenderId(uint256 groupId, uint256 senderId, bool supportDeny) external;
+    function voteBySenderId(uint256 groupId, uint256 senderId, bool supportBan) external;
 
     function clearVoteBySenderId(uint256 groupId, uint256 senderId) external;
 
     function refreshVoteBySenderId(uint256 groupId, uint256 senderId, address voter) external;
 
-    function voteBySender(uint256 groupId, uint256 senderId, address senderAddress, bool supportDeny) external;
+    function voteBySender(uint256 groupId, uint256 senderId, address senderAddress, bool supportBan) external;
 
     function clearVoteBySender(uint256 groupId, uint256 senderId, address senderAddress) external;
 
@@ -73,19 +73,19 @@ interface IGovVotedDenySource is IPostDenySource {
     function voteStatusBySenderAddress(uint256 groupId, address senderAddress)
         external
         view
-        returns (bool denied, uint256 supportWeight, uint256 opposeWeight);
+        returns (bool banned, uint256 supportWeight, uint256 opposeWeight);
 
     function voteStatusBySenderAddresses(uint256 groupId, address[] calldata senderAddresses)
         external
         view
-        returns (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights);
+        returns (bool[] memory banned, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-    function isAddressDenied(uint256 groupId, address senderAddress) external view returns (bool);
+    function isAddressBanned(uint256 groupId, address senderAddress) external view returns (bool);
 
-    function isAddressDeniedBatch(uint256 groupId, address[] calldata senderAddresses)
+    function isAddressBannedBatch(uint256 groupId, address[] calldata senderAddresses)
         external
         view
-        returns (bool[] memory denied);
+        returns (bool[] memory banned);
 
     function votedSenderAddressesCount(uint256 groupId) external view returns (uint256);
 
@@ -114,19 +114,19 @@ interface IGovVotedDenySource is IPostDenySource {
     function voteStatusBySenderId(uint256 groupId, uint256 senderId)
         external
         view
-        returns (bool denied, uint256 supportWeight, uint256 opposeWeight);
+        returns (bool banned, uint256 supportWeight, uint256 opposeWeight);
 
     function voteStatusBySenderIds(uint256 groupId, uint256[] calldata senderIds)
         external
         view
-        returns (bool[] memory denied, uint256[] memory supportWeights, uint256[] memory opposeWeights);
+        returns (bool[] memory banned, uint256[] memory supportWeights, uint256[] memory opposeWeights);
 
-    function isSenderIdDenied(uint256 groupId, uint256 senderId) external view returns (bool);
+    function isSenderIdBanned(uint256 groupId, uint256 senderId) external view returns (bool);
 
-    function isSenderIdDeniedBatch(uint256 groupId, uint256[] calldata senderIds)
+    function isSenderIdBannedBatch(uint256 groupId, uint256[] calldata senderIds)
         external
         view
-        returns (bool[] memory denied);
+        returns (bool[] memory banned);
 
     function votedSenderIdsCount(uint256 groupId) external view returns (uint256);
 

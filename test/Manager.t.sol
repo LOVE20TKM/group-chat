@@ -8,7 +8,7 @@ import {IBaseManager} from "../src/interfaces/managers/IBaseManager.sol";
 import {MockERC20Payment} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {MockManager} from "./mocks/MockManagers.sol";
-import {MockBeforePostRejectPlugin, MockPostDenySource} from "./mocks/MockPlugins.sol";
+import {MockBeforePostRejectPlugin, MockPostBanSource} from "./mocks/MockPlugins.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract ManagerTest is GroupChatFixture {
@@ -20,10 +20,11 @@ contract ManagerTest is GroupChatFixture {
     }
 
     function testT100_managerActivatesChatWithImmutableConfigAndNoDelegate() public {
-        MockPostDenySource deny = new MockPostDenySource();
+        MockPostBanSource banSource = new MockPostBanSource();
         MockBeforePostRejectPlugin beforePlugin = new MockBeforePostRejectPlugin();
-        MockManager manager =
-            new MockManager(address(chat), address(deny), address(beforePlugin), address(0), address(managerCenter));
+        MockManager manager = new MockManager(
+            address(chat), address(banSource), address(beforePlugin), address(0), address(managerCenter)
+        );
 
         groupId = manager.activateMockManagedGroup();
         assertEq(chat.chatInfo(groupId).owner, address(manager));
@@ -34,7 +35,7 @@ contract ManagerTest is GroupChatFixture {
         IGroupChat.ChatInfo memory info = chat.chatInfo(groupId);
         assertEq(info.delegateId, 0);
         assertEq(info.scopeSource, address(manager));
-        assertEq(info.denySource, address(deny));
+        assertEq(info.banSource, address(banSource));
         assertEq(info.beforePostPlugin, address(beforePlugin));
         assertEq(info.afterPostPlugin, address(0));
 
@@ -62,7 +63,7 @@ contract ManagerTest is GroupChatFixture {
             address(manager), abi.encodeWithSignature("setScopeSource(uint256,address)", groupId, other)
         );
         _expectUnknownSelector(
-            address(manager), abi.encodeWithSignature("setDenySource(uint256,address)", groupId, other)
+            address(manager), abi.encodeWithSignature("setBanSource(uint256,address)", groupId, other)
         );
         _expectUnknownSelector(
             address(manager), abi.encodeWithSignature("setBeforePostPlugin(uint256,address)", groupId, other)

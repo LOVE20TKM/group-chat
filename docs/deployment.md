@@ -18,8 +18,9 @@ source ./one_click_deploy.sh <network>
 
 - `GroupChat`
 - `GroupAdmin`
-- `AdminDenySource`
-- `GovVotedDenySource`
+- `GroupBanList`
+- `AdminBanSource`
+- `GovVotedBanSource`
 - `GroupMember`
 - `GroupMemberScope`
 - `GroupJoinScopeSource`
@@ -41,20 +42,21 @@ source ./one_click_deploy.sh <network>
 ## 可选参数
 
 - `GROUP_ADDRESS`：仅用于部署后校验。
-- `GROUP_CHAT_DENY_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
+- `GROUP_CHAT_BAN_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
 - `GROUP_CHAT_MAX_ADMIN_IDS`：`GroupAdmin.setAdmins` 单组最多管理员 NFT 数，默认 `20`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
 `GroupChat.originBlocks` 与 `GroupChat.phaseBlocks` 部署时直接读取 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约，保证 `currentRound()` 对齐 Join 合约。
 
-`DeployGroupChat` 固定部署 `GroupAdmin`、`AdminDenySource` 与 `GovVotedDenySource`。
-`GovVotedDenySource` 构造参数固定写入黑名单生效阈值。
+`DeployGroupChat` 固定部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource` 与 `GovVotedBanSource`。
+`GovVotedBanSource` 构造参数固定写入黑名单生效阈值。
 `DeployGroupChat` 固定部署 `GroupMember`、`GroupMemberScope` 与 `GroupJoinScopeSource`。
-四个 typed Manager 的 `DENY_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedDenySource`。
+四个 typed Manager 的 `BAN_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedBanSource`。
 `GroupAdmin` 是 owner-admin 管理型模块共享的管理员名单。
+`GroupBanList` 是 owner-admin 管理型模块共享的手工黑名单。
 `GroupMember` 是链群服务者管理型模块共享的成员 NFT 名单。
-`AdminDenySource` 作为中心化 / 链群等 owner-admin 管理型 deny source 产物写入地址文件，不自动挂到 typed Manager。
+`AdminBanSource` 读取 `GroupBanList`，作为中心化 / 链群等 owner-admin 管理型 ban source 产物写入地址文件，不自动挂到 typed Manager。
 `GroupMemberScope` 与 `GroupJoinScopeSource` 作为链群服务者可选 scope source 产物写入地址文件，不自动挂到 typed Manager。
 
 ## 参数文件
@@ -76,8 +78,9 @@ source ./one_click_deploy.sh <network>
 结果字段只包含当前仓库本次部署产物；上游依赖地址继续从 `address.group.params`、`address.group.defaults.params` 与 `group.chat.params` 读取。
 
 - `groupAdminAddress`
-- `adminDenySourceAddress`
-- `govVotedDenySourceAddress`
+- `groupBanListAddress`
+- `adminBanSourceAddress`
+- `govVotedBanSourceAddress`
 - `groupMemberAddress`
 - `groupMemberScopeAddress`
 - `groupJoinScopeSourceAddress`
@@ -95,8 +98,9 @@ source ./one_click_deploy.sh <network>
 
 - `GroupChat`
 - `GroupAdmin`
-- `AdminDenySource`
-- `GovVotedDenySource`
+- `GroupBanList`
+- `AdminBanSource`
+- `GovVotedBanSource`
 - `GroupMember`
 - `GroupMemberScope`
 - `GroupJoinScopeSource`
@@ -106,7 +110,7 @@ source ./one_click_deploy.sh <network>
 
 ```text
 groupChatAddress
-govVotedDenySourceAddress
+govVotedBanSourceAddress
 GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
 GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
 EXTENSION_CENTER_ADDRESS
@@ -132,9 +136,10 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 - `GroupChat.currentRound()` 与 core Join 当前轮一致
 - `GroupAdmin` 固定依赖
 - `GroupAdmin.MAX_ADMIN_IDS`
-- `AdminDenySource` 固定依赖
-- `GovVotedDenySource` 固定依赖
-- `GovVotedDenySource` 禁言阈值
+- `GroupBanList` 固定依赖
+- `AdminBanSource.GROUP_BAN_LIST_ADDRESS`
+- `GovVotedBanSource` 固定依赖
+- `GovVotedBanSource` 禁言阈值
 - `GroupMember.GROUP_ADMIN_ADDRESS`
 - `GroupMember.GROUP_ADDRESS`
 - `GroupMemberScope.GROUP_MEMBER_ADDRESS`

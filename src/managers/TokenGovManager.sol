@@ -6,11 +6,11 @@ import {BaseTokenScopeManager} from "./BaseTokenScopeManager.sol";
 contract TokenGovManager is BaseTokenScopeManager {
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseTokenScopeManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
+    ) BaseTokenScopeManager(groupChat_, banSource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
 
     function activate(address token) external returns (uint256 groupId) {
         return _activateToken(token, "mgr_token_gov_");

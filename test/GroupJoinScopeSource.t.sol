@@ -2,10 +2,12 @@
 pragma solidity =0.8.17;
 
 import {GroupAdmin} from "../src/GroupAdmin.sol";
+
+import {GroupBanList} from "../src/GroupBanList.sol";
 import {GroupMember} from "../src/GroupMember.sol";
 import {IGroupChatErrors} from "../src/interfaces/IGroupChat.sol";
 import {IGroupJoinScopeSource} from "../src/interfaces/sources/scope/IGroupJoinScopeSource.sol";
-import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
+import {AdminBanSource} from "../src/sources/ban/AdminBanSource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
@@ -92,12 +94,13 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         assertTrue(_canPostAllowed(groupId, senderId, other));
     }
 
-    function testT132_groupJoinScopeCombinesWithAdminDenySource() public {
-        AdminDenySource deny = new AdminDenySource(address(groupAdmin));
+    function testT132_groupJoinScopeCombinesWithAdminBanSource() public {
+        GroupBanList banList = new GroupBanList(address(groupAdmin));
+        AdminBanSource banSource = new AdminBanSource(address(banList));
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(deny), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(banSource), address(0), address(0), 0);
 
         groupJoin.setTokenAddressCount(groupId, senderOwner, 1);
 
@@ -108,14 +111,14 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         groupDefaults.setDefaultGroupId(groupId);
 
         vm.prank(chatOwner);
-        deny.denyBySenderIds(groupId, _uints(senderId));
+        banList.banBySenderIds(groupId, _uints(senderId));
 
         (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
-        assertEq(reasonCode, IGroupChatErrors.DenyRejected.selector);
+        assertEq(reasonCode, IGroupChatErrors.BanRejected.selector);
 
         vm.prank(chatOwner);
-        deny.undenyBySenderIds(groupId, _uints(senderId));
+        banList.unbanBySenderIds(groupId, _uints(senderId));
 
         assertTrue(_canPostAllowed(groupId, senderId, senderOwner));
     }

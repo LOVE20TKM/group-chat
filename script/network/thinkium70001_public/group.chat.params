@@ -11,9 +11,9 @@ groupJoinAddress=0xd94e4Fc2108B78Aa57438BFe5E85192687f74322
 # Recent rounds scanned by action chat managers
 actionRecentRounds=3
 
-# GovVotedDenySource blacklist threshold ratio, precision 1e18.
+# GovVotedBanSource blacklist threshold ratio, precision 1e18.
 # 3000000000000000 = 0.3% blacklist effective threshold.
-denyThresholdRatio=3000000000000000
+banThresholdRatio=3000000000000000
 
 # Max GroupAdmin admin NFT count per group
 maxAdminIds=20

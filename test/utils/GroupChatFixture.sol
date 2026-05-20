@@ -29,7 +29,7 @@ abstract contract GroupChatFixture is TestBase {
         keccak256("DelegateIdSet(uint256,address,uint256,uint256,uint256)");
     bytes32 internal constant SCOPE_SOURCE_SET_SIG =
         keccak256("ScopeSourceSet(uint256,address,address,uint256,address)");
-    bytes32 internal constant DENY_SOURCE_SET_SIG = keccak256("DenySourceSet(uint256,address,address,uint256,address)");
+    bytes32 internal constant BAN_SOURCE_SET_SIG = keccak256("BanSourceSet(uint256,address,address,uint256,address)");
     bytes32 internal constant BEFORE_POST_PLUGIN_SET_SIG =
         keccak256("BeforePostPluginSet(uint256,address,address,uint256,address)");
     bytes32 internal constant AFTER_POST_PLUGIN_SET_SIG =

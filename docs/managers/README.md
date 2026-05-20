@@ -4,7 +4,7 @@ Manager 用于去中心化群聊。
 
 接口位于 `src/interfaces/managers/`。公共面分三层：
 
-- `IBaseManager`：所有 Manager 共同配置、`ExtensionCenter`、scope、deny、ERC721 接收面。
+- `IBaseManager`：所有 Manager 共同配置、`ExtensionCenter`、scope、ban、ERC721 接收面。
 - `IBaseTokenScopeManager`：token 类共同激活和查询面。
 - `IBaseTokenActionScopeManager`：action 类共同激活和查询面。
 
@@ -14,10 +14,10 @@ Manager 用于去中心化群聊。
 - 只允许 `Launch.isLOVE20Token(token) == true` 的 LOVE20 协议代币激活 typed chat。
 - Action 类 Manager 只允许已存在于 core `Submit.actionsCount(token)` 范围内的 `actionId` 激活 typed chat。
 - 通过 `activate(...)` 激活对应类型的 chat。
-- 激活时一次性写入 `scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin`。
+- 激活时一次性写入 `scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin`。
 - 激活时 `delegateId = 0`。
 - 作为该 chat 的 `scopeSource`。
-- 作为治理黑名单的 `IDenyVoteWeightSource`。
+- 作为治理黑名单的 `IBanVoteWeightSource`。
 - 为治理黑名单提供 `voteWeightOf(...)` 与 `totalVoteWeight(...)`。
 
 ## NFT 命名
@@ -63,14 +63,14 @@ Manager 用于去中心化群聊。
 ```solidity
 constructor(
     address groupChat_,
-    address denySource_,
+    address banSource_,
     address beforePostPlugin_,
     address afterPostPlugin_,
     address extensionCenter_
 )
 ```
 
-`denySource_`、`beforePostPlugin_`、`afterPostPlugin_` 可为 `address(0)`。非零时必须有代码。
+`banSource_`、`beforePostPlugin_`、`afterPostPlugin_` 可为 `address(0)`。非零时必须有代码。
 
 Action 类 Manager 构造函数额外接收 `uint256 recentRounds_`，当前部署配置为 `3`。
 

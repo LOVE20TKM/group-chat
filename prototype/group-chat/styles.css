@@ -1121,7 +1121,7 @@ button:disabled {
   flex-direction: row-reverse;
 }
 
-.message-row.denied {
+.message-row.banned {
   opacity: 0.82;
 }
 
@@ -1135,7 +1135,7 @@ button:disabled {
   font-size: 11px;
 }
 
-.message-deny-badge {
+.message-ban-badge {
   display: inline-block;
   margin-left: 6px;
   padding: 1px 5px;
@@ -1214,7 +1214,7 @@ button:disabled {
 }
 
 .composer,
-.composer-blocked {
+.composer-banned {
   padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
   background: #fff;
   border-top: 1px solid var(--greyscale-200);

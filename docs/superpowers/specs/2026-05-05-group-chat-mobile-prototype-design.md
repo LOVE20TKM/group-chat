@@ -9,7 +9,7 @@
 1. 用户进入某个 `GroupNFT` 对应的 chat。
 2. 前端显示微信式聊天界面。
 3. 前端使用当前地址的 `defaultGroupId` 作为发言 NFT。
-4. 前端展示 `canPost`、`scopeSource`、`denySource` 等链上状态。
+4. 前端展示 `canPost`、`scopeSource`、`banSource` 等链上状态。
 5. 用户读取消息、引用消息、提及身份、发送公开链上消息。
 6. 桌面端同一路由保持手机优先预览，不额外引入宽屏分栏。
 
@@ -39,7 +39,7 @@
 - 私聊。
 - 消息编辑、删除、撤回。
 - 协议外阅读权限。
-- 完整 GroupAdmin、GroupMemberScope、AdminDenySource 或 GovVotedDenySource 后台。
+- 完整 GroupAdmin、GroupMemberScope、AdminBanSource 或 GovVotedBanSource 后台。
 - 真实钱包交易接入。原型只模拟交互与状态。
 
 ## 协议映射
@@ -51,13 +51,13 @@
 | 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderId` |
 | 发送消息 | `post` / `postAsDefaultSender` |
 | 可发言判断 | `canPost(groupId, senderId, senderAddress)` |
-| 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`DenyRejected` 等产品错误名 / reasonCode |
+| 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`BanRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，只记录声明语义 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
-| 规则槽 | `chatInfo(groupId)`：`delegateId`、`scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin` |
+| 规则槽 | `chatInfo(groupId)`：`delegateId`、`scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin` |
 | 共享管理员 | `GroupAdmin.adminIds(groupId)`、`GroupAdmin.adminIdOf(groupId, account)` |
 | 手工成员发言资格 | `GroupMember.memberIds(groupId, offset, limit)`、`GroupMemberScope.canPost(groupId, senderId, senderAddress)` |
 | 链群发言资格 | `GroupJoinScopeSource.canPost(...) = GroupMember.isMemberId(...) || GroupJoin.gTokenAddressesByGroupIdByAccountCount(...) > 0` |
@@ -93,7 +93,7 @@
 
 5. `...` 群菜单与详情页
    - 详情页展示当前 `defaultGroupId` 与不可发言原因。
-   - 管理页展示 `scopeSource` / `denySource` / plugin、`GroupAdmin` 管理员 NFT 和 `GroupMember` 成员 NFT。
+   - 管理页展示 `scopeSource` / `banSource` / plugin、`GroupAdmin` 管理员 NFT 和 `GroupMember` 成员 NFT。
    - 黑名单页展示治理禁言或管理员禁言状态。
 
 ### 桌面端
@@ -108,7 +108,7 @@
 
 - 正常可发言。
 - `ScopeRejected`：无发言资格。
-- `DenyRejected`：被黑名单拒绝。
+- `BanRejected`：被黑名单拒绝。
 - `SenderAddressNotSenderIdOwner`：当前钱包不是 `defaultGroupId` owner。
 - 引用 `messageId > 0` 的消息后发送。
 - 输入框自动解析 mention 与 mentionAll。

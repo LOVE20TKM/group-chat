@@ -14,7 +14,7 @@ abstract contract BaseManager is IBaseManager {
     address public immutable GROUP_ADDRESS;
     uint256 internal immutable MAX_GROUP_NAME_LENGTH;
     address public immutable EXTENSION_CENTER_ADDRESS;
-    address public immutable DENY_SOURCE_ADDRESS;
+    address public immutable BAN_SOURCE_ADDRESS;
     address public immutable BEFORE_POST_PLUGIN_ADDRESS;
     address public immutable AFTER_POST_PLUGIN_ADDRESS;
 
@@ -28,13 +28,13 @@ abstract contract BaseManager is IBaseManager {
 
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
     ) {
         _requireCode(groupChat_);
-        _requireOptionalCode(denySource_);
+        _requireOptionalCode(banSource_);
         _requireOptionalCode(beforePostPlugin_);
         _requireOptionalCode(afterPostPlugin_);
         _requireCode(extensionCenter_);
@@ -46,7 +46,7 @@ abstract contract BaseManager is IBaseManager {
         GROUP_ADDRESS = love20Group;
         MAX_GROUP_NAME_LENGTH = ILOVE20Group(love20Group).MAX_GROUP_NAME_LENGTH();
         EXTENSION_CENTER_ADDRESS = extensionCenter_;
-        DENY_SOURCE_ADDRESS = denySource_;
+        BAN_SOURCE_ADDRESS = banSource_;
         BEFORE_POST_PLUGIN_ADDRESS = beforePostPlugin_;
         AFTER_POST_PLUGIN_ADDRESS = afterPostPlugin_;
     }
@@ -88,7 +88,7 @@ abstract contract BaseManager is IBaseManager {
             metaKeys,
             metaValues,
             address(this),
-            DENY_SOURCE_ADDRESS,
+            BAN_SOURCE_ADDRESS,
             BEFORE_POST_PLUGIN_ADDRESS,
             AFTER_POST_PLUGIN_ADDRESS,
             0

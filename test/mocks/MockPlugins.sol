@@ -10,7 +10,7 @@ interface IGroupChatPluginView {
         uint256 configVersion;
         uint256 delegateId;
         address scopeSource;
-        address denySource;
+        address banSource;
         address beforePostPlugin;
         address afterPostPlugin;
         address firstActivatedOwner;
@@ -110,23 +110,23 @@ contract MockPostScopeFailSource {
     }
 }
 
-contract MockPostDenySource {
-    bool public denied;
+contract MockPostBanSource {
+    bool public banned;
 
-    function setDenied(bool denied_) external {
-        denied = denied_;
+    function setBanned(bool banned_) external {
+        banned = banned_;
     }
 
-    function isDenied(uint256, uint256, address) external view returns (bool) {
-        return denied;
+    function isBanned(uint256, uint256, address) external view returns (bool) {
+        return banned;
     }
 }
 
-contract MockPostDenyFailSource {
-    error DenySourceBoom();
+contract MockPostBanFailSource {
+    error BanSourceBoom();
 
-    function isDenied(uint256, uint256, address) external pure returns (bool) {
-        revert DenySourceBoom();
+    function isBanned(uint256, uint256, address) external pure returns (bool) {
+        revert BanSourceBoom();
     }
 }
 

@@ -6,7 +6,7 @@ import {IGroupDefaults} from "./interfaces/external/IGroupDefaults.sol";
 import {ILOVE20Group} from "./interfaces/external/ILOVE20Group.sol";
 import {IAfterPostPlugin} from "./interfaces/plugins/IAfterPostPlugin.sol";
 import {IBeforePostPlugin} from "./interfaces/plugins/IBeforePostPlugin.sol";
-import {IPostDenySource} from "./interfaces/sources/IPostDenySource.sol";
+import {IPostBanSource} from "./interfaces/sources/IPostBanSource.sol";
 import {IPostScopeSource} from "./interfaces/sources/IPostScopeSource.sol";
 
 contract GroupChat is IGroupChat {
@@ -30,7 +30,7 @@ contract GroupChat is IGroupChat {
         uint256 delegateId;
         address delegateOwnerSnapshot;
         address scopeSource;
-        address denySource;
+        address banSource;
         address beforePostPlugin;
         address afterPostPlugin;
     }
@@ -97,7 +97,7 @@ contract GroupChat is IGroupChat {
         string[] calldata metaKeys_,
         bytes[] calldata metaValues_,
         address scopeSource_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         uint256 delegateId_
@@ -115,7 +115,7 @@ contract GroupChat is IGroupChat {
         _validateMetaInput(metaKeys_, metaValues_);
         _validateInitialMetaCapacity(metaValues_);
         _validateSourceAddress(scopeSource_);
-        _validateSourceAddress(denySource_);
+        _validateSourceAddress(banSource_);
         _validatePluginAddress(beforePostPlugin_);
         _validatePluginAddress(afterPostPlugin_);
         _validateDelegateId(groupId, delegateId_);
@@ -128,7 +128,7 @@ contract GroupChat is IGroupChat {
         config.activated = true;
         config.postingAllowed = true;
         config.scopeSource = scopeSource_;
-        config.denySource = denySource_;
+        config.banSource = banSource_;
         config.beforePostPlugin = beforePostPlugin_;
         config.afterPostPlugin = afterPostPlugin_;
 
@@ -143,8 +143,8 @@ contract GroupChat is IGroupChat {
         if (scopeSource_ != address(0)) {
             emit ScopeSourceSet(groupId, scopeSource_, msg.sender, newVersion, address(0));
         }
-        if (denySource_ != address(0)) {
-            emit DenySourceSet(groupId, denySource_, msg.sender, newVersion, address(0));
+        if (banSource_ != address(0)) {
+            emit BanSourceSet(groupId, banSource_, msg.sender, newVersion, address(0));
         }
         if (beforePostPlugin_ != address(0)) {
             emit BeforePostPluginSet(groupId, beforePostPlugin_, msg.sender, newVersion, address(0));
@@ -247,7 +247,7 @@ contract GroupChat is IGroupChat {
         _setSource(groupId, sourceAddress, true);
     }
 
-    function setDenySource(uint256 groupId, address sourceAddress) external nonReentrant {
+    function setBanSource(uint256 groupId, address sourceAddress) external nonReentrant {
         _setSource(groupId, sourceAddress, false);
     }
 
@@ -371,7 +371,7 @@ contract GroupChat is IGroupChat {
             configVersion: config.configVersion,
             delegateId: _delegateIdOf(config, owner),
             scopeSource: config.scopeSource,
-            denySource: config.denySource,
+            banSource: config.banSource,
             beforePostPlugin: config.beforePostPlugin,
             afterPostPlugin: config.afterPostPlugin,
             firstActivatedOwner: config.firstActivatedOwner,
@@ -424,9 +424,9 @@ contract GroupChat is IGroupChat {
         return _chatConfigs[groupId].scopeSource;
     }
 
-    function denySource(uint256 groupId) external view returns (address) {
+    function banSource(uint256 groupId) external view returns (address) {
         _requireExistingGroup(groupId);
-        return _chatConfigs[groupId].denySource;
+        return _chatConfigs[groupId].banSource;
     }
 
     function beforePostPlugin(uint256 groupId) external view returns (address) {
@@ -655,7 +655,7 @@ contract GroupChat is IGroupChat {
         _validateSourceAddress(sourceAddress);
 
         ChatConfig storage config = _chatConfigs[groupId];
-        address prevSourceAddress = isScope ? config.scopeSource : config.denySource;
+        address prevSourceAddress = isScope ? config.scopeSource : config.banSource;
         if (prevSourceAddress == sourceAddress) {
             return;
         }
@@ -663,14 +663,14 @@ contract GroupChat is IGroupChat {
         if (isScope) {
             config.scopeSource = sourceAddress;
         } else {
-            config.denySource = sourceAddress;
+            config.banSource = sourceAddress;
         }
 
         uint256 newVersion = _nextConfigVersion(config);
         if (isScope) {
             emit ScopeSourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
         } else {
-            emit DenySourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+            emit BanSourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
         }
     }
 
@@ -892,13 +892,13 @@ contract GroupChat is IGroupChat {
         internal
         view
     {
-        bytes4 reasonCode = _postSourceBlocker(config, groupId, senderId, senderAddress);
+        bytes4 reasonCode = _postSourceRejection(config, groupId, senderId, senderAddress);
         if (reasonCode != bytes4(0)) {
             _revertPostSourceReason(reasonCode);
         }
     }
 
-    function _postSourceBlocker(ChatConfig storage config, uint256 groupId, uint256 senderId, address senderAddress)
+    function _postSourceRejection(ChatConfig storage config, uint256 groupId, uint256 senderId, address senderAddress)
         internal
         view
         returns (bytes4 reasonCode)
@@ -914,13 +914,13 @@ contract GroupChat is IGroupChat {
                 return ScopeSourceFailed.selector;
             }
         }
-        if (config.denySource != address(0)) {
-            try IPostDenySource(config.denySource).isDenied(groupId, senderId, senderAddress) returns (bool denied) {
-                if (denied) {
-                    return DenyRejected.selector;
+        if (config.banSource != address(0)) {
+            try IPostBanSource(config.banSource).isBanned(groupId, senderId, senderAddress) returns (bool banned) {
+                if (banned) {
+                    return BanRejected.selector;
                 }
             } catch {
-                return DenySourceFailed.selector;
+                return BanSourceFailed.selector;
             }
         }
         return bytes4(0);
@@ -933,11 +933,11 @@ contract GroupChat is IGroupChat {
         if (reasonCode == ScopeSourceFailed.selector) {
             revert ScopeSourceFailed();
         }
-        if (reasonCode == DenyRejected.selector) {
-            revert DenyRejected();
+        if (reasonCode == BanRejected.selector) {
+            revert BanRejected();
         }
-        if (reasonCode == DenySourceFailed.selector) {
-            revert DenySourceFailed();
+        if (reasonCode == BanSourceFailed.selector) {
+            revert BanSourceFailed();
         }
         revert();
     }
@@ -968,7 +968,7 @@ contract GroupChat is IGroupChat {
             return (false, SenderAddressNotSenderIdOwner.selector);
         }
 
-        bytes4 sourceReasonCode = _postSourceBlocker(config, groupId, senderId, senderAddress);
+        bytes4 sourceReasonCode = _postSourceRejection(config, groupId, senderId, senderAddress);
         if (sourceReasonCode != bytes4(0)) {
             return (false, sourceReasonCode);
         }

@@ -2,6 +2,8 @@
 pragma solidity =0.8.17;
 
 import {GroupAdmin} from "../src/GroupAdmin.sol";
+
+import {GroupBanList} from "../src/GroupBanList.sol";
 import {GroupChat} from "../src/GroupChat.sol";
 import {GroupMember} from "../src/GroupMember.sol";
 import {IExtensionCenter} from "../src/interfaces/external/IExtensionCenter.sol";
@@ -10,8 +12,8 @@ import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
 import {TokenActionMainManager} from "../src/managers/TokenActionMainManager.sol";
 import {TokenGovManager} from "../src/managers/TokenGovManager.sol";
 import {TokenMainManager} from "../src/managers/TokenMainManager.sol";
-import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
-import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
+import {AdminBanSource} from "../src/sources/ban/AdminBanSource.sol";
+import {GovVotedBanSource} from "../src/sources/ban/GovVotedBanSource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
 import {GroupMemberScope} from "../src/sources/scope/GroupMemberScope.sol";
 import {ScriptBase} from "./ScriptBase.sol";
@@ -29,14 +31,15 @@ contract DeployGroupChat is ScriptBase {
         uint256 phaseBlocks;
         uint256 actionRecentRounds;
         uint256 maxAdminIds;
-        uint256 denyThresholdRatio;
+        uint256 banThresholdRatio;
     }
 
     struct DeployedAddresses {
         address groupChat;
         address groupAdmin;
-        address adminDenySource;
-        address govVotedDenySource;
+        address groupBanList;
+        address adminBanSource;
+        address govVotedBanSource;
         address groupMember;
         address groupMemberScope;
         address groupJoinScopeSource;
@@ -56,7 +59,7 @@ contract DeployGroupChat is ScriptBase {
             vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
             vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS"),
             vm.envOr("GROUP_CHAT_MAX_ADMIN_IDS", DEFAULT_MAX_ADMIN_IDS),
-            vm.envOr("GROUP_CHAT_DENY_THRESHOLD_RATIO", uint256(3e15))
+            vm.envOr("GROUP_CHAT_BAN_THRESHOLD_RATIO", uint256(3e15))
         );
 
         vm.startBroadcast();
@@ -77,7 +80,7 @@ contract DeployGroupChat is ScriptBase {
         address afterPostPlugin,
         uint256 actionRecentRounds,
         uint256 maxAdminIds,
-        uint256 denyThresholdRatio
+        uint256 banThresholdRatio
     ) internal view returns (DeployConfig memory) {
         address coreJoin = IExtensionCenter(extensionCenter).joinAddress();
         return DeployConfig({
@@ -90,7 +93,7 @@ contract DeployGroupChat is ScriptBase {
             phaseBlocks: ILOVE20Join(coreJoin).phaseBlocks(),
             actionRecentRounds: actionRecentRounds,
             maxAdminIds: maxAdminIds,
-            denyThresholdRatio: denyThresholdRatio
+            banThresholdRatio: banThresholdRatio
         });
     }
 
@@ -98,16 +101,16 @@ contract DeployGroupChat is ScriptBase {
         GroupChat groupChat = new GroupChat(config.groupDefaults, config.originBlocks, config.phaseBlocks);
         deployed.groupChat = address(groupChat);
         deployed.groupAdmin = address(new GroupAdmin(address(groupChat), config.maxAdminIds));
-        deployed.adminDenySource = address(new AdminDenySource(deployed.groupAdmin));
-        deployed.govVotedDenySource =
-            address(new GovVotedDenySource(groupChat.GROUP_ADDRESS(), config.denyThresholdRatio));
+        deployed.groupBanList = address(new GroupBanList(deployed.groupAdmin));
+        deployed.adminBanSource = address(new AdminBanSource(deployed.groupBanList));
+        deployed.govVotedBanSource = address(new GovVotedBanSource(groupChat.GROUP_ADDRESS(), config.banThresholdRatio));
         deployed.groupMember = address(new GroupMember(deployed.groupAdmin));
         deployed.groupMemberScope = address(new GroupMemberScope(deployed.groupMember));
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(deployed.groupMember, config.groupJoin));
 
         TokenMainManager tokenMainManager = new TokenMainManager(
             address(groupChat),
-            deployed.govVotedDenySource,
+            deployed.govVotedBanSource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
@@ -115,7 +118,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.tokenMainManager = address(tokenMainManager);
         TokenGovManager tokenGovManager = new TokenGovManager(
             address(groupChat),
-            deployed.govVotedDenySource,
+            deployed.govVotedBanSource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter
@@ -123,7 +126,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.tokenGovManager = address(tokenGovManager);
         TokenActionGovManager tokenActionGovManager = new TokenActionGovManager(
             address(groupChat),
-            deployed.govVotedDenySource,
+            deployed.govVotedBanSource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter,
@@ -132,7 +135,7 @@ contract DeployGroupChat is ScriptBase {
         deployed.tokenActionGovManager = address(tokenActionGovManager);
         TokenActionMainManager tokenActionMainManager = new TokenActionMainManager(
             address(groupChat),
-            deployed.govVotedDenySource,
+            deployed.govVotedBanSource,
             config.beforePostPlugin,
             config.afterPostPlugin,
             config.extensionCenter,
@@ -155,8 +158,9 @@ contract DeployGroupChat is ScriptBase {
     {
         string memory content = string.concat(
             _addressLine("groupAdminAddress", deployed.groupAdmin),
-            _addressLine("adminDenySourceAddress", deployed.adminDenySource),
-            _addressLine("govVotedDenySourceAddress", deployed.govVotedDenySource),
+            _addressLine("groupBanListAddress", deployed.groupBanList),
+            _addressLine("adminBanSourceAddress", deployed.adminBanSource),
+            _addressLine("govVotedBanSourceAddress", deployed.govVotedBanSource),
             _addressLine("groupMemberAddress", deployed.groupMember),
             _addressLine("groupMemberScopeAddress", deployed.groupMemberScope),
             _addressLine("groupJoinScopeSourceAddress", deployed.groupJoinScopeSource)

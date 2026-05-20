@@ -12,7 +12,7 @@
 - 实际签名地址为 `senderAddress`
 - `senderAddress` 必须是 `senderGroupId` 当前 owner
 - 基础发言资格通过 `scopeSource` 承载
-- 黑名单与豁免名单通过 `denySource` 承载
+- 黑名单与豁免名单通过 `banSource` 承载
 - 其他发言前扩展规则通过 `beforePostPlugin` 承载
 
 ## 2. 主协议职责
@@ -24,7 +24,7 @@
 - 校验 `msg.sender == ownerOf(senderGroupId)`
 - 校验消息内容、提及、引用消息合法
 - 调用 `scopeSource` 判断基础发言资格
-- 调用 `denySource` 判断是否被禁言
+- 调用 `banSource` 判断是否被禁言
 - 调用 `beforePostPlugin` 执行额外发言前规则
 - 写入消息、索引与事件
 - 调用 `afterPostPlugin` 执行消息落链后的观察逻辑
@@ -71,7 +71,7 @@
 
 实现上，`scopeSource` 是群聊协议的一等配置槽位，由群聊 NFT 当前 owner 或有效代理配置。
 
-### 4.2 Deny
+### 4.2 Block
 
 黑名单判断。
 
@@ -79,7 +79,7 @@
 
 - 当前 `senderAddress` 或 `senderGroupId` 是否应被禁言
 
-实现上，`denySource` 是群聊协议的一等配置槽位。不同群聊可挂不同黑名单源。
+实现上，`banSource` 是群聊协议的一等配置槽位。不同群聊可挂不同黑名单源。
 
 ### 4.3 Exempt
 
@@ -93,7 +93,7 @@
 
 - `exemptList` 不提供基础发言资格
 - `exemptList` 不单独成为主协议槽位
-- `exemptList` 是 `denySource` 的内部规则
+- `exemptList` 是 `banSource` 的内部规则
 - 如果没有基础发言资格，即使命中 `exemptList` 也不能发言
 
 统一发送处理顺序：
@@ -123,7 +123,7 @@
 - 四种代币/行动去中心化群聊分别对应四个 Manager
 - Manager 激活函数统一命名为 `activate(...)`，入参按群聊类型定义，不走通用群类型参数
 - Manager 激活后，群聊不可关闭
-- Manager 激活后，不可重配 `scopeSource`、`denySource`、`beforePostPlugin`、`afterPostPlugin`
+- Manager 激活后，不可重配 `scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin`
 - Manager 激活后，token / action scope、最近 `X` 轮、发言资格参数不可再改
 - Manager 不得暴露通用 `call` / `delegatecall` / `execute` 后门，且不可升级
 - 中心化群聊不使用 Manager 约束，owner / delegate 可以替换有问题的 source / plugin
@@ -131,10 +131,10 @@
 
 治理黑名单原则：
 
-- 四种代币/行动去中心化群聊共用 `GovVotedDenySource`
-- 票权来自按 `groupId` 配置的 `IDenyVoteWeightSource`
+- 四种代币/行动去中心化群聊共用 `GovVotedBanSource`
+- 票权来自按 `groupId` 配置的 `IBanVoteWeightSource`
 - 默认票权源就是该群聊对应的 Manager
-- 阈值、投票期、反对票 / 撤票 / 复议等规则由 `GovVotedDenySource` 构造时确定，部署后不按群重配
+- 阈值、投票期、反对票 / 撤票 / 复议等规则由 `GovVotedBanSource` 构造时确定，部署后不按群重配
 
 ## 6. 五种去中心化群聊
 
@@ -148,7 +148,7 @@
 
 黑名单：
 
-- 使用治理投票型 `denySource`
+- 使用治理投票型 `banSource`
 - 投票权重来自 `TokenGroupChatManager`
 - 权重语义为地址持有的治理票
 - 支持地址维度与 `senderGroupId` 维度目标
@@ -165,7 +165,7 @@
 
 黑名单：
 
-- 使用治理投票型 `denySource`
+- 使用治理投票型 `banSource`
 - 投票权重来自 `TokenGovGroupChatManager`
 - 权重语义为地址持有的治理票
 - 支持地址维度与 `senderGroupId` 维度目标
@@ -182,7 +182,7 @@
 
 黑名单：
 
-- 使用治理投票型 `denySource`
+- 使用治理投票型 `banSource`
 - 投票权重来自 `TokenActionGovGroupChatManager`
 - 权重语义为地址当前行动轮的投票数
 - 支持地址维度与 `senderGroupId` 维度目标
@@ -200,7 +200,7 @@
 
 黑名单：
 
-- 使用治理投票型 `denySource`
+- 使用治理投票型 `banSource`
 - 投票权重来自 `TokenActionGroupChatManager`
 - 权重语义为地址当前行动轮的投票数
 - 支持地址维度与 `senderGroupId` 维度目标
@@ -245,10 +245,10 @@
 ```text
 Open:
   scopeSource = address(0)
-  denySource = AdminDenySource
+  banSource = AdminBanSource
 ```
 
-如后续需要成员制群聊，应新增独立 `scopeSource`，不要把成员资格放进 `exemptList` 或 `AdminDenySource`。
+如后续需要成员制群聊，应新增独立 `scopeSource`，不要把成员资格放进 `exemptList` 或 `AdminBanSource`。
 
 ## 8. 前端与扩展要求
 
@@ -263,7 +263,7 @@ Open:
 前端推荐规则：
 
 - 先读取 `GroupChat.ruleSlots(groupId)`
-- 使用 `chainId + 合约地址` 组成的可信地址表匹配 `scopeSource`、`denySource`、`beforePostPlugin`
+- 使用 `chainId + 合约地址` 组成的可信地址表匹配 `scopeSource`、`banSource`、`beforePostPlugin`
 - 命中可信地址时，使用对应专用 ABI 读取展示数据
 - 未命中可信地址时，只展示合约地址与通用状态
 - 发言按钮可用性优先读取 `GroupChat.canPost(groupId, senderGroupId, senderAddress)`
@@ -289,5 +289,5 @@ event StateVersionChanged(
 - 最近 `X` 轮由对应 Manager 的构造参数或专属激活参数确定，群聊激活后不可改
 - 中心化群管理员当前只管理黑名单，不管理基础发言资格
 - 链群群聊当前不定义开放模式，发言资格来自链群行动参与
-- `GovVotedDenySource` 构造参数：阈值、投票期、反对票 / 撤票 / 复议规则
+- `GovVotedBanSource` 构造参数：阈值、投票期、反对票 / 撤票 / 复议规则
 - `senderGroupId` 维度黑名单的投票权如何从地址票权映射

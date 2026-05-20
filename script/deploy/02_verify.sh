@@ -15,10 +15,11 @@ if [ -z "$RPC_URL" ]; then
 fi
 
 if [ -f "$network_dir/address.group.chat.params" ] && { \
-    [ -z "$groupChatAddress" ] || \
-    [ -z "$groupAdminAddress" ] || \
-    [ -z "$adminDenySourceAddress" ] || \
-    [ -z "$govVotedDenySourceAddress" ] || \
+	    [ -z "$groupChatAddress" ] || \
+	    [ -z "$groupAdminAddress" ] || \
+	    [ -z "$groupBanListAddress" ] || \
+	    [ -z "$adminBanSourceAddress" ] || \
+    [ -z "$govVotedBanSourceAddress" ] || \
     [ -z "$groupMemberAddress" ] || \
     [ -z "$groupMemberScopeAddress" ] || \
     [ -z "$groupJoinScopeSourceAddress" ] || \
@@ -40,6 +41,11 @@ if [ -z "$GROUP_ADMIN_ADDRESS" ] && [ -n "$groupAdminAddress" ]; then
     export GROUP_ADMIN_ADDRESS
 fi
 
+if [ -z "$GROUP_BAN_LIST_ADDRESS" ] && [ -n "$groupBanListAddress" ]; then
+    GROUP_BAN_LIST_ADDRESS=$groupBanListAddress
+    export GROUP_BAN_LIST_ADDRESS
+fi
+
 if [ -z "$GROUP_MEMBER_ADDRESS" ] && [ -n "$groupMemberAddress" ]; then
     GROUP_MEMBER_ADDRESS=$groupMemberAddress
     export GROUP_MEMBER_ADDRESS
@@ -55,9 +61,9 @@ if [ -z "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" ] && [ -n "$groupJoinScopeSourceAddre
     export GROUP_JOIN_SCOPE_SOURCE_ADDRESS
 fi
 
-if [ -z "$ADMIN_DENY_SOURCE_ADDRESS" ] && [ -n "$adminDenySourceAddress" ]; then
-    ADMIN_DENY_SOURCE_ADDRESS=$adminDenySourceAddress
-    export ADMIN_DENY_SOURCE_ADDRESS
+if [ -z "$ADMIN_BAN_SOURCE_ADDRESS" ] && [ -n "$adminBanSourceAddress" ]; then
+    ADMIN_BAN_SOURCE_ADDRESS=$adminBanSourceAddress
+    export ADMIN_BAN_SOURCE_ADDRESS
 fi
 
 if [ -z "$GROUP_ADDRESS" ]; then
@@ -121,27 +127,36 @@ verify_contract \
     $group_admin_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-admin_deny_source_constructor_args=$(cast abi-encode "constructor(address)" \
+group_ban_list_constructor_args=$(cast abi-encode "constructor(address)" \
     $groupAdminAddress)
 verify_contract \
-    $adminDenySourceAddress \
-    "AdminDenySource" \
-    "src/sources/deny/AdminDenySource.sol" \
-    $admin_deny_source_constructor_args
+    $groupBanListAddress \
+    "GroupBanList" \
+    "src/GroupBanList.sol" \
+    $group_ban_list_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
-if [ -z "$GROUP_CHAT_DENY_THRESHOLD_RATIO" ]; then
-    GROUP_CHAT_DENY_THRESHOLD_RATIO=3000000000000000
+admin_ban_source_constructor_args=$(cast abi-encode "constructor(address)" \
+    $groupBanListAddress)
+verify_contract \
+    $adminBanSourceAddress \
+    "AdminBanSource" \
+    "src/sources/ban/AdminBanSource.sol" \
+    $admin_ban_source_constructor_args
+[ $? -ne 0 ] && ((failed_verifications++))
+
+if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
+    GROUP_CHAT_BAN_THRESHOLD_RATIO=3000000000000000
 fi
 
-gov_deny_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
+gov_ban_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
     $GROUP_ADDRESS \
-    $GROUP_CHAT_DENY_THRESHOLD_RATIO)
+    $GROUP_CHAT_BAN_THRESHOLD_RATIO)
 verify_contract \
-    $govVotedDenySourceAddress \
-    "GovVotedDenySource" \
-    "src/sources/deny/GovVotedDenySource.sol" \
-    $gov_deny_source_constructor_args
+    $govVotedBanSourceAddress \
+    "GovVotedBanSource" \
+    "src/sources/ban/GovVotedBanSource.sol" \
+    $gov_ban_source_constructor_args
 [ $? -ne 0 ] && ((failed_verifications++))
 
 group_member_constructor_args=$(cast abi-encode "constructor(address)" $groupAdminAddress)
@@ -172,21 +187,21 @@ verify_contract \
 
 token_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
     $groupChatAddress \
-    $govVotedDenySourceAddress \
+    $govVotedBanSourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS)
 
 token_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
     $groupChatAddress \
-    $govVotedDenySourceAddress \
+    $govVotedBanSourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS)
 
 token_action_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
     $groupChatAddress \
-    $govVotedDenySourceAddress \
+    $govVotedBanSourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS \
@@ -194,7 +209,7 @@ token_action_gov_manager_constructor_args=$(cast abi-encode "constructor(address
 
 token_action_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
     $groupChatAddress \
-    $govVotedDenySourceAddress \
+    $govVotedBanSourceAddress \
     $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
     $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
     $EXTENSION_CENTER_ADDRESS \

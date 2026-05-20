@@ -12,7 +12,7 @@
 4. [群聊类型](./chat-types.md)
 5. [Manager 总览](./managers/README.md)
 6. [ScopeSource 总览](./sources/scope/README.md)
-7. [DenySource 总览](./sources/deny/README.md)
+7. [BanSource 总览](./sources/ban/README.md)
 8. [部署说明](./deployment.md)
 9. [测试矩阵](./tests.md)
 
@@ -41,9 +41,9 @@ Typed Managers：
 Sources：
 
 - [ScopeSource 共同语义](./sources/scope/README.md)
-- [DenySource 共同语义](./sources/deny/README.md)
-- [AdminDenySource](./sources/deny/admin-deny-source.md)
-- [GovVotedDenySource](./sources/deny/gov-voted-deny-source.md)
+- [BanSource 共同语义](./sources/ban/README.md)
+- [AdminBanSource](./sources/ban/admin-ban-source.md)
+- [GovVotedBanSource](./sources/ban/gov-voted-ban-source.md)
 
 群聊类型：
 

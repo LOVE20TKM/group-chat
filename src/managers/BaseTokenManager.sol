@@ -12,11 +12,11 @@ abstract contract BaseTokenManager is BaseManager {
 
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
+    ) BaseManager(groupChat_, banSource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         address launch = IExtensionCenter(extensionCenter_).launchAddress();
         address stake = IExtensionCenter(extensionCenter_).stakeAddress();
         _requireCode(launch);

@@ -131,7 +131,7 @@ const requiredHtml = [
   'id="message-list"',
   'id="composer-input"',
   'placeholder="输入公开链上消息"',
-  'id="composer-blocked"',
+  'id="composer-banned"',
 ];
 
 for (const needle of requiredHtml) {
@@ -168,7 +168,7 @@ const requiredCss = [
   '.filter-tabs',
   '.action-row',
   '.query-row',
-  '.composer-blocked',
+  '.composer-banned',
   '.delegate-panel',
   '@media (min-width: 900px)',
   '@media (max-width: 390px)',
@@ -200,14 +200,14 @@ const requiredAppJs = [
   'pageReturnStack',
   'renderGroupDetails',
   'openDetails',
-  'postBlockReason',
+  'postBanReason',
   'scopeSourceReason',
   'blacklistQueryType',
   'blacklistRows',
   'govMyVoteDetail',
-  'adminDenyListPage',
-  'adminDenyRowsFromPage',
-  'setAdminDenyOperator',
+  'adminBanListPage',
+  'adminBanRowsFromPage',
+  'setAdminBanOperator',
   'setBlacklistQueryType',
   'setNftInputMode',
   'set-nft-input-mode-select',
@@ -221,14 +221,14 @@ const requiredAppJs = [
   'data-action="toggle-avatar-menu"',
   'activeAvatarMenuKey',
   'toggleAvatarMenu',
-  'canShowAvatarDenyMenu',
+  'canShowAvatarBanMenu',
   'SenderAddressNotSenderIdOwner',
   'ChatNotActivated',
   'PostingNotAllowed',
   'messagesForChat',
   'renderMessageContent',
   'showBlacklistedMessages',
-  'messageSenderDenied',
+  'messageSenderBanned',
   'shouldHideMessage',
   'set-show-blacklisted',
   '显示黑名单消息',
@@ -280,15 +280,15 @@ const requiredAppJs = [
   'queryBlacklist',
   'ownerOfGroupId',
   'validDefaultGroupIdOf',
-  'addSenderDenyFromMessage',
-  'denyBySenderIds',
-  'denyBySenders',
+  'addSenderBanFromMessage',
+  'banBySenderIds',
+  'banBySenders',
   'conversationStatus',
   'unreadMessagesForChat',
-  'data-action="add-sender-deny"',
+  'data-action="add-sender-ban"',
   'revalidateGovVote',
   'canEditRules',
-  'canEditAdminDeny',
+  'canEditAdminBan',
   'canEditMemberScope',
   'groupAdminState',
   'groupMemberScopeState',
@@ -315,12 +315,12 @@ const requiredDataJs = [
   'TokenActionGovManager',
   'GroupMemberScope',
   'GroupJoinScopeSource',
-  'AdminDenySource',
-  'GovVotedDenySource',
+  'AdminBanSource',
+  'GovVotedBanSource',
   'groupAdmin',
   'groupMemberScope',
-  'addressDenyOperatorStates',
-  'senderIdDenyOperatorStates',
+  'addressBanOperatorStates',
+  'senderIdBanOperatorStates',
   'memberIds',
   'groupOwners',
   'defaultGroupIdsByAddress',
@@ -371,20 +371,20 @@ for (const chat of initialState.chats) {
   for (const field of ['groupId', 'shortTitle', 'type', 'model', 'manager', 'params', 'chatInfo']) {
     if (chat[field] === undefined) throw new Error(`Chat ${chat.groupId} missing ${field}`);
   }
-  if (chat.blacklistMode === 'gov' && !chat.govDeny) throw new Error(`Gov chat ${chat.groupId} missing govDeny`);
+  if (chat.blacklistMode === 'gov' && !chat.govBan) throw new Error(`Gov chat ${chat.groupId} missing govBan`);
   if (chat.blacklistMode === 'gov') {
-    for (const field of ['addressDenyList', 'senderIdDenyList', 'addressTargets', 'senderIdTargets']) {
-      if (!Array.isArray(chat.govDeny[field])) throw new Error(`Gov chat ${chat.groupId} govDeny.${field} must be an array`);
+    for (const field of ['addressBanList', 'senderIdBanList', 'addressTargets', 'senderIdTargets']) {
+      if (!Array.isArray(chat.govBan[field])) throw new Error(`Gov chat ${chat.groupId} govBan.${field} must be an array`);
     }
   }
-  if (chat.blacklistMode === 'admin' && !chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} missing adminDeny`);
+  if (chat.blacklistMode === 'admin' && !chat.adminBan) throw new Error(`Admin chat ${chat.groupId} missing adminBan`);
   if (chat.blacklistMode === 'admin') {
     if (!chat.groupAdmin) throw new Error(`Admin chat ${chat.groupId} missing groupAdmin`);
     if (!Array.isArray(chat.groupAdmin.adminIds)) throw new Error(`Admin chat ${chat.groupId} groupAdmin.adminIds must be an array`);
-    if ('adminIds' in chat.adminDeny) throw new Error(`Admin chat ${chat.groupId} must not store adminIds under adminDeny`);
-    for (const field of ['addressDenyOperatorStates', 'senderIdDenyOperatorStates']) {
-      if (!chat.adminDeny[field] || typeof chat.adminDeny[field] !== 'object' || Array.isArray(chat.adminDeny[field])) {
-        throw new Error(`Admin chat ${chat.groupId} adminDeny.${field} must be an object`);
+    if ('adminIds' in chat.adminBan) throw new Error(`Admin chat ${chat.groupId} must not store adminIds under adminBan`);
+    for (const field of ['addressBanOperatorStates', 'senderIdBanOperatorStates']) {
+      if (!chat.adminBan[field] || typeof chat.adminBan[field] !== 'object' || Array.isArray(chat.adminBan[field])) {
+        throw new Error(`Admin chat ${chat.groupId} adminBan.${field} must be an object`);
       }
     }
   }
@@ -443,17 +443,17 @@ const requiredProtocolCopy = [
   'chatInfo',
   'senderId',
   'scopeSource',
-  'denySource',
+  'banSource',
   'beforePostPlugin',
   'afterPostPlugin',
   'delegateId',
   'stateVersion',
-  'denyThresholdRatio',
+  'banThresholdRatio',
   'totalWeight',
-  'addressDenyList',
-  'senderIdDenyList',
-  'addressDenyOperatorStates',
-  'senderIdDenyOperatorStates',
+  'addressBanList',
+  'senderIdBanList',
+  'addressBanOperatorStates',
+  'senderIdBanOperatorStates',
   'GroupAdmin',
   'GroupMemberScope',
   'memberIds',
@@ -507,11 +507,11 @@ const overLimitContent = Object.values(mentionTestState.nftProfiles)
   .join(' ');
 const overLimitDraft = parseComposerMentionedSenderIds(overLimitContent);
 if (overLimitDraft.mentionedSenderIds.length !== 34 || overLimitDraft.overLimitCount !== 2) {
-  throw new Error('Mention parser must keep over-limit mentionedSenderIds so sending can be blocked');
+  throw new Error('Mention parser must keep over-limit mentionedSenderIds so sending can be banned');
 }
 const overLimitHint = mentionSenderIdsValidationHint(overLimitDraft);
 if (!overLimitHint.includes('超过 32') || !overLimitHint.includes('请删除 2') || overLimitHint.includes('截断')) {
-  throw new Error('Mention validation hint must explain that overflow blocks sending');
+  throw new Error('Mention validation hint must explain that overflow prevents sending');
 }
 
 const duplicateDraft = parseComposerMentionedSenderIds('@成员01 @成员01');
@@ -526,14 +526,14 @@ const blacklistHarness = new Function(
   'state',
   [
     extractFunctionSource(js, 'sameAddress'),
-    extractFunctionSource(js, 'govAddressDenied'),
-    extractFunctionSource(js, 'govSenderIdDenied'),
+    extractFunctionSource(js, 'govAddressBanned'),
+    extractFunctionSource(js, 'govSenderIdBanned'),
     extractFunctionSource(js, 'messagePreferenceKey'),
     extractFunctionSource(js, 'groupMessagePreference'),
     extractFunctionSource(js, 'showBlacklistedMessages'),
-    extractFunctionSource(js, 'messageSenderDenied'),
+    extractFunctionSource(js, 'messageSenderBanned'),
     extractFunctionSource(js, 'shouldHideMessage'),
-    'return { showBlacklistedMessages, messageSenderDenied, shouldHideMessage };',
+    'return { showBlacklistedMessages, messageSenderBanned, shouldHideMessage };',
   ].join('\n'),
 );
 
@@ -545,13 +545,13 @@ const blacklistedMessage = blacklistState.messages.find((message) => message.gro
 if (!blacklistedMessage) {
   throw new Error('Fixture must include a message from a blacklisted sender');
 }
-if (!blacklistApi.messageSenderDenied(blacklistChat, blacklistedMessage)) {
-  throw new Error('Blacklisted sender message must be detected from address or NFT deny state');
+if (!blacklistApi.messageSenderBanned(blacklistChat, blacklistedMessage)) {
+  throw new Error('Blacklisted sender message must be detected from address or NFT ban state');
 }
-blacklistChat.govDeny.addressTargets.push({ target: '0x55...aa', support: 20, oppose: 1, voters: 2, myVote: null, myWeight: 0, voterList: [] });
+blacklistChat.govBan.addressTargets.push({ target: '0x55...aa', support: 20, oppose: 1, voters: 2, myVote: null, myWeight: 0, voterList: [] });
 const unsettledVoteMessage = { groupId: '1024', senderId: 9012, senderAddress: '0x55...aa' };
-if (blacklistApi.messageSenderDenied(blacklistChat, unsettledVoteMessage)) {
-  throw new Error('Gov messages must use the settled deny list, not support/oppose tallies, for hidden state');
+if (blacklistApi.messageSenderBanned(blacklistChat, unsettledVoteMessage)) {
+  throw new Error('Gov messages must use the settled ban list, not support/oppose tallies, for hidden state');
 }
 if (!blacklistApi.shouldHideMessage(blacklistChat, blacklistedMessage)) {
   throw new Error('Blacklisted sender message must be hidden by default');
@@ -571,16 +571,16 @@ const blacklistRowsHarness = new Function(
     extractFunctionSource(js, 'blacklistNftLabel'),
     extractFunctionSource(js, 'sameAddress'),
     extractFunctionSource(js, 'normalizeBlacklistTargetType'),
-    extractFunctionSource(js, 'govAddressDenied'),
-    extractFunctionSource(js, 'govSenderIdDenied'),
+    extractFunctionSource(js, 'govAddressBanned'),
+    extractFunctionSource(js, 'govSenderIdBanned'),
     extractFunctionSource(js, 'govMyVoteDetail'),
-    extractFunctionSource(js, 'adminDenyOperatorRecord'),
-    extractFunctionSource(js, 'adminDenyOperatorDetailFromValues'),
-    extractFunctionSource(js, 'adminDenyTargets'),
-    extractFunctionSource(js, 'adminDenyListPage'),
-    extractFunctionSource(js, 'adminDenyRowsFromPage'),
+    extractFunctionSource(js, 'adminBanOperatorRecord'),
+    extractFunctionSource(js, 'adminBanOperatorDetailFromValues'),
+    extractFunctionSource(js, 'adminBanTargets'),
+    extractFunctionSource(js, 'adminBanListPage'),
+    extractFunctionSource(js, 'adminBanRowsFromPage'),
     extractFunctionSource(js, 'blacklistRows'),
-    'return { blacklistRows, govMyVoteDetail, adminDenyListPage, adminDenyRowsFromPage };',
+    'return { blacklistRows, govMyVoteDetail, adminBanListPage, adminBanRowsFromPage };',
   ].join('\n'),
 );
 
@@ -598,19 +598,19 @@ const adminRows = blacklistRowsApi.blacklistRows(initialState.chats.find((chat) 
 const adminAddressRow = adminRows.find((row) => row.type === 'address' && row.target === '0x66...d0');
 const adminSenderRow = adminRows.find((row) => row.type === 'nft' && row.target === '9017');
 if (!adminAddressRow?.detail.includes('NFT #1308') || !adminAddressRow?.detail.includes('0x21...ce')) {
-  throw new Error('Admin address deny rows must show who added the blacklist entry');
+  throw new Error('Admin address ban rows must show who added the blacklist entry');
 }
 if (!adminSenderRow?.detail.includes('NFT #1310') || !adminSenderRow?.detail.includes('0x31...10')) {
-  throw new Error('Admin senderId deny rows must show who added the blacklist entry');
+  throw new Error('Admin senderId ban rows must show who added the blacklist entry');
 }
 if (adminSenderRow?.label !== 'NFT #9017' || !adminSenderRow.detail.includes('NFT #9017')) {
   throw new Error('Admin NFT blacklist rows must fall back to the token id when the NFT name is unavailable');
 }
-const adminAddressPage = blacklistRowsApi.adminDenyListPage(initialState.chats.find((chat) => chat.groupId === 1301), 'address', 0, 1);
+const adminAddressPage = blacklistRowsApi.adminBanListPage(initialState.chats.find((chat) => chat.groupId === 1301), 'address', 0, 1);
 if (adminAddressPage.targets[0] !== '0x66...d0' || adminAddressPage.operatorAddresses[0] !== '0x21...ce' || adminAddressPage.operatorIds[0] !== '1308') {
-  throw new Error('Admin address deny list page must return target, operatorAddress, and operatorId together');
+  throw new Error('Admin address ban list page must return target, operatorAddress, and operatorId together');
 }
-const adminSenderRows = blacklistRowsApi.adminDenyRowsFromPage(initialState.chats.find((chat) => chat.groupId === 1301), 'nft', 0, 1);
+const adminSenderRows = blacklistRowsApi.adminBanRowsFromPage(initialState.chats.find((chat) => chat.groupId === 1301), 'nft', 0, 1);
 if (!adminSenderRows[0]?.detail.includes('NFT #9017') || !adminSenderRows[0]?.detail.includes('NFT #1310')) {
   throw new Error('Admin senderId rows must be derived from the paged tuple response and keep both target and operator ids');
 }
@@ -656,7 +656,7 @@ const sendDocument = {
 };
 sendHarness(sendState, sendDocument, () => {}).sendMessage();
 if (sendState.messages.length !== 0 || !sendState.syncHint.includes('TooManyMentionedSenderIds')) {
-  throw new Error('sendMessage must block over-limit mentionedSenderIds instead of truncating and sending');
+  throw new Error('sendMessage must prevent over-limit mentionedSenderIds instead of truncating and sending');
 }
 
 const quoteHarness = new Function(
@@ -823,7 +823,7 @@ const blacklistPanelHarness = new Function(
 
 const blacklistPanelState = { blacklistQueryType: 'address', nftInputMode: 'id', blacklistQueryResult: '' };
 const blacklistPanelApi = blacklistPanelHarness(blacklistPanelState);
-const blacklistPanel = blacklistPanelApi.renderBlacklistPanel({ groupId: 1301, title: '示例群', blacklistMode: 'admin', adminDeny: { stateVersion: 3 } });
+const blacklistPanel = blacklistPanelApi.renderBlacklistPanel({ groupId: 1301, title: '示例群', blacklistMode: 'admin', adminBan: { stateVersion: 3 } });
 if ((blacklistPanel.match(/示例群/g) || []).length !== 1) {
   throw new Error('Blacklist page must not render the group name twice');
 }
@@ -833,7 +833,7 @@ const blacklistControlsHarness = new Function(
   [
     'function escapeHtml(value) { return String(value); }',
     extractFunctionSource(js, 'renderNftLookupControl'),
-    'function canEditAdminDeny(chat) { return Boolean(chat.canEditAdminDeny); }',
+    'function canEditAdminBan(chat) { return Boolean(chat.canEditAdminBan); }',
     extractFunctionSource(js, 'renderBlacklistAddAction'),
     extractFunctionSource(js, 'renderBlacklistControls'),
     'return { renderBlacklistControls };',
@@ -898,8 +898,8 @@ if (!nftLookupApi.renderMemberIdControls({}).includes('data-action="set-member-q
 const blacklistTextHarness = new Function(
   'state',
   [
-    'function renderPermissionNotice(allowed, allowedText, deniedText) { return allowed ? allowedText : deniedText; }',
-    'function canEditAdminDeny(chat) { return Boolean(chat.canEditAdminDeny); }',
+    'function renderPermissionNotice(allowed, allowedText, bannedText) { return allowed ? allowedText : bannedText; }',
+    'function canEditAdminBan(chat) { return Boolean(chat.canEditAdminBan); }',
     'function escapeHtml(value) { return String(value); }',
     'function blacklistRowKey(targetType, target) { return `${targetType}:${target}`; }',
     'function renderBlacklistRowMenu() { return ""; }',
@@ -914,7 +914,7 @@ const govPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ bla
 if (govPermissionText.includes('有权限：') || govPermissionText.includes('无权限：')) {
   throw new Error('Blacklist permission notice must not prefix texts with access labels');
 }
-const adminPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'admin', canEditAdminDeny: true });
+const adminPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'admin', canEditAdminBan: true });
 if (adminPermissionText.includes('有权限：') || adminPermissionText.includes('无权限：')) {
   throw new Error('Admin blacklist permission notice must not prefix texts with access labels');
 }
@@ -977,7 +977,7 @@ const managerActivateHarness = new Function(
     extractFunctionSource(js, 'nextManagedGroupId'),
     extractFunctionSource(js, 'syncManagedGroupId'),
     'function captureActivationDraft(chat) { return state.activationDrafts[String(chat.groupId)] || { ...chat.params }; }',
-    'function activationBlocker() { return ""; }',
+    'function activationIssue() { return ""; }',
     'function activationPreview(chat, draft) { const values = Object.keys(chat.params).map((key) => draft[key]).join(", "); return `${chat.manager}.activate(${values})`; }',
     'function resolveOptionalKnownNftInput(value) { return value; }',
     'function refreshManualMemberScopeAllowed() {}',

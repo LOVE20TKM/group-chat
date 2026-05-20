@@ -35,11 +35,11 @@ Delegate：
 Rule slots：
 
 - `setScopeSource`
-- `setDenySource`
+- `setBanSource`
 - `setBeforePostPlugin`
 - `setAfterPostPlugin`
 - `scopeSource`
-- `denySource`
+- `banSource`
 - `beforePostPlugin`
 - `afterPostPlugin`
 - `canPost`
@@ -87,7 +87,7 @@ Query：
 - `configVersion`
 - `delegateId`
 - `scopeSource`
-- `denySource`
+- `banSource`
 - `beforePostPlugin`
 - `afterPostPlugin`
 - `firstActivatedOwner`
@@ -132,7 +132,7 @@ Query：
 - `MetaSet`
 - `DelegateIdSet`
 - `ScopeSourceSet`
-- `DenySourceSet`
+- `BanSourceSet`
 - `BeforePostPluginSet`
 - `AfterPostPluginSet`
 
@@ -193,9 +193,9 @@ Rule slot 错误：
 - `SourceAddressHasNoCode`
 - `PluginAddressHasNoCode`
 - `ScopeRejected`
-- `DenyRejected`
+- `BanRejected`
 - `ScopeSourceFailed`
-- `DenySourceFailed`
+- `BanSourceFailed`
 
 消息错误：
 

@@ -11,11 +11,11 @@ contract TokenMainManager is BaseTokenScopeManager {
 
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseTokenScopeManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
+    ) BaseTokenScopeManager(groupChat_, banSource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         address join = IExtensionCenter(extensionCenter_).joinAddress();
         _requireCode(join);
 

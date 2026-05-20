@@ -9,11 +9,11 @@ contract MockManager is BaseManager {
 
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_
-    ) BaseManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
+    ) BaseManager(groupChat_, banSource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {}
 
     function activateMockManagedGroup() external returns (uint256 groupId) {
         groupId = _mintManagedGroup("mock_manager");

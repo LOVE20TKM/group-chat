@@ -25,12 +25,12 @@ abstract contract BaseTokenActionScopeManager is BaseTokenManager, IBaseTokenAct
 
     constructor(
         address groupChat_,
-        address denySource_,
+        address banSource_,
         address beforePostPlugin_,
         address afterPostPlugin_,
         address extensionCenter_,
         uint256 recentRounds_
-    ) BaseTokenManager(groupChat_, denySource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
+    ) BaseTokenManager(groupChat_, banSource_, beforePostPlugin_, afterPostPlugin_, extensionCenter_) {
         _requireRecentRounds(recentRounds_);
 
         address vote = IExtensionCenter(extensionCenter_).voteAddress();

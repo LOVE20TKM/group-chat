@@ -18,4 +18,4 @@
 - `adminIds(uint256 groupId)`
 - `stateVersion(uint256 groupId)`
 
-`AdminDenySource`、`GroupMember` 等 owner-admin 管理型模块应固定读取同一个 `GroupAdmin`，避免每个模块维护一份割裂的管理员名单。
+`GroupBanList`、`GroupMember` 等 owner-admin 管理型模块应固定读取同一个 `GroupAdmin`，避免每个模块维护一份割裂的管理员名单。

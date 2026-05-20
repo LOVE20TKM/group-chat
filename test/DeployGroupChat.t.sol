@@ -3,6 +3,7 @@ pragma solidity =0.8.17;
 
 import {DeployGroupChat} from "../script/DeployGroupChat.s.sol";
 import {GroupAdmin} from "../src/GroupAdmin.sol";
+import {GroupBanList} from "../src/GroupBanList.sol";
 import {GroupMember} from "../src/GroupMember.sol";
 import {IGroupChat} from "../src/interfaces/IGroupChat.sol";
 import {IBaseManager} from "../src/interfaces/managers/IBaseManager.sol";
@@ -10,8 +11,8 @@ import {BaseTokenActionScopeManager} from "../src/managers/BaseTokenActionScopeM
 import {BaseTokenScopeManager} from "../src/managers/BaseTokenScopeManager.sol";
 import {TokenActionGovManager} from "../src/managers/TokenActionGovManager.sol";
 import {TokenActionMainManager} from "../src/managers/TokenActionMainManager.sol";
-import {AdminDenySource} from "../src/sources/deny/AdminDenySource.sol";
-import {GovVotedDenySource} from "../src/sources/deny/GovVotedDenySource.sol";
+import {AdminBanSource} from "../src/sources/ban/AdminBanSource.sol";
+import {GovVotedBanSource} from "../src/sources/ban/GovVotedBanSource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
 import {GroupMemberScope} from "../src/sources/scope/GroupMemberScope.sol";
 import {MockGroupDefaults} from "./mocks/MockGroupDefaults.sol";
@@ -34,7 +35,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
         address afterPostPlugin,
         uint256 actionRecentRounds,
         uint256 maxAdminIds,
-        uint256 denyThresholdRatio
+        uint256 banThresholdRatio
     ) external view returns (DeployConfig memory) {
         return _configFromCoreJoin(
             groupDefaults,
@@ -44,7 +45,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
             afterPostPlugin,
             actionRecentRounds,
             maxAdminIds,
-            denyThresholdRatio
+            banThresholdRatio
         );
     }
 
@@ -62,7 +63,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
 }
 
 contract DeployGroupChatTest is TestBase {
-    uint256 internal constant DENY_THRESHOLD_RATIO = 3e15;
+    uint256 internal constant BAN_THRESHOLD_RATIO = 3e15;
     uint256 internal constant MAX_ADMIN_IDS = 20;
 
     MockLOVE20Group internal groupNft;
@@ -90,15 +91,16 @@ contract DeployGroupChatTest is TestBase {
             phaseBlocks: 25,
             actionRecentRounds: 3,
             maxAdminIds: MAX_ADMIN_IDS,
-            denyThresholdRatio: DENY_THRESHOLD_RATIO
+            banThresholdRatio: BAN_THRESHOLD_RATIO
         });
 
         DeployGroupChat.DeployedAddresses memory deployed = deployer.deployForTest(config);
 
         assertTrue(deployed.groupChat.code.length != 0);
         assertTrue(deployed.groupAdmin.code.length != 0);
-        assertTrue(deployed.adminDenySource.code.length != 0);
-        assertTrue(deployed.govVotedDenySource.code.length != 0);
+        assertTrue(deployed.groupBanList.code.length != 0);
+        assertTrue(deployed.adminBanSource.code.length != 0);
+        assertTrue(deployed.govVotedBanSource.code.length != 0);
         assertTrue(deployed.groupMember.code.length != 0);
         assertTrue(deployed.groupMemberScope.code.length != 0);
         assertTrue(deployed.groupJoinScopeSource.code.length != 0);
@@ -116,14 +118,15 @@ contract DeployGroupChatTest is TestBase {
         assertEq(GroupAdmin(deployed.groupAdmin).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(GroupAdmin(deployed.groupAdmin).GROUP_ADDRESS(), address(groupNft));
         assertEq(GroupAdmin(deployed.groupAdmin).MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
-        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
-        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_CHAT_ADDRESS(), deployed.groupChat);
-        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
-        assertEq(AdminDenySource(deployed.adminDenySource).GROUP_ADDRESS(), address(groupNft));
-        assertEq(AdminDenySource(deployed.adminDenySource).MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
-        assertEq(GovVotedDenySource(deployed.govVotedDenySource).GROUP_ADDRESS(), address(groupNft));
-        assertEq(GovVotedDenySource(deployed.govVotedDenySource).PRECISION(), 1e18);
-        assertEq(GovVotedDenySource(deployed.govVotedDenySource).DENY_THRESHOLD_RATIO(), DENY_THRESHOLD_RATIO);
+        assertEq(GroupBanList(deployed.groupBanList).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
+        assertEq(GroupBanList(deployed.groupBanList).GROUP_CHAT_ADDRESS(), deployed.groupChat);
+        assertEq(GroupBanList(deployed.groupBanList).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(GroupBanList(deployed.groupBanList).GROUP_ADDRESS(), address(groupNft));
+        assertEq(GroupBanList(deployed.groupBanList).MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
+        assertEq(AdminBanSource(deployed.adminBanSource).GROUP_BAN_LIST_ADDRESS(), deployed.groupBanList);
+        assertEq(GovVotedBanSource(deployed.govVotedBanSource).GROUP_ADDRESS(), address(groupNft));
+        assertEq(GovVotedBanSource(deployed.govVotedBanSource).PRECISION(), 1e18);
+        assertEq(GovVotedBanSource(deployed.govVotedBanSource).BAN_THRESHOLD_RATIO(), BAN_THRESHOLD_RATIO);
         assertEq(GroupMember(deployed.groupMember).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
         assertEq(GroupMember(deployed.groupMember).GROUP_ADDRESS(), address(groupNft));
         assertEq(GroupMemberScope(deployed.groupMemberScope).GROUP_MEMBER_ADDRESS(), deployed.groupMember);
@@ -164,7 +167,7 @@ contract DeployGroupChatTest is TestBase {
             address(0xCAFE),
             7,
             MAX_ADMIN_IDS,
-            DENY_THRESHOLD_RATIO
+            BAN_THRESHOLD_RATIO
         );
 
         assertEq(config.groupDefaults, address(groupDefaults));
@@ -176,7 +179,7 @@ contract DeployGroupChatTest is TestBase {
         assertEq(config.phaseBlocks, 44);
         assertEq(config.actionRecentRounds, 7);
         assertEq(config.maxAdminIds, MAX_ADMIN_IDS);
-        assertEq(config.denyThresholdRatio, DENY_THRESHOLD_RATIO);
+        assertEq(config.banThresholdRatio, BAN_THRESHOLD_RATIO);
     }
 
     function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {
@@ -190,27 +193,29 @@ contract DeployGroupChatTest is TestBase {
             phaseBlocks: 456,
             actionRecentRounds: 7,
             maxAdminIds: MAX_ADMIN_IDS,
-            denyThresholdRatio: DENY_THRESHOLD_RATIO
+            banThresholdRatio: BAN_THRESHOLD_RATIO
         });
         DeployGroupChat.DeployedAddresses memory deployed = DeployGroupChat.DeployedAddresses({
             groupChat: address(0x101),
             groupAdmin: address(0x102),
-            adminDenySource: address(0x103),
-            govVotedDenySource: address(0x104),
-            groupMember: address(0x105),
-            groupMemberScope: address(0x106),
-            groupJoinScopeSource: address(0x107),
-            tokenMainManager: address(0x108),
-            tokenGovManager: address(0x109),
-            tokenActionGovManager: address(0x10A),
-            tokenActionMainManager: address(0x10B)
+            groupBanList: address(0x103),
+            adminBanSource: address(0x104),
+            govVotedBanSource: address(0x105),
+            groupMember: address(0x106),
+            groupMemberScope: address(0x107),
+            groupJoinScopeSource: address(0x108),
+            tokenMainManager: address(0x109),
+            tokenGovManager: address(0x10A),
+            tokenActionGovManager: address(0x10B),
+            tokenActionMainManager: address(0x10C)
         });
 
         string memory content = deployer.addressFileContentForTest(config, deployed);
 
         _assertContains(content, "groupAdminAddress=");
-        _assertContains(content, "adminDenySourceAddress=");
-        _assertContains(content, "govVotedDenySourceAddress=");
+        _assertContains(content, "groupBanListAddress=");
+        _assertContains(content, "adminBanSourceAddress=");
+        _assertContains(content, "govVotedBanSourceAddress=");
         _assertContains(content, "groupMemberAddress=");
         _assertContains(content, "groupMemberScopeAddress=");
         _assertContains(content, "groupJoinScopeSourceAddress=");
@@ -231,7 +236,7 @@ contract DeployGroupChatTest is TestBase {
 
     function _assertManagerCommon(address manager, DeployGroupChat.DeployedAddresses memory deployed) internal view {
         assertEq(IBaseManager(manager).GROUP_CHAT_ADDRESS(), deployed.groupChat);
-        assertEq(IBaseManager(manager).DENY_SOURCE_ADDRESS(), deployed.govVotedDenySource);
+        assertEq(IBaseManager(manager).BAN_SOURCE_ADDRESS(), deployed.govVotedBanSource);
         assertEq(IBaseManager(manager).BEFORE_POST_PLUGIN_ADDRESS(), address(0));
         assertEq(IBaseManager(manager).AFTER_POST_PLUGIN_ADDRESS(), address(0));
     }
