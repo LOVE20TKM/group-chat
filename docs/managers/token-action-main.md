@@ -37,7 +37,6 @@ function activate(
 - `GroupChat.banSource = BAN_SOURCE_ADDRESS`
 - `GroupChat.beforePostPlugin = BEFORE_POST_PLUGIN_ADDRESS`
 - `GroupChat.afterPostPlugin = AFTER_POST_PLUGIN_ADDRESS`
-- `delegateId = 0`
 
 ## 发言资格
 

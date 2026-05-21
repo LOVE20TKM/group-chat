@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {GroupAdmin} from "../../src/GroupAdmin.sol";
 import {GroupChat} from "../../src/GroupChat.sol";
 import {IGroupChatErrors} from "../../src/interfaces/IGroupChat.sol";
 
 import {MockGroupDefaults} from "../mocks/MockGroupDefaults.sol";
+import {MockGroupDelegate} from "../mocks/MockGroupDelegate.sol";
 import {MockLOVE20Group} from "../mocks/MockLOVE20Group.sol";
 import {TestBase, Vm} from "./TestBase.sol";
 
 abstract contract GroupChatFixture is TestBase {
     MockLOVE20Group internal groupNft;
     MockGroupDefaults internal groupDefaults;
+    MockGroupDelegate internal groupDelegate;
+    GroupAdmin internal baseGroupAdmin;
     GroupChat internal chat;
 
     address internal chatOwner = address(0xA11CE);
@@ -25,8 +29,6 @@ abstract contract GroupChatFixture is TestBase {
     uint256 internal originBlocks;
     uint256 internal phaseBlocks = 100;
     bytes32 internal constant META_SET_SIG = keccak256("MetaSet(uint256,address,uint256,string,bytes,bytes)");
-    bytes32 internal constant DELEGATE_GROUP_ID_SET_SIG =
-        keccak256("DelegateIdSet(uint256,address,uint256,uint256,uint256)");
     bytes32 internal constant SCOPE_SOURCE_SET_SIG =
         keccak256("ScopeSourceSet(uint256,address,address,uint256,address)");
     bytes32 internal constant BAN_SOURCE_SET_SIG = keccak256("BanSourceSet(uint256,address,address,uint256,address)");
@@ -53,7 +55,9 @@ abstract contract GroupChatFixture is TestBase {
 
         originBlocks = block.number + 50;
         groupDefaults = new MockGroupDefaults(address(groupNft));
-        chat = new GroupChat(address(groupDefaults), originBlocks, phaseBlocks);
+        groupDelegate = new MockGroupDelegate(address(groupNft));
+        baseGroupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), 20);
+        chat = new GroupChat(address(baseGroupAdmin), originBlocks, phaseBlocks);
     }
 
     function _emptyMeta() internal pure returns (string[] memory keys, bytes[] memory values) {
@@ -108,7 +112,7 @@ abstract contract GroupChatFixture is TestBase {
     function _activateEmpty() internal {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
     }
 
     function _decodeMetaConfigVersion(bytes memory data) internal pure returns (uint256 version) {
@@ -129,10 +133,6 @@ abstract contract GroupChatFixture is TestBase {
 
     function _decodeVersionAndAddress(bytes memory data) internal pure returns (uint256 version) {
         (version,) = abi.decode(data, (uint256, address));
-    }
-
-    function _decodeVersionAndUint256(bytes memory data) internal pure returns (uint256 version) {
-        (version,) = abi.decode(data, (uint256, uint256));
     }
 
     function _decodeActivateVersion(bytes memory data) internal pure returns (uint256 version) {

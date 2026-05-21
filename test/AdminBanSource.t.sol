@@ -27,7 +27,7 @@ contract AdminBanSourceTest is GroupChatFixture {
         super.setUp();
         adminId = groupNft.mint(adminOwner);
         secondAdminId = groupNft.mint(secondAdminOwner);
-        groupAdmin = new GroupAdmin(address(chat), MAX_ADMIN_IDS);
+        groupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), MAX_ADMIN_IDS);
         banList = new GroupBanList(address(groupAdmin));
         banSource = new AdminBanSource(address(banList));
     }
@@ -46,7 +46,9 @@ contract AdminBanSourceTest is GroupChatFixture {
 
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(banSource), address(0), address(0), delegateId);
+        chat.activateChat(groupId, keys, values, address(0), address(banSource), address(0), address(0));
+        vm.prank(chatOwner);
+        groupDelegate.setDelegateId(groupId, delegateId);
 
         vm.prank(delegateIdOwner);
         vm.expectRevert(IGroupBanList.UnauthorizedGroupBanListManager.selector);
@@ -81,7 +83,7 @@ contract AdminBanSourceTest is GroupChatFixture {
         _configureAdmin();
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(banSource), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(0), address(banSource), address(0), address(0));
 
         vm.prank(adminOwner);
         banList.banBySenderIds(groupId, _uints(senderId));
@@ -177,7 +179,7 @@ contract AdminBanSourceTest is GroupChatFixture {
 
     function testT124B_setAdminsRejectsAdminCountAboveLimit() public {
         vm.expectRevert(IGroupAdmin.MaxAdminIdsZero.selector);
-        new GroupAdmin(address(chat), 0);
+        new GroupAdmin(address(groupDefaults), address(groupDelegate), 0);
 
         uint256[] memory admins = new uint256[](MAX_ADMIN_IDS + 1);
         for (uint256 i = 0; i < admins.length; i++) {

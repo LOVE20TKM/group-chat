@@ -20,7 +20,7 @@ contract GroupMemberScopeTest is GroupChatFixture {
     function setUp() public override {
         super.setUp();
         adminId = groupNft.mint(adminOwner);
-        groupAdmin = new GroupAdmin(address(chat), 20);
+        groupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), 20);
         member = new GroupMember(address(groupAdmin));
         scope = new GroupMemberScope(address(member));
     }
@@ -70,7 +70,7 @@ contract GroupMemberScopeTest is GroupChatFixture {
         _configureAdmin();
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
 
         (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);

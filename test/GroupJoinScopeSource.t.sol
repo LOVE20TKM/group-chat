@@ -31,7 +31,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
 
     function setUp() public override {
         super.setUp();
-        groupAdmin = new GroupAdmin(address(chat), 20);
+        groupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), 20);
         member = new GroupMember(address(groupAdmin));
         groupJoin = new MockGroupJoin();
         scope = new GroupJoinScopeSource(address(member), address(groupJoin));
@@ -48,7 +48,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     function testT131_groupJoinParticipationControlsPost() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
 
         (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
@@ -75,7 +75,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     function testT131B_groupMemberScopeMembershipAlsoControlsPost() public {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
 
         vm.prank(chatOwner);
         groupAdmin.setAdmins(groupId, _uints(groupId));
@@ -100,7 +100,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(banSource), address(0), address(0), 0);
+        chat.activateChat(groupId, keys, values, address(scope), address(banSource), address(0), address(0));
 
         groupJoin.setTokenAddressCount(groupId, senderOwner, 1);
 

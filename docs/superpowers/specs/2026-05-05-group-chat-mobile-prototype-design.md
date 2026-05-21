@@ -54,10 +54,10 @@
 | 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`BanRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
-| 全体提及 | `mentionAll`，只记录声明语义 |
+| 全体提及 | `mentionAll`，仅 owner、delegate 或 GroupAdmin 管理员 NFT 可发 |
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
-| 规则槽 | `chatInfo(groupId)`：`delegateId`、`scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin` |
+| 规则槽 | `chatInfo(groupId)`：`scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin` |
 | 共享管理员 | `GroupAdmin.adminIds(groupId)`、`GroupAdmin.adminIdOf(groupId, account)` |
 | 手工成员发言资格 | `GroupMember.memberIds(groupId, offset, limit)`、`GroupMemberScope.canPost(groupId, senderId, senderAddress)` |
 | 链群发言资格 | `GroupJoinScopeSource.canPost(...) = GroupMember.isMemberId(...) || GroupJoin.gTokenAddressesByGroupIdByAccountCount(...) > 0` |

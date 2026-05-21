@@ -30,14 +30,6 @@ interface IGroupBanList {
 
     function GROUP_ADMIN_ADDRESS() external view returns (address);
 
-    function GROUP_CHAT_ADDRESS() external view returns (address);
-
-    function GROUP_DEFAULTS_ADDRESS() external view returns (address);
-
-    function GROUP_ADDRESS() external view returns (address);
-
-    function MAX_ADMIN_IDS() external view returns (uint256);
-
     function isAddressBanned(uint256 groupId, address senderAddress) external view returns (bool);
 
     function isSenderIdBanned(uint256 groupId, uint256 senderId) external view returns (bool);

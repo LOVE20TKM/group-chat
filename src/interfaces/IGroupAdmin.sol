@@ -8,6 +8,7 @@ interface IGroupAdmin {
     error DuplicateAdminId();
     error AdminIdsLimitExceeded();
     error MaxAdminIdsZero();
+    error GroupDelegateGroupMismatch();
 
     event AdminSet(
         uint256 indexed groupId,
@@ -20,9 +21,9 @@ interface IGroupAdmin {
 
     event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
-    function GROUP_CHAT_ADDRESS() external view returns (address);
-
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
+
+    function GROUP_DELEGATE_ADDRESS() external view returns (address);
 
     function GROUP_ADDRESS() external view returns (address);
 

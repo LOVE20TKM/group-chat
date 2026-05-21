@@ -8,7 +8,6 @@ interface IGroupChatPluginView {
         bool activated;
         bool postingAllowed;
         uint256 configVersion;
-        uint256 delegateId;
         address scopeSource;
         address banSource;
         address beforePostPlugin;
@@ -20,8 +19,6 @@ interface IGroupChatPluginView {
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
 
-    function delegateIdOf(uint256 groupId) external view returns (uint256);
-
     function post(
         uint256 groupId,
         uint256 senderId,
@@ -32,6 +29,10 @@ interface IGroupChatPluginView {
     ) external;
 
     function setMeta(uint256 groupId, string calldata key, bytes calldata value) external;
+}
+
+interface IGroupDelegatePluginView {
+    function ownerOrDelegateIdOf(uint256 groupId, address account) external view returns (uint256);
 }
 
 contract MockBeforePostRejectPlugin {
@@ -248,18 +249,16 @@ contract MockManagedPlugin {
     error UnauthorizedPluginManager();
 
     address public immutable CHAT_ADDRESS;
+    address public immutable GROUP_DELEGATE_ADDRESS;
     mapping(uint256 => bytes) public configValue;
 
-    constructor(address chat_) {
+    constructor(address chat_, address groupDelegate_) {
         CHAT_ADDRESS = chat_;
+        GROUP_DELEGATE_ADDRESS = groupDelegate_;
     }
 
     function configure(uint256 groupId, bytes calldata value) external {
-        IGroupChatPluginView.ChatInfo memory info = IGroupChatPluginView(CHAT_ADDRESS).chatInfo(groupId);
-        uint256 delegateId_ = IGroupChatPluginView(CHAT_ADDRESS).delegateIdOf(groupId);
-        address delegateIdOwner =
-            delegateId_ == 0 ? address(0) : IGroupChatPluginView(CHAT_ADDRESS).chatInfo(delegateId_).owner;
-        if (msg.sender != info.owner && msg.sender != delegateIdOwner) {
+        if (IGroupDelegatePluginView(GROUP_DELEGATE_ADDRESS).ownerOrDelegateIdOf(groupId, msg.sender) == 0) {
             revert UnauthorizedPluginManager();
         }
         configValue[groupId] = value;

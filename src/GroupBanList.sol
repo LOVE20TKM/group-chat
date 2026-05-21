@@ -10,10 +10,6 @@ contract GroupBanList is IGroupBanList {
     using EnumerableSets for EnumerableSets.UintSet;
 
     address public immutable GROUP_ADMIN_ADDRESS;
-    address public immutable GROUP_CHAT_ADDRESS;
-    address public immutable GROUP_DEFAULTS_ADDRESS;
-    address public immutable GROUP_ADDRESS;
-    uint256 public immutable MAX_ADMIN_IDS;
 
     struct BanOperatorState {
         address operatorAddress;
@@ -35,10 +31,6 @@ contract GroupBanList is IGroupBanList {
             revert GroupBanListAddressHasNoCode();
         }
         GROUP_ADMIN_ADDRESS = groupAdmin_;
-        GROUP_CHAT_ADDRESS = IGroupAdmin(groupAdmin_).GROUP_CHAT_ADDRESS();
-        GROUP_DEFAULTS_ADDRESS = IGroupAdmin(groupAdmin_).GROUP_DEFAULTS_ADDRESS();
-        GROUP_ADDRESS = IGroupAdmin(groupAdmin_).GROUP_ADDRESS();
-        MAX_ADMIN_IDS = IGroupAdmin(groupAdmin_).MAX_ADMIN_IDS();
     }
 
     function banBySenderIds(uint256 groupId, uint256[] calldata senderIds) external {

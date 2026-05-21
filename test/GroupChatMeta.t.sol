@@ -104,9 +104,7 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         vm.recordLogs();
         vm.prank(chatOwner);
-        chat.activateChat(
-            groupId, keys1, values1, address(0), address(0), address(beforePlugin), address(afterPlugin), delegateId
-        );
+        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(beforePlugin), address(afterPlugin));
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(chat.chatInfo(groupId).configVersion, 1);
@@ -120,7 +118,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(entryKeys[1], "b");
         assertEq(entryValues[1], bytes("2"));
 
-        assertEq(logs.length, 6);
+        assertEq(logs.length, 5);
         assertEq(logs[0].topics[0], META_SET_SIG);
         assertEq(_decodeMetaConfigVersion(logs[0].data), 1);
         assertEq(_decodeMetaKey(logs[0].data), "a");
@@ -132,14 +130,12 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(_decodeMetaValue(logs[1].data), bytes("2"));
         assertEq(_decodeMetaPrevValue(logs[1].data), bytes(""));
 
-        assertEq(logs[2].topics[0], DELEGATE_GROUP_ID_SET_SIG);
-        assertEq(_decodeVersionAndUint256(logs[2].data), 1);
-        assertEq(logs[3].topics[0], BEFORE_POST_PLUGIN_SET_SIG);
+        assertEq(logs[2].topics[0], BEFORE_POST_PLUGIN_SET_SIG);
+        assertEq(_decodeVersionAndAddress(logs[2].data), 1);
+        assertEq(logs[3].topics[0], AFTER_POST_PLUGIN_SET_SIG);
         assertEq(_decodeVersionAndAddress(logs[3].data), 1);
-        assertEq(logs[4].topics[0], AFTER_POST_PLUGIN_SET_SIG);
-        assertEq(_decodeVersionAndAddress(logs[4].data), 1);
-        assertEq(logs[5].topics[0], ACTIVATE_SIG);
-        assertEq(_decodeActivateVersion(logs[5].data), 1);
+        assertEq(logs[4].topics[0], ACTIVATE_SIG);
+        assertEq(_decodeActivateVersion(logs[4].data), 1);
     }
 
     function testT029_setMetaBatchTreatsExplicitEmptyMetaAsDeletion() public {
@@ -151,7 +147,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         values1[1] = bytes("2");
 
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0));
 
         string[] memory keys2 = new string[](1);
         bytes[] memory values2 = new bytes[](1);
@@ -188,7 +184,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         values1[1] = bytes("2");
 
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0));
 
         string[] memory batchKeys = new string[](3);
         bytes[] memory batchValues = new bytes[](3);
@@ -228,15 +224,6 @@ contract GroupChatMetaTest is GroupChatFixture {
     function testT080T081_versionsStayConsistentAcrossConfigWrites() public {
         _activateEmpty();
 
-        vm.recordLogs();
-        vm.prank(chatOwner);
-        chat.setDelegateId(groupId, delegateId);
-        Vm.Log[] memory logs1 = vm.getRecordedLogs();
-
-        assertEq(logs1.length, 1);
-        assertEq(logs1[0].topics[0], DELEGATE_GROUP_ID_SET_SIG);
-        assertEq(_decodeVersionAndUint256(logs1[0].data), chat.chatInfo(groupId).configVersion);
-
         string[] memory batchKeys = new string[](2);
         bytes[] memory batchValues = new bytes[](2);
         batchKeys[0] = "k1";
@@ -263,7 +250,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         (string[] memory tooManyKeys, bytes[] memory tooManyValues) = _filledMeta(maxKeys + 1, bytes("v"));
         vm.prank(chatOwner);
         vm.expectRevert(abi.encodeWithSelector(IGroupChatErrors.TooManyMetaKeys.selector, maxKeys + 1, maxKeys));
-        chat.activateChat(groupId, tooManyKeys, tooManyValues, address(0), address(0), address(0), address(0), 0);
+        chat.activateChat(groupId, tooManyKeys, tooManyValues, address(0), address(0), address(0), address(0));
 
         _activateEmpty();
 
@@ -271,9 +258,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         bytes memory tooLongValue = new bytes(maxValueLength + 1);
         vm.prank(chatOwner);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IGroupChatErrors.MetaValueTooLong.selector, maxValueLength + 1, maxValueLength
-            )
+            abi.encodeWithSelector(IGroupChatErrors.MetaValueTooLong.selector, maxValueLength + 1, maxValueLength)
         );
         chat.setMeta(groupId, "long", tooLongValue);
     }

@@ -2,7 +2,10 @@
 pragma solidity =0.8.17;
 
 import {IGroupChat} from "./interfaces/IGroupChat.sol";
+
+import {IGroupAdmin} from "./interfaces/IGroupAdmin.sol";
 import {IGroupDefaults} from "./interfaces/external/IGroupDefaults.sol";
+import {IGroupDelegate} from "./interfaces/external/IGroupDelegate.sol";
 import {ILOVE20Group} from "./interfaces/external/ILOVE20Group.sol";
 import {IAfterPostPlugin} from "./interfaces/plugins/IAfterPostPlugin.sol";
 import {IBeforePostPlugin} from "./interfaces/plugins/IBeforePostPlugin.sol";
@@ -15,8 +18,10 @@ contract GroupChat is IGroupChat {
     uint256 public constant MAX_META_KEYS = 32;
     uint256 public constant MAX_META_VALUE_LENGTH = 4096;
 
+    address public immutable GROUP_ADMIN_ADDRESS;
     address public immutable GROUP_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
+    address public immutable GROUP_DELEGATE_ADDRESS;
     uint256 public immutable originBlocks;
     uint256 public immutable phaseBlocks;
 
@@ -27,8 +32,6 @@ contract GroupChat is IGroupChat {
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
         uint256 firstActivatedTimestamp;
-        uint256 delegateId;
-        address delegateOwnerSnapshot;
         address scopeSource;
         address banSource;
         address beforePostPlugin;
@@ -70,15 +73,33 @@ contract GroupChat is IGroupChat {
 
     uint256 internal _entered;
 
-    constructor(address groupDefaults_, uint256 originBlocks_, uint256 phaseBlocks_) {
-        if (groupDefaults_.code.length == 0) {
-            revert GroupDefaultsHasNoCode();
+    constructor(address groupAdmin_, uint256 originBlocks_, uint256 phaseBlocks_) {
+        if (groupAdmin_.code.length == 0) {
+            revert GroupAdminHasNoCode();
         }
         if (phaseBlocks_ == 0) {
             revert PhaseBlocksZero();
         }
-        GROUP_DEFAULTS_ADDRESS = groupDefaults_;
-        GROUP_ADDRESS = IGroupDefaults(groupDefaults_).GROUP_ADDRESS();
+
+        address groupDefaults = IGroupAdmin(groupAdmin_).GROUP_DEFAULTS_ADDRESS();
+        address groupDelegate = IGroupAdmin(groupAdmin_).GROUP_DELEGATE_ADDRESS();
+        address groupAddress = IGroupAdmin(groupAdmin_).GROUP_ADDRESS();
+        if (groupDefaults.code.length == 0) {
+            revert GroupDefaultsHasNoCode();
+        }
+        if (groupDelegate.code.length == 0) {
+            revert GroupDelegateHasNoCode();
+        }
+        if (IGroupDefaults(groupDefaults).GROUP_ADDRESS() != groupAddress) {
+            revert GroupDefaultsGroupMismatch();
+        }
+        if (IGroupDelegate(groupDelegate).GROUP_ADDRESS() != groupAddress) {
+            revert GroupDelegateGroupMismatch();
+        }
+        GROUP_ADMIN_ADDRESS = groupAdmin_;
+        GROUP_DEFAULTS_ADDRESS = groupDefaults;
+        GROUP_DELEGATE_ADDRESS = groupDelegate;
+        GROUP_ADDRESS = groupAddress;
         originBlocks = originBlocks_;
         phaseBlocks = phaseBlocks_;
     }
@@ -99,8 +120,7 @@ contract GroupChat is IGroupChat {
         address scopeSource_,
         address banSource_,
         address beforePostPlugin_,
-        address afterPostPlugin_,
-        uint256 delegateId_
+        address afterPostPlugin_
     ) external nonReentrant {
         address owner = _ownerOfOrRevert(groupId);
         if (msg.sender != owner) {
@@ -118,7 +138,6 @@ contract GroupChat is IGroupChat {
         _validateSourceAddress(banSource_);
         _validatePluginAddress(beforePostPlugin_);
         _validatePluginAddress(afterPostPlugin_);
-        _validateDelegateId(groupId, delegateId_);
 
         config.firstActivatedOwner = owner;
         config.firstActivatedBlockNumber = block.number;
@@ -135,11 +154,6 @@ contract GroupChat is IGroupChat {
         uint256 newVersion = _nextConfigVersion(config);
 
         _initActivateMeta(groupId, metaKeys_, metaValues_, newVersion);
-        if (delegateId_ != 0) {
-            config.delegateId = delegateId_;
-            config.delegateOwnerSnapshot = owner;
-            emit DelegateIdSet(groupId, owner, delegateId_, newVersion, 0);
-        }
         if (scopeSource_ != address(0)) {
             emit ScopeSourceSet(groupId, scopeSource_, msg.sender, newVersion, address(0));
         }
@@ -218,31 +232,6 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function setDelegateId(uint256 groupId, uint256 delegateId_) external nonReentrant {
-        address owner = _ownerOfOrRevert(groupId);
-        if (msg.sender != owner) {
-            revert NotChatOwner();
-        }
-
-        ChatConfig storage config = _chatConfigs[groupId];
-        if (!config.activated) {
-            revert ChatNotActivated();
-        }
-        _validateDelegateId(groupId, delegateId_);
-
-        address targetSnapshot = delegateId_ == 0 ? address(0) : owner;
-        if (config.delegateId == delegateId_ && config.delegateOwnerSnapshot == targetSnapshot) {
-            return;
-        }
-
-        uint256 prevDelegateId = _delegateIdOf(config, owner);
-        config.delegateId = delegateId_;
-        config.delegateOwnerSnapshot = targetSnapshot;
-
-        uint256 newVersion = _nextConfigVersion(config);
-        emit DelegateIdSet(groupId, owner, delegateId_, newVersion, prevDelegateId);
-    }
-
     function setScopeSource(uint256 groupId, address sourceAddress) external nonReentrant {
         _setSource(groupId, sourceAddress, true);
     }
@@ -314,6 +303,9 @@ contract GroupChat is IGroupChat {
             revert ContentTooLong(contentLength, MAX_CONTENT_LENGTH);
         }
         _validateMentionedSenderIds(mentionedSenderIds);
+        if (mentionAll) {
+            _requireMentionAllOperator(groupId);
+        }
         _validateQuotedMessageId(groupId, quotedMessageId);
 
         uint256 round = currentRound();
@@ -369,7 +361,6 @@ contract GroupChat is IGroupChat {
             activated: config.activated,
             postingAllowed: config.postingAllowed,
             configVersion: config.configVersion,
-            delegateId: _delegateIdOf(config, owner),
             scopeSource: config.scopeSource,
             banSource: config.banSource,
             beforePostPlugin: config.beforePostPlugin,
@@ -407,11 +398,6 @@ contract GroupChat is IGroupChat {
             keys_[i] = key;
             values_[i] = _metaStates[groupId][_metaHash(key)].value;
         }
-    }
-
-    function delegateIdOf(uint256 groupId) external view returns (uint256) {
-        address owner = _ownerOfOrRevert(groupId);
-        return _delegateIdOf(_chatConfigs[groupId], owner);
     }
 
     function postingAllowed(uint256 groupId) external view returns (bool) {
@@ -878,14 +864,25 @@ contract GroupChat is IGroupChat {
     }
 
     function _requireOwnerOrDelegateAndActivated(uint256 groupId) internal view {
-        address owner = _ownerOfOrRevert(groupId);
+        _ownerOfOrRevert(groupId);
         ChatConfig storage config = _chatConfigs[groupId];
         if (!config.activated) {
             revert ChatNotActivated();
         }
-        if (!_isOwnerOrDelegateIdOwner(config, owner, msg.sender)) {
+        if (IGroupDelegate(GROUP_DELEGATE_ADDRESS).ownerOrDelegateIdOf(groupId, msg.sender) == 0) {
             revert NotChatOwnerOrDelegateIdOwner();
         }
+    }
+
+    function _requireMentionAllOperator(uint256 groupId) internal view {
+        IGroupAdmin groupAdmin = IGroupAdmin(GROUP_ADMIN_ADDRESS);
+        if (groupAdmin.ownerOrDelegateIdOf(groupId, msg.sender) != 0) {
+            return;
+        }
+        if (groupAdmin.adminIdOf(groupId, msg.sender) != 0) {
+            return;
+        }
+        revert MentionAllUnauthorized();
     }
 
     function _requirePostSources(ChatConfig storage config, uint256 groupId, uint256 senderId, address senderAddress)
@@ -996,23 +993,6 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _delegateIdOf(ChatConfig storage config, address owner) internal view returns (uint256) {
-        if (config.delegateOwnerSnapshot != owner) {
-            return 0;
-        }
-        return config.delegateId;
-    }
-
-    function _validateDelegateId(uint256 groupId, uint256 delegateId_) internal view {
-        if (delegateId_ == 0) {
-            return;
-        }
-        if (delegateId_ == groupId) {
-            revert DelegateIdCannotBeGroupId();
-        }
-        _ownerOfOrRevert(delegateId_);
-    }
-
     function _validateSourceAddress(address sourceAddress) internal view {
         if (sourceAddress != address(0) && sourceAddress.code.length == 0) {
             revert SourceAddressHasNoCode();
@@ -1023,23 +1003,6 @@ contract GroupChat is IGroupChat {
         if (pluginAddress != address(0) && pluginAddress.code.length == 0) {
             revert PluginAddressHasNoCode();
         }
-    }
-
-    function _isOwnerOrDelegateIdOwner(ChatConfig storage config, address owner, address operator)
-        internal
-        view
-        returns (bool)
-    {
-        if (operator == owner) {
-            return true;
-        }
-
-        uint256 delegateId_ = _delegateIdOf(config, owner);
-        if (delegateId_ == 0) {
-            return false;
-        }
-
-        return operator == _ownerOfOrRevert(delegateId_);
     }
 
     function _validateMetaInput(string[] calldata keys, bytes[] calldata values)

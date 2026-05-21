@@ -3,6 +3,8 @@ pragma solidity =0.8.17;
 
 import {GroupAdmin} from "../src/GroupAdmin.sol";
 import {IGroupAdmin} from "../src/interfaces/IGroupAdmin.sol";
+import {MockGroupDelegate} from "./mocks/MockGroupDelegate.sol";
+import {MockLOVE20Group} from "./mocks/MockLOVE20Group.sol";
 import {GroupChatFixture} from "./utils/GroupChatFixture.sol";
 
 contract GroupAdminTest is GroupChatFixture {
@@ -19,20 +21,28 @@ contract GroupAdminTest is GroupChatFixture {
         super.setUp();
         adminId = groupNft.mint(adminOwner);
         secondAdminId = groupNft.mint(secondAdminOwner);
-        groupAdmin = new GroupAdmin(address(chat), MAX_ADMIN_IDS);
+        groupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), MAX_ADMIN_IDS);
     }
 
     function testT129A_constructorStoresDependenciesAndRejectsInvalidConfig() public {
-        assertEq(groupAdmin.GROUP_CHAT_ADDRESS(), address(chat));
         assertEq(groupAdmin.GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(groupAdmin.GROUP_DELEGATE_ADDRESS(), address(groupDelegate));
         assertEq(groupAdmin.GROUP_ADDRESS(), address(groupNft));
         assertEq(groupAdmin.MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
 
         vm.expectRevert(IGroupAdmin.GroupAdminAddressHasNoCode.selector);
-        new GroupAdmin(address(0x1234), MAX_ADMIN_IDS);
+        new GroupAdmin(address(0x1234), address(groupDelegate), MAX_ADMIN_IDS);
+
+        vm.expectRevert(IGroupAdmin.GroupAdminAddressHasNoCode.selector);
+        new GroupAdmin(address(groupDefaults), address(0x1234), MAX_ADMIN_IDS);
+
+        MockLOVE20Group otherGroup = new MockLOVE20Group();
+        MockGroupDelegate mismatchedDelegate = new MockGroupDelegate(address(otherGroup));
+        vm.expectRevert(IGroupAdmin.GroupDelegateGroupMismatch.selector);
+        new GroupAdmin(address(groupDefaults), address(mismatchedDelegate), MAX_ADMIN_IDS);
 
         vm.expectRevert(IGroupAdmin.MaxAdminIdsZero.selector);
-        new GroupAdmin(address(chat), 0);
+        new GroupAdmin(address(groupDefaults), address(groupDelegate), 0);
     }
 
     function testT129B_ownerAndDelegateCanSetAdmins() public {
@@ -43,7 +53,9 @@ contract GroupAdminTest is GroupChatFixture {
 
         (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0), delegateId);
+        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        vm.prank(chatOwner);
+        groupDelegate.setDelegateId(groupId, delegateId);
 
         vm.prank(delegateIdOwner);
         groupAdmin.setAdmins(groupId, _uints(secondAdminId));

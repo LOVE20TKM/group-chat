@@ -36,6 +36,11 @@ if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
     export GROUP_JOIN_ADDRESS
 fi
 
+if [ -z "$GROUP_DELEGATE_ADDRESS" ] && [ -n "$groupDelegateAddress" ]; then
+    GROUP_DELEGATE_ADDRESS=$groupDelegateAddress
+    export GROUP_DELEGATE_ADDRESS
+fi
+
 if [ -z "$GROUP_ADMIN_ADDRESS" ] && [ -n "$groupAdminAddress" ]; then
     GROUP_ADMIN_ADDRESS=$groupAdminAddress
     export GROUP_ADMIN_ADDRESS
@@ -104,7 +109,7 @@ group_chat_phase_blocks=$(cast call "$groupChatAddress" "phaseBlocks()(uint256)"
 group_chat_phase_blocks=${group_chat_phase_blocks%% *}
 
 constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
-    $GROUP_DEFAULTS_ADDRESS \
+    $groupAdminAddress \
     $group_chat_origin_blocks \
     $group_chat_phase_blocks)
 
@@ -117,8 +122,9 @@ if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
     GROUP_CHAT_MAX_ADMIN_IDS=20
 fi
 
-group_admin_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
-    $groupChatAddress \
+group_admin_constructor_args=$(cast abi-encode "constructor(address,address,uint256)" \
+    $GROUP_DEFAULTS_ADDRESS \
+    $GROUP_DELEGATE_ADDRESS \
     $GROUP_CHAT_MAX_ADMIN_IDS)
 verify_contract \
     $groupAdminAddress \

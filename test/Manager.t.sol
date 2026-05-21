@@ -31,9 +31,7 @@ contract ManagerTest is GroupChatFixture {
 
         assertTrue(chat.chatInfo(groupId).activated);
         assertTrue(chat.chatInfo(groupId).postingAllowed);
-        assertEq(chat.delegateIdOf(groupId), 0);
         IGroupChat.ChatInfo memory info = chat.chatInfo(groupId);
-        assertEq(info.delegateId, 0);
         assertEq(info.scopeSource, address(manager));
         assertEq(info.banSource, address(banSource));
         assertEq(info.beforePostPlugin, address(beforePlugin));

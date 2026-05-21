@@ -7,7 +7,9 @@
 生命周期：
 
 - `GROUP_ADDRESS`
+- `GROUP_ADMIN_ADDRESS`
 - `GROUP_DEFAULTS_ADDRESS`
+- `GROUP_DELEGATE_ADDRESS`
 - `originBlocks`
 - `phaseBlocks`
 - `MAX_CONTENT_LENGTH`
@@ -26,11 +28,6 @@ Meta：
 - `metaValue`
 - `metaEntriesCount`
 - `metaEntries`
-
-Delegate：
-
-- `setDelegateId`
-- `delegateIdOf`
 
 Rule slots：
 
@@ -85,7 +82,6 @@ Query：
 - `activated`
 - `postingAllowed`
 - `configVersion`
-- `delegateId`
 - `scopeSource`
 - `banSource`
 - `beforePostPlugin`
@@ -130,7 +126,6 @@ Query：
 - `Activate(uint256 indexed groupId, address indexed owner, uint256 configVersion)`
 - `PostingAllowedSet`
 - `MetaSet`
-- `DelegateIdSet`
 - `ScopeSourceSet`
 - `BanSourceSet`
 - `BeforePostPluginSet`
@@ -184,10 +179,6 @@ Meta 错误：
 - `MetaArrayLengthMismatch`
 - `DuplicateMetaKey`
 
-Delegate 错误：
-
-- `DelegateIdCannotBeGroupId`
-
 Rule slot 错误：
 
 - `SourceAddressHasNoCode`
@@ -209,4 +200,9 @@ Rule slot 错误：
 默认身份错误：
 
 - `DefaultGroupIdNotSet`
+- `GroupAdminHasNoCode`
 - `GroupDefaultsHasNoCode`
+- `GroupDefaultsGroupMismatch`
+- `GroupDelegateHasNoCode`
+- `GroupDelegateGroupMismatch`
+- `MentionAllUnauthorized`

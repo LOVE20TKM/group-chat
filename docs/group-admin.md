@@ -5,7 +5,7 @@
 ## 语义
 
 - 管理员绑定 `GroupNFT`，不是地址。
-- `setAdmins(groupId, adminIds)` 只能由 `GroupNFT.ownerOf(groupId)` 当前 owner 或 `GroupChat.delegateIdOf(groupId)` 的有效 owner 调用。
+- `setAdmins(groupId, adminIds)` 只能由 `GroupNFT.ownerOf(groupId)` 当前 owner 或 `GroupDelegate.ownerOrDelegateIdOf(groupId, account)` 命中的有效 delegate owner 调用。
 - admin 权限通过 `GroupDefaults.defaultGroupIdOf(account)` 实时生效。
 - NFT 转让、默认身份变化、delegate 变化都会实时影响权限。
 

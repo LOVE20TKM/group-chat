@@ -46,7 +46,7 @@
 - `blacklistMode = "gov"` 必须有 `govBan`。
 - `blacklistMode = "admin"` 必须有 `groupAdmin` 与 `adminBan`；管理员 NFT 放在 `groupAdmin.adminIds`，不要放回 `adminBan`。
 - 链群服务者管理型群聊必须有 `groupMemberScope.memberIds`，用于 `GroupMemberScope` 手工成员 NFT 名单。
-- `chatInfo` 至少保留 `scopeSource/banSource/beforePostPlugin/afterPostPlugin/delegateId`。
+- `chatInfo` 至少保留 `scopeSource/banSource/beforePostPlugin/afterPostPlugin`；delegate 使用独立的 `groupDelegate.delegateId`。
 
 ## 验收
 

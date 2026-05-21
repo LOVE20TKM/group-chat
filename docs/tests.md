@@ -6,7 +6,6 @@
 
 - `test/GroupChatLifecycle.t.sol`：部署、激活、发言开关、首次激活快照
 - `test/GroupChatMeta.t.sol`：meta、批量写、`configVersion`
-- `test/GroupChatDelegate.t.sol`：delegate、NFT 转让失效 / 恢复
 - `test/GroupChatMessages.t.sol`：发言、mentionedSenderIds、mention 通知事件、quote、round、分页、sender 索引
 - `test/GroupChatPlugins.t.sol`：scope、ban、before / after plugin、重入
 - `test/GroupChatDefaultSender.t.sol`：默认发言身份
@@ -36,12 +35,6 @@ Meta：
 - 非空 value 超过 `MAX_META_VALUE_LENGTH` 必须 revert。
 - 批量写只递增一次 `configVersion`。
 - 批量写按最终 live key 总数校验 `MAX_META_KEYS`，失败时不得产生部分写入。
-
-Delegate：
-
-- owner 可设置和清空 delegate。
-- delegate 不能激活或代替发言。
-- NFT 转出后旧 delegate 失效，转回后恢复。
 
 发言：
 
@@ -76,7 +69,7 @@ Manager：
 
 Source：
 
-- `GroupAdmin` 统一 owner / delegate 配管理员 NFT。
+- `GroupAdmin` 统一通过外部 `GroupDelegate` 判定 owner / delegate 配管理员 NFT。
 - `GroupMember` 维护成员 NFT 名单，`GroupMemberScope` 使用该名单控制发言资格。
 - `GroupJoinScopeSource` 组合 `GroupMember` 与 `GroupJoin` g 索引。
 - `GroupBanList` 维护手工黑名单，`AdminBanSource` 使用该名单控制发言资格。
@@ -86,6 +79,7 @@ Source：
 部署：
 
 - 固定部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource`、`GovVotedBanSource`、`GroupMember`、`GroupMemberScope`、`GroupJoinScopeSource`。
+- `GroupChat` 固定接入 `group` 仓库部署的 `GroupDelegate`，不在当前仓库部署 delegate。
 - 地址文件只包含当前仓库部署产物字段；上游依赖地址不写入 `address.group.chat.params`。
 
 ## 当前验证命令

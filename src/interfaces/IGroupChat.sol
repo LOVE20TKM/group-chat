@@ -17,7 +17,6 @@ interface IGroupChatErrors {
     error MetaValueTooLong(uint256 length, uint256 maxLength);
     error MetaArrayLengthMismatch();
     error DuplicateMetaKey();
-    error DelegateIdCannotBeGroupId();
     error SourceAddressHasNoCode();
     error PluginAddressHasNoCode();
     error ContentEmpty();
@@ -27,7 +26,12 @@ interface IGroupChatErrors {
     error InvalidQuotedMessageId();
     error InvalidMessageId();
     error DefaultGroupIdNotSet();
+    error GroupAdminHasNoCode();
     error GroupDefaultsHasNoCode();
+    error GroupDefaultsGroupMismatch();
+    error GroupDelegateHasNoCode();
+    error GroupDelegateGroupMismatch();
+    error MentionAllUnauthorized();
     error ScopeRejected();
     error BanRejected();
     error ScopeSourceFailed();
@@ -48,14 +52,6 @@ interface IGroupChatEvents {
         string key,
         bytes value,
         bytes prevValue
-    );
-
-    event DelegateIdSet(
-        uint256 indexed groupId,
-        address indexed owner,
-        uint256 indexed delegateId,
-        uint256 configVersion,
-        uint256 prevDelegateId
     );
 
     event ScopeSourceSet(
@@ -118,7 +114,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         bool activated;
         bool postingAllowed;
         uint256 configVersion;
-        uint256 delegateId;
         address scopeSource;
         address banSource;
         address beforePostPlugin;
@@ -151,7 +146,11 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function GROUP_ADDRESS() external view returns (address);
 
+    function GROUP_ADMIN_ADDRESS() external view returns (address);
+
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
+
+    function GROUP_DELEGATE_ADDRESS() external view returns (address);
 
     function originBlocks() external view returns (uint256);
 
@@ -172,8 +171,7 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         address scopeSource_,
         address banSource_,
         address beforePostPlugin_,
-        address afterPostPlugin_,
-        uint256 delegateId_
+        address afterPostPlugin_
     ) external;
 
     function setPostingAllowed(uint256 groupId, bool postingAllowed_) external;
@@ -181,8 +179,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
     function setMeta(uint256 groupId, string calldata key, bytes calldata value) external;
 
     function setMetaBatch(uint256 groupId, string[] calldata keys, bytes[] calldata values) external;
-
-    function setDelegateId(uint256 groupId, uint256 delegateId_) external;
 
     function setScopeSource(uint256 groupId, address sourceAddress) external;
 
@@ -219,8 +215,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         external
         view
         returns (string[] memory keys, bytes[] memory values);
-
-    function delegateIdOf(uint256 groupId) external view returns (uint256);
 
     function postingAllowed(uint256 groupId) external view returns (bool);
 

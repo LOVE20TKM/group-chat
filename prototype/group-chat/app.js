@@ -237,7 +237,6 @@ function activationDraftFor(chat) {
       banSource: chat.chatInfo.banSource,
       beforePostPlugin: chat.chatInfo.beforePostPlugin,
       afterPostPlugin: chat.chatInfo.afterPostPlugin,
-      delegateId: chat.chatInfo.delegateId,
     };
   }
   return state.activationDrafts[key];
@@ -254,7 +253,6 @@ function activationFieldLabel(field) {
     banSource: 'banSource',
     beforePostPlugin: 'beforePostPlugin',
     afterPostPlugin: 'afterPostPlugin',
-    delegateId: 'delegateId',
   };
   return labels[field] || field;
 }
@@ -301,17 +299,13 @@ function activationIssue(chat, draft) {
   if (chat.model === 'chain-service') {
     if (Number(draft.groupId) !== chat.groupId) return 'groupId 必须等于当前 GroupNFT tokenId';
     if (chat.role !== 'owner') return '只有 groupId 当前 owner 可以直接激活';
-    const delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
-    if (!delegateId) return `未找到 NFT：${draft.delegateId}`;
-    if (Number(delegateId || 0) === chat.groupId) return 'delegateId 不能等于 groupId';
   }
   return '';
 }
 
 function activationPreview(chat, draft) {
   if (chat.model === 'chain-service') {
-    const delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
-    return `activateChat(${draft.groupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.banSource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin}, ${delegateId})`;
+    return `activateChat(${draft.groupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.banSource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin})`;
   }
   const values = Object.keys(chat.params).map((key) => draft[key]).join(', ');
   return `${chat.manager}.activate(${values})`;
@@ -323,6 +317,10 @@ function manageableRole(chat) {
 
 function canEditRules(chat) {
   return chat && ['owner', 'delegate'].includes(chat.role);
+}
+
+function canMentionAll(chat) {
+  return Boolean(canEditRules(chat) || isAdminBanOperator(chat));
 }
 
 function groupAdminState(chat) {
@@ -871,7 +869,6 @@ function renderDirectActivationFields(chat, draft) {
       ${renderActivationChoice('banSource', draft.banSource)}
       ${renderActivationChoice('beforePostPlugin', draft.beforePostPlugin)}
       ${renderActivationChoice('afterPostPlugin', draft.afterPostPlugin)}
-      ${renderActivationTextInput('delegateId', draft.delegateId)}
     </section>
   `;
 }
@@ -901,11 +898,8 @@ function renderNftLookupControl(inputId, value, mode, placeholder, selectAction,
 
 function renderActivationTextInput(field, value, readonly = false) {
   const id = `activation-${field}-input`;
-  const placeholder = field === 'delegateId' ? (state.nftInputMode === 'name' ? '请输入NFT名称' : '请输入NFT ID') : '';
-  const inputMode = field === 'delegateId' ? (state.nftInputMode === 'id' ? 'numeric' : 'text') : activationInputMode(field);
-  const control = field === 'delegateId'
-    ? renderNftLookupControl(id, value, state.nftInputMode, placeholder, 'set-nft-input-mode-select', readonly, inputMode, `data-activation-field="${field}"`)
-    : `<input id="${id}" data-activation-field="${field}" value="${escapeHtml(value ?? '')}" inputmode="${inputMode}" placeholder="${placeholder}" ${readonly ? 'readonly' : ''}>`;
+  const inputMode = activationInputMode(field);
+  const control = `<input id="${id}" data-activation-field="${field}" value="${escapeHtml(value ?? '')}" inputmode="${inputMode}" ${readonly ? 'readonly' : ''}>`;
   return `
     <div class="field-row activation-field-row">
       <label for="${id}">${escapeHtml(activationFieldLabel(field))}</label>
@@ -1007,7 +1001,7 @@ function renderRuleInput(chat, slot, canEdit = canEditRules(chat)) {
 }
 
 function renderDelegateInput(chat, canEdit = canEditRules(chat)) {
-  const value = chat.chatInfo.delegateId || '0';
+  const value = chat.groupDelegate?.delegateId || '0';
   const placeholder = state.nftInputMode === 'name' ? '请输入代理NFT名称' : '请输入代理NFT ID';
   const inputMode = state.nftInputMode === 'id' ? 'numeric' : 'text';
   return `
@@ -1019,7 +1013,7 @@ function renderDelegateInput(chat, canEdit = canEditRules(chat)) {
       <div class="query-result">${escapeHtml(delegateDisplay(value))}</div>
       <div class="query-row delegate-query-row">
         ${renderNftLookupControl('delegateId-input', '', state.nftInputMode, placeholder, 'set-nft-input-mode-select', !canEdit, inputMode)}
-        <button class="sheet-button primary" type="button" data-action="set-rule-slot" data-slot="delegateId" data-input="delegateId-input" ${canEdit ? '' : 'disabled'}>确认</button>
+        <button class="sheet-button primary" type="button" data-action="set-delegate-id" data-input="delegateId-input" ${canEdit ? '' : 'disabled'}>确认</button>
       </div>
       <div class="muted">输入 0 表示不设置代理。</div>
       ${state.delegateQueryResult ? `<div class="query-result">${escapeHtml(state.delegateQueryResult)}</div>` : ''}
@@ -1095,13 +1089,8 @@ function renderAdminList(items, listName, canRemove) {
 
 function renderRuleRows(chat) {
   return Object.entries(chat.chatInfo)
-    .map(([key, value]) => `<div><span>${escapeHtml(key)}</span><strong>${escapeHtml(ruleSlotDisplay(key, value))}</strong></div>`)
+    .map(([key, value]) => `<div><span>${escapeHtml(key)}</span><strong>${escapeHtml(value)}</strong></div>`)
     .join('');
-}
-
-function ruleSlotDisplay(key, value) {
-  if (key !== 'delegateId' || value === '0') return value;
-  return delegateDisplay(value);
 }
 
 function delegateDisplay(value) {
@@ -1891,7 +1880,6 @@ function activateChat(groupId) {
     chat.chatInfo.banSource = draft.banSource || 'address(0)';
     chat.chatInfo.beforePostPlugin = draft.beforePostPlugin || 'address(0)';
     chat.chatInfo.afterPostPlugin = draft.afterPostPlugin || 'address(0)';
-    chat.chatInfo.delegateId = resolveOptionalKnownNftInput(draft.delegateId, state.nftInputMode);
     chat.params = {
       groupId: String(chat.groupId),
       scopeSource: chat.chatInfo.scopeSource,
@@ -1936,35 +1924,40 @@ function setRuleSlot(slot, inputId) {
   const input = document.getElementById(inputId);
   let value = input.value.trim();
   if (!chat || !canEditRules(chat)) return;
-  if (slot === 'delegateId') {
-    if (!value) {
-      state.delegateQueryResult = '请输入代理 NFT 名称或编号；输入 0 表示不设置代理。';
-      render();
-      return;
-    }
-    value = resolveOptionalKnownNftInput(value, state.nftInputMode);
-    if (!value) {
-      state.delegateQueryResult = state.nftInputMode === 'id'
-        ? `未加载 NFT #${input.value.trim()}，无法确认名称。`
-        : `未找到 NFT：${input.value.trim()}`;
-      render();
-      return;
-    }
-    if (value !== '0' && Number(value) === chat.groupId) {
-      state.delegateQueryResult = '代理 NFT 不能等于当前群聊 NFT。';
-      render();
-      return;
-    }
-    chat.chatInfo[slot] = value;
-    state.delegateQueryResult = value === '0' ? '已确认：不设置代理。' : `已确认：NFT #${value} · ${nftProfile(value).name}`;
-    state.syncHint = `${slot} 已更新为 ${value}`;
-    render();
-    return;
-  }
   if (!value) return;
   chat.chatInfo[slot] = value;
   refreshManualMemberScopeAllowed(chat);
   state.syncHint = `${slot} 已更新为 ${value}`;
+  render();
+}
+
+function setDelegateId(inputId) {
+  const chat = activeChat();
+  const input = document.getElementById(inputId);
+  let value = input.value.trim();
+  if (!chat || !canEditRules(chat)) return;
+  if (!value) {
+    state.delegateQueryResult = '请输入代理 NFT 名称或编号；输入 0 表示不设置代理。';
+    render();
+    return;
+  }
+  value = resolveOptionalKnownNftInput(value, state.nftInputMode);
+  if (!value) {
+    state.delegateQueryResult = state.nftInputMode === 'id'
+      ? `未加载 NFT #${input.value.trim()}，无法确认名称。`
+      : `未找到 NFT：${input.value.trim()}`;
+    render();
+    return;
+  }
+  if (value !== '0' && Number(value) === chat.groupId) {
+    state.delegateQueryResult = '代理 NFT 不能等于当前群聊 NFT。';
+    render();
+    return;
+  }
+  chat.groupDelegate = chat.groupDelegate || {};
+  chat.groupDelegate.delegateId = value;
+  state.delegateQueryResult = value === '0' ? '已确认：不设置代理。' : `已确认：NFT #${value} · ${nftProfile(value).name}`;
+  state.syncHint = `GroupDelegate.setDelegateId(${chat.groupId}, ${value}) 已模拟提交。`;
   render();
 }
 
@@ -2553,6 +2546,11 @@ function sendMessage() {
     render();
     return;
   }
+  if (draftMentionedSenderIds.mentionAll && !canMentionAll(chat)) {
+    state.syncHint = 'MentionAllUnauthorized：只有 owner、delegate 或 GroupAdmin 管理员 NFT 可以发送 @全部。';
+    render();
+    return;
+  }
 
   const visibleMessages = messagesForChat(state.activeGroupId);
   const nextMessageId = visibleMessages.length ? Math.max(...visibleMessages.map((message) => message.messageId)) + 1 : 1;
@@ -2769,6 +2767,7 @@ document.addEventListener('click', (event) => {
   if (action === 'open-settings') openSettings(target.dataset.groupId);
   if (action === 'open-blacklist') openBlacklist(target.dataset.groupId);
   if (action === 'set-rule-slot') setRuleSlot(target.dataset.slot, target.dataset.input);
+  if (action === 'set-delegate-id') setDelegateId(target.dataset.input);
   if (action === 'set-rule-slot-option') setRuleSlotOption(target.dataset.slot, target.dataset.value);
   if (action === 'set-posting-allowed') setPostingAllowed(target.dataset.value);
   if (action === 'admin-list-add') addAdminList(target.dataset.list, target.dataset.input);

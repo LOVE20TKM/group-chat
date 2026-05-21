@@ -270,7 +270,6 @@ const requiredAppJs = [
   'queryAdminId',
   'queryMemberSelf',
   'queryMemberId',
-  'ruleSlotDisplay',
   'admin-nft-row',
   'renderBlacklistControls',
   'blacklist-controls',
@@ -297,6 +296,8 @@ const requiredAppJs = [
   'setRuleSlot',
   'MessagePost',
   'GroupMemberScope.addMemberIds',
+  'setDelegateId',
+  'set-delegate-id',
 ];
 
 for (const needle of requiredAppJs) {
@@ -446,7 +447,7 @@ const requiredProtocolCopy = [
   'banSource',
   'beforePostPlugin',
   'afterPostPlugin',
-  'delegateId',
+  'groupDelegate',
   'stateVersion',
   'banThresholdRatio',
   'totalWeight',
@@ -878,14 +879,14 @@ const nftLookupApi = nftLookupHarness({
   memberIdQuery: '',
   delegateQueryResult: '',
 });
-const activationDelegateInput = nftLookupApi.renderActivationTextInput('delegateId', '');
-if (!activationDelegateInput.includes('class="nft-lookup"')) {
-  throw new Error('Activation delegateId input must reuse the shared NFT lookup control');
+const activationMetaInput = nftLookupApi.renderActivationTextInput('metaTitle', '');
+if (activationMetaInput.includes('class="nft-lookup"')) {
+  throw new Error('Activation fields must not render the removed delegate NFT lookup');
 }
-if (!activationDelegateInput.includes('data-activation-field="delegateId"')) {
-  throw new Error('Activation delegateId lookup input must remain capturable by activation drafts');
+if (!nftLookupApi.renderDelegateInput({ groupDelegate: { delegateId: '0' } }, true).includes('data-action="set-delegate-id"')) {
+  throw new Error('Delegate editor must call GroupDelegate setDelegateId flow');
 }
-if (!nftLookupApi.renderDelegateInput({ chatInfo: { delegateId: '0' } }, true).includes('data-action="set-nft-input-mode-select"')) {
+if (!nftLookupApi.renderDelegateInput({ groupDelegate: { delegateId: '0' } }, true).includes('data-action="set-nft-input-mode-select"')) {
   throw new Error('Delegate editor must reuse the shared NFT lookup control');
 }
 if (!nftLookupApi.renderAdminIdControls({}).includes('data-action="set-admin-query-type-select"')) {

@@ -90,8 +90,7 @@ abstract contract BaseManager is IBaseManager {
             address(this),
             BAN_SOURCE_ADDRESS,
             BEFORE_POST_PLUGIN_ADDRESS,
-            AFTER_POST_PLUGIN_ADDRESS,
-            0
+            AFTER_POST_PLUGIN_ADDRESS
         );
     }
 

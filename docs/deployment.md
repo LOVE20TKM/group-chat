@@ -32,6 +32,7 @@ source ./one_click_deploy.sh <network>
 ## 必填参数
 
 - `GROUP_DEFAULTS_ADDRESS`
+- `GROUP_DELEGATE_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`
@@ -48,6 +49,7 @@ source ./one_click_deploy.sh <network>
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
 `GroupChat.originBlocks` 与 `GroupChat.phaseBlocks` 部署时直接读取 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约，保证 `currentRound()` 对齐 Join 合约。
+`GroupChat` 构造时固定写入 `GROUP_DELEGATE_ADDRESS`，并校验 `GroupDelegate.GROUP_ADDRESS()` 与 `GroupDefaults.GROUP_ADDRESS()` 一致。
 
 `DeployGroupChat` 固定部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource` 与 `GovVotedBanSource`。
 `GovVotedBanSource` 构造参数固定写入黑名单生效阈值。
@@ -68,6 +70,7 @@ source ./one_click_deploy.sh <network>
 - `script/network/<network>/group.chat.params`
 - `script/network/<network>/address.group.params`
 - `script/network/<network>/address.group.defaults.params`
+- `script/network/<network>/address.group.delegate.params`
 
 `.account` 为本地运行必需文件，必须包含 `KEYSTORE_ACCOUNT` 与 `ACCOUNT_ADDRESS`；可从同目录 `.account.example` 复制生成，真实 `.account` 不提交。
 
@@ -75,7 +78,7 @@ source ./one_click_deploy.sh <network>
 
 - `script/network/<network>/address.group.chat.params`
 
-结果字段只包含当前仓库本次部署产物；上游依赖地址继续从 `address.group.params`、`address.group.defaults.params` 与 `group.chat.params` 读取。
+结果字段只包含当前仓库本次部署产物；上游依赖地址继续从 `address.group.params`、`address.group.defaults.params`、`address.group.delegate.params` 与 `group.chat.params` 读取。
 
 - `groupAdminAddress`
 - `groupBanListAddress`
@@ -125,16 +128,20 @@ GROUP_CHAT_ACTION_RECENT_ROUNDS
 ## Check
 
 子脚本默认由 `one_click_deploy.sh` 调用；单独运行前必须先执行 `source ./00_init.sh <network>`。
-`99_check.sh` 会重新读取 `script/network/<network>/address.group.chat.params`、`address.group.params`、`address.group.defaults.params` 与 `group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与 core Join 合约值比对；不一致即视为部署失败，该合约实例不得继续使用。
+`99_check.sh` 会重新读取 `script/network/<network>/address.group.chat.params`、`address.group.params`、`address.group.defaults.params`、`address.group.delegate.params` 与 `group.chat.params`，并将链上 immutable `originBlocks` / `phaseBlocks` 与 core Join 合约值比对；不一致即视为部署失败，该合约实例不得继续使用。
 
 `script/deploy/99_check.sh` 会检查：
 
 - `GroupChat.GROUP_DEFAULTS_ADDRESS`
+- `GroupChat.GROUP_DELEGATE_ADDRESS`
+- `GroupChat.GROUP_ADMIN_ADDRESS`
 - `GroupChat.GROUP_ADDRESS`
+- `GroupDelegate.GROUP_ADDRESS`
 - `originBlocks` 对齐 core Join
 - `phaseBlocks` 对齐 core Join
 - `GroupChat.currentRound()` 与 core Join 当前轮一致
 - `GroupAdmin` 固定依赖
+- `GroupAdmin.GROUP_DELEGATE_ADDRESS`
 - `GroupAdmin.MAX_ADMIN_IDS`
 - `GroupBanList` 固定依赖
 - `AdminBanSource.GROUP_BAN_LIST_ADDRESS`

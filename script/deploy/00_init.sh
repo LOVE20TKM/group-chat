@@ -35,6 +35,10 @@ if [ -f "$network_dir/address.group.defaults.params" ]; then
     source $network_dir/address.group.defaults.params
 fi
 
+if [ -f "$network_dir/address.group.delegate.params" ]; then
+    source $network_dir/address.group.delegate.params
+fi
+
 if [ -f "$network_dir/group.chat.params" ]; then
     source $network_dir/group.chat.params
     unset ORIGIN_BLOCKS
@@ -46,6 +50,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
 
     if [ -n "$groupDefaultsAddress" ]; then
         export GROUP_DEFAULTS_ADDRESS=$groupDefaultsAddress
+    fi
+
+    if [ -n "$groupDelegateAddress" ]; then
+        export GROUP_DELEGATE_ADDRESS=$groupDelegateAddress
     fi
 
     if [ -n "$extensionCenterAddress" ]; then
@@ -103,6 +111,12 @@ if [ -f "$network_dir/group.chat.params" ]; then
     if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
         echo -e "\033[31mError:\033[0m GROUP_DEFAULTS_ADDRESS not set"
         echo -e "Please provide groupDefaultsAddress in $network_dir/address.group.defaults.params"
+        return 1
+    fi
+
+    if [ -z "$GROUP_DELEGATE_ADDRESS" ]; then
+        echo -e "\033[31mError:\033[0m GROUP_DELEGATE_ADDRESS not set"
+        echo -e "Please provide groupDelegateAddress in $network_dir/address.group.delegate.params"
         return 1
     fi
 
@@ -168,6 +182,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
 
     export GROUP_ADDRESS
     export GROUP_DEFAULTS_ADDRESS
+    export GROUP_DELEGATE_ADDRESS
     export EXTENSION_CENTER_ADDRESS
     export GROUP_JOIN_ADDRESS
     export GROUP_ADMIN_ADDRESS
@@ -187,6 +202,7 @@ if [ -f "$network_dir/group.chat.params" ]; then
         echo "  LOVE20 Group: $GROUP_ADDRESS"
     fi
     echo "  GroupDefaults: $GROUP_DEFAULTS_ADDRESS"
+    echo "  GroupDelegate: $GROUP_DELEGATE_ADDRESS"
     echo "  ExtensionCenter: $EXTENSION_CENTER_ADDRESS"
     echo "  GroupJoin: $GROUP_JOIN_ADDRESS"
     echo "  GroupAdmin: $GROUP_ADMIN_ADDRESS"

@@ -15,7 +15,6 @@ Manager 用于去中心化群聊。
 - Action 类 Manager 只允许已存在于 core `Submit.actionsCount(token)` 范围内的 `actionId` 激活 typed chat。
 - 通过 `activate(...)` 激活对应类型的 chat。
 - 激活时一次性写入 `scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin`。
-- 激活时 `delegateId = 0`。
 - 作为该 chat 的 `scopeSource`。
 - 作为治理黑名单的 `IBanVoteWeightSource`。
 - 为治理黑名单提供 `voteWeightOf(...)` 与 `totalVoteWeight(...)`。

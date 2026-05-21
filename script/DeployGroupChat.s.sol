@@ -23,6 +23,7 @@ contract DeployGroupChat is ScriptBase {
 
     struct DeployConfig {
         address groupDefaults;
+        address groupDelegate;
         address extensionCenter;
         address groupJoin;
         address beforePostPlugin;
@@ -53,6 +54,7 @@ contract DeployGroupChat is ScriptBase {
         address groupJoin = vm.envAddress("GROUP_JOIN_ADDRESS");
         DeployConfig memory config = _configFromCoreJoin(
             vm.envAddress("GROUP_DEFAULTS_ADDRESS"),
+            vm.envAddress("GROUP_DELEGATE_ADDRESS"),
             vm.envAddress("EXTENSION_CENTER_ADDRESS"),
             groupJoin,
             vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
@@ -74,6 +76,7 @@ contract DeployGroupChat is ScriptBase {
 
     function _configFromCoreJoin(
         address groupDefaults,
+        address groupDelegate,
         address extensionCenter,
         address groupJoin,
         address beforePostPlugin,
@@ -85,6 +88,7 @@ contract DeployGroupChat is ScriptBase {
         address coreJoin = IExtensionCenter(extensionCenter).joinAddress();
         return DeployConfig({
             groupDefaults: groupDefaults,
+            groupDelegate: groupDelegate,
             extensionCenter: extensionCenter,
             groupJoin: groupJoin,
             beforePostPlugin: beforePostPlugin,
@@ -98,9 +102,9 @@ contract DeployGroupChat is ScriptBase {
     }
 
     function _deploy(DeployConfig memory config) internal returns (DeployedAddresses memory deployed) {
-        GroupChat groupChat = new GroupChat(config.groupDefaults, config.originBlocks, config.phaseBlocks);
+        deployed.groupAdmin = address(new GroupAdmin(config.groupDefaults, config.groupDelegate, config.maxAdminIds));
+        GroupChat groupChat = new GroupChat(deployed.groupAdmin, config.originBlocks, config.phaseBlocks);
         deployed.groupChat = address(groupChat);
-        deployed.groupAdmin = address(new GroupAdmin(address(groupChat), config.maxAdminIds));
         deployed.groupBanList = address(new GroupBanList(deployed.groupAdmin));
         deployed.adminBanSource = address(new AdminBanSource(deployed.groupBanList));
         deployed.govVotedBanSource = address(new GovVotedBanSource(groupChat.GROUP_ADDRESS(), config.banThresholdRatio));

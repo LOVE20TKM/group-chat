@@ -29,6 +29,10 @@ if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.defaults.params" ];
     source "$network_dir/address.group.defaults.params"
 fi
 
+if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.delegate.params" ]; then
+    source "$network_dir/address.group.delegate.params"
+fi
+
 if [ -n "$network_dir" ] && [ -f "$network_dir/group.chat.params" ]; then
     source "$network_dir/group.chat.params"
 else
@@ -44,6 +48,11 @@ fi
 if [ -n "$groupDefaultsAddress" ]; then
     GROUP_DEFAULTS_ADDRESS=$groupDefaultsAddress
     export GROUP_DEFAULTS_ADDRESS
+fi
+
+if [ -n "$groupDelegateAddress" ]; then
+    GROUP_DELEGATE_ADDRESS=$groupDelegateAddress
+    export GROUP_DELEGATE_ADDRESS
 fi
 
 if [ -n "$extensionCenterAddress" ]; then
@@ -146,6 +155,11 @@ if [ -z "$GROUP_DEFAULTS_ADDRESS" ]; then
     ((missing_params++))
 fi
 
+if [ -z "$GROUP_DELEGATE_ADDRESS" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_DELEGATE_ADDRESS not set"
+    ((missing_params++))
+fi
+
 if [ -z "$EXTENSION_CENTER_ADDRESS" ]; then
     echo -e "\033[31m✗\033[0m EXTENSION_CENTER_ADDRESS not set"
     ((missing_params++))
@@ -238,7 +252,7 @@ fi
 
 if [ $missing_params -gt 0 ]; then
     echo -e "\033[31mError:\033[0m $missing_params initialization parameter(s) missing"
-    echo "Please ensure all parameters are loaded from group.chat.params / address.group.params / address.group.defaults.params / address.group.chat.params"
+    echo "Please ensure all parameters are loaded from group.chat.params / address.group.params / address.group.defaults.params / address.group.delegate.params / address.group.chat.params"
     return 1
 fi
 
@@ -246,6 +260,7 @@ echo -e "\033[32m✓\033[0m All initialization parameters are set"
 echo ""
 
 echo -e "GroupChat Address: $groupChatAddress\n"
+echo -e "GroupDelegate Address: $GROUP_DELEGATE_ADDRESS"
 echo -e "GroupAdmin Address: $GROUP_ADMIN_ADDRESS"
 echo -e "GroupBanList Address: $GROUP_BAN_LIST_ADDRESS"
 echo -e "AdminBanSource Address: $ADMIN_BAN_SOURCE_ADDRESS"
@@ -303,7 +318,19 @@ check_equal "GroupChat: GROUP_ADDRESS" $defaults_group_address $(cast_call $grou
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
+check_equal "GroupChat: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $groupChatAddress "GROUP_ADMIN_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
 check_equal "GroupChat: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $groupChatAddress "GROUP_DEFAULTS_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+check_equal "GroupChat: GROUP_DELEGATE_ADDRESS" $GROUP_DELEGATE_ADDRESS $(cast_call $groupChatAddress "GROUP_DELEGATE_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+echo ""
+
+check_equal "GroupDelegate: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_DELEGATE_ADDRESS "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -341,9 +368,9 @@ fi
 echo ""
 
 echo "Verifying GroupAdmin configuration..."
-check_equal "GroupAdmin: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_CHAT_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
 check_equal "GroupAdmin: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GroupAdmin: GROUP_DELEGATE_ADDRESS" $GROUP_DELEGATE_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_DELEGATE_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "GroupAdmin: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_ADDRESS()(address)")
 [ $? -ne 0 ] && ((failed_checks++))
@@ -353,14 +380,6 @@ echo ""
 
 echo "Verifying GroupBanList configuration..."
 check_equal "GroupBanList: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupBanList: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_CHAT_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupBanList: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupBanList: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_ADDRESS()(address)")
-[ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupBanList: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_call $GROUP_BAN_LIST_ADDRESS "MAX_ADMIN_IDS()(uint256)")
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 

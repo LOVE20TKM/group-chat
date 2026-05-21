@@ -86,6 +86,7 @@ python3 -m http.server 8012
 依赖环境变量：
 
 - `GROUP_DEFAULTS_ADDRESS`
+- `GROUP_DELEGATE_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`（当前配置为 `3`）
@@ -112,6 +113,7 @@ forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 shell 一键部署：
 
 - 上游 `GroupDefaults` 地址使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.defaults.params`
+- 上游 `GroupDelegate` 地址使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.delegate.params`
 - 上游 `LOVE20Group` 地址可使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.params` 做校验
 - 当前仓库自身参数从 `script/network/<network>/group.chat.params` 读取
 - `DeployGroupChat` 固定同时部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource` 与 `GovVotedBanSource`

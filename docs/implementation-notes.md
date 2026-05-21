@@ -16,7 +16,6 @@
 - `chatInfo`
 - `metaValue` / `metaEntriesCount` / `metaEntries`
 - `setMeta` / `setMetaBatch`
-- `setDelegateId` / `delegateIdOf`
 - `setScopeSource` / `setBanSource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
 - `canPost`
@@ -66,6 +65,7 @@
 依赖环境变量：
 
 - `GROUP_DEFAULTS_ADDRESS`
+- `GROUP_DELEGATE_ADDRESS`
 - `EXTENSION_CENTER_ADDRESS`
 - `GROUP_JOIN_ADDRESS`
 - `GROUP_CHAT_ACTION_RECENT_ROUNDS`
@@ -93,11 +93,14 @@ forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 shell 一键部署时：
 
 - 上游 `GroupDefaults` 已归属 `group` 仓库并单独部署，地址直接使用从 `group` 仓库复制过来的 `address.group.defaults.params`
+- 上游 `GroupDelegate` 已归属 `group` 仓库并单独部署，地址直接使用从 `group` 仓库复制过来的 `address.group.delegate.params`
 - 上游 `LOVE20Group` 地址可使用从 `group` 仓库复制过来的 `address.group.params` 做部署后校验
 - 上游 `GroupJoin` 地址来自 `extension-group` 仓库，用于部署链群 `scopeSource`
 - `DeployGroupChat` 不部署 `GroupDefaults`，只读取 `GROUP_DEFAULTS_ADDRESS`
+- `DeployGroupChat` 不部署 `GroupDelegate`，只读取 `GROUP_DELEGATE_ADDRESS`
 - `DeployGroupChat` 会同时部署 `GroupChat`、`GroupAdmin`、`GroupBanList`、`AdminBanSource`、`GovVotedBanSource`、`GroupMember`、`GroupMemberScope`、`GroupJoinScopeSource` 与四个 typed Manager
 - `GroupChat` 构造时通过 `GroupDefaults.GROUP_ADDRESS()` 派生 `GROUP_ADDRESS`
+- `GroupChat` 构造时校验 `GroupDelegate.GROUP_ADDRESS()` 与 `GroupDefaults.GROUP_ADDRESS()` 一致
 - `GroupChat` 自身初始化参数与 Manager 依赖从 `group.chat.params` 读取
 - 四个 typed Manager 固定挂本次部署的 `GovVotedBanSource`
 
@@ -108,6 +111,7 @@ shell 一键部署时：
 - [script/network/thinkium70001_public/group.chat.params](../script/network/thinkium70001_public/group.chat.params)
 - [script/network/thinkium70001_public/address.group.params](../script/network/thinkium70001_public/address.group.params)
 - [script/network/thinkium70001_public/address.group.defaults.params](../script/network/thinkium70001_public/address.group.defaults.params)
+- `script/network/<network>/address.group.delegate.params` 从 `group` 仓库复制
 - [script/network/thinkium70001_public_test/group.chat.params](../script/network/thinkium70001_public_test/group.chat.params)
 - [script/network/thinkium70001_public_test/address.group.params](../script/network/thinkium70001_public_test/address.group.params)
 - [script/network/thinkium70001_public_test/address.group.defaults.params](../script/network/thinkium70001_public_test/address.group.defaults.params)

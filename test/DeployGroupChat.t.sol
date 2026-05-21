@@ -15,7 +15,9 @@ import {AdminBanSource} from "../src/sources/ban/AdminBanSource.sol";
 import {GovVotedBanSource} from "../src/sources/ban/GovVotedBanSource.sol";
 import {GroupJoinScopeSource} from "../src/sources/scope/GroupJoinScopeSource.sol";
 import {GroupMemberScope} from "../src/sources/scope/GroupMemberScope.sol";
+
 import {MockGroupDefaults} from "./mocks/MockGroupDefaults.sol";
+import {MockGroupDelegate} from "./mocks/MockGroupDelegate.sol";
 import {MockLOVE20Group} from "./mocks/MockLOVE20Group.sol";
 import {MockLOVE20Protocols} from "./mocks/MockLOVE20Protocols.sol";
 import {TestBase} from "./utils/TestBase.sol";
@@ -29,6 +31,7 @@ contract DeployMockGroupJoin {
 contract DeployGroupChatHarness is DeployGroupChat {
     function configFromCoreJoinForTest(
         address groupDefaults,
+        address groupDelegate,
         address extensionCenter,
         address groupJoin,
         address beforePostPlugin,
@@ -39,6 +42,7 @@ contract DeployGroupChatHarness is DeployGroupChat {
     ) external view returns (DeployConfig memory) {
         return _configFromCoreJoin(
             groupDefaults,
+            groupDelegate,
             extensionCenter,
             groupJoin,
             beforePostPlugin,
@@ -68,6 +72,7 @@ contract DeployGroupChatTest is TestBase {
 
     MockLOVE20Group internal groupNft;
     MockGroupDefaults internal groupDefaults;
+    MockGroupDelegate internal groupDelegate;
     MockLOVE20Protocols internal protocol;
     DeployMockGroupJoin internal groupJoin;
     DeployGroupChatHarness internal deployer;
@@ -75,6 +80,7 @@ contract DeployGroupChatTest is TestBase {
     function setUp() public {
         groupNft = new MockLOVE20Group();
         groupDefaults = new MockGroupDefaults(address(groupNft));
+        groupDelegate = new MockGroupDelegate(address(groupNft));
         protocol = new MockLOVE20Protocols();
         groupJoin = new DeployMockGroupJoin();
         deployer = new DeployGroupChatHarness();
@@ -83,6 +89,7 @@ contract DeployGroupChatTest is TestBase {
     function testT140_deploysSourcesManagersAndWiresDependencies() public {
         DeployGroupChat.DeployConfig memory config = DeployGroupChat.DeployConfig({
             groupDefaults: address(groupDefaults),
+            groupDelegate: address(groupDelegate),
             extensionCenter: address(protocol),
             groupJoin: address(groupJoin),
             beforePostPlugin: address(0),
@@ -109,20 +116,18 @@ contract DeployGroupChatTest is TestBase {
         assertTrue(deployed.tokenActionGovManager.code.length != 0);
         assertTrue(deployed.tokenActionMainManager.code.length != 0);
 
+        assertEq(IGroupChat(deployed.groupChat).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
         assertEq(IGroupChat(deployed.groupChat).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(IGroupChat(deployed.groupChat).GROUP_DELEGATE_ADDRESS(), address(groupDelegate));
         assertEq(IGroupChat(deployed.groupChat).GROUP_ADDRESS(), address(groupNft));
         assertEq(IGroupChat(deployed.groupChat).originBlocks(), 100);
         assertEq(IGroupChat(deployed.groupChat).phaseBlocks(), 25);
 
-        assertEq(GroupAdmin(deployed.groupAdmin).GROUP_CHAT_ADDRESS(), deployed.groupChat);
         assertEq(GroupAdmin(deployed.groupAdmin).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
+        assertEq(GroupAdmin(deployed.groupAdmin).GROUP_DELEGATE_ADDRESS(), address(groupDelegate));
         assertEq(GroupAdmin(deployed.groupAdmin).GROUP_ADDRESS(), address(groupNft));
         assertEq(GroupAdmin(deployed.groupAdmin).MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
         assertEq(GroupBanList(deployed.groupBanList).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
-        assertEq(GroupBanList(deployed.groupBanList).GROUP_CHAT_ADDRESS(), deployed.groupChat);
-        assertEq(GroupBanList(deployed.groupBanList).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
-        assertEq(GroupBanList(deployed.groupBanList).GROUP_ADDRESS(), address(groupNft));
-        assertEq(GroupBanList(deployed.groupBanList).MAX_ADMIN_IDS(), MAX_ADMIN_IDS);
         assertEq(AdminBanSource(deployed.adminBanSource).GROUP_BAN_LIST_ADDRESS(), deployed.groupBanList);
         assertEq(GovVotedBanSource(deployed.govVotedBanSource).GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedBanSource(deployed.govVotedBanSource).PRECISION(), 1e18);
@@ -161,6 +166,7 @@ contract DeployGroupChatTest is TestBase {
 
         DeployGroupChat.DeployConfig memory config = deployer.configFromCoreJoinForTest(
             address(groupDefaults),
+            address(groupDelegate),
             address(protocol),
             address(groupJoin),
             address(0xBEEF),
@@ -171,6 +177,7 @@ contract DeployGroupChatTest is TestBase {
         );
 
         assertEq(config.groupDefaults, address(groupDefaults));
+        assertEq(config.groupDelegate, address(groupDelegate));
         assertEq(config.extensionCenter, address(protocol));
         assertEq(config.groupJoin, address(groupJoin));
         assertEq(config.beforePostPlugin, address(0xBEEF));
@@ -185,6 +192,7 @@ contract DeployGroupChatTest is TestBase {
     function testT141_addressFileContentIncludesOnlyGroupChatDeploymentFields() public view {
         DeployGroupChat.DeployConfig memory config = DeployGroupChat.DeployConfig({
             groupDefaults: address(groupDefaults),
+            groupDelegate: address(groupDelegate),
             extensionCenter: address(protocol),
             groupJoin: address(groupJoin),
             beforePostPlugin: address(0xBEEF),
@@ -225,6 +233,7 @@ contract DeployGroupChatTest is TestBase {
         _assertContains(content, "tokenActionGovManagerAddress=");
         _assertContains(content, "tokenActionMainManagerAddress=");
         _assertNotContains(content, "groupDefaultsAddress=");
+        _assertNotContains(content, "groupDelegateAddress=");
         _assertNotContains(content, "extensionCenterAddress=");
         _assertNotContains(content, "groupJoinAddress=");
         _assertNotContains(content, "groupChatBeforePostPluginAddress=");

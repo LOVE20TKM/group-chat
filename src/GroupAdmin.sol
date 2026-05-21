@@ -2,16 +2,17 @@
 pragma solidity =0.8.17;
 
 import {IGroupAdmin} from "./interfaces/IGroupAdmin.sol";
-import {IGroupChat} from "./interfaces/IGroupChat.sol";
+
 import {IGroupDefaults} from "./interfaces/external/IGroupDefaults.sol";
+import {IGroupDelegate} from "./interfaces/external/IGroupDelegate.sol";
 import {ILOVE20Group} from "./interfaces/external/ILOVE20Group.sol";
 import {EnumerableSets} from "./libraries/EnumerableSets.sol";
 
 contract GroupAdmin is IGroupAdmin {
     using EnumerableSets for EnumerableSets.UintSet;
 
-    address public immutable GROUP_CHAT_ADDRESS;
     address public immutable GROUP_DEFAULTS_ADDRESS;
+    address public immutable GROUP_DELEGATE_ADDRESS;
     address public immutable GROUP_ADDRESS;
     uint256 public immutable MAX_ADMIN_IDS;
 
@@ -22,19 +23,21 @@ contract GroupAdmin is IGroupAdmin {
 
     mapping(uint256 => AdminState) internal _states;
 
-    constructor(address groupChat_, uint256 maxAdminIds_) {
+    constructor(address groupDefaults_, address groupDelegate_, uint256 maxAdminIds_) {
         if (maxAdminIds_ == 0) {
             revert MaxAdminIdsZero();
         }
-        _requireCode(groupChat_);
+        _requireCode(groupDefaults_);
+        _requireCode(groupDelegate_);
 
-        address groupDefaults = IGroupChat(groupChat_).GROUP_DEFAULTS_ADDRESS();
-        address love20Group = IGroupChat(groupChat_).GROUP_ADDRESS();
-        _requireCode(groupDefaults);
+        address love20Group = IGroupDefaults(groupDefaults_).GROUP_ADDRESS();
+        if (IGroupDelegate(groupDelegate_).GROUP_ADDRESS() != love20Group) {
+            revert GroupDelegateGroupMismatch();
+        }
         _requireCode(love20Group);
 
-        GROUP_CHAT_ADDRESS = groupChat_;
-        GROUP_DEFAULTS_ADDRESS = groupDefaults;
+        GROUP_DEFAULTS_ADDRESS = groupDefaults_;
+        GROUP_DELEGATE_ADDRESS = groupDelegate_;
         GROUP_ADDRESS = love20Group;
         MAX_ADMIN_IDS = maxAdminIds_;
     }
@@ -81,16 +84,7 @@ contract GroupAdmin is IGroupAdmin {
     }
 
     function ownerOrDelegateIdOf(uint256 groupId, address account) public view returns (uint256 operatorId) {
-        address chatOwner = _ownerOfOrRevert(groupId);
-        if (account == chatOwner) {
-            return groupId;
-        }
-
-        uint256 delegateId = IGroupChat(GROUP_CHAT_ADDRESS).delegateIdOf(groupId);
-        if (delegateId != 0 && account == _tryOwnerOf(delegateId)) {
-            return delegateId;
-        }
-        return 0;
+        return IGroupDelegate(GROUP_DELEGATE_ADDRESS).ownerOrDelegateIdOf(groupId, account);
     }
 
     function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool) {
