@@ -271,9 +271,20 @@ function conversationReminders(status) {
 
 function chatListMeta(chat) {
   const meta = chat.type === 'chain-service'
-    ? [chatTypeLabel(chat), `G#${chat.groupId}`]
-    : [chatTokenSymbol(chat), chatTypeLabel(chat), `G#${chat.groupId}`];
+    ? [`G#${chat.groupId}`, chatTypeLabel(chat)]
+    : [`G#${chat.groupId}`, chatTokenSymbol(chat), chatTypeLabel(chat)];
   return meta.join(' · ');
+}
+
+function chatHeaderTitle(chat) {
+  return chatListTitle(chat);
+}
+
+function chatHeaderMeta(chat) {
+  const parts = ['action', 'action-gov'].includes(chat.type)
+    ? [`G#${chat.groupId}`, chatTokenSymbol(chat), chatTypeLabel(chat)]
+    : [`G#${chat.groupId}`, chatTokenSymbol(chat)];
+  return parts.filter(Boolean).join(' · ');
 }
 
 function renderChatListHeader(chat, reminders) {
@@ -1417,21 +1428,14 @@ function renderChatTools(chat) {
       ${renderChatMenuButtons(chat)}
     </div>
   ` : '';
-  const meta = chat.type === 'chain-service'
-    ? `G#${chat.groupId}`
-    : `${chatTokenSymbol(chat)} · G#${chat.groupId}`;
-  const subline = chat.type === 'action' || chat.type === 'action-gov'
-    ? `${chatListMeta(chat)} · 行动 #${chat.actionId}`
-    : chatListMeta(chat);
+  const meta = chatHeaderMeta(chat);
   return `
     <div class="chat-tools">
       <div class="chat-tools-copy">
+        <strong>${escapeHtml(chatHeaderTitle(chat))}</strong>
         <div class="chat-tools-kicker">
-          <span class="chat-tools-badge">${escapeHtml(chatTypeLabel(chat))}</span>
           <span class="chat-tools-meta">${escapeHtml(meta)}</span>
         </div>
-        <strong>${escapeHtml(chatDisplayName(chat))}</strong>
-        <span class="chat-tools-subline">${escapeHtml(subline)}</span>
       </div>
       <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-group-id="${chat.groupId}" aria-label="群聊菜单">...</button>
       ${menu}

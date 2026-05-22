@@ -1038,13 +1038,11 @@ button:disabled {
   position: sticky;
   top: 0;
   z-index: 6;
-  margin-bottom: 14px;
-  padding: 12px 12px 10px;
-  border: 1px solid rgba(41, 38, 232, 0.12);
-  border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 239, 255, 0.94));
-  box-shadow: 0 12px 28px rgba(25, 28, 31, 0.08);
+  margin-bottom: 10px;
+  padding: 10px 10px 10px 12px;
+  border-bottom: 1px solid var(--greyscale-200);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 18px rgba(25, 28, 31, 0.05);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -1058,7 +1056,6 @@ button:disabled {
 .chat-tools-kicker {
   display: flex;
   align-items: center;
-  gap: 6px;
   min-width: 0;
   flex-wrap: wrap;
 }
@@ -1093,8 +1090,8 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 17px;
-  line-height: 1.2;
+  font-size: 15px;
+  line-height: 1.25;
 }
 
 .chat-tools-subline {
