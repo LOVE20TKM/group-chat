@@ -229,16 +229,28 @@ function clearActiveQuote() {
 function chatDisplayName(chat) {
   if (chat.type === 'token-community') return `${chatTokenSymbol(chat)} 主群`;
   if (chat.type === 'token-gov') return `${chatTokenSymbol(chat)} 治理群`;
-  if (chat.type === 'action') return `${chatTokenSymbol(chat)} 行动主群-No.${chat.actionId}-${actionTitle(chat)}`;
-  if (chat.type === 'action-gov') return `${chatTokenSymbol(chat)} 行动治理群-No.${chat.actionId}-${actionTitle(chat)}`;
-  if (chat.type === 'chain-service') return `链群-${chat.chainName || chat.groupId}`;
+  if (chat.type === 'action') return `No.${chat.actionId} ${actionTitle(chat)} 行动主群`;
+  if (chat.type === 'action-gov') return `No.${chat.actionId} ${actionTitle(chat)} 行动治理群`;
+  if (chat.type === 'chain-service') return `${chat.chainName || chat.shortTitle || chat.groupId} 链群`;
   return chat.title;
 }
 
-function chatListTitle(chat) {
+function chatTitleBase(chat) {
+  if (chat.type === 'token-community' || chat.type === 'token-gov') return chatTokenSymbol(chat);
   if (chat.type === 'action' || chat.type === 'action-gov') return `No.${chat.actionId} ${actionTitle(chat)}`;
   if (chat.type === 'chain-service') return chat.chainName || chat.shortTitle || String(chat.groupId);
-  return chatDisplayName(chat);
+  return chat.title || chatDisplayName(chat);
+}
+
+function chatListTitle(chat) {
+  const suffix = chatTypeLabel(chat);
+  return suffix ? `${chatTitleBase(chat)} ${suffix}` : chatTitleBase(chat);
+}
+
+function renderChatTitle(chat) {
+  const suffix = chatTypeLabel(chat);
+  const suffixHtml = suffix ? ` <span class="chat-title-type">${escapeHtml(suffix)}</span>` : '';
+  return `${escapeHtml(chatTitleBase(chat))}${suffixHtml}`;
 }
 
 function chatTokenSymbol(chat) {
@@ -253,9 +265,9 @@ function actionTitle(chat) {
 function chatTypeLabel(chat) {
   const labels = {
     'token-community': '主群',
-    'token-gov': '治理',
+    'token-gov': '治理群',
     action: '行动主群',
-    'action-gov': '行动治理',
+    'action-gov': '行动治理群',
     'chain-service': '链群',
   };
   return labels[chat.type] || '群聊';
@@ -269,11 +281,20 @@ function conversationReminders(status) {
   return reminders;
 }
 
+function visibleGroupIdLabel(chat) {
+  if (!chat) return '';
+  if (chat.type === 'chain-service' || chat.activated) return `G#${chat.groupId}`;
+  return '';
+}
+
 function chatListMeta(chat) {
-  const meta = chat.type === 'chain-service'
-    ? [`G#${chat.groupId}`, chatTypeLabel(chat)]
-    : [`G#${chat.groupId}`, chatTokenSymbol(chat), chatTypeLabel(chat)];
-  return meta.join(' · ');
+  const groupIdLabel = visibleGroupIdLabel(chat);
+  const meta = ['token-community', 'token-gov', 'action', 'action-gov'].includes(chat.type)
+    ? [groupIdLabel]
+    : chat.type === 'chain-service'
+      ? [groupIdLabel]
+      : [groupIdLabel, chatTokenSymbol(chat), chatTypeLabel(chat)];
+  return meta.filter(Boolean).join(' · ');
 }
 
 function chatHeaderTitle(chat) {
@@ -281,9 +302,7 @@ function chatHeaderTitle(chat) {
 }
 
 function chatHeaderMeta(chat) {
-  const parts = ['action', 'action-gov'].includes(chat.type)
-    ? [`G#${chat.groupId}`, chatTokenSymbol(chat), chatTypeLabel(chat)]
-    : [`G#${chat.groupId}`, chatTokenSymbol(chat)];
+  const parts = [visibleGroupIdLabel(chat)];
   return parts.filter(Boolean).join(' · ');
 }
 
@@ -782,7 +801,7 @@ function renderConversationRow(entry) {
     <article class="conversation-row group-row conversation-type-${chat.type}${pinned ? ' pinned' : ''}" data-action="${rowAction}" ${rowTarget} data-long-press-conversation data-menu-open="${state.activeConversationMenuGroupId === chat.groupId ? 'true' : 'false'}">
       <div class="conversation-type-rail" aria-hidden="true"></div>
       <div class="conversation-main">
-        <div class="conversation-title">${escapeHtml(chatListTitle(chat))}</div>
+        <div class="conversation-title">${renderChatTitle(chat)}</div>
         ${renderChatListHeader(chat, reminders)}
       </div>
       ${menu}
@@ -807,8 +826,7 @@ function renderActivationHub() {
 
 function renderActivationSection() {
   if (state.activationType === 'token') return `
-    <section class="workspace-band">
-      <h2>代币群</h2>
+    <section class="activation-list">
       ${state.chats
         .filter((chat) => chat.token === state.activeToken && ['token-community', 'token-gov'].includes(chat.type))
         .map(renderActivationCard)
@@ -817,15 +835,13 @@ function renderActivationSection() {
   `;
 
   if (state.activationType === 'action') return `
-    <section class="workspace-band">
-      <h2>行动群</h2>
+    <section class="activation-list">
       ${state.actions.filter((action) => action.token === state.activeToken).map(renderActionActivation).join('')}
     </section>
   `;
 
   return `
-    <section class="workspace-band">
-      <h2>链群</h2>
+    <section class="activation-list">
       ${state.chats
         .filter((chat) => chat.token === state.activeToken && chat.type === 'chain-service')
         .map(renderChainActivation)
@@ -837,17 +853,17 @@ function renderActivationSection() {
 function renderActivationCard(chat) {
   const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
   const mainTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
+  const meta = chatListMeta(chat);
   return `
     <article class="type-card">
       <div class="card-topline">
-        <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+        <strong>${renderChatTitle(chat)}</strong>
         <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? '已激活' : '待激活'}</span>
       </div>
-      <div class="muted">${escapeHtml(chat.manager)} · ${escapeHtml(chat.activationCall)}</div>
-      <div class="kv-grid">${renderParams(chat.params)}</div>
+      ${meta ? `<div class="muted">${escapeHtml(meta)}</div>` : ''}
       <div class="card-actions">
-        <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.activated ? '进入' : '配置入参'}</button>
-        <button class="sheet-button" type="button" data-action="open-blacklist" data-group-id="${chat.groupId}" ${chat.activated ? '' : 'disabled'}>黑名单</button>
+        <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.activated ? '进入' : '配置'}</button>
+        ${chat.activated ? `<button class="sheet-button" type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
       </div>
     </article>
   `;
@@ -873,9 +889,11 @@ function renderActionActivation(action) {
 function renderMiniActivate(chat) {
   const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
   const mainTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
+  const meta = chatListMeta(chat);
   return `
     <div class="mini-card">
-      <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+      <strong>${escapeHtml(chatTypeLabel(chat))}</strong>
+      ${meta ? `<span class="muted">${escapeHtml(meta)}</span>` : ''}
       <button class="sheet-button${chat.activated ? '' : ' primary'}" type="button" data-action="${mainAction}" ${mainTarget}>
         ${chat.activated ? '进入' : '配置'}
       </button>
@@ -887,10 +905,10 @@ function renderChainActivation(chat) {
   return `
     <article class="action-row">
       <div class="card-topline">
-        <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+        <strong>${renderChatTitle(chat)}</strong>
         <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? chat.role : '待激活'}</span>
       </div>
-      <div class="muted">一个代币社区可有多个链群服务者管理群</div>
+      <div class="muted">${escapeHtml(chatListMeta(chat))}</div>
       <div class="inline-actions">
         <button type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" ${chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`}>${chat.activated ? '进入' : '配置'}</button>
         ${chat.activated && (canEditRules(chat) || canEditMemberScope(chat)) ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">群管理</button>` : ''}
@@ -908,19 +926,16 @@ function renderActivationForm() {
   const fields = chat.model === 'chain-service'
     ? renderDirectActivationFields(chat, draft)
     : renderManagerActivationFields(chat, draft);
+  const meta = chatListMeta(chat);
 
   return `
     <section class="workspace-band activation-form">
       <div class="screen-heading">
-        <h1>${escapeHtml(chatDisplayName(chat))}</h1>
+        <h1>${renderChatTitle(chat)}</h1>
         <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? '已激活' : '待激活'}</span>
       </div>
-      <div class="kv-grid">${renderParams(chat.params)}</div>
+      ${meta ? `<div class="muted">${escapeHtml(meta)}</div>` : ''}
       ${fields}
-      <div class="activation-preview">
-        <b>调用预览</b>
-        <code>${escapeHtml(activationPreview(chat, draft))}</code>
-      </div>
       ${issue ? `<div class="notice-row">${escapeHtml(issue)}</div>` : ''}
       <div class="card-actions">
         <button class="sheet-button primary" type="button" data-action="activate-chat" data-group-id="${chat.groupId}" ${issue ? 'disabled' : ''}>提交激活</button>
@@ -933,10 +948,8 @@ function renderActivationForm() {
 function renderManagerActivationFields(chat, draft) {
   return `
     <section class="activation-section">
-      <h2>Manager 入参</h2>
+      <h2>激活参数</h2>
       ${Object.keys(chat.params).map((field) => renderActivationTextInput(field, draft[field], field === 'groupId')).join('')}
-      <div class="rule-table">${renderRuleRows(chat)}</div>
-      <div class="notice-row">Manager 型群聊激活后不再修改 token、actionId 或规则槽；recentRounds 由 Manager 构造配置固定。</div>
     </section>
   `;
 }
@@ -1432,7 +1445,7 @@ function renderChatTools(chat) {
   return `
     <div class="chat-tools">
       <div class="chat-tools-copy">
-        <strong>${escapeHtml(chatHeaderTitle(chat))}</strong>
+        <strong>${renderChatTitle(chat)}</strong>
         <div class="chat-tools-kicker">
           <span class="chat-tools-meta">${escapeHtml(meta)}</span>
         </div>
@@ -2671,7 +2684,7 @@ function sendMessage() {
   });
   if (chat) chat.lastMessageId = nextMessageId;
   const mentionHint = mentionSenderIdsValidationHint(draftMentionedSenderIds);
-  state.syncHint = `MessagePost 发现 messageId #${nextMessageId}，正文已通过 messages 补拉。${mentionHint ? ` ${mentionHint}` : ''}`;
+  state.syncHint = mentionHint || '已发送。';
   clearActiveQuote();
   state.mentionedSenderIds = [];
   state.mentionAll = false;

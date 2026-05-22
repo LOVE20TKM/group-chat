@@ -162,6 +162,14 @@ button:disabled {
   line-height: 1.2;
 }
 
+.screen-heading h1,
+.card-topline strong,
+.chat-tools strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .screen-heading {
   margin-bottom: 10px;
 }
@@ -366,11 +374,35 @@ button:disabled {
   min-height: 20px;
   display: flex;
   align-items: center;
+  gap: 6px;
   color: var(--greyscale-900);
   font-size: 15px;
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
+}
+
+.chat-title-type {
+  flex: 0 0 auto;
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 5px;
+  background: var(--greyscale-50);
+  color: var(--greyscale-500);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.conversation-title .chat-title-type,
+.card-topline strong .chat-title-type,
+.screen-heading h1 .chat-title-type,
+.chat-tools strong .chat-title-type {
+  display: inline-flex;
 }
 
 .conversation-badge {
