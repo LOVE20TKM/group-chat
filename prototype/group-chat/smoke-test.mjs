@@ -421,6 +421,10 @@ for (const message of initialState.messages) {
   if (!chatIds.has(Number(message.groupId))) {
     throw new Error(`Message ${message.messageId} points to missing groupId ${message.groupId}`);
   }
+  const timestampValue = new Date(message.timestamp).getTime();
+  if (!message.timestamp || !Number.isFinite(timestampValue)) {
+    throw new Error(`Message ${message.messageId} in groupId ${message.groupId} missing valid timestamp`);
+  }
 }
 
 const hasInvalidMessageId = initialState.messages.some((message) => message.messageId === 0);
@@ -660,6 +664,30 @@ if (sendState.messages.length !== 0 || !sendState.syncHint.includes('TooManyMent
   throw new Error('sendMessage must prevent over-limit mentionedSenderIds instead of truncating and sending');
 }
 
+const sendSuccessState = {
+  account: '0x8b...91',
+  defaultGroupId: 9007,
+  activeGroupId: '1024',
+  messages: [],
+  mentionedSenderIds: [],
+  mentionAll: false,
+  syncHint: '',
+  chat: { round: 42 },
+  nftProfiles: mentionTestState.nftProfiles,
+};
+const sendSuccessInput = { value: '补一条带时间的测试消息' };
+const sendSuccessDocument = {
+  getElementById(id) {
+    if (id === 'composer-input') return sendSuccessInput;
+    throw new Error(`Unexpected document lookup: ${id}`);
+  },
+};
+sendHarness(sendSuccessState, sendSuccessDocument, () => {}).sendMessage();
+const createdMessage = sendSuccessState.messages[0];
+if (!createdMessage || !createdMessage.timestamp || !Number.isFinite(new Date(createdMessage.timestamp).getTime())) {
+  throw new Error('sendMessage must stamp a valid timestamp on new local messages');
+}
+
 const quoteHarness = new Function(
   'state',
   'render',
@@ -692,6 +720,46 @@ if (quoteTestState.quotedMessagesByGroupId['1024'] !== undefined) {
 quoteMessage(1);
 if (quoteTestState.quotedMessagesByGroupId['1024'] !== 1) {
   throw new Error('quoteMessage must store positive messageId quotes');
+}
+
+const quoteSummaryHarness = new Function(
+  [
+    extractFunctionSource(js, 'quotedMessageSummary'),
+    'return { quotedMessageSummary };',
+  ].join('\n'),
+);
+
+const { quotedMessageSummary } = quoteSummaryHarness();
+if (quotedMessageSummary({ content: `  第一行
+第二行  ` }) !== '第一行 第二行') {
+  throw new Error('quotedMessageSummary must normalize quoted message content');
+}
+if (quotedMessageSummary({ content: '这是一个很长的引用内容，用来测试截断展示' }, 9) !== '这是一个很长的引…') {
+  throw new Error('quotedMessageSummary must truncate long quoted message content');
+}
+
+const renderMessageHarness = new Function(
+  'state',
+  [
+    extractFunctionSource(js, 'escapeHtml'),
+    extractFunctionSource(js, 'quotedMessageSummary'),
+    extractFunctionSource(js, 'renderMessage'),
+    'function messageSenderBanned() { return false; }',
+    'function nftProfile(senderId) { return senderId === 1 ? { name: "原发送人", badge: "原" } : { name: "回复者", badge: "回" }; }',
+    'function messageById() { return { senderId: 1, content: "被引用的消息内容" }; }',
+    'function renderMessageContent(message) { return message.content; }',
+    'function messageMenuKey() { return ""; }',
+    'function renderSenderBanAction() { return ""; }',
+    'function canQuoteMessage() { return false; }',
+    'function currentDefaultGroupId() { return 0; }',
+    'return { renderMessage };',
+  ].join('\n'),
+);
+
+const renderedQuoteHtml = renderMessageHarness({ activeAvatarMenuKey: null, activeMenuMessageId: null })
+  .renderMessage(null, { messageId: 2, senderId: 2, groupId: '1024', quotedMessageId: 1, content: '回复内容', mine: false });
+if (!renderedQuoteHtml.includes('<div class="quote-preview">被引用的消息内容</div>')) {
+  throw new Error('renderMessage must show quoted message content in quote preview');
 }
 
 const chatMenuHarness = new Function(

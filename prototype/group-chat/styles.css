@@ -24,6 +24,8 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--greyscale-100);
   color: var(--greyscale-900);
@@ -49,16 +51,20 @@ button:disabled {
   min-height: 100dvh;
   display: flex;
   justify-content: center;
+  overflow: hidden;
 }
 
 .phone-frame {
   width: 100%;
   max-width: 520px;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow: hidden;
 }
 
 .app-header {
@@ -1016,19 +1022,70 @@ button:disabled {
   min-height: 0;
   padding: 12px 16px;
   overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-top: 92px;
+  background:
+    linear-gradient(180deg, rgba(244, 247, 255, 0.92) 0, rgba(255, 255, 255, 0) 96px),
+    #fff;
 }
 
 .chat-tools {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 36px;
-  gap: 7px;
+  gap: 10px;
+  align-items: start;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  margin-bottom: 14px;
+  padding: 12px 12px 10px;
+  border: 1px solid rgba(41, 38, 232, 0.12);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(234, 239, 255, 0.94));
+  box-shadow: 0 12px 28px rgba(25, 28, 31, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.chat-tools-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.chat-tools-kicker {
+  display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid var(--greyscale-200);
-  border-radius: 8px;
-  background: #fff;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.chat-tools-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(41, 38, 232, 0.1);
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chat-tools-meta,
+.chat-tools-subline {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--greyscale-500);
+}
+
+.chat-tools-meta {
+  font-size: 11px;
 }
 
 .chat-tools strong {
@@ -1036,12 +1093,23 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.chat-tools-subline {
+  font-size: 12px;
 }
 
 .chat-tools .chat-menu-button {
   min-height: 30px;
+  border: 1px solid rgba(41, 38, 232, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 18px rgba(25, 28, 31, 0.06);
   padding: 0;
   font-weight: 700;
+  color: var(--greyscale-700);
 }
 
 .group-detail-heading {
@@ -1099,15 +1167,16 @@ button:disabled {
   font-size: 13px;
 }
 
-.round-divider {
+.message-time-divider {
   width: fit-content;
   margin: 0 auto 12px;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
   background: var(--greyscale-100);
   color: var(--greyscale-500);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .message-row {
@@ -1126,6 +1195,7 @@ button:disabled {
 }
 
 .message-body {
+  flex: 1;
   min-width: 0;
 }
 
@@ -1133,6 +1203,12 @@ button:disabled {
   margin-bottom: 3px;
   color: var(--greyscale-500);
   font-size: 11px;
+}
+
+.message-row.mine .message-meta {
+  width: fit-content;
+  margin-left: auto;
+  text-align: right;
 }
 
 .message-ban-badge {
@@ -1147,12 +1223,14 @@ button:disabled {
 }
 
 .message-bubble {
+  width: fit-content;
   max-width: 82%;
   margin-bottom: 12px;
   padding: 9px 10px;
   border: 1px solid var(--greyscale-200);
   border-radius: 8px;
   background: #fff;
+  overflow-wrap: anywhere;
 }
 
 .message-bubble.mine {
@@ -1185,6 +1263,10 @@ button:disabled {
   font-size: 12px;
 }
 
+.message-row.mine .message-actions {
+  margin-left: auto;
+}
+
 .quote-preview {
   margin-bottom: 6px;
   padding-left: 7px;
@@ -1194,11 +1276,14 @@ button:disabled {
 }
 
 .status-strip {
+  position: relative;
+  z-index: 4;
   margin: 0 16px 8px;
   padding: 8px;
   border: 1px solid var(--greyscale-200);
-  border-radius: 8px;
-  background: var(--greyscale-50);
+  border-radius: 12px;
+  background: rgba(249, 250, 251, 0.94);
+  box-shadow: 0 -4px 14px rgba(25, 28, 31, 0.04);
   color: var(--greyscale-700);
   font-size: 12px;
 }
@@ -1215,9 +1300,14 @@ button:disabled {
 
 .composer,
 .composer-banned {
+  position: relative;
+  z-index: 5;
   padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
   border-top: 1px solid var(--greyscale-200);
+  box-shadow: 0 -12px 28px rgba(25, 28, 31, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .composer-row {

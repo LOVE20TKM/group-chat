@@ -12,6 +12,8 @@ const blacklistPageSize = prototypeData.pageSizes.blacklist;
 const voterPageSize = prototypeData.pageSizes.voter;
 const avatarLongPressMs = 520;
 const conversationLongPressMs = 520;
+const messageTimeDividerGapMs = 5 * 60 * 1000;
+const weekdayLabels = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 let avatarPressState = null;
 let conversationPressState = null;
 let suppressAvatarClick = false;
@@ -113,6 +115,71 @@ function messageById(messageId, groupId = state.activeGroupId) {
   return messagesForChat(groupId).find((message) => message.messageId === Number(messageId));
 }
 
+function messageTimestampValue(message) {
+  if (!message || message.timestamp === undefined || message.timestamp === null || message.timestamp === '') return null;
+  if (typeof message.timestamp === 'number') return Number.isFinite(message.timestamp) ? message.timestamp : null;
+  const parsed = new Date(message.timestamp).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function calendarDayStartValue(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function isSameCalendarDay(left, right) {
+  return calendarDayStartValue(left) === calendarDayStartValue(right);
+}
+
+function calendarDayDistance(later, earlier) {
+  return Math.round((calendarDayStartValue(later) - calendarDayStartValue(earlier)) / (24 * 60 * 60 * 1000));
+}
+
+function messageDayPeriodLabel(date) {
+  const hour = date.getHours();
+  if (hour < 6) return '凌晨';
+  if (hour < 8) return '早上';
+  if (hour < 12) return '上午';
+  if (hour < 13) return '中午';
+  if (hour < 18) return '下午';
+  return '晚上';
+}
+
+function formatMessageClock(date) {
+  const displayHour = date.getHours() % 12 || 12;
+  return `${displayHour}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function formatMessageTimeLabel(timestamp, now = new Date()) {
+  const date = new Date(timestamp);
+  if (!Number.isFinite(date.getTime())) return '';
+  const period = `${messageDayPeriodLabel(date)} ${formatMessageClock(date)}`;
+  const nowDate = now instanceof Date ? now : new Date(now);
+  const dayDistance = calendarDayDistance(nowDate, date);
+  if (dayDistance === 0 && isSameCalendarDay(nowDate, date)) return period;
+  if (dayDistance === 1) return `昨天 ${period}`;
+  if (dayDistance > 1 && dayDistance < 7) return `${weekdayLabels[date.getDay()]} ${period}`;
+  if (date.getFullYear() === nowDate.getFullYear()) return `${date.getMonth() + 1}月${date.getDate()}日 ${period}`;
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${period}`;
+}
+
+function shouldRenderMessageTimeDivider(message, previousMessage) {
+  const timestamp = messageTimestampValue(message);
+  if (timestamp === null) return false;
+  if (!previousMessage) return true;
+  const previousTimestamp = messageTimestampValue(previousMessage);
+  if (previousTimestamp === null) return true;
+  const currentDate = new Date(timestamp);
+  const previousDate = new Date(previousTimestamp);
+  return !isSameCalendarDay(currentDate, previousDate) || Math.abs(timestamp - previousTimestamp) >= messageTimeDividerGapMs;
+}
+
+function renderMessageTimeDivider(message, previousMessage) {
+  if (!shouldRenderMessageTimeDivider(message, previousMessage)) return '';
+  const timestamp = messageTimestampValue(message);
+  if (timestamp === null) return '';
+  return `<div class="message-time-divider">${escapeHtml(formatMessageTimeLabel(timestamp))}</div>`;
+}
+
 function unreadMessagesForChat(groupId) {
   const lastRead = Number(state.readCursorsByGroupId?.[String(groupId)] || 0);
   const chat = chatById(groupId);
@@ -146,6 +213,13 @@ function activeQuotedMessageId() {
 
 function canQuoteMessage(message) {
   return Number(message?.messageId) > 0;
+}
+
+function quotedMessageSummary(message, maxLength = Infinity) {
+  const normalized = String(message?.content || '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return '消息';
+  if (!Number.isFinite(maxLength) || normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(1, maxLength - 1)).trimEnd()}…`;
 }
 
 function clearActiveQuote() {
@@ -1320,10 +1394,21 @@ function renderMessages() {
   const allMessages = messagesForChat(groupId);
   const visibleMessages = allMessages.filter((message) => !shouldHideMessage(chat, message));
   const groupTools = chat ? renderChatTools(chat) : '';
-  const roundLabel = chat ? `<div class="round-divider">Round ${chat.round}</div>` : '';
-  const items = visibleMessages.map((message) => renderMessage(chat, message)).join('');
+  const items = visibleMessages
+    .map((message, index) => `${renderMessageTimeDivider(message, visibleMessages[index - 1])}${renderMessage(chat, message)}`)
+    .join('');
   const emptyState = '<div class="empty-state">暂无消息</div>';
-  document.getElementById('message-list').innerHTML = `${groupTools}${roundLabel}${items || emptyState}`;
+  const messageList = document.getElementById('message-list');
+  messageList.innerHTML = `${groupTools}${items || emptyState}`;
+  scrollMessagesToBottom();
+}
+
+function scrollMessagesToBottom() {
+  const messageList = document.getElementById('message-list');
+  if (!messageList) return;
+  requestAnimationFrame(() => {
+    messageList.scrollTop = messageList.scrollHeight;
+  });
 }
 
 function renderChatTools(chat) {
@@ -1332,9 +1417,22 @@ function renderChatTools(chat) {
       ${renderChatMenuButtons(chat)}
     </div>
   ` : '';
+  const meta = chat.type === 'chain-service'
+    ? `G#${chat.groupId}`
+    : `${chatTokenSymbol(chat)} · G#${chat.groupId}`;
+  const subline = chat.type === 'action' || chat.type === 'action-gov'
+    ? `${chatListMeta(chat)} · 行动 #${chat.actionId}`
+    : chatListMeta(chat);
   return `
     <div class="chat-tools">
-      <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+      <div class="chat-tools-copy">
+        <div class="chat-tools-kicker">
+          <span class="chat-tools-badge">${escapeHtml(chatTypeLabel(chat))}</span>
+          <span class="chat-tools-meta">${escapeHtml(meta)}</span>
+        </div>
+        <strong>${escapeHtml(chatDisplayName(chat))}</strong>
+        <span class="chat-tools-subline">${escapeHtml(subline)}</span>
+      </div>
       <button class="chat-menu-button" type="button" data-action="toggle-chat-menu" data-group-id="${chat.groupId}" aria-label="群聊菜单">...</button>
       ${menu}
     </div>
@@ -1418,7 +1516,7 @@ function renderMessage(chat, message) {
   const bannedBadge = banned ? '<span class="message-ban-badge">黑名单</span>' : '';
   const profile = nftProfile(message.senderId);
   const quoted = message.quotedMessageId ? messageById(message.quotedMessageId, message.groupId) : null;
-  const quote = quoted ? `<div class="quote-preview">引用 ${escapeHtml(nftProfile(quoted.senderId).name)}</div>` : '';
+  const quote = quoted ? `<div class="quote-preview">${escapeHtml(quotedMessageSummary(quoted))}</div>` : '';
   const content = renderMessageContent(message);
   const avatarMenu = state.activeAvatarMenuKey === messageMenuKey(message)
     ? `<div class="message-actions avatar-actions">${renderSenderBanAction(chat, message)}</div>`
@@ -1605,8 +1703,7 @@ function renderComposerChips() {
   const quotedMessageId = activeQuotedMessageId();
   if (quotedMessageId) {
     const quoted = messageById(quotedMessageId, state.activeGroupId);
-    const quotedName = quoted ? nftProfile(quoted.senderId).name : '消息';
-    chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedName)} ×</button>`);
+    chips.push(`<button class="chip" type="button" data-action="clear-quote">引用 ${escapeHtml(quotedMessageSummary(quoted, 18))} ×</button>`);
   }
   const composerChips = document.getElementById('composer-chips');
   composerChips.hidden = !chips.length;
@@ -2559,6 +2656,7 @@ function sendMessage() {
     groupId: state.activeGroupId,
     senderId: currentDefaultGroupId(),
     senderAddress: state.account,
+    timestamp: new Date().toISOString(),
     round: chat ? chat.round : 0,
     messageId: nextMessageId,
     content,
@@ -2811,5 +2909,10 @@ document.addEventListener('change', (event) => {
 });
 
 document.getElementById('send-button').addEventListener('click', sendMessage);
+document.getElementById('composer-input').addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.isComposing) return;
+  event.preventDefault();
+  sendMessage();
+});
 
 render();
