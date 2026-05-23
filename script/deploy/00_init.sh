@@ -253,6 +253,8 @@ check_equal() {
     local expected="$2"
     local actual="$3"
 
+    expected=$(normalize_cast_value "$expected")
+    actual=$(normalize_cast_value "$actual")
     expected=$(echo "$expected" | tr '[:upper:]' '[:lower:]')
     actual=$(echo "$actual" | tr '[:upper:]' '[:lower:]')
 
@@ -269,6 +271,19 @@ check_equal() {
     fi
 }
 echo "check_equal() loaded"
+
+normalize_cast_value() {
+    local value="$1"
+
+    value=$(trim_whitespace "$value")
+    case "$value" in
+        *" ["*"]")
+            value="${value%% \[*}"
+            ;;
+    esac
+
+    printf '%s' "$value"
+}
 
 forge_script() {
   local verify_args=()

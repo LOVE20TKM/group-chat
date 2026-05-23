@@ -308,7 +308,7 @@ echo "Verifying initialization parameters match contract values..."
 
 defaults_group_address=$(cast_call $GROUP_DEFAULTS_ADDRESS "GROUP_ADDRESS()(address)")
 if [ -n "$GROUP_ADDRESS" ]; then
-    check_equal "GroupDefaults: GROUP_ADDRESS" $GROUP_ADDRESS $defaults_group_address
+    check_equal "GroupDefaults: GROUP_ADDRESS" "$GROUP_ADDRESS" "$defaults_group_address"
     [ $? -ne 0 ] && ((failed_checks++))
     echo ""
 else
@@ -316,23 +316,23 @@ else
     export GROUP_ADDRESS
 fi
 
-check_equal "GroupChat: GROUP_ADDRESS" $defaults_group_address $(cast_call $groupChatAddress "GROUP_ADDRESS()(address)")
+check_equal "GroupChat: GROUP_ADDRESS" "$defaults_group_address" "$(cast_call "$groupChatAddress" "GROUP_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $groupChatAddress "GROUP_ADMIN_ADDRESS()(address)")
+check_equal "GroupChat: GROUP_ADMIN_ADDRESS" "$GROUP_ADMIN_ADDRESS" "$(cast_call "$groupChatAddress" "GROUP_ADMIN_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $groupChatAddress "GROUP_DEFAULTS_ADDRESS()(address)")
+check_equal "GroupChat: GROUP_DEFAULTS_ADDRESS" "$GROUP_DEFAULTS_ADDRESS" "$(cast_call "$groupChatAddress" "GROUP_DEFAULTS_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: GROUP_DELEGATE_ADDRESS" $GROUP_DELEGATE_ADDRESS $(cast_call $groupChatAddress "GROUP_DELEGATE_ADDRESS()(address)")
+check_equal "GroupChat: GROUP_DELEGATE_ADDRESS" "$GROUP_DELEGATE_ADDRESS" "$(cast_call "$groupChatAddress" "GROUP_DELEGATE_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupDelegate: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_DELEGATE_ADDRESS "GROUP_ADDRESS()(address)")
+check_equal "GroupDelegate: GROUP_ADDRESS" "$GROUP_ADDRESS" "$(cast_call "$GROUP_DELEGATE_ADDRESS" "GROUP_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -341,11 +341,11 @@ group_chat_phase_blocks=$(cast_call $groupChatAddress "phaseBlocks()(uint256)")
 core_join_origin_blocks=$(cast_call $center_join_address "originBlocks()(uint256)")
 core_join_phase_blocks=$(cast_call $center_join_address "phaseBlocks()(uint256)")
 
-check_equal "GroupChat: originBlocks matches core Join" $core_join_origin_blocks $group_chat_origin_blocks
+check_equal "GroupChat: originBlocks matches core Join" "$core_join_origin_blocks" "$group_chat_origin_blocks"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-check_equal "GroupChat: phaseBlocks matches core Join" $core_join_phase_blocks $group_chat_phase_blocks
+check_equal "GroupChat: phaseBlocks matches core Join" "$core_join_phase_blocks" "$group_chat_phase_blocks"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -360,7 +360,7 @@ if [ -n "$actual_round" ]; then
     echo -e "  Actual: $actual_round"
     join_round=$(cast_call $center_join_address "currentRound()(uint256)" 2>/dev/null)
     if [ -n "$join_round" ]; then
-        check_equal "GroupChat: currentRound matches core Join" $join_round $actual_round
+        check_equal "GroupChat: currentRound matches core Join" "$join_round" "$actual_round"
         [ $? -ne 0 ] && ((failed_checks++))
     fi
 else
@@ -370,51 +370,51 @@ fi
 echo ""
 
 echo "Verifying GroupAdmin configuration..."
-check_equal "GroupAdmin: GROUP_DEFAULTS_ADDRESS" $GROUP_DEFAULTS_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_DEFAULTS_ADDRESS()(address)")
+check_equal "GroupAdmin: GROUP_DEFAULTS_ADDRESS" "$GROUP_DEFAULTS_ADDRESS" "$(cast_call "$GROUP_ADMIN_ADDRESS" "GROUP_DEFAULTS_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupAdmin: GROUP_DELEGATE_ADDRESS" $GROUP_DELEGATE_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_DELEGATE_ADDRESS()(address)")
+check_equal "GroupAdmin: GROUP_DELEGATE_ADDRESS" "$GROUP_DELEGATE_ADDRESS" "$(cast_call "$GROUP_ADMIN_ADDRESS" "GROUP_DELEGATE_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupAdmin: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_ADMIN_ADDRESS "GROUP_ADDRESS()(address)")
+check_equal "GroupAdmin: GROUP_ADDRESS" "$GROUP_ADDRESS" "$(cast_call "$GROUP_ADMIN_ADDRESS" "GROUP_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupAdmin: MAX_ADMIN_IDS" $GROUP_CHAT_MAX_ADMIN_IDS $(cast_call $GROUP_ADMIN_ADDRESS "MAX_ADMIN_IDS()(uint256)")
+check_equal "GroupAdmin: MAX_ADMIN_IDS" "$GROUP_CHAT_MAX_ADMIN_IDS" "$(cast_call "$GROUP_ADMIN_ADDRESS" "MAX_ADMIN_IDS()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying GroupBanList configuration..."
-check_equal "GroupBanList: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $GROUP_BAN_LIST_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
+check_equal "GroupBanList: GROUP_ADMIN_ADDRESS" "$GROUP_ADMIN_ADDRESS" "$(cast_call "$GROUP_BAN_LIST_ADDRESS" "GROUP_ADMIN_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying AdminBanSource configuration..."
-check_equal "AdminBanSource: GROUP_BAN_LIST_ADDRESS" $GROUP_BAN_LIST_ADDRESS $(cast_call $ADMIN_BAN_SOURCE_ADDRESS "GROUP_BAN_LIST_ADDRESS()(address)")
+check_equal "AdminBanSource: GROUP_BAN_LIST_ADDRESS" "$GROUP_BAN_LIST_ADDRESS" "$(cast_call "$ADMIN_BAN_SOURCE_ADDRESS" "GROUP_BAN_LIST_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying GovVotedBanSource configuration..."
-check_equal "GovVotedBanSource: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $govVotedBanSourceAddress "GROUP_ADDRESS()(address)")
+check_equal "GovVotedBanSource: GROUP_ADDRESS" "$GROUP_ADDRESS" "$(cast_call "$govVotedBanSourceAddress" "GROUP_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedBanSource: PRECISION" 1000000000000000000 $(cast_call $govVotedBanSourceAddress "PRECISION()(uint256)")
+check_equal "GovVotedBanSource: PRECISION" "1000000000000000000" "$(cast_call "$govVotedBanSourceAddress" "PRECISION()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GovVotedBanSource: BAN_THRESHOLD_RATIO" $GROUP_CHAT_BAN_THRESHOLD_RATIO $(cast_call $govVotedBanSourceAddress "BAN_THRESHOLD_RATIO()(uint256)")
+check_equal "GovVotedBanSource: BAN_THRESHOLD_RATIO" "$GROUP_CHAT_BAN_THRESHOLD_RATIO" "$(cast_call "$govVotedBanSourceAddress" "BAN_THRESHOLD_RATIO()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying GroupMember configuration..."
-check_equal "GroupMember: GROUP_ADMIN_ADDRESS" $GROUP_ADMIN_ADDRESS $(cast_call $GROUP_MEMBER_ADDRESS "GROUP_ADMIN_ADDRESS()(address)")
+check_equal "GroupMember: GROUP_ADMIN_ADDRESS" "$GROUP_ADMIN_ADDRESS" "$(cast_call "$GROUP_MEMBER_ADDRESS" "GROUP_ADMIN_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupMember: GROUP_ADDRESS" $GROUP_ADDRESS $(cast_call $GROUP_MEMBER_ADDRESS "GROUP_ADDRESS()(address)")
+check_equal "GroupMember: GROUP_ADDRESS" "$GROUP_ADDRESS" "$(cast_call "$GROUP_MEMBER_ADDRESS" "GROUP_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying GroupMemberScope configuration..."
-check_equal "GroupMemberScope: GROUP_MEMBER_ADDRESS" $GROUP_MEMBER_ADDRESS $(cast_call $GROUP_MEMBER_SCOPE_ADDRESS "GROUP_MEMBER_ADDRESS()(address)")
+check_equal "GroupMemberScope: GROUP_MEMBER_ADDRESS" "$GROUP_MEMBER_ADDRESS" "$(cast_call "$GROUP_MEMBER_SCOPE_ADDRESS" "GROUP_MEMBER_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 echo "Verifying GroupJoinScopeSource configuration..."
-check_equal "GroupJoinScopeSource: GROUP_MEMBER_ADDRESS" $GROUP_MEMBER_ADDRESS $(cast_call $GROUP_JOIN_SCOPE_SOURCE_ADDRESS "GROUP_MEMBER_ADDRESS()(address)")
+check_equal "GroupJoinScopeSource: GROUP_MEMBER_ADDRESS" "$GROUP_MEMBER_ADDRESS" "$(cast_call "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" "GROUP_MEMBER_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
-check_equal "GroupJoinScopeSource: GROUP_JOIN_ADDRESS" $GROUP_JOIN_ADDRESS $(cast_call $GROUP_JOIN_SCOPE_SOURCE_ADDRESS "GROUP_JOIN_ADDRESS()(address)")
+check_equal "GroupJoinScopeSource: GROUP_JOIN_ADDRESS" "$GROUP_JOIN_ADDRESS" "$(cast_call "$GROUP_JOIN_SCOPE_SOURCE_ADDRESS" "GROUP_JOIN_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
@@ -440,19 +440,19 @@ check_manager_common() {
     local manager_name=$1
     local manager_address=$2
 
-    check_equal "$manager_name: GROUP_CHAT_ADDRESS" $groupChatAddress $(cast_call $manager_address "GROUP_CHAT_ADDRESS()(address)")
+    check_equal "$manager_name: GROUP_CHAT_ADDRESS" "$groupChatAddress" "$(cast_call "$manager_address" "GROUP_CHAT_ADDRESS()(address)")"
     [ $? -ne 0 ] && ((failed_checks++))
 
-    check_equal "$manager_name: BAN_SOURCE_ADDRESS" $govVotedBanSourceAddress $(cast_call $manager_address "BAN_SOURCE_ADDRESS()(address)")
+    check_equal "$manager_name: BAN_SOURCE_ADDRESS" "$govVotedBanSourceAddress" "$(cast_call "$manager_address" "BAN_SOURCE_ADDRESS()(address)")"
     [ $? -ne 0 ] && ((failed_checks++))
 
-    check_equal "$manager_name: BEFORE_POST_PLUGIN_ADDRESS" $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS $(cast_call $manager_address "BEFORE_POST_PLUGIN_ADDRESS()(address)")
+    check_equal "$manager_name: BEFORE_POST_PLUGIN_ADDRESS" "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" "$(cast_call "$manager_address" "BEFORE_POST_PLUGIN_ADDRESS()(address)")"
     [ $? -ne 0 ] && ((failed_checks++))
 
-    check_equal "$manager_name: AFTER_POST_PLUGIN_ADDRESS" $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS $(cast_call $manager_address "AFTER_POST_PLUGIN_ADDRESS()(address)")
+    check_equal "$manager_name: AFTER_POST_PLUGIN_ADDRESS" "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" "$(cast_call "$manager_address" "AFTER_POST_PLUGIN_ADDRESS()(address)")"
     [ $? -ne 0 ] && ((failed_checks++))
 
-    check_equal "$manager_name: EXTENSION_CENTER_ADDRESS" $EXTENSION_CENTER_ADDRESS $(cast_call $manager_address "EXTENSION_CENTER_ADDRESS()(address)")
+    check_equal "$manager_name: EXTENSION_CENTER_ADDRESS" "$EXTENSION_CENTER_ADDRESS" "$(cast_call "$manager_address" "EXTENSION_CENTER_ADDRESS()(address)")"
     [ $? -ne 0 ] && ((failed_checks++))
 }
 
@@ -465,12 +465,12 @@ check_manager_common "TokenGovManager" $tokenGovManagerAddress
 echo ""
 
 check_manager_common "TokenActionGovManager" $tokenActionGovManagerAddress
-check_equal "TokenActionGovManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionGovManagerAddress "RECENT_ROUNDS()(uint256)")
+check_equal "TokenActionGovManager: RECENT_ROUNDS" "$GROUP_CHAT_ACTION_RECENT_ROUNDS" "$(cast_call "$tokenActionGovManagerAddress" "RECENT_ROUNDS()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 check_manager_common "TokenActionMainManager" $tokenActionMainManagerAddress
-check_equal "TokenActionMainManager: RECENT_ROUNDS" $GROUP_CHAT_ACTION_RECENT_ROUNDS $(cast_call $tokenActionMainManagerAddress "RECENT_ROUNDS()(uint256)")
+check_equal "TokenActionMainManager: RECENT_ROUNDS" "$GROUP_CHAT_ACTION_RECENT_ROUNDS" "$(cast_call "$tokenActionMainManagerAddress" "RECENT_ROUNDS()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
