@@ -276,7 +276,7 @@ Open:
 ```solidity
 function stateVersion(uint256 groupId) external view returns (uint256);
 
-event StateVersionChanged(
+event ChangeStateVersion(
     uint256 indexed groupId,
     uint256 stateVersion
 );

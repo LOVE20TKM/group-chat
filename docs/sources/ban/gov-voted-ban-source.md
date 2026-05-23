@@ -304,12 +304,12 @@ function stateVersion(
 - 同一分页接口返回的数组长度必须一致。
 - voted sender 与投票人列表必须去重，返回顺序不作协议承诺。
 - 任意外部投票写调用发生至少一项实际状态变化时，必须递增一次对应 `groupId` 的 `stateVersion`。
-- `*BySender*` 联动写接口若同时改变地址目标和 NFT 目标，两条明细事件必须使用同一个 `stateVersion`，且只发出一条 `StateVersionChanged`。
+- `*BySender*` 联动写接口若同时改变地址目标和 NFT 目标，两条明细事件必须使用同一个 `stateVersion`，且只发出一条 `ChangeStateVersion`。
 
 ## 最小事件
 
 ```solidity
-event AddressBanVoteSet(
+event SetAddressBanVote(
     uint256 indexed groupId,
     address indexed targetAddress,
     address indexed voter,
@@ -320,7 +320,7 @@ event AddressBanVoteSet(
     uint256 stateVersion
 );
 
-event SenderIdBanVoteSet(
+event SetSenderIdBanVote(
     uint256 indexed groupId,
     uint256 indexed targetSenderId,
     address indexed voter,
@@ -331,21 +331,21 @@ event SenderIdBanVoteSet(
     uint256 stateVersion
 );
 
-event AddressBanSet(
+event SetAddressBan(
     uint256 indexed groupId,
     address indexed targetAddress,
     bool listed,
     uint256 stateVersion
 );
 
-event SenderIdBanSet(
+event SetSenderIdBan(
     uint256 indexed groupId,
     uint256 indexed targetSenderId,
     bool listed,
     uint256 stateVersion
 );
 
-event StateVersionChanged(
+event ChangeStateVersion(
     uint256 indexed groupId,
     uint256 stateVersion
 );

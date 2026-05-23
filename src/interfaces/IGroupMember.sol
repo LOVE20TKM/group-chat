@@ -7,7 +7,7 @@ interface IGroupMember {
     error GroupNotExist();
     error TargetMemberIdZero();
 
-    event MemberIdSet(
+    event SetMemberId(
         uint256 indexed groupId,
         address indexed operator,
         uint256 indexed memberId,
@@ -16,7 +16,7 @@ interface IGroupMember {
         uint256 stateVersion
     );
 
-    event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
+    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_ADMIN_ADDRESS() external view returns (address);
 

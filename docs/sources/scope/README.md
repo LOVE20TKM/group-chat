@@ -46,4 +46,4 @@ function canPost(
 ## 前端规则
 
 - 未在可信地址表中的 source，不调用专用展示接口。
-- 成员名单状态读取 `GroupMember.stateVersion(groupId)` 与 `GroupMember.StateVersionChanged`。
+- 成员名单状态读取 `GroupMember.stateVersion(groupId)` 与 `GroupMember.ChangeStateVersion`。

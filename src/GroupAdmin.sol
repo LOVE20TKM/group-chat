@@ -73,16 +73,16 @@ contract GroupAdmin is IGroupAdmin {
                 snapshotChanged = true;
             }
             if (snapshotChanged) {
-                emit AdminSnapshotSet(
+                emit SetAdminSnapshot(
                     groupId, msg.sender, adminId, operatorId, groupOwnerSnapshot, adminOwnerSnapshot, newVersion
                 );
             }
             if (state.adminIds.add(adminId)) {
                 newVersion = _ensureStateVersion(state, newVersion);
-                emit AdminSet(groupId, msg.sender, adminId, operatorId, true, newVersion);
+                emit SetAdmin(groupId, msg.sender, adminId, operatorId, true, newVersion);
             }
         }
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function removeAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
@@ -102,9 +102,9 @@ contract GroupAdmin is IGroupAdmin {
             delete state.groupOwnerSnapshots[adminId];
             delete state.adminOwnerSnapshots[adminId];
             newVersion = _ensureStateVersion(state, newVersion);
-            emit AdminSet(groupId, msg.sender, adminId, operatorId, false, newVersion);
+            emit SetAdmin(groupId, msg.sender, adminId, operatorId, false, newVersion);
         }
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function adminIdOf(uint256 groupId, address account) public view returns (uint256 adminId) {
@@ -171,9 +171,9 @@ contract GroupAdmin is IGroupAdmin {
         return newVersion;
     }
 
-    function _emitStateVersionChangedIfChanged(uint256 groupId, uint256 newVersion) internal {
+    function _emitChangeStateVersionIfChanged(uint256 groupId, uint256 newVersion) internal {
         if (newVersion != 0) {
-            emit StateVersionChanged(groupId, newVersion);
+            emit ChangeStateVersion(groupId, newVersion);
         }
     }
 

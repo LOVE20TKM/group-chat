@@ -10,7 +10,7 @@ interface IGroupAdmin {
     error MaxAdminIdsZero();
     error GroupDelegateGroupMismatch();
 
-    event AdminSet(
+    event SetAdmin(
         uint256 indexed groupId,
         address indexed operator,
         uint256 indexed adminId,
@@ -19,7 +19,7 @@ interface IGroupAdmin {
         uint256 stateVersion
     );
 
-    event AdminSnapshotSet(
+    event SetAdminSnapshot(
         uint256 indexed groupId,
         address indexed operator,
         uint256 indexed adminId,
@@ -29,7 +29,7 @@ interface IGroupAdmin {
         uint256 stateVersion
     );
 
-    event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
+    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 

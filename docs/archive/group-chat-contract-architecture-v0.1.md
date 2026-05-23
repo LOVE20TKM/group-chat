@@ -218,7 +218,7 @@ chainId + source/plugin address
 interface IRuleStateVersion {
     function stateVersion(uint256 groupId) external view returns (uint256);
 
-    event StateVersionChanged(
+    event ChangeStateVersion(
         uint256 indexed groupId,
         uint256 stateVersion
     );
@@ -236,7 +236,7 @@ beforePostPlugin.stateVersion  -> plugin 内部状态变化，如有
 
 前端只有在可信 adapter 标记该模块支持 `stateVersion` 时才调用它。
 
-官方可信模块发生内部状态变化时，应发出 `StateVersionChanged`。第三方模块即使也发同名事件，前端也只在该模块地址命中可信解析表时处理。
+官方可信模块发生内部状态变化时，应发出 `ChangeStateVersion`。第三方模块即使也发同名事件，前端也只在该模块地址命中可信解析表时处理。
 
 ## 3. 通用发送判定顺序
 
@@ -354,7 +354,7 @@ AfterPostPlugin 是实际挂到 `GroupChat.afterPostPlugin` 的合约。
 
 - 只观察已落链消息
 - 不得影响主消息成功落链
-- 失败只触发 `AfterPostPluginFailed`
+- 失败只触发 `FailAfterPostPlugin`
 
 主协议不强制设置 gas cap。原因：
 

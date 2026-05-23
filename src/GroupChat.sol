@@ -155,16 +155,16 @@ contract GroupChat is IGroupChat {
 
         _initActivateMeta(groupId, metaKeys_, metaValues_, newVersion);
         if (scopeSource_ != address(0)) {
-            emit ScopeSourceSet(groupId, scopeSource_, msg.sender, newVersion, address(0));
+            emit SetScopeSource(groupId, scopeSource_, msg.sender, newVersion, address(0));
         }
         if (banSource_ != address(0)) {
-            emit BanSourceSet(groupId, banSource_, msg.sender, newVersion, address(0));
+            emit SetBanSource(groupId, banSource_, msg.sender, newVersion, address(0));
         }
         if (beforePostPlugin_ != address(0)) {
-            emit BeforePostPluginSet(groupId, beforePostPlugin_, msg.sender, newVersion, address(0));
+            emit SetBeforePostPlugin(groupId, beforePostPlugin_, msg.sender, newVersion, address(0));
         }
         if (afterPostPlugin_ != address(0)) {
-            emit AfterPostPluginSet(groupId, afterPostPlugin_, msg.sender, newVersion, address(0));
+            emit SetAfterPostPlugin(groupId, afterPostPlugin_, msg.sender, newVersion, address(0));
         }
         emit Activate(groupId, owner, newVersion);
     }
@@ -179,7 +179,7 @@ contract GroupChat is IGroupChat {
 
         config.postingAllowed = postingAllowed_;
         uint256 newVersion = _nextConfigVersion(config);
-        emit PostingAllowedSet(groupId, msg.sender, newVersion, postingAllowed_);
+        emit SetPostingAllowed(groupId, msg.sender, newVersion, postingAllowed_);
     }
 
     function setMeta(uint256 groupId, string calldata key, bytes calldata value) external nonReentrant {
@@ -326,12 +326,12 @@ contract GroupChat is IGroupChat {
 
         _recordRound(groupId, round, messageIndex);
 
-        emit MessagePost(groupId, senderId, msg.sender, round, messageIndex + 1);
+        emit PostMessage(groupId, senderId, msg.sender, round, messageIndex + 1);
         for (uint256 i = 0; i < mentionedSenderIds.length; i++) {
-            emit MessageMention(groupId, mentionedSenderIds[i], messageIndex + 1);
+            emit MentionSenderId(groupId, mentionedSenderIds[i], messageIndex + 1);
         }
         if (mentionAll) {
-            emit MessageMentionAll(groupId, messageIndex + 1);
+            emit MentionAll(groupId, messageIndex + 1);
         }
 
         if (config.afterPostPlugin != address(0)) {
@@ -347,7 +347,7 @@ contract GroupChat is IGroupChat {
                 block.number,
                 block.timestamp
             ) {} catch (bytes memory err) {
-                emit AfterPostPluginFailed(groupId, messageIndex + 1, config.afterPostPlugin, round, err);
+                emit FailAfterPostPlugin(groupId, messageIndex + 1, config.afterPostPlugin, round, err);
             }
         }
     }
@@ -632,7 +632,7 @@ contract GroupChat is IGroupChat {
                 continue;
             }
             _addMeta(groupId, newKeys[i], newValues[i]);
-            emit MetaSet(groupId, msg.sender, newVersion, newKeys[i], newValues[i], "");
+            emit SetMeta(groupId, msg.sender, newVersion, newKeys[i], newValues[i], "");
         }
     }
 
@@ -654,9 +654,9 @@ contract GroupChat is IGroupChat {
 
         uint256 newVersion = _nextConfigVersion(config);
         if (isScope) {
-            emit ScopeSourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+            emit SetScopeSource(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
         } else {
-            emit BanSourceSet(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+            emit SetBanSource(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
         }
     }
 
@@ -678,9 +678,9 @@ contract GroupChat is IGroupChat {
 
         uint256 newVersion = _nextConfigVersion(config);
         if (isBefore) {
-            emit BeforePostPluginSet(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
+            emit SetBeforePostPlugin(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
         } else {
-            emit AfterPostPluginSet(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
+            emit SetAfterPostPlugin(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
         }
     }
 
@@ -770,18 +770,18 @@ contract GroupChat is IGroupChat {
         if (value.length == 0) {
             bytes memory prevValue = item.value;
             _removeMeta(groupId, hash);
-            emit MetaSet(groupId, msg.sender, newVersion, key, "", prevValue);
+            emit SetMeta(groupId, msg.sender, newVersion, key, "", prevValue);
             return;
         }
         if (item.indexPlusOne != 0) {
             bytes memory prevValue2 = item.value;
             item.value = value;
-            emit MetaSet(groupId, msg.sender, newVersion, key, value, prevValue2);
+            emit SetMeta(groupId, msg.sender, newVersion, key, value, prevValue2);
             return;
         }
 
         _addMeta(groupId, key, value);
-        emit MetaSet(groupId, msg.sender, newVersion, key, value, "");
+        emit SetMeta(groupId, msg.sender, newVersion, key, value, "");
     }
 
     function _removeMeta(uint256 groupId, bytes32 hash) internal {

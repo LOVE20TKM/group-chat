@@ -74,7 +74,7 @@
 - `value` 是 `bytes`，`value.length == 0` 表示删除。
 - 当前 live `meta` key 总数最多 `MAX_META_KEYS = 32`。
 - 非空 `value` 最多 `MAX_META_VALUE_LENGTH = 4096` bytes。
-- 链上只保留当前值，历史变化看 `MetaSet`。
+- 链上只保留当前值，历史变化看 `SetMeta`。
 - `metaEntriesCount` 返回当前 live key 总数。
 - `metaEntries` 按当前 live key 插入顺序分页。
 - 更新已有 key 不改变位置；删除后重写视为新 key。

@@ -28,23 +28,23 @@ abstract contract GroupChatFixture is TestBase {
     uint256 internal delegateId;
     uint256 internal originBlocks;
     uint256 internal phaseBlocks = 100;
-    bytes32 internal constant META_SET_SIG = keccak256("MetaSet(uint256,address,uint256,string,bytes,bytes)");
-    bytes32 internal constant SCOPE_SOURCE_SET_SIG =
-        keccak256("ScopeSourceSet(uint256,address,address,uint256,address)");
-    bytes32 internal constant BAN_SOURCE_SET_SIG = keccak256("BanSourceSet(uint256,address,address,uint256,address)");
-    bytes32 internal constant BEFORE_POST_PLUGIN_SET_SIG =
-        keccak256("BeforePostPluginSet(uint256,address,address,uint256,address)");
-    bytes32 internal constant AFTER_POST_PLUGIN_SET_SIG =
-        keccak256("AfterPostPluginSet(uint256,address,address,uint256,address)");
+    bytes32 internal constant SET_META_SIG = keccak256("SetMeta(uint256,address,uint256,string,bytes,bytes)");
+    bytes32 internal constant SET_SCOPE_SOURCE_SIG =
+        keccak256("SetScopeSource(uint256,address,address,uint256,address)");
+    bytes32 internal constant SET_BAN_SOURCE_SIG = keccak256("SetBanSource(uint256,address,address,uint256,address)");
+    bytes32 internal constant SET_BEFORE_POST_PLUGIN_SIG =
+        keccak256("SetBeforePostPlugin(uint256,address,address,uint256,address)");
+    bytes32 internal constant SET_AFTER_POST_PLUGIN_SIG =
+        keccak256("SetAfterPostPlugin(uint256,address,address,uint256,address)");
     bytes32 internal constant ACTIVATE_SIG = keccak256("Activate(uint256,address,uint256)");
-    bytes32 internal constant POSTING_ALLOWED_SET_SIG = keccak256("PostingAllowedSet(uint256,address,uint256,bool)");
-    bytes32 internal constant MESSAGE_POST_SIG = keccak256("MessagePost(uint256,uint256,address,uint256,uint256)");
-    bytes32 internal constant MESSAGE_MENTION_SIG = keccak256("MessageMention(uint256,uint256,uint256)");
-    bytes32 internal constant MESSAGE_MENTION_ALL_SIG = keccak256("MessageMentionAll(uint256,uint256)");
-    bytes32 internal constant AFTER_POST_PLUGIN_FAILED_SIG =
-        keccak256("AfterPostPluginFailed(uint256,uint256,address,uint256,bytes)");
-    bytes32 internal constant DEFAULT_GROUP_ID_SET_SIG = keccak256("SetDefaultGroupId(address,uint256)");
-    bytes32 internal constant DEFAULT_GROUP_ID_CLEARED_SIG = keccak256("ClearDefaultGroupId(address,uint256)");
+    bytes32 internal constant SET_POSTING_ALLOWED_SIG = keccak256("SetPostingAllowed(uint256,address,uint256,bool)");
+    bytes32 internal constant POST_MESSAGE_SIG = keccak256("PostMessage(uint256,uint256,address,uint256,uint256)");
+    bytes32 internal constant MENTION_SENDER_ID_SIG = keccak256("MentionSenderId(uint256,uint256,uint256)");
+    bytes32 internal constant MENTION_ALL_SIG = keccak256("MentionAll(uint256,uint256)");
+    bytes32 internal constant FAIL_AFTER_POST_PLUGIN_SIG =
+        keccak256("FailAfterPostPlugin(uint256,uint256,address,uint256,bytes)");
+    bytes32 internal constant SET_DEFAULT_GROUP_ID_SIG = keccak256("SetDefaultGroupId(address,uint256)");
+    bytes32 internal constant CLEAR_DEFAULT_GROUP_ID_SIG = keccak256("ClearDefaultGroupId(address,uint256)");
 
     function setUp() public virtual {
         groupNft = new MockLOVE20Group();
@@ -139,7 +139,7 @@ abstract contract GroupChatFixture is TestBase {
         version = abi.decode(data, (uint256));
     }
 
-    function _decodeMessagePost(bytes memory data) internal pure returns (uint256 round, uint256 messageId) {
+    function _decodePostMessage(bytes memory data) internal pure returns (uint256 round, uint256 messageId) {
         (round, messageId) = abi.decode(data, (uint256, uint256));
     }
 
@@ -147,7 +147,7 @@ abstract contract GroupChatFixture is TestBase {
         messageId = abi.decode(data, (uint256));
     }
 
-    function _decodeAfterPostFailedRound(bytes memory data) internal pure returns (uint256 round) {
+    function _decodeFailAfterPostPluginRound(bytes memory data) internal pure returns (uint256 round) {
         (round,) = abi.decode(data, (uint256, bytes));
     }
 }

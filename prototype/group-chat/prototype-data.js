@@ -544,7 +544,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   ],
   messages: [
     { groupId: '1024', senderId: 9001, senderAddress: '0x3a...02', timestamp: '2026-05-22T09:00:00+08:00', round: 42, messageId: 1, content: '本轮行动投票窗口已经开始，建议先确认治理票。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
-    { groupId: '1024', senderId: 9007, senderAddress: '0x8b...91', timestamp: '2026-05-22T09:03:00+08:00', round: 42, messageId: 2, content: '@验证员小周 我补充：MessagePost 只是发现信号，正文回查 messages。', mentionedSenderIds: [1029], mentionAll: false, quotedMessageId: 0, mine: true },
+    { groupId: '1024', senderId: 9007, senderAddress: '0x8b...91', timestamp: '2026-05-22T09:03:00+08:00', round: 42, messageId: 2, content: '@验证员小周 我补充：PostMessage 只是发现信号，正文回查 messages。', mentionedSenderIds: [1029], mentionAll: false, quotedMessageId: 0, mine: true },
     { groupId: '1024', senderId: 1029, senderAddress: '0x52...13', timestamp: '2026-05-22T09:14:00+08:00', round: 42, messageId: 3, content: '@全部 只有 owner、delegate 或 admin 可以发。', mentionedSenderIds: [], mentionAll: true, quotedMessageId: 2, mine: false },
     { groupId: '1024', senderId: 9011, senderAddress: '0x44...aa', timestamp: '2026-05-22T21:18:00+08:00', round: 42, messageId: 4, content: '这条消息来自已被治理黑名单命中的地址与 NFT，默认应隐藏。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },
     { groupId: '1025', senderId: 9101, senderAddress: '0x77...10', timestamp: '2026-05-22T08:45:00+08:00', round: 42, messageId: 1, content: '治理群只同步治理者可执行的讨论，避免和主群的社区入口混在一起。', mentionedSenderIds: [], mentionAll: false, quotedMessageId: 0, mine: false },

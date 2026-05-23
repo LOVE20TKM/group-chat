@@ -13,7 +13,7 @@ interface IGovVotedBanSource is IPostBanSource {
     error VoteNotFound();
     error BanThresholdTooHigh();
 
-    event AddressBanVoteSet(
+    event SetAddressBanVote(
         uint256 indexed groupId,
         address indexed targetAddress,
         address indexed voter,
@@ -24,7 +24,7 @@ interface IGovVotedBanSource is IPostBanSource {
         uint256 stateVersion
     );
 
-    event SenderIdBanVoteSet(
+    event SetSenderIdBanVote(
         uint256 indexed groupId,
         uint256 indexed targetSenderId,
         address indexed voter,
@@ -35,11 +35,11 @@ interface IGovVotedBanSource is IPostBanSource {
         uint256 stateVersion
     );
 
-    event AddressBanSet(uint256 indexed groupId, address indexed targetAddress, bool listed, uint256 stateVersion);
+    event SetAddressBan(uint256 indexed groupId, address indexed targetAddress, bool listed, uint256 stateVersion);
 
-    event SenderIdBanSet(uint256 indexed groupId, uint256 indexed targetSenderId, bool listed, uint256 stateVersion);
+    event SetSenderIdBan(uint256 indexed groupId, uint256 indexed targetSenderId, bool listed, uint256 stateVersion);
 
-    event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
+    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_ADDRESS() external view returns (address);
 

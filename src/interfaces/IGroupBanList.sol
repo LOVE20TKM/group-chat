@@ -8,7 +8,7 @@ interface IGroupBanList {
     error TargetSenderIdZero();
     error SenderPairLengthMismatch();
 
-    event AddressBanSet(
+    event SetAddressBan(
         uint256 indexed groupId,
         address indexed operatorAddress,
         address indexed targetAddress,
@@ -17,7 +17,7 @@ interface IGroupBanList {
         uint256 stateVersion
     );
 
-    event SenderIdBanSet(
+    event SetSenderIdBan(
         uint256 indexed groupId,
         address indexed operatorAddress,
         uint256 indexed targetSenderId,
@@ -26,7 +26,7 @@ interface IGroupBanList {
         uint256 stateVersion
     );
 
-    event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
+    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_ADMIN_ADDRESS() external view returns (address);
 

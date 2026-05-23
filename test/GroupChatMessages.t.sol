@@ -113,12 +113,12 @@ contract GroupChatMessagesTest is GroupChatFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 3);
-        assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
-        assertEq(logs[1].topics[0], MESSAGE_MENTION_SIG);
+        assertEq(logs[0].topics[0], POST_MESSAGE_SIG);
+        assertEq(logs[1].topics[0], MENTION_SENDER_ID_SIG);
         assertEq(logs[1].topics[1], bytes32(groupId));
         assertEq(logs[1].topics[2], bytes32(otherGroupId));
         assertEq(_decodeMessageId(logs[1].data), 1);
-        assertEq(logs[2].topics[0], MESSAGE_MENTION_SIG);
+        assertEq(logs[2].topics[0], MENTION_SENDER_ID_SIG);
         assertEq(logs[2].topics[1], bytes32(groupId));
         assertEq(logs[2].topics[2], bytes32(delegateId));
         assertEq(_decodeMessageId(logs[2].data), 1);
@@ -177,8 +177,8 @@ contract GroupChatMessagesTest is GroupChatFixture {
         Vm.Log[] memory mentionAllLogs = vm.getRecordedLogs();
 
         assertEq(mentionAllLogs.length, 2);
-        assertEq(mentionAllLogs[0].topics[0], MESSAGE_POST_SIG);
-        assertEq(mentionAllLogs[1].topics[0], MESSAGE_MENTION_ALL_SIG);
+        assertEq(mentionAllLogs[0].topics[0], POST_MESSAGE_SIG);
+        assertEq(mentionAllLogs[1].topics[0], MENTION_ALL_SIG);
         assertEq(mentionAllLogs[1].topics[1], bytes32(groupId));
         assertEq(_decodeMessageId(mentionAllLogs[1].data), 1);
 
@@ -429,8 +429,8 @@ contract GroupChatMessagesTest is GroupChatFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 1);
-        assertEq(logs[0].topics[0], MESSAGE_POST_SIG);
-        (uint256 messageRound, uint256 messageId) = _decodeMessagePost(logs[0].data);
+        assertEq(logs[0].topics[0], POST_MESSAGE_SIG);
+        (uint256 messageRound, uint256 messageId) = _decodePostMessage(logs[0].data);
         assertEq(messageRound, 0);
         assertEq(messageId, 1);
 

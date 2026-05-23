@@ -22,8 +22,8 @@
 
 ## 事件
 
-- `AdminSet`：管理员 NFT 被加入或移出配置集合时发出。
-- `AdminSnapshotSet`：`addAdmins` 新增或重新确认管理员 NFT，导致该 `adminId` 的群 owner / admin owner 快照变化时发出。
-- `StateVersionChanged`：集合或快照发生变化时发出，作为缓存重拉信号。
+- `SetAdmin`：管理员 NFT 被加入或移出配置集合时发出。
+- `SetAdminSnapshot`：`addAdmins` 新增或重新确认管理员 NFT，导致该 `adminId` 的群 owner / admin owner 快照变化时发出。
+- `ChangeStateVersion`：集合或快照发生变化时发出，作为缓存重拉信号。
 
 `GroupBanList`、`GroupMember` 等 owner-admin 管理型模块应固定读取同一个 `GroupAdmin`，避免每个模块维护一份割裂的管理员名单。

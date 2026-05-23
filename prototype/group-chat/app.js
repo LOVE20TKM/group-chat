@@ -2704,7 +2704,7 @@ function sendMessage() {
   });
   if (chat) chat.lastMessageId = nextMessageId;
   const mentionHint = mentionSenderIdsValidationHint(draftMentionedSenderIds);
-  state.syncHint = mentionHint || '已发送，MessagePost 发现信号已模拟。';
+  state.syncHint = mentionHint || '已发送，PostMessage 发现信号已模拟。';
   clearActiveQuote();
   state.mentionedSenderIds = [];
   state.mentionAll = false;

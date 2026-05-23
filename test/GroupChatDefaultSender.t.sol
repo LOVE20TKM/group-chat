@@ -16,7 +16,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 1);
-        assertEq(logs[0].topics[0], DEFAULT_GROUP_ID_SET_SIG);
+        assertEq(logs[0].topics[0], SET_DEFAULT_GROUP_ID_SIG);
         assertEq(groupDefaults.defaultGroupIdOf(senderOwner), senderId);
 
         vm.roll(originBlocks);
@@ -63,7 +63,7 @@ contract GroupChatDefaultSenderTest is GroupChatFixture {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         assertEq(logs.length, 1);
-        assertEq(logs[0].topics[0], DEFAULT_GROUP_ID_CLEARED_SIG);
+        assertEq(logs[0].topics[0], CLEAR_DEFAULT_GROUP_ID_SIG);
         assertEq(groupDefaults.defaultGroupIdOf(senderOwner), 0);
 
         vm.prank(other);

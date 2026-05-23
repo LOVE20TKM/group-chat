@@ -355,7 +355,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (newVersion == 0) {
             revert VoteUnchanged();
         }
-        _emitStateVersionChanged(groupId, newVersion);
+        _emitChangeStateVersion(groupId, newVersion);
     }
 
     function _setSenderIdVote(uint256 groupId, uint256 targetSenderId, address voter, bool supportBan) internal {
@@ -364,7 +364,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (newVersion == 0) {
             revert VoteUnchanged();
         }
-        _emitStateVersionChanged(groupId, newVersion);
+        _emitChangeStateVersion(groupId, newVersion);
     }
 
     function _setVoteIfChanged(
@@ -401,7 +401,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         vote.supportBan = supportBan;
         vote.settledWeight = weight;
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitVoteSet(state, groupId, key, voter, supportBan, weight, newVersion);
+        _emitSetVote(state, groupId, key, voter, supportBan, weight, newVersion);
         newVersion = _syncBanList(state, groupId, key, totalWeight, newVersion);
         return newVersion;
     }
@@ -411,7 +411,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (newVersion == 0) {
             revert VoteNotFound();
         }
-        _emitStateVersionChanged(groupId, newVersion);
+        _emitChangeStateVersion(groupId, newVersion);
     }
 
     function _clearSenderIdVote(uint256 groupId, uint256 targetSenderId, address voter) internal {
@@ -420,7 +420,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (newVersion == 0) {
             revert VoteNotFound();
         }
-        _emitStateVersionChanged(groupId, newVersion);
+        _emitChangeStateVersion(groupId, newVersion);
     }
 
     function _clearVoteIfFound(uint256 groupId, TargetKey memory key, address voter, uint256 newVersion)
@@ -440,7 +440,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
 
         _removeVote(state, target, key, voter);
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitVoteSet(state, groupId, key, voter, false, 0, newVersion);
+        _emitSetVote(state, groupId, key, voter, false, 0, newVersion);
         newVersion = _syncBanList(state, groupId, key, totalWeight, newVersion);
         return newVersion;
     }
@@ -451,7 +451,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (!found) {
             revert VoteNotFound();
         }
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function _refreshSenderIdVote(uint256 groupId, uint256 targetSenderId, address voter) internal {
@@ -460,7 +460,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (!found) {
             revert VoteNotFound();
         }
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function _refreshVoteIfFound(uint256 groupId, TargetKey memory key, address voter, uint256 newVersion)
@@ -488,7 +488,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (weight == 0) {
             _removeVoteAfterWeightRemoved(state, target, key, voter);
             newVersion = _ensureStateVersion(state, newVersion);
-            _emitVoteSet(state, groupId, key, voter, false, 0, newVersion);
+            _emitSetVote(state, groupId, key, voter, false, 0, newVersion);
             newVersion = _syncBanList(state, groupId, key, totalWeight, newVersion);
             return (true, newVersion);
         }
@@ -496,7 +496,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         _addWeight(target, vote.supportBan, weight);
         vote.settledWeight = weight;
         newVersion = _ensureStateVersion(state, newVersion);
-        _emitVoteSet(state, groupId, key, voter, vote.supportBan, weight, newVersion);
+        _emitSetVote(state, groupId, key, voter, vote.supportBan, weight, newVersion);
         newVersion = _syncBanList(state, groupId, key, totalWeight, newVersion);
         return (true, newVersion);
     }
@@ -517,7 +517,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (newVersion == 0) {
             revert VoteUnchanged();
         }
-        _emitStateVersionChanged(groupId, newVersion);
+        _emitChangeStateVersion(groupId, newVersion);
     }
 
     function _clearSenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter) internal {
@@ -528,7 +528,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (newVersion == 0) {
             revert VoteNotFound();
         }
-        _emitStateVersionChanged(groupId, newVersion);
+        _emitChangeStateVersion(groupId, newVersion);
     }
 
     function _refreshSenderVote(uint256 groupId, uint256 targetSenderId, address targetAddress, address voter)
@@ -542,7 +542,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
         if (!addressFound && !senderIdFound) {
             revert VoteNotFound();
         }
-        _emitStateVersionChangedIfChanged(groupId, newVersion2);
+        _emitChangeStateVersionIfChanged(groupId, newVersion2);
     }
 
     function _requireSenderTarget(uint256 targetSenderId, address targetAddress) internal pure {
@@ -561,17 +561,17 @@ contract GovVotedBanSource is IGovVotedBanSource {
         return newVersion;
     }
 
-    function _emitStateVersionChanged(uint256 groupId, uint256 newVersion) internal {
-        emit StateVersionChanged(groupId, newVersion);
+    function _emitChangeStateVersion(uint256 groupId, uint256 newVersion) internal {
+        emit ChangeStateVersion(groupId, newVersion);
     }
 
-    function _emitStateVersionChangedIfChanged(uint256 groupId, uint256 newVersion) internal {
+    function _emitChangeStateVersionIfChanged(uint256 groupId, uint256 newVersion) internal {
         if (newVersion != 0) {
-            emit StateVersionChanged(groupId, newVersion);
+            emit ChangeStateVersion(groupId, newVersion);
         }
     }
 
-    function _emitVoteSet(
+    function _emitSetVote(
         ChatState storage state,
         uint256 groupId,
         TargetKey memory key,
@@ -582,7 +582,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
     ) internal {
         TargetState storage target = _targetState(state, key);
         if (key.kind == TargetKind.SenderAddress) {
-            emit AddressBanVoteSet(
+            emit SetAddressBanVote(
                 groupId,
                 key.targetAddress,
                 voter,
@@ -593,7 +593,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
                 newVersion
             );
         } else {
-            emit SenderIdBanVoteSet(
+            emit SetSenderIdBanVote(
                 groupId,
                 key.targetSenderId,
                 voter,
@@ -620,7 +620,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
 
         newVersion = _ensureStateVersion(state, newVersion);
         _setBanListed(state, key, shouldList);
-        _emitBanSet(groupId, key, shouldList, newVersion);
+        _emitSetBan(groupId, key, shouldList, newVersion);
         return newVersion;
     }
 
@@ -752,11 +752,11 @@ contract GovVotedBanSource is IGovVotedBanSource {
         }
     }
 
-    function _emitBanSet(uint256 groupId, TargetKey memory key, bool listed, uint256 newVersion) internal {
+    function _emitSetBan(uint256 groupId, TargetKey memory key, bool listed, uint256 newVersion) internal {
         if (key.kind == TargetKind.SenderAddress) {
-            emit AddressBanSet(groupId, key.targetAddress, listed, newVersion);
+            emit SetAddressBan(groupId, key.targetAddress, listed, newVersion);
         } else {
-            emit SenderIdBanSet(groupId, key.targetSenderId, listed, newVersion);
+            emit SetSenderIdBan(groupId, key.targetSenderId, listed, newVersion);
         }
     }
 

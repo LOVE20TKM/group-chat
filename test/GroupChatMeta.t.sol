@@ -35,8 +35,8 @@ contract GroupChatMetaTest is GroupChatFixture {
 
         assertEq(chat.chatInfo(groupId).configVersion, 4);
         assertEq(logs.length, 2);
-        assertEq(logs[0].topics[0], META_SET_SIG);
-        assertEq(logs[1].topics[0], META_SET_SIG);
+        assertEq(logs[0].topics[0], SET_META_SIG);
+        assertEq(logs[1].topics[0], SET_META_SIG);
         assertEq(_decodeMetaConfigVersion(logs[0].data), 4);
         assertEq(_decodeMetaConfigVersion(logs[1].data), 4);
 
@@ -119,20 +119,20 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(entryValues[1], bytes("2"));
 
         assertEq(logs.length, 5);
-        assertEq(logs[0].topics[0], META_SET_SIG);
+        assertEq(logs[0].topics[0], SET_META_SIG);
         assertEq(_decodeMetaConfigVersion(logs[0].data), 1);
         assertEq(_decodeMetaKey(logs[0].data), "a");
         assertEq(_decodeMetaValue(logs[0].data), bytes("1"));
         assertEq(_decodeMetaPrevValue(logs[0].data), bytes(""));
 
-        assertEq(logs[1].topics[0], META_SET_SIG);
+        assertEq(logs[1].topics[0], SET_META_SIG);
         assertEq(_decodeMetaKey(logs[1].data), "b");
         assertEq(_decodeMetaValue(logs[1].data), bytes("2"));
         assertEq(_decodeMetaPrevValue(logs[1].data), bytes(""));
 
-        assertEq(logs[2].topics[0], BEFORE_POST_PLUGIN_SET_SIG);
+        assertEq(logs[2].topics[0], SET_BEFORE_POST_PLUGIN_SIG);
         assertEq(_decodeVersionAndAddress(logs[2].data), 1);
-        assertEq(logs[3].topics[0], AFTER_POST_PLUGIN_SET_SIG);
+        assertEq(logs[3].topics[0], SET_AFTER_POST_PLUGIN_SIG);
         assertEq(_decodeVersionAndAddress(logs[3].data), 1);
         assertEq(logs[4].topics[0], ACTIVATE_SIG);
         assertEq(_decodeActivateVersion(logs[4].data), 1);
@@ -168,7 +168,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(chat.metaValue(groupId, "a"), bytes(""));
 
         assertEq(logs.length, 1);
-        assertEq(logs[0].topics[0], META_SET_SIG);
+        assertEq(logs[0].topics[0], SET_META_SIG);
         assertEq(_decodeMetaConfigVersion(logs[0].data), 2);
         assertEq(_decodeMetaKey(logs[0].data), "a");
         assertEq(_decodeMetaValue(logs[0].data), bytes(""));
@@ -214,7 +214,7 @@ contract GroupChatMetaTest is GroupChatFixture {
         assertEq(chat.metaValue(groupId, "missing"), bytes(""));
 
         assertEq(logs.length, 1);
-        assertEq(logs[0].topics[0], META_SET_SIG);
+        assertEq(logs[0].topics[0], SET_META_SIG);
         assertEq(_decodeMetaConfigVersion(logs[0].data), 2);
         assertEq(_decodeMetaKey(logs[0].data), "c");
         assertEq(_decodeMetaValue(logs[0].data), bytes("3"));

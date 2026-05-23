@@ -76,7 +76,7 @@ BanSourceFailed.selector          banSource 调用失败
 - 空消息必须 revert。
 - 单条消息上限固定为 `4096` bytes。
 - 消息只能新增，不能编辑或删除。
-- `MessagePost` 事件不带完整正文，正文以 view 读取为准。
+- `PostMessage` 事件不带完整正文，正文以 view 读取为准。
 
 ## 消息 ID
 
@@ -162,8 +162,8 @@ BanSourceFailed.selector          banSource 调用失败
 
 ## 同步策略
 
-- `MessagePost` 只作为发现信号。
-- `MessageMention` / `MessageMentionAll` 只作为链下通知索引信号。
+- `PostMessage` 只作为发现信号。
+- `MentionSenderId` / `MentionAll` 只作为链下通知索引信号。
 - 正文以 `message(...)` 或 `messages(...)` 为准。
 - 前端维护每个 `groupId` 的最新 `messageId`。
 - 若事件中的 `messageId == latestMessageId + 1`，可用 `message(groupId, messageId)` 回查。

@@ -30,13 +30,13 @@ contract GroupMember is IGroupMember {
     function addMemberIds(uint256 groupId, uint256[] calldata memberIdList) external {
         uint256 operatorId = _requireAdmin(groupId);
         uint256 newVersion = _setMemberIds(groupId, operatorId, memberIdList, true);
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function removeMemberIds(uint256 groupId, uint256[] calldata memberIdList) external {
         uint256 operatorId = _requireAdmin(groupId);
         uint256 newVersion = _setMemberIds(groupId, operatorId, memberIdList, false);
-        _emitStateVersionChangedIfChanged(groupId, newVersion);
+        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function isMemberId(uint256 groupId, uint256 memberId) external view returns (bool) {
@@ -77,7 +77,7 @@ contract GroupMember is IGroupMember {
             _requireMemberIdTarget(memberId);
             if (_setMemberId(state.memberIds, memberId, listed)) {
                 newVersion = _ensureStateVersion(state, newVersion);
-                emit MemberIdSet(groupId, msg.sender, memberId, operatorId, listed, newVersion);
+                emit SetMemberId(groupId, msg.sender, memberId, operatorId, listed, newVersion);
             }
         }
     }
@@ -107,9 +107,9 @@ contract GroupMember is IGroupMember {
         return newVersion;
     }
 
-    function _emitStateVersionChangedIfChanged(uint256 groupId, uint256 newVersion) internal {
+    function _emitChangeStateVersionIfChanged(uint256 groupId, uint256 newVersion) internal {
         if (newVersion != 0) {
-            emit StateVersionChanged(groupId, newVersion);
+            emit ChangeStateVersion(groupId, newVersion);
         }
     }
 

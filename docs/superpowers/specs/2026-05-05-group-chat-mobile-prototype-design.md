@@ -55,7 +55,7 @@
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
 | 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
 | 全体提及 | `mentionAll`，仅 owner、delegate 或 GroupAdmin 管理员 NFT 可发 |
-| 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
+| 消息同步 | `PostMessage` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
 | 规则槽 | `chatInfo(groupId)`：`scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin` |
 | 共享管理员 | `GroupAdmin.adminIds(groupId)` 返回管理员 NFT 与当前有效性、`GroupAdmin.adminIdOf(groupId, account)` |
@@ -79,7 +79,7 @@
 
 3. 状态条
    - 靠近输入区显示同步提示和模拟交易反馈。
-   - 示例：`MessagePost 发现 messageId #80，正文已通过 messages 补拉。`
+   - 示例：`PostMessage 发现 messageId #80，正文已通过 messages 补拉。`
    - 发言资格失败时由不可发言输入区展示产品化错误名 / reasonCode 对应中文原因。
 
 4. 输入区
@@ -144,7 +144,7 @@
   - `canPost` reasonCode 能在 UI 中解释。
   - `mentionedSenderIds` 去重有前端提示；超过 `32` 时阻止发送并提示 `TooManyMentionedSenderIds`。
   - `quotedMessageId` 为 `0` 与非 `0` 两种状态可见。
-  - `MessagePost` 事件不是正文真源的同步策略在 UI 中有提示。
+  - `PostMessage` 事件不是正文真源的同步策略在 UI 中有提示。
 
 ## 原型交付
 

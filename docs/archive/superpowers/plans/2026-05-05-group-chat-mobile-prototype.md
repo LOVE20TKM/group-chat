@@ -73,7 +73,7 @@ const requiredJs = [
   'ScopeRejected',
   'BanRejected',
   'SenderNotGroupOwner',
-  'MessagePost',
+  'PostMessage',
   'quotedMessageIndex',
   'mentionAll',
   'messagesByMentionAll',
@@ -223,7 +223,7 @@ Implement:
 - Quote sets `quotedMessageIndex`.
 - Typing `@姓名` maps to `mentionedSenderIds`.
 - Typing `@全部` maps to `mentionAll`.
-- Send appends a new mock message and shows `MessagePost` sync hint.
+- Send appends a new mock message and shows `PostMessage` sync hint.
 - Status mode buttons simulate `OK`, `ScopeRejected`, `BanRejected`, `SenderNotGroupOwner`.
 - Index mode buttons simulate `messages`, `messagesByRound`, `messagesBySender`, `messagesByMention`, `messagesByMentionAll`.
 

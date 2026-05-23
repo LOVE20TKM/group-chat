@@ -341,7 +341,7 @@ const requiredAppJs = [
   'activateChat',
   '配置入参',
   'setRuleSlot',
-  'MessagePost',
+  'PostMessage',
   'GroupMemberScope.addMemberIds',
   'setDelegateId',
   'set-delegate-id',
