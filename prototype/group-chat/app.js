@@ -4,7 +4,7 @@ if (!prototypeData) {
   throw new Error('Missing LOVE20_CHAT_PROTOTYPE_DATA. Load prototype-data.js before app.js.');
 }
 
-const messagePreferenceStorageKey = 'love20-chat:message-preferences:v1';
+const messagePreferenceStorageKey = 'love20-chat:message-preferences:v2';
 const state = JSON.parse(JSON.stringify(prototypeData.initialState));
 state.localMessagePreferences = readLocalMessagePreferences();
 const { bottomTabs, activationTabs } = prototypeData;
@@ -611,23 +611,23 @@ function currentSenderBanned(chat) {
   return ban.addressBanList.includes(state.account) || ban.senderIdBanList.includes(String(currentDefaultGroupId()));
 }
 
-function messagePreferenceKey(groupId = state.activeGroupId) {
-  return `${state.account || 'disconnected'}:${String(groupId)}`;
+function messagePreferenceKey() {
+  return `${state.account || 'disconnected'}:all-groups`;
 }
 
-function groupMessagePreference(groupId = state.activeGroupId) {
-  return state.localMessagePreferences?.[messagePreferenceKey(groupId)] || {};
+function accountMessagePreference() {
+  return state.localMessagePreferences?.[messagePreferenceKey()] || {};
 }
 
-function showBlacklistedMessages(groupId = state.activeGroupId) {
-  return Boolean(groupMessagePreference(groupId).showBlacklistedMessages);
+function showBlacklistedMessages() {
+  return Boolean(accountMessagePreference().showBlacklistedMessages);
 }
 
-function setShowBlacklistedMessages(groupId, value) {
-  const key = messagePreferenceKey(groupId);
+function setShowBlacklistedMessages(value) {
+  const key = messagePreferenceKey();
   state.localMessagePreferences = {
     ...(state.localMessagePreferences || {}),
-    [key]: { ...groupMessagePreference(groupId), showBlacklistedMessages: Boolean(value) },
+    [key]: { ...accountMessagePreference(), showBlacklistedMessages: Boolean(value) },
   };
   return writeLocalMessagePreferences();
 }
@@ -650,7 +650,7 @@ function messageSenderBanned(chat, message) {
 }
 
 function shouldHideMessage(chat, message) {
-  return messageSenderBanned(chat, message) && !showBlacklistedMessages(message.groupId);
+  return messageSenderBanned(chat, message) && !showBlacklistedMessages();
 }
 
 function chatStatus(chat) {
@@ -723,7 +723,6 @@ function renderWorkspace() {
   if (state.view === 'activate') workspace.innerHTML = renderActivationHub();
   if (state.view === 'activate-form') workspace.innerHTML = renderActivationForm();
   if (state.view === 'details') workspace.innerHTML = renderGroupDetails();
-  if (state.view === 'preferences') workspace.innerHTML = renderGroupPreferences();
   if (state.view === 'members') workspace.innerHTML = renderGroupMembers();
   if (state.view === 'admins') workspace.innerHTML = renderGroupAdmins();
   if (state.view === 'settings') workspace.innerHTML = renderGroupSettings();
@@ -748,8 +747,10 @@ function renderInbox() {
   return `
     <section class="conversation-list">${renderConversationRows()}</section>
     <div class="inbox-action-row">
+      <button class="sheet-button" type="button" data-action="toggle-inbox-preferences">偏好</button>
       <button class="sheet-button primary" type="button" data-action="set-view" data-view="activate">群聊激活</button>
     </div>
+    ${state.inboxPreferencesOpen ? renderMessagePreferenceControl() : ''}
   `;
 }
 
@@ -770,7 +771,8 @@ function renderConversationRows() {
   ].join('');
 }
 
-function renderConversationSection(label, rows, emptyText) {
+function renderConversationSection(label, rows, emptyText, showLabel = true) {
+  if (!showLabel && !rows.length) return '';
   const count = rows.length ? `<span>${rows.length} 个</span>` : '';
   const content = rows.length
     ? rows.map(renderConversationRow).join('')
@@ -778,7 +780,7 @@ function renderConversationSection(label, rows, emptyText) {
 
   return `
     <div class="conversation-section">
-      <div class="conversation-section-label"><strong>${label}</strong>${count}</div>
+      ${showLabel ? `<div class="conversation-section-label"><strong>${label}</strong>${count}</div>` : ''}
       ${content}
     </div>
   `;
@@ -1480,7 +1482,6 @@ function renderChatMenuButtons(chat) {
   const pinned = isPinnedConversation(chat.groupId);
   return `
     <button type="button" data-action="toggle-conversation-pin" data-group-id="${chat.groupId}">${pinned ? '取消置顶' : '置顶'}</button>
-    <button type="button" data-action="open-preferences" data-group-id="${chat.groupId}">偏好</button>
     <button type="button" data-action="open-members" data-group-id="${chat.groupId}">群成员</button>
     <button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>
     <button type="button" data-action="open-admins" data-group-id="${chat.groupId}">管理员</button>
@@ -1618,17 +1619,6 @@ function renderGroupDetails() {
   return renderGroupSettings();
 }
 
-function renderGroupPreferences() {
-  const chat = activeChat();
-  if (!chat) return '<div class="empty-state">请选择群聊</div>';
-  return `
-    <section class="workspace-band">
-      ${renderGroupDetailHeader(chat, '偏好', '本机')}
-    </section>
-    ${renderMessagePreferenceControl(chat)}
-  `;
-}
-
 function renderGroupMembers() {
   const chat = activeChat();
   if (!chat) return '<div class="empty-state">请选择群聊</div>';
@@ -1716,19 +1706,19 @@ function renderGroupStatusCard(chat) {
   `;
 }
 
-function renderMessagePreferenceControl(chat) {
-  const showBanned = showBlacklistedMessages(chat.groupId);
+function renderMessagePreferenceControl() {
+  const showBanned = showBlacklistedMessages();
   return `
     <section class="workspace-band message-preference-panel">
       <div class="card-topline">
         <strong>本机阅读偏好</strong>
-        <span>localStorage</span>
+        <span>全部群聊</span>
       </div>
       <div class="field-row activation-choice-row">
         <label>显示黑名单消息</label>
         <div class="choice-group">
-          <button class="picker-button${showBanned ? ' active' : ''}" type="button" data-action="set-show-blacklisted" data-group-id="${chat.groupId}" data-value="true">开启</button>
-          <button class="picker-button${showBanned ? '' : ' active'}" type="button" data-action="set-show-blacklisted" data-group-id="${chat.groupId}" data-value="false">关闭</button>
+          <button class="picker-button${showBanned ? ' active' : ''}" type="button" data-action="set-show-blacklisted" data-value="true">开启</button>
+          <button class="picker-button${showBanned ? '' : ' active'}" type="button" data-action="set-show-blacklisted" data-value="false">关闭</button>
         </div>
       </div>
     </section>
@@ -1764,6 +1754,7 @@ function setBottomTab(tab) {
   if (tab === 'chat') state.view = 'inbox';
   state.pageReturnStack = [];
   state.activeConversationMenuGroupId = null;
+  state.inboxPreferencesOpen = false;
   render();
 }
 
@@ -1771,6 +1762,7 @@ function setView(view) {
   state.pageReturnStack = [];
   state.view = view;
   state.activeConversationMenuGroupId = null;
+  state.inboxPreferencesOpen = false;
   render();
 }
 
@@ -1855,6 +1847,7 @@ function openChat(groupId) {
   state.activeAvatarMenuKey = null;
   state.activeConversationMenuGroupId = null;
   state.activeGroupMenuId = null;
+  state.inboxPreferencesOpen = false;
   state.pageReturnStack = [];
   render();
 }
@@ -1892,10 +1885,6 @@ function openGroupDetailView(groupId, view) {
   render();
 }
 
-function openPreferences(groupId) {
-  openGroupDetailView(groupId, 'preferences');
-}
-
 function openMembers(groupId) {
   openGroupDetailView(groupId, 'members');
 }
@@ -1923,10 +1912,17 @@ function toggleChatMenu(groupId) {
   render();
 }
 
-function setShowBlacklistedMessagesPreference(groupId, value) {
+function toggleInboxPreferences() {
+  state.inboxPreferencesOpen = !state.inboxPreferencesOpen;
+  state.activeConversationMenuGroupId = null;
+  render();
+}
+
+function setShowBlacklistedMessagesPreference(value) {
   const showBanned = value === 'true';
-  const saved = setShowBlacklistedMessages(groupId, showBanned);
+  const saved = setShowBlacklistedMessages(showBanned);
   state.activeGroupMenuId = null;
+  state.activeConversationMenuGroupId = null;
   state.activeMenuMessageId = null;
   state.activeAvatarMenuKey = null;
   if (saved) state.syncHint = showBanned ? '已在本机显示黑名单消息。' : '已在本机隐藏黑名单消息。';
@@ -2878,6 +2874,7 @@ document.addEventListener('click', (event) => {
     render();
   }
   if (action === 'set-view') setView(target.dataset.view);
+  if (action === 'toggle-inbox-preferences') toggleInboxPreferences();
   if (action === 'set-blacklist-query-type') setBlacklistQueryType(target.dataset.queryType);
   if (action === 'set-blacklist-page') setBlacklistPage(target.dataset.page);
   if (action === 'toggle-blacklist-menu') toggleBlacklistMenu(target.dataset.targetType, target.dataset.target);
@@ -2893,10 +2890,9 @@ document.addEventListener('click', (event) => {
   if (action === 'activate-chat') activateChat(target.dataset.groupId);
   if (action === 'set-activation-option') setActivationOption(target.dataset.field, target.dataset.value);
   if (action === 'toggle-chat-menu') toggleChatMenu(target.dataset.groupId);
-  if (action === 'set-show-blacklisted') setShowBlacklistedMessagesPreference(target.dataset.groupId, target.dataset.value);
+  if (action === 'set-show-blacklisted') setShowBlacklistedMessagesPreference(target.dataset.value);
   if (action === 'open-manage') openManage(target.dataset.groupId);
   if (action === 'open-details') openDetails(target.dataset.groupId);
-  if (action === 'open-preferences') openPreferences(target.dataset.groupId);
   if (action === 'open-members') openMembers(target.dataset.groupId);
   if (action === 'open-admins') openAdmins(target.dataset.groupId);
   if (action === 'open-settings') openSettings(target.dataset.groupId);

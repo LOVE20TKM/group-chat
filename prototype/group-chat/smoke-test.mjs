@@ -53,6 +53,8 @@ const renderActivationCardSource = extractFunctionSource(js, 'renderActivationCa
 const renderMiniActivateSource = extractFunctionSource(js, 'renderMiniActivate');
 const renderChainActivationSource = extractFunctionSource(js, 'renderChainActivation');
 const activationActionButtonClassSource = extractFunctionSource(js, 'activationActionButtonClass');
+const renderInboxSource = extractFunctionSource(js, 'renderInbox');
+const renderConversationRowsSource = extractFunctionSource(js, 'renderConversationRows');
 
 if (renderActivationCardSource.includes('open-blacklist')) {
   throw new Error('Activation cards must not link to blacklist');
@@ -76,6 +78,25 @@ if (!activationActionButtonClassSource.includes("'sheet-button activation-enter-
 
 if (!activationActionButtonClassSource.includes("'sheet-button primary'")) {
   throw new Error('Inactive chats must render the primary activation button style');
+}
+
+if (
+  !renderInboxSource.includes('data-action="toggle-inbox-preferences"') ||
+  !renderInboxSource.includes('state.inboxPreferencesOpen ? renderMessagePreferenceControl()')
+) {
+  throw new Error('Global message preference control must stay collapsed behind the inbox preference button');
+}
+
+if (renderInboxSource.includes('inbox-toolbar')) {
+  throw new Error('Inbox preference button must live in the bottom action row');
+}
+
+if (!renderConversationRowsSource.includes('置顶群聊') || !renderConversationRowsSource.includes('暂无置顶群聊')) {
+  throw new Error('Pinned conversations must render the pinned section label and empty state');
+}
+
+if (!css.includes('.conversation-row[data-menu-open="true"]') || !css.includes('overflow: visible;')) {
+  throw new Error('Open conversation menus must not be clipped by the row overflow');
 }
 
 for (const [name, source] of [
@@ -242,7 +263,9 @@ const requiredAppJs = [
   'set-activation-type',
   'toggleChatMenu',
   'toggleConversationPin',
+  'toggleInboxPreferences',
   'activeConversationMenuGroupId',
+  'inboxPreferencesOpen',
   'activeGroupMenuId',
   'pageReturnStack',
   'renderGroupDetails',
@@ -581,7 +604,7 @@ const blacklistHarness = new Function(
     extractFunctionSource(js, 'govAddressBanned'),
     extractFunctionSource(js, 'govSenderIdBanned'),
     extractFunctionSource(js, 'messagePreferenceKey'),
-    extractFunctionSource(js, 'groupMessagePreference'),
+    extractFunctionSource(js, 'accountMessagePreference'),
     extractFunctionSource(js, 'showBlacklistedMessages'),
     extractFunctionSource(js, 'messageSenderBanned'),
     extractFunctionSource(js, 'shouldHideMessage'),
@@ -608,9 +631,9 @@ if (blacklistApi.messageSenderBanned(blacklistChat, unsettledVoteMessage)) {
 if (!blacklistApi.shouldHideMessage(blacklistChat, blacklistedMessage)) {
   throw new Error('Blacklisted sender message must be hidden by default');
 }
-blacklistState.localMessagePreferences[`${blacklistState.account}:1024`] = { showBlacklistedMessages: true };
-if (!blacklistApi.showBlacklistedMessages('1024')) {
-  throw new Error('Local preference must enable blacklisted message display per account and group');
+blacklistState.localMessagePreferences[`${blacklistState.account}:all-groups`] = { showBlacklistedMessages: true };
+if (!blacklistApi.showBlacklistedMessages()) {
+  throw new Error('Local preference must enable blacklisted message display per account across all groups');
 }
 if (blacklistApi.shouldHideMessage(blacklistChat, blacklistedMessage)) {
   throw new Error('Blacklisted sender message must show after local preference is enabled');
@@ -914,6 +937,9 @@ const groupDetailMenuHarness = new Function(
 const groupDetailMenuState = JSON.parse(JSON.stringify(initialState));
 const groupDetailMenuApi = groupDetailMenuHarness(groupDetailMenuState);
 const chatMenu = groupDetailMenuApi.renderChatMenuButtons({ groupId: 1301 });
+if (chatMenu.includes('data-action="open-preferences"')) {
+  throw new Error('Chat view menu must not keep the global preference on a single group menu');
+}
 if (!chatMenu.includes('data-action="open-members" data-group-id="1301">群成员</button>')) {
   throw new Error('Chat view menu must keep detail-page navigation entries');
 }

@@ -46,6 +46,7 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
   activeAvatarMenuKey: null,
   activeConversationMenuGroupId: null,
   activeGroupMenuId: null,
+  inboxPreferencesOpen: false,
   syncHint: '',
   nftProfiles: {
     9001: { name: '行动发起人', badge: '行' },
