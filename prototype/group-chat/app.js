@@ -1266,10 +1266,11 @@ function renderBlacklistPanel(chat) {
 
 function renderBlacklistPermissionNotice(chat) {
   if (chat.blacklistMode === 'gov') {
+    const mechanismText = govBlacklistMechanismText(chat);
     return renderPermissionNotice(
       chat.voteWeight > 0,
-      `当前地址有 ${chat.voteWeight} ${chat.voteWeightLabel}，可参与治理黑名单投票。`,
-      `当前地址没有 ${chat.voteWeightLabel}，只能查看和查询治理黑名单。`,
+      `当前地址有 ${chat.voteWeight} ${chat.voteWeightLabel}，可参与治理黑名单投票。${mechanismText}`,
+      `当前地址没有 ${chat.voteWeightLabel}，只能查看和查询治理黑名单。${mechanismText}`,
     );
   }
 
@@ -1282,6 +1283,24 @@ function renderBlacklistPermissionNotice(chat) {
   }
 
   return renderPermissionNotice(false, '', '当前群聊未启用黑名单源。');
+}
+
+function govBlacklistMechanismText(chat) {
+  const totalWeight = uintLike(chat?.govBan?.totalWeight);
+  const thresholdRatio = uintLike(chat?.govBan?.banThresholdRatio);
+  if (totalWeight === 0n || thresholdRatio === 0n) {
+    return '黑名单实时计票：赞成票大于反对票时生效；地址或 NFT 任一命中都会拒绝发言。';
+  }
+  const thresholdWeight = (totalWeight * thresholdRatio + BAN_THRESHOLD_PRECISION - 1n) / BAN_THRESHOLD_PRECISION;
+  const ratioText = govBlacklistRatioText(thresholdRatio);
+  return `黑名单实时计票：赞成票大于反对票，且赞成票达到全 token 治理票的 ${ratioText}（当前至少 ${thresholdWeight} 票）时生效；地址或 NFT 任一命中都会拒绝发言。`;
+}
+
+function govBlacklistRatioText(ratio) {
+  const basisPoints = (ratio * 10000n) / BAN_THRESHOLD_PRECISION;
+  const whole = basisPoints / 100n;
+  const fraction = basisPoints % 100n;
+  return fraction === 0n ? `${whole}%` : `${whole}.${String(fraction).padStart(2, '0').replace(/0+$/, '')}%`;
 }
 
 function renderBlacklistControls(chat, placeholder, selfLabel) {

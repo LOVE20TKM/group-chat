@@ -1045,6 +1045,10 @@ const blacklistTextHarness = new Function(
     'function escapeHtml(value) { return String(value); }',
     'function blacklistRowKey(targetType, target) { return `${targetType}:${target}`; }',
     'function renderBlacklistRowMenu() { return ""; }',
+    'const BAN_THRESHOLD_PRECISION = 1000000000000000000n;',
+    extractFunctionSource(js, 'uintLike'),
+    extractFunctionSource(js, 'govBlacklistRatioText'),
+    extractFunctionSource(js, 'govBlacklistMechanismText'),
     extractFunctionSource(js, 'renderBlacklistPermissionNotice'),
     extractFunctionSource(js, 'renderBlacklistRow'),
     'return { renderBlacklistPermissionNotice, renderBlacklistRow };',
@@ -1052,9 +1056,17 @@ const blacklistTextHarness = new Function(
 );
 
 const blacklistTextApi = blacklistTextHarness({});
-const govPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'gov', voteWeight: 18, voteWeightLabel: '治理票' });
+const govPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({
+  blacklistMode: 'gov',
+  voteWeight: 18,
+  voteWeightLabel: '治理票',
+  govBan: { banThresholdRatio: 3000000000000000, totalWeight: 1000 },
+});
 if (govPermissionText.includes('有权限：') || govPermissionText.includes('无权限：')) {
   throw new Error('Blacklist permission notice must not prefix texts with access labels');
+}
+if (!govPermissionText.includes('黑名单实时计票') || !govPermissionText.includes('赞成票大于反对票') || !govPermissionText.includes('0.3%')) {
+  throw new Error('Gov blacklist permission notice must explain how votes make a blacklist effective');
 }
 const adminPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'admin', canEditAdminBan: true });
 if (adminPermissionText.includes('有权限：') || adminPermissionText.includes('无权限：')) {
