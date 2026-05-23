@@ -89,7 +89,7 @@ contract GroupMemberScopeTest is GroupChatFixture {
 
     function testT133D_permissionsTargetsAndGroupIsolation() public {
         vm.prank(chatOwner);
-        groupAdmin.setAdmins(groupId, _uints(adminId));
+        groupAdmin.addAdmins(groupId, _uints(adminId));
 
         vm.prank(adminOwner);
         vm.expectRevert(IGroupMember.UnauthorizedGroupMemberManager.selector);
@@ -118,12 +118,12 @@ contract GroupMemberScopeTest is GroupChatFixture {
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupAdmin.UnauthorizedGroupAdminManager.selector);
-        groupAdmin.setAdmins(otherGroupId, _uints(adminId));
+        groupAdmin.addAdmins(otherGroupId, _uints(adminId));
     }
 
     function _configureAdmin() internal {
         vm.prank(chatOwner);
-        groupAdmin.setAdmins(groupId, _uints(adminId));
+        groupAdmin.addAdmins(groupId, _uints(adminId));
 
         vm.prank(adminOwner);
         groupDefaults.setDefaultGroupId(adminId);

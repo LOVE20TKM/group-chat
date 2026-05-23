@@ -19,6 +19,8 @@ contract GroupAdmin is IGroupAdmin {
     struct AdminState {
         EnumerableSets.UintSet adminIds;
         uint256 stateVersion;
+        mapping(uint256 => address) groupOwnerSnapshots;
+        mapping(uint256 => address) adminOwnerSnapshots;
     }
 
     mapping(uint256 => AdminState) internal _states;
@@ -42,43 +44,76 @@ contract GroupAdmin is IGroupAdmin {
         MAX_ADMIN_IDS = maxAdminIds_;
     }
 
-    function setAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
+    function addAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
         uint256 operatorId = ownerOrDelegateIdOf(groupId, msg.sender);
         if (operatorId == 0) {
             revert UnauthorizedGroupAdminManager();
         }
-        if (adminIdList.length > MAX_ADMIN_IDS) {
-            revert AdminIdsLimitExceeded();
-        }
         _validateAdminIds(adminIdList);
 
         AdminState storage state = _states[groupId];
-        uint256 newVersion;
-        uint256 i;
-        while (i < state.adminIds.values.length) {
-            uint256 adminId = state.adminIds.values[i];
-            if (_contains(adminIdList, adminId)) {
-                i++;
-                continue;
-            }
-            state.adminIds.remove(adminId);
-            newVersion = _ensureStateVersion(state, newVersion);
-            emit AdminSet(groupId, msg.sender, adminId, operatorId, false, newVersion);
+        if (state.adminIds.values.length + _newAdminIdsCount(state, adminIdList) > MAX_ADMIN_IDS) {
+            revert AdminIdsLimitExceeded();
         }
 
-        for (i = 0; i < adminIdList.length; i++) {
-            if (state.adminIds.add(adminIdList[i])) {
+        address groupOwnerSnapshot = _ownerOfOrRevert(groupId);
+        uint256 newVersion;
+        for (uint256 i = 0; i < adminIdList.length; i++) {
+            uint256 adminId = adminIdList[i];
+            address adminOwnerSnapshot = _ownerOfOrRevert(adminId);
+            bool snapshotChanged;
+            if (state.groupOwnerSnapshots[adminId] != groupOwnerSnapshot) {
+                state.groupOwnerSnapshots[adminId] = groupOwnerSnapshot;
                 newVersion = _ensureStateVersion(state, newVersion);
-                emit AdminSet(groupId, msg.sender, adminIdList[i], operatorId, true, newVersion);
+                snapshotChanged = true;
+            }
+            if (state.adminOwnerSnapshots[adminId] != adminOwnerSnapshot) {
+                state.adminOwnerSnapshots[adminId] = adminOwnerSnapshot;
+                newVersion = _ensureStateVersion(state, newVersion);
+                snapshotChanged = true;
+            }
+            if (snapshotChanged) {
+                emit AdminSnapshotSet(
+                    groupId, msg.sender, adminId, operatorId, groupOwnerSnapshot, adminOwnerSnapshot, newVersion
+                );
+            }
+            if (state.adminIds.add(adminId)) {
+                newVersion = _ensureStateVersion(state, newVersion);
+                emit AdminSet(groupId, msg.sender, adminId, operatorId, true, newVersion);
             }
         }
         _emitStateVersionChangedIfChanged(groupId, newVersion);
     }
 
+    function removeAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
+        uint256 operatorId = ownerOrDelegateIdOf(groupId, msg.sender);
+        if (operatorId == 0) {
+            revert UnauthorizedGroupAdminManager();
+        }
+        _validateAdminIds(adminIdList);
+
+        AdminState storage state = _states[groupId];
+        uint256 newVersion;
+        for (uint256 i = 0; i < adminIdList.length; i++) {
+            uint256 adminId = adminIdList[i];
+            if (!state.adminIds.remove(adminId)) {
+                continue;
+            }
+            delete state.groupOwnerSnapshots[adminId];
+            delete state.adminOwnerSnapshots[adminId];
+            newVersion = _ensureStateVersion(state, newVersion);
+            emit AdminSet(groupId, msg.sender, adminId, operatorId, false, newVersion);
+        }
+        _emitStateVersionChangedIfChanged(groupId, newVersion);
+    }
+
     function adminIdOf(uint256 groupId, address account) public view returns (uint256 adminId) {
-        _ownerOfOrRevert(groupId);
+        AdminState storage state = _states[groupId];
         adminId = IGroupDefaults(GROUP_DEFAULTS_ADDRESS).defaultGroupIdOf(account);
-        if (adminId == 0 || _tryOwnerOf(adminId) != account || !_states[groupId].adminIds.contains(adminId)) {
+        if (
+            adminId == 0 || !state.adminIds.contains(adminId) || !_isEffectiveAdminId(state, groupId, adminId)
+                || state.adminOwnerSnapshots[adminId] != account || _tryOwnerOf(adminId) != account
+        ) {
             return 0;
         }
     }
@@ -88,11 +123,18 @@ contract GroupAdmin is IGroupAdmin {
     }
 
     function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool) {
-        return _states[groupId].adminIds.contains(adminId);
+        AdminState storage state = _states[groupId];
+        return state.adminIds.contains(adminId) && _isEffectiveAdminId(state, groupId, adminId);
     }
 
-    function adminIds(uint256 groupId) external view returns (uint256[] memory) {
-        return _states[groupId].adminIds.values;
+    function adminIds(uint256 groupId) external view returns (uint256[] memory ids, bool[] memory isEffective) {
+        AdminState storage state = _states[groupId];
+        ids = state.adminIds.values;
+        uint256 length = ids.length;
+        isEffective = new bool[](length);
+        for (uint256 i = 0; i < length; i++) {
+            isEffective[i] = _isEffectiveAdminId(state, groupId, ids[i]);
+        }
     }
 
     function stateVersion(uint256 groupId) external view returns (uint256) {
@@ -110,6 +152,18 @@ contract GroupAdmin is IGroupAdmin {
         }
     }
 
+    function _newAdminIdsCount(AdminState storage state, uint256[] calldata adminIdList)
+        internal
+        view
+        returns (uint256 count)
+    {
+        for (uint256 i = 0; i < adminIdList.length; i++) {
+            if (!state.adminIds.contains(adminIdList[i])) {
+                count++;
+            }
+        }
+    }
+
     function _ensureStateVersion(AdminState storage state, uint256 newVersion) internal returns (uint256) {
         if (newVersion == 0) {
             newVersion = ++state.stateVersion;
@@ -121,6 +175,17 @@ contract GroupAdmin is IGroupAdmin {
         if (newVersion != 0) {
             emit StateVersionChanged(groupId, newVersion);
         }
+    }
+
+    function _isEffectiveAdminId(AdminState storage state, uint256 groupId, uint256 adminId)
+        internal
+        view
+        returns (bool)
+    {
+        address ownerSnapshot = state.groupOwnerSnapshots[adminId];
+        address adminOwnerSnapshot = state.adminOwnerSnapshots[adminId];
+        return ownerSnapshot != address(0) && adminOwnerSnapshot != address(0) && _tryOwnerOf(groupId) == ownerSnapshot
+            && _tryOwnerOf(adminId) == adminOwnerSnapshot;
     }
 
     function _requireCode(address target) internal view {
@@ -143,14 +208,5 @@ contract GroupAdmin is IGroupAdmin {
         } catch {
             return address(0);
         }
-    }
-
-    function _contains(uint256[] calldata values, uint256 target) internal pure returns (bool) {
-        for (uint256 i = 0; i < values.length; i++) {
-            if (values[i] == target) {
-                return true;
-            }
-        }
-        return false;
     }
 }

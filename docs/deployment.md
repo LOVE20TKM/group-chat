@@ -44,7 +44,7 @@ source ./one_click_deploy.sh <network>
 
 - `GROUP_ADDRESS`：仅用于部署后校验。
 - `GROUP_CHAT_BAN_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
-- `GROUP_CHAT_MAX_ADMIN_IDS`：`GroupAdmin.setAdmins` 单组最多管理员 NFT 数，默认 `20`。
+- `GROUP_CHAT_MAX_ADMIN_IDS`：`GroupAdmin.addAdmins` 后单组最多管理员 NFT 数，默认 `20`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 

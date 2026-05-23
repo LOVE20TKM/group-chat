@@ -41,6 +41,53 @@ if (!renderStatusMatch) {
   throw new Error('Missing renderStatus');
 }
 
+if (js.includes('activation-summary') || css.includes('.activation-summary')) {
+  throw new Error('Activation hub summary row must be removed');
+}
+
+if (js.includes('GroupAdmin.setAdmins')) {
+  throw new Error('GroupAdmin prototype copy must use addAdmins/removeAdmins, not removed setAdmins');
+}
+
+const renderActivationCardSource = extractFunctionSource(js, 'renderActivationCard');
+const renderMiniActivateSource = extractFunctionSource(js, 'renderMiniActivate');
+const renderChainActivationSource = extractFunctionSource(js, 'renderChainActivation');
+const activationActionButtonClassSource = extractFunctionSource(js, 'activationActionButtonClass');
+
+if (renderActivationCardSource.includes('open-blacklist')) {
+  throw new Error('Activation cards must not link to blacklist');
+}
+
+if (renderMiniActivateSource.includes('blacklist') || renderMiniActivateSource.includes('group-manage')) {
+  throw new Error('Activation mini cards must stay focused on enter/activate actions');
+}
+
+if (renderChainActivationSource.includes('open-blacklist') || renderChainActivationSource.includes('open-manage')) {
+  throw new Error('Chain activation cards must not expose blacklist or group management');
+}
+
+if (renderChainActivationSource.includes('chat.role')) {
+  throw new Error('Chain activation cards must not render role pills');
+}
+
+if (!activationActionButtonClassSource.includes("'sheet-button activation-enter-button'")) {
+  throw new Error('Activated chats must render the lighter enter button style');
+}
+
+if (!activationActionButtonClassSource.includes("'sheet-button primary'")) {
+  throw new Error('Inactive chats must render the primary activation button style');
+}
+
+for (const [name, source] of [
+  ['renderActivationCard', renderActivationCardSource],
+  ['renderMiniActivate', renderMiniActivateSource],
+  ['renderChainActivation', renderChainActivationSource],
+]) {
+  if (!source.includes('activationActionButtonClass(chat)')) {
+    throw new Error(`${name} activation actions must use the shared activation button style helper`);
+  }
+}
+
 if (renderStatusMatch[1].includes('chatStatus(') || renderStatusMatch[1].includes('status.label')) {
   throw new Error('Chat input status strip must not render posting status');
 }
@@ -469,9 +516,9 @@ const requiredProtocolCopy = [
   '代币群',
   '${chatTokenSymbol(chat)} 主群',
   '${chatTokenSymbol(chat)} 治理群',
-  '行动主群-No.',
-  '行动治理群-No.',
-  '链群-${chat.chainName || chat.groupId}',
+  'No.${chat.actionId} ${actionTitle(chat)} 行动主群',
+  'No.${chat.actionId} ${actionTitle(chat)} 行动治理群',
+  '${chat.chainName || chat.shortTitle || chat.groupId} 链群',
   '春节公益铸造',
   '雪松节点',
   '我的投票：',

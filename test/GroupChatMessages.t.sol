@@ -194,7 +194,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
         uint256[] memory adminIds = new uint256[](1);
         adminIds[0] = adminId;
         vm.prank(chatOwner);
-        baseGroupAdmin.setAdmins(groupId, adminIds);
+        baseGroupAdmin.addAdmins(groupId, adminIds);
         vm.prank(senderOwner);
         groupDefaults.setDefaultGroupId(adminId);
         vm.prank(senderOwner);

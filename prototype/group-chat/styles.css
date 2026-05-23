@@ -264,6 +264,21 @@ button:disabled {
   margin-top: 0;
 }
 
+.activation-header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.activation-header .screen-heading {
+  margin-bottom: 0;
+}
+
+.activation-tabs {
+  margin: 0;
+  padding-bottom: 2px;
+}
+
 .activation-list {
   display: grid;
   gap: 8px;
@@ -272,6 +287,7 @@ button:disabled {
 .type-card,
 .mini-card,
 .action-row,
+.activation-card,
 .list-row,
 .workspace-band {
   border: 1px solid var(--greyscale-200);
@@ -554,10 +570,82 @@ button:disabled {
 
 .type-card,
 .action-row,
+.activation-card,
 .workspace-band,
 .list-row {
   padding: 12px;
   margin-bottom: 8px;
+}
+
+.activation-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, auto);
+  align-items: center;
+  gap: 10px;
+}
+
+.activation-card-main {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.activation-card-main .muted {
+  margin-top: 0;
+}
+
+.activation-card-actions {
+  min-width: 96px;
+  display: grid;
+  grid-template-columns: minmax(88px, 1fr);
+  gap: 7px;
+}
+
+.activation-card-actions.single-action,
+.activation-card-actions.count-1 {
+  min-width: 96px;
+  grid-template-columns: minmax(88px, 1fr);
+}
+
+.activation-action-card {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.activation-sublist {
+  display: grid;
+  gap: 1px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid var(--greyscale-200);
+  border-radius: 8px;
+  background: var(--greyscale-200);
+}
+
+.activation-subrow {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, auto);
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  background: #fff;
+}
+
+.activation-subrow-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.activation-subrow-main strong {
+  font-size: 13px;
+}
+
+.activation-subrow > button {
+  justify-self: end;
+  width: 100%;
+  min-width: 96px;
 }
 
 .blacklist-list-head {
@@ -975,9 +1063,38 @@ button:disabled {
   margin-top: 12px;
 }
 
+.activation-section + .activation-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--greyscale-200);
+}
+
 .activation-section h2 {
   margin: 0 0 8px;
   font-size: 15px;
+}
+
+.activation-form-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: start;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--greyscale-200);
+}
+
+.activation-form-head h1 {
+  margin: 0;
+  color: var(--greyscale-900);
+  font-size: 18px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.activation-submit-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
 }
 
 .activation-field-row,
@@ -1600,12 +1717,28 @@ button:disabled {
   .card-actions,
   .split-cards,
   .row-actions,
+  .activation-card,
+  .activation-card-actions,
+  .activation-subrow,
+  .activation-form-head,
+  .activation-submit-row,
   .field-row,
   .field-row.compact,
   .activation-field-row,
   .activation-choice-row,
   .query-row {
     grid-template-columns: 1fr;
+  }
+
+  .activation-card-actions,
+  .activation-card-actions.single-action,
+  .activation-card-actions.count-1,
+  .activation-card-actions.count-3 {
+    min-width: 0;
+  }
+
+  .activation-subrow .pill {
+    justify-self: start;
   }
 
   .rule-table div {

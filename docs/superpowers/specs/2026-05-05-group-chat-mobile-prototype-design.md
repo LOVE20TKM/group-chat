@@ -58,7 +58,7 @@
 | 消息同步 | `MessagePost` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
 | 规则槽 | `chatInfo(groupId)`：`scopeSource`、`banSource`、`beforePostPlugin`、`afterPostPlugin` |
-| 共享管理员 | `GroupAdmin.adminIds(groupId)`、`GroupAdmin.adminIdOf(groupId, account)` |
+| 共享管理员 | `GroupAdmin.adminIds(groupId)` 返回管理员 NFT 与当前有效性、`GroupAdmin.adminIdOf(groupId, account)` |
 | 手工成员发言资格 | `GroupMember.memberIds(groupId, offset, limit)`、`GroupMemberScope.canPost(groupId, senderId, senderAddress)` |
 | 链群发言资格 | `GroupJoinScopeSource.canPost(...) = GroupMember.isMemberId(...) || GroupJoin.gTokenAddressesByGroupIdByAccountCount(...) > 0` |
 

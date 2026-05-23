@@ -19,6 +19,16 @@ interface IGroupAdmin {
         uint256 stateVersion
     );
 
+    event AdminSnapshotSet(
+        uint256 indexed groupId,
+        address indexed operator,
+        uint256 indexed adminId,
+        uint256 operatorId,
+        address groupOwnerSnapshot,
+        address adminOwnerSnapshot,
+        uint256 stateVersion
+    );
+
     event StateVersionChanged(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
@@ -29,7 +39,9 @@ interface IGroupAdmin {
 
     function MAX_ADMIN_IDS() external view returns (uint256);
 
-    function setAdmins(uint256 groupId, uint256[] calldata adminIdList) external;
+    function addAdmins(uint256 groupId, uint256[] calldata adminIdList) external;
+
+    function removeAdmins(uint256 groupId, uint256[] calldata adminIdList) external;
 
     function adminIdOf(uint256 groupId, address account) external view returns (uint256);
 
@@ -37,7 +49,7 @@ interface IGroupAdmin {
 
     function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool);
 
-    function adminIds(uint256 groupId) external view returns (uint256[] memory);
+    function adminIds(uint256 groupId) external view returns (uint256[] memory ids, bool[] memory isEffective);
 
     function stateVersion(uint256 groupId) external view returns (uint256);
 }

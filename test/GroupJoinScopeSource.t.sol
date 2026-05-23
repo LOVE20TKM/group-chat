@@ -78,7 +78,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
 
         vm.prank(chatOwner);
-        groupAdmin.setAdmins(groupId, _uints(groupId));
+        groupAdmin.addAdmins(groupId, _uints(groupId));
 
         vm.prank(chatOwner);
         groupDefaults.setDefaultGroupId(groupId);
@@ -105,7 +105,7 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
         groupJoin.setTokenAddressCount(groupId, senderOwner, 1);
 
         vm.prank(chatOwner);
-        groupAdmin.setAdmins(groupId, _uints(groupId));
+        groupAdmin.addAdmins(groupId, _uints(groupId));
 
         vm.prank(chatOwner);
         groupDefaults.setDefaultGroupId(groupId);

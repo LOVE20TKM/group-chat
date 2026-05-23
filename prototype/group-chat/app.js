@@ -811,26 +811,40 @@ function renderConversationRow(entry) {
 
 function renderActivationHub() {
   return `
-    <div class="screen-heading">
-      <h1>激活群聊</h1>
-      <span>${state.activeToken}</span>
-    </div>
-    <div class="chat-picker">
-      ${activationTabs
-        .map((tab) => `<button class="picker-button${state.activationType === tab.id ? ' active' : ''}" type="button" data-action="set-activation-type" data-activation-type="${tab.id}">${tab.label}</button>`)
-        .join('')}
+    <div class="activation-header">
+      <div class="screen-heading">
+        <h1>激活群聊</h1>
+        <span>${state.activeToken}</span>
+      </div>
+      <div class="chat-picker activation-tabs">
+        ${activationTabs
+          .map((tab) => `<button class="picker-button${state.activationType === tab.id ? ' active' : ''}" type="button" data-action="set-activation-type" data-activation-type="${tab.id}">${tab.label}</button>`)
+          .join('')}
+      </div>
     </div>
     ${renderActivationSection()}
   `;
 }
 
+function activationCandidates() {
+  if (state.activationType === 'token') {
+    return state.chats.filter((chat) => chat.token === state.activeToken && ['token-community', 'token-gov'].includes(chat.type));
+  }
+
+  if (state.activationType === 'action') {
+    return state.actions
+      .filter((action) => action.token === state.activeToken)
+      .flatMap((action) => [chatById(action.actionGroupId), chatById(action.actionGovGroupId)])
+      .filter(Boolean);
+  }
+
+  return state.chats.filter((chat) => chat.token === state.activeToken && chat.type === 'chain-service');
+}
+
 function renderActivationSection() {
   if (state.activationType === 'token') return `
     <section class="activation-list">
-      ${state.chats
-        .filter((chat) => chat.token === state.activeToken && ['token-community', 'token-gov'].includes(chat.type))
-        .map(renderActivationCard)
-        .join('')}
+      ${activationCandidates().map(renderActivationCard).join('')}
     </section>
   `;
 
@@ -850,20 +864,24 @@ function renderActivationSection() {
   `;
 }
 
+function activationActionButtonClass(chat) {
+  return chat.activated ? 'sheet-button activation-enter-button' : 'sheet-button primary';
+}
+
 function renderActivationCard(chat) {
   const mainAction = chat.activated ? 'open-chat' : 'open-activation-form';
   const mainTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   const meta = chatListMeta(chat);
   return `
-    <article class="type-card">
-      <div class="card-topline">
-        <strong>${renderChatTitle(chat)}</strong>
-        <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? '已激活' : '待激活'}</span>
+    <article class="activation-card activation-card-${chat.type}">
+      <div class="activation-card-main">
+        <div class="card-topline">
+          <strong>${renderChatTitle(chat)}</strong>
+        </div>
+        ${meta ? `<div class="muted">${escapeHtml(meta)}</div>` : ''}
       </div>
-      ${meta ? `<div class="muted">${escapeHtml(meta)}</div>` : ''}
-      <div class="card-actions">
-        <button class="sheet-button primary" type="button" data-action="${mainAction}" ${mainTarget}>${chat.activated ? '进入' : '配置'}</button>
-        ${chat.activated ? `<button class="sheet-button" type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
+      <div class="activation-card-actions single-action">
+        <button class="${activationActionButtonClass(chat)}" type="button" data-action="${mainAction}" ${mainTarget}>${chat.activated ? '进入' : '激活'}</button>
       </div>
     </article>
   `;
@@ -873,12 +891,12 @@ function renderActionActivation(action) {
   const actionChat = chatById(action.actionGroupId);
   const actionGovChat = chatById(action.actionGovGroupId);
   return `
-    <article class="action-row">
+    <article class="activation-card activation-action-card">
       <div class="card-topline">
         <strong>#${escapeHtml(action.actionId)} ${escapeHtml(action.title)}</strong>
         <span>round ${action.round}</span>
       </div>
-      <div class="split-cards">
+      <div class="activation-sublist">
         ${renderMiniActivate(actionChat)}
         ${renderMiniActivate(actionGovChat)}
       </div>
@@ -891,11 +909,13 @@ function renderMiniActivate(chat) {
   const mainTarget = chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`;
   const meta = chatListMeta(chat);
   return `
-    <div class="mini-card">
-      <strong>${escapeHtml(chatTypeLabel(chat))}</strong>
-      ${meta ? `<span class="muted">${escapeHtml(meta)}</span>` : ''}
-      <button class="sheet-button${chat.activated ? '' : ' primary'}" type="button" data-action="${mainAction}" ${mainTarget}>
-        ${chat.activated ? '进入' : '配置'}
+    <div class="activation-subrow">
+      <div class="activation-subrow-main">
+        <strong>${escapeHtml(chatTypeLabel(chat))}</strong>
+        ${meta ? `<span class="muted">${escapeHtml(meta)}</span>` : ''}
+      </div>
+      <button class="${activationActionButtonClass(chat)}" type="button" data-action="${mainAction}" ${mainTarget}>
+        ${chat.activated ? '进入' : '激活'}
       </button>
     </div>
   `;
@@ -903,16 +923,15 @@ function renderMiniActivate(chat) {
 
 function renderChainActivation(chat) {
   return `
-    <article class="action-row">
-      <div class="card-topline">
-        <strong>${renderChatTitle(chat)}</strong>
-        <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? chat.role : '待激活'}</span>
+    <article class="activation-card activation-card-${chat.type}">
+      <div class="activation-card-main">
+        <div class="card-topline">
+          <strong>${renderChatTitle(chat)}</strong>
+        </div>
+        <div class="muted">${escapeHtml(chatListMeta(chat))}</div>
       </div>
-      <div class="muted">${escapeHtml(chatListMeta(chat))}</div>
-      <div class="inline-actions">
-        <button type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" ${chat.activated ? `data-group-id="${chat.groupId}"` : `data-group-id="${chat.groupId}"`}>${chat.activated ? '进入' : '配置'}</button>
-        ${chat.activated && (canEditRules(chat) || canEditMemberScope(chat)) ? `<button type="button" data-action="open-manage" data-group-id="${chat.groupId}">群管理</button>` : ''}
-        ${chat.activated ? `<button type="button" data-action="open-blacklist" data-group-id="${chat.groupId}">黑名单</button>` : ''}
+      <div class="activation-card-actions single-action">
+        <button class="${activationActionButtonClass(chat)}" type="button" data-action="${chat.activated ? 'open-chat' : 'open-activation-form'}" data-group-id="${chat.groupId}">${chat.activated ? '进入' : '激活'}</button>
       </div>
     </article>
   `;
@@ -930,15 +949,16 @@ function renderActivationForm() {
 
   return `
     <section class="workspace-band activation-form">
-      <div class="screen-heading">
-        <h1>${renderChatTitle(chat)}</h1>
-        <span class="pill ${chat.activated ? 'pill-ok' : 'pill-warn'}">${chat.activated ? '已激活' : '待激活'}</span>
+      <div class="activation-form-head">
+        <div>
+          <h1>${renderChatTitle(chat)}</h1>
+          ${meta ? `<div class="muted">${escapeHtml(meta)}</div>` : ''}
+        </div>
       </div>
-      ${meta ? `<div class="muted">${escapeHtml(meta)}</div>` : ''}
       ${fields}
       ${issue ? `<div class="notice-row">${escapeHtml(issue)}</div>` : ''}
-      <div class="card-actions">
-        <button class="sheet-button primary" type="button" data-action="activate-chat" data-group-id="${chat.groupId}" ${issue ? 'disabled' : ''}>提交激活</button>
+      <div class="activation-submit-row">
+        <button class="sheet-button primary" type="button" data-action="activate-chat" data-group-id="${chat.groupId}" ${issue ? 'disabled' : ''}>激活群聊</button>
         <button class="sheet-button" type="button" data-action="set-view" data-view="activate">返回列表</button>
       </div>
     </section>
@@ -948,7 +968,7 @@ function renderActivationForm() {
 function renderManagerActivationFields(chat, draft) {
   return `
     <section class="activation-section">
-      <h2>激活参数</h2>
+      <h2>配置入参</h2>
       ${Object.keys(chat.params).map((field) => renderActivationTextInput(field, draft[field], field === 'groupId')).join('')}
     </section>
   `;
@@ -2121,7 +2141,7 @@ function addAdminList(listName, inputId) {
     if (!groupAdmin.adminIds.includes(targetValue)) {
       groupAdmin.adminIds.push(targetValue);
       groupAdmin.stateVersion += 1;
-      state.syncHint = `GroupAdmin.setAdmins([...${targetValue}]) 已模拟`;
+      state.syncHint = `GroupAdmin.addAdmins([${targetValue}]) 已模拟`;
     }
     state.adminIdQuery = value;
     queryAdminIdValue(value, false);
@@ -2264,7 +2284,7 @@ function removeAdminList(listName, value) {
     if (groupAdmin.adminIds.includes(value)) {
       groupAdmin.adminIds = groupAdmin.adminIds.filter((item) => item !== value);
       groupAdmin.stateVersion += 1;
-      state.syncHint = `GroupAdmin.setAdmins([...]) 已模拟，移除 ${value}`;
+      state.syncHint = `GroupAdmin.removeAdmins([${value}]) 已模拟`;
     }
   } else if (isMemberList) {
     const memberScope = ensureGroupMemberScopeState(chat);
@@ -2684,7 +2704,7 @@ function sendMessage() {
   });
   if (chat) chat.lastMessageId = nextMessageId;
   const mentionHint = mentionSenderIdsValidationHint(draftMentionedSenderIds);
-  state.syncHint = mentionHint || '已发送。';
+  state.syncHint = mentionHint || '已发送，MessagePost 发现信号已模拟。';
   clearActiveQuote();
   state.mentionedSenderIds = [];
   state.mentionAll = false;
