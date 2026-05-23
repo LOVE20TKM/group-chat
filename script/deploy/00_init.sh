@@ -1,5 +1,5 @@
 # ------ set network ------
-export network=$1
+export network="$1"
 if [ -z "$network" ] || [ ! -d "../network/$network" ]; then
     echo -e "\033[31mError:\033[0m Network parameter is required."
     echo -e "\nAvailable networks:"
@@ -12,6 +12,8 @@ fi
 echo -e "Selected network: \033[36m$network\033[0m"
 
 # ------ dont change below ------
+source ./lib.sh || return 1
+
 network_dir="../network/$network"
 
 if [ ! -f "$network_dir/.account" ]; then
@@ -20,27 +22,27 @@ if [ ! -f "$network_dir/.account" ]; then
     echo -e "You can start from $network_dir/.account.example"
     return 1
 fi
-source $network_dir/.account && \
-source $network_dir/network.params
+load_env_file "$network_dir/.account" || return 1
+load_env_file "$network_dir/network.params" || return 1
 
 if [ -f "$network_dir/address.group.params" ]; then
-    source $network_dir/address.group.params
+    load_env_file "$network_dir/address.group.params" || return 1
 fi
 
 if [ -f "$network_dir/address.group.chat.params" ]; then
-    source $network_dir/address.group.chat.params
+    load_env_file "$network_dir/address.group.chat.params" || return 1
 fi
 
 if [ -f "$network_dir/address.group.defaults.params" ]; then
-    source $network_dir/address.group.defaults.params
+    load_env_file "$network_dir/address.group.defaults.params" || return 1
 fi
 
 if [ -f "$network_dir/address.group.delegate.params" ]; then
-    source $network_dir/address.group.delegate.params
+    load_env_file "$network_dir/address.group.delegate.params" || return 1
 fi
 
 if [ -f "$network_dir/group.chat.params" ]; then
-    source $network_dir/group.chat.params
+    load_env_file "$network_dir/group.chat.params" || return 1
     unset ORIGIN_BLOCKS
     unset PHASE_BLOCKS
 
@@ -269,15 +271,21 @@ check_equal() {
 echo "check_equal() loaded"
 
 forge_script() {
+  local verify_args=()
+
+  if [[ "$network" != thinkium* ]]; then
+    verify_args=(--verify --etherscan-api-key "$ETHERSCAN_API_KEY")
+  fi
+
   forge script "$@" \
-    --rpc-url $RPC_URL \
-    --account $KEYSTORE_ACCOUNT \
-    --sender $ACCOUNT_ADDRESS \
+    --rpc-url "$RPC_URL" \
+    --account "$KEYSTORE_ACCOUNT" \
+    --sender "$ACCOUNT_ADDRESS" \
     --password "$KEYSTORE_PASSWORD" \
     --gas-price 5000000000 \
     --gas-limit 50000000 \
     --broadcast \
     --legacy \
-    $([[ "$network" != thinkium* ]] && echo "--verify --etherscan-api-key $ETHERSCAN_API_KEY")
+    "${verify_args[@]}"
 }
 echo "forge_script() loaded"

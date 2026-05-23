@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./lib.sh || return 1
+
 if [ -z "$RPC_URL" ]; then
     echo -e "\033[31mError:\033[0m Environment not initialized. Please run 00_init.sh first."
     return 1
@@ -10,7 +12,7 @@ echo "Deploying GroupChat contract..."
 forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
 
 if [ $? -eq 0 ]; then
-    source $network_dir/address.group.chat.params
+    load_env_file "$network_dir/address.group.chat.params" || return 1
     export GROUP_ADMIN_ADDRESS=$groupAdminAddress
     export GROUP_BAN_LIST_ADDRESS=$groupBanListAddress
     export ADMIN_BAN_SOURCE_ADDRESS=$adminBanSourceAddress

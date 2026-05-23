@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./lib.sh || return 1
+
 if [ -z "$network" ]; then
   echo -e "\033[31mError:\033[0m Environment not initialized. Please run 00_init.sh first."
   return 1
@@ -11,7 +13,7 @@ if [[ "$network" != thinkium70001* ]]; then
 fi
 
 if [ -z "$RPC_URL" ]; then
-    source 00_init.sh $network
+    source 00_init.sh "$network" || return 1
 fi
 
 if [ -f "$network_dir/address.group.chat.params" ] && { \
@@ -28,7 +30,7 @@ if [ -f "$network_dir/address.group.chat.params" ] && { \
     [ -z "$tokenActionGovManagerAddress" ] || \
     [ -z "$tokenActionMainManagerAddress" ]; \
 }; then
-    source "$network_dir/address.group.chat.params"
+    load_env_file "$network_dir/address.group.chat.params" || return 1
 fi
 
 if [ -z "$GROUP_JOIN_ADDRESS" ] && [ -n "$groupJoinAddress" ]; then
@@ -86,12 +88,12 @@ verify_contract(){
   echo "Verifying contract: $contract_name at $contract_address"
 
   forge verify-contract \
-    --chain-id $CHAIN_ID \
-    --verifier $VERIFIER \
-    --verifier-url $VERIFIER_URL \
+    --chain-id "$CHAIN_ID" \
+    --verifier "$VERIFIER" \
+    --verifier-url "$VERIFIER_URL" \
     --constructor-args "$ctor_args" \
-    $contract_address \
-    $contract_path:$contract_name
+    "$contract_address" \
+    "$contract_path:$contract_name"
 
   if [ $? -eq 0 ]; then
     echo -e "\033[32m✓\033[0m Contract $contract_name verified successfully"
@@ -109,13 +111,13 @@ group_chat_phase_blocks=$(cast call "$groupChatAddress" "phaseBlocks()(uint256)"
 group_chat_phase_blocks=${group_chat_phase_blocks%% *}
 
 constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
-    $groupAdminAddress \
-    $group_chat_origin_blocks \
-    $group_chat_phase_blocks)
+    "$groupAdminAddress" \
+    "$group_chat_origin_blocks" \
+    "$group_chat_phase_blocks")
 
 failed_verifications=0
 
-verify_contract $groupChatAddress "GroupChat" "src/GroupChat.sol" $constructor_args
+verify_contract "$groupChatAddress" "GroupChat" "src/GroupChat.sol" "$constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
@@ -123,32 +125,32 @@ if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
 fi
 
 group_admin_constructor_args=$(cast abi-encode "constructor(address,address,uint256)" \
-    $GROUP_DEFAULTS_ADDRESS \
-    $GROUP_DELEGATE_ADDRESS \
-    $GROUP_CHAT_MAX_ADMIN_IDS)
+    "$GROUP_DEFAULTS_ADDRESS" \
+    "$GROUP_DELEGATE_ADDRESS" \
+    "$GROUP_CHAT_MAX_ADMIN_IDS")
 verify_contract \
-    $groupAdminAddress \
+    "$groupAdminAddress" \
     "GroupAdmin" \
     "src/GroupAdmin.sol" \
-    $group_admin_constructor_args
+    "$group_admin_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 group_ban_list_constructor_args=$(cast abi-encode "constructor(address)" \
-    $groupAdminAddress)
+    "$groupAdminAddress")
 verify_contract \
-    $groupBanListAddress \
+    "$groupBanListAddress" \
     "GroupBanList" \
     "src/GroupBanList.sol" \
-    $group_ban_list_constructor_args
+    "$group_ban_list_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 admin_ban_source_constructor_args=$(cast abi-encode "constructor(address)" \
-    $groupBanListAddress)
+    "$groupBanListAddress")
 verify_contract \
-    $adminBanSourceAddress \
+    "$adminBanSourceAddress" \
     "AdminBanSource" \
     "src/sources/ban/AdminBanSource.sol" \
-    $admin_ban_source_constructor_args
+    "$admin_ban_source_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
@@ -156,97 +158,97 @@ if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
 fi
 
 gov_ban_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
-    $GROUP_ADDRESS \
-    $GROUP_CHAT_BAN_THRESHOLD_RATIO)
+    "$GROUP_ADDRESS" \
+    "$GROUP_CHAT_BAN_THRESHOLD_RATIO")
 verify_contract \
-    $govVotedBanSourceAddress \
+    "$govVotedBanSourceAddress" \
     "GovVotedBanSource" \
     "src/sources/ban/GovVotedBanSource.sol" \
-    $gov_ban_source_constructor_args
+    "$gov_ban_source_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
-group_member_constructor_args=$(cast abi-encode "constructor(address)" $groupAdminAddress)
+group_member_constructor_args=$(cast abi-encode "constructor(address)" "$groupAdminAddress")
 verify_contract \
-    $groupMemberAddress \
+    "$groupMemberAddress" \
     "GroupMember" \
     "src/GroupMember.sol" \
-    $group_member_constructor_args
+    "$group_member_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
-group_member_scope_constructor_args=$(cast abi-encode "constructor(address)" $groupMemberAddress)
+group_member_scope_constructor_args=$(cast abi-encode "constructor(address)" "$groupMemberAddress")
 verify_contract \
-    $groupMemberScopeAddress \
+    "$groupMemberScopeAddress" \
     "GroupMemberScope" \
     "src/sources/scope/GroupMemberScope.sol" \
-    $group_member_scope_constructor_args
+    "$group_member_scope_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 group_join_scope_source_constructor_args=$(cast abi-encode "constructor(address,address)" \
-    $groupMemberAddress \
-    $GROUP_JOIN_ADDRESS)
+    "$groupMemberAddress" \
+    "$GROUP_JOIN_ADDRESS")
 verify_contract \
-    $groupJoinScopeSourceAddress \
+    "$groupJoinScopeSourceAddress" \
     "GroupJoinScopeSource" \
     "src/sources/scope/GroupJoinScopeSource.sol" \
-    $group_join_scope_source_constructor_args
+    "$group_join_scope_source_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 token_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
-    $groupChatAddress \
-    $govVotedBanSourceAddress \
-    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
-    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
-    $EXTENSION_CENTER_ADDRESS)
+    "$groupChatAddress" \
+    "$govVotedBanSourceAddress" \
+    "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" \
+    "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" \
+    "$EXTENSION_CENTER_ADDRESS")
 
 token_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address)" \
-    $groupChatAddress \
-    $govVotedBanSourceAddress \
-    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
-    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
-    $EXTENSION_CENTER_ADDRESS)
+    "$groupChatAddress" \
+    "$govVotedBanSourceAddress" \
+    "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" \
+    "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" \
+    "$EXTENSION_CENTER_ADDRESS")
 
 token_action_gov_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
-    $groupChatAddress \
-    $govVotedBanSourceAddress \
-    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
-    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
-    $EXTENSION_CENTER_ADDRESS \
-    $GROUP_CHAT_ACTION_RECENT_ROUNDS)
+    "$groupChatAddress" \
+    "$govVotedBanSourceAddress" \
+    "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" \
+    "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" \
+    "$EXTENSION_CENTER_ADDRESS" \
+    "$GROUP_CHAT_ACTION_RECENT_ROUNDS")
 
 token_action_manager_constructor_args=$(cast abi-encode "constructor(address,address,address,address,address,uint256)" \
-    $groupChatAddress \
-    $govVotedBanSourceAddress \
-    $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS \
-    $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS \
-    $EXTENSION_CENTER_ADDRESS \
-    $GROUP_CHAT_ACTION_RECENT_ROUNDS)
+    "$groupChatAddress" \
+    "$govVotedBanSourceAddress" \
+    "$GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS" \
+    "$GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS" \
+    "$EXTENSION_CENTER_ADDRESS" \
+    "$GROUP_CHAT_ACTION_RECENT_ROUNDS")
 
 verify_contract \
-    $tokenMainManagerAddress \
+    "$tokenMainManagerAddress" \
     "TokenMainManager" \
     "src/managers/TokenMainManager.sol" \
-    $token_manager_constructor_args
+    "$token_manager_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenGovManagerAddress \
+    "$tokenGovManagerAddress" \
     "TokenGovManager" \
     "src/managers/TokenGovManager.sol" \
-    $token_gov_manager_constructor_args
+    "$token_gov_manager_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenActionGovManagerAddress \
+    "$tokenActionGovManagerAddress" \
     "TokenActionGovManager" \
     "src/managers/TokenActionGovManager.sol" \
-    $token_action_gov_manager_constructor_args
+    "$token_action_gov_manager_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 verify_contract \
-    $tokenActionMainManagerAddress \
+    "$tokenActionMainManagerAddress" \
     "TokenActionMainManager" \
     "src/managers/TokenActionMainManager.sol" \
-    $token_action_manager_constructor_args
+    "$token_action_manager_constructor_args"
 [ $? -ne 0 ] && ((failed_verifications++))
 
 if [ $failed_verifications -gt 0 ]; then

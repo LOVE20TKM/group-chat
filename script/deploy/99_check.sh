@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ./lib.sh || return 1
+
 echo "========================================="
 echo "Verifying GroupChat Configuration"
 echo "========================================="
@@ -18,23 +20,23 @@ if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.chat.params" ] && {
     [ -z "$tokenActionGovManagerAddress" ] || \
     [ -z "$tokenActionMainManagerAddress" ]; \
 }; then
-    source "$network_dir/address.group.chat.params"
+    load_env_file "$network_dir/address.group.chat.params" || return 1
 fi
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.params" ]; then
-    source "$network_dir/address.group.params"
+    load_env_file "$network_dir/address.group.params" || return 1
 fi
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.defaults.params" ]; then
-    source "$network_dir/address.group.defaults.params"
+    load_env_file "$network_dir/address.group.defaults.params" || return 1
 fi
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/address.group.delegate.params" ]; then
-    source "$network_dir/address.group.delegate.params"
+    load_env_file "$network_dir/address.group.delegate.params" || return 1
 fi
 
 if [ -n "$network_dir" ] && [ -f "$network_dir/group.chat.params" ]; then
-    source "$network_dir/group.chat.params"
+    load_env_file "$network_dir/group.chat.params" || return 1
 else
     echo -e "\033[31mError:\033[0m group.chat.params not found; run 00_init.sh <network> before 99_check.sh"
     return 1
