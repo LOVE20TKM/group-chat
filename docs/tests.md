@@ -43,6 +43,7 @@
 
 - `scopeSource=false` 拒绝发言。
 - `banSource=true` 拒绝发言。
+- owner / delegate 通过核心身份校验后跳过 `scopeSource` 与 `banSource`，但不能冒充别人的 `senderId`。
 - source 失败返回对应 `canPost` reason。
 - 非零无代码地址必须 revert。
 - `beforePost` revert 回滚整笔消息。

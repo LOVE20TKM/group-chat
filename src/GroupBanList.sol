@@ -274,6 +274,9 @@ contract GroupBanList is IGroupBanList {
     function _requireAdmin(uint256 groupId) internal view returns (uint256 operatorId) {
         operatorId = IGroupAdmin(GROUP_ADMIN_ADDRESS).adminIdOf(groupId, msg.sender);
         if (operatorId == 0) {
+            operatorId = IGroupAdmin(GROUP_ADMIN_ADDRESS).ownerOrDelegateIdOf(groupId, msg.sender);
+        }
+        if (operatorId == 0) {
             revert UnauthorizedGroupBanListManager();
         }
     }

@@ -18,6 +18,7 @@
 - `setPostingAllowed`
 - `postingAllowed`
 - `chatInfo`
+- `chatInfos`
 
 Rule slots：
 

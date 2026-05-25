@@ -32,25 +32,31 @@ contract AdminBanSourceTest is GroupChatFixture {
         banSource = new AdminBanSource(address(banList));
     }
 
-    function testT120_ownerAndDelegateCanConfigureAdminsButNotBanLists() public {
+    function testT120_ownerAndDelegateCanManageBanListsByDefault() public {
         address[] memory accounts = _addresses(senderOwner);
 
         vm.prank(chatOwner);
-        groupAdmin.addAdmins(groupId, _uints(adminId));
-        assertTrue(groupAdmin.isAdminId(groupId, adminId));
-
-        vm.prank(chatOwner);
-        vm.expectRevert(IGroupBanList.UnauthorizedGroupBanListManager.selector);
         banList.banBySenderAddresses(groupId, accounts);
+        assertTrue(banList.isAddressBanned(groupId, senderOwner));
 
-        vm.prank(chatOwner);
-        chat.activateChat(groupId, address(0), address(banSource), address(0), address(0));
         vm.prank(chatOwner);
         groupDelegate.setDelegateId(groupId, delegateId);
 
         vm.prank(delegateIdOwner);
-        vm.expectRevert(IGroupBanList.UnauthorizedGroupBanListManager.selector);
-        banList.banBySenderAddresses(groupId, accounts);
+        banList.banBySenderIds(groupId, _uints(senderId));
+        assertTrue(banList.isSenderIdBanned(groupId, senderId));
+
+        (bool[] memory addressBanned, address[] memory addressOperatorAddresses, uint256[] memory addressOperatorIds) =
+            banList.addressBanDetails(groupId, accounts);
+        assertTrue(addressBanned[0]);
+        assertEq(addressOperatorAddresses[0], chatOwner);
+        assertEq(addressOperatorIds[0], groupId);
+
+        (bool[] memory senderIdBanned, address[] memory senderIdOperatorAddresses, uint256[] memory senderIdOperatorIds)
+        = banList.senderIdBanDetails(groupId, _uints(senderId));
+        assertTrue(senderIdBanned[0]);
+        assertEq(senderIdOperatorAddresses[0], delegateIdOwner);
+        assertEq(senderIdOperatorIds[0], delegateId);
     }
 
     function testT121_adminRequiresDefaultGroupAndCanOnlyManageBanLists() public {
@@ -273,20 +279,17 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertTrue(!banList.isSenderIdBanned(groupId, otherGroupId));
     }
 
-    function testT127_ownerCanManageBanListsOnlyThroughAdminNftList() public {
-        vm.prank(chatOwner);
-        groupAdmin.addAdmins(groupId, _uints(groupId));
-
-        vm.prank(chatOwner);
-        vm.expectRevert(IGroupBanList.UnauthorizedGroupBanListManager.selector);
-        banList.banBySenderAddresses(groupId, _addresses(senderOwner));
-
-        vm.prank(chatOwner);
-        groupDefaults.setDefaultGroupId(groupId);
-
+    function testT127_ownerCanManageBanListsWithoutDefaultGroupId() public {
         vm.prank(chatOwner);
         banList.banBySenderAddresses(groupId, _addresses(senderOwner));
         assertTrue(banList.isAddressBanned(groupId, senderOwner));
+
+        (bool[] memory banned, address[] memory operatorAddresses, uint256[] memory operatorIds) =
+            banList.addressBanDetails(groupId, _addresses(senderOwner));
+
+        assertTrue(banned[0]);
+        assertEq(operatorAddresses[0], chatOwner);
+        assertEq(operatorIds[0], groupId);
     }
 
     function testT128_banDetailsReturnIndependentCacheSlicesAndOperators() public {

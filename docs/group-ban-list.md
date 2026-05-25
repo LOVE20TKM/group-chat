@@ -7,8 +7,8 @@
 - 黑名单支持 `senderAddress` 与 `senderId` 两个目标维度。
 - `isBanned(groupId, senderId, senderAddress)` 命中任一维度即返回 `true`。
 - 状态按 `groupId` 隔离。
-- 管理权限来自 `GroupAdmin.adminIdOf(groupId, msg.sender)`。
-- owner / delegate 若要管理黑名单，也需要把自己的默认身份 NFT 加入该群管理员集合。
+- 管理权限来自 `GroupAdmin.adminIdOf(groupId, msg.sender)`，或 `GroupAdmin.ownerOrDelegateIdOf(groupId, msg.sender)` 命中的当前 owner / delegate。
+- owner / delegate 默认可管理黑名单，不需要把自己的默认身份 NFT 加入管理员集合。
 
 ## 接口
 

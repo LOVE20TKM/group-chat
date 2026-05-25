@@ -7,7 +7,7 @@
 - 成员资格绑定 `GroupNFT`，不是地址。
 - NFT 转让后，成员资格随 NFT 转移。
 - 成员名单由命中 `GroupAdmin.adminIdOf(groupId, msg.sender)` 的 admin 管理。
-- owner / delegate 若要管理成员名单，也需要把自己的默认身份 NFT 加入该群管理员集合。
+- 当前 owner / delegate 默认也可管理成员名单，不需要把自己的默认身份 NFT 加入管理员集合。
 
 ## 接口
 

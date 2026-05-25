@@ -306,6 +306,47 @@ contract GroupChatPluginsTest is GroupChatFixture {
         assertEq(prevBan, address(banSource));
     }
 
+    function testT070G_ownerAndDelegateBypassScopeAndBanSources() public {
+        MockPostScopeSource scope = new MockPostScopeSource();
+        MockPostBanSource banSource = new MockPostBanSource();
+
+        vm.prank(chatOwner);
+        chat.activateChat(groupId, address(scope), address(banSource), address(0), address(0));
+
+        scope.setAllowed(false);
+        banSource.setBanned(true);
+
+        (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
+        assertTrue(!allowed);
+        assertEq(reasonCode, IGroupChatErrors.ScopeRejected.selector);
+
+        (allowed, reasonCode) = _canPost(groupId, senderId, chatOwner);
+        assertTrue(!allowed);
+        assertEq(reasonCode, IGroupChatErrors.SenderAddressNotSenderIdOwner.selector);
+
+        assertTrue(_canPostAllowed(groupId, groupId, chatOwner));
+
+        vm.roll(originBlocks);
+        vm.prank(chatOwner);
+        _post(groupId, groupId, "owner-bypasses-sources");
+        assertEq(chat.messagesCount(groupId), 1);
+
+        scope.setAllowed(true);
+
+        (allowed, reasonCode) = _canPost(groupId, senderId, senderOwner);
+        assertTrue(!allowed);
+        assertEq(reasonCode, IGroupChatErrors.BanRejected.selector);
+
+        vm.prank(chatOwner);
+        groupDelegate.setDelegateId(groupId, delegateId);
+
+        assertTrue(_canPostAllowed(groupId, delegateId, delegateIdOwner));
+
+        vm.prank(delegateIdOwner);
+        _post(groupId, delegateId, "delegate-bypasses-sources");
+        assertEq(chat.messagesCount(groupId), 2);
+    }
+
     function testT071_beforePostRejectRevertsWholePost() public {
         MockBeforePostRejectPlugin beforePlugin = new MockBeforePostRejectPlugin();
 

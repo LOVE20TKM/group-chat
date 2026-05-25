@@ -23,8 +23,8 @@ GroupMember.isMemberId(groupId, senderId)
 成员名单由 `GroupMember` 维护：
 
 - 管理员名单由 `GroupAdmin` 维护。
-- 命中 `GroupAdmin.adminIdOf(groupId, msg.sender)` 的 admin 可增删成员 NFT。
-- owner / delegate 若要管理成员名单，也需要把自己的默认身份 NFT 加入该群管理员集合。
+- 命中 `GroupAdmin.adminIdOf(groupId, msg.sender)` 的 admin，或 `GroupAdmin.ownerOrDelegateIdOf(groupId, msg.sender)` 命中的当前 owner / delegate，可增删成员 NFT。
+- owner / delegate 默认可管理成员名单，不需要把自己的默认身份 NFT 加入该群管理员集合。
 
 ## 3. 配置
 

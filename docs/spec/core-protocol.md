@@ -73,6 +73,7 @@
 - `address(0)` 表示未挂载。
 - `scopeSource=0` 表示默认开放发言。
 - `banSource=0` 表示无黑名单。
+- owner / delegate 在完成核心发言校验与 `senderId` ownership 校验后，跳过 `scopeSource` 与 `banSource`。
 - 非零地址必须有代码。
 - 重复设置为当前值直接 no-op，不发事件。
 
@@ -80,6 +81,7 @@
 
 ```text
 核心校验
+-> owner/delegate source bypass
 -> scopeSource
 -> banSource
 -> beforePostPlugin
@@ -97,7 +99,7 @@
 ## 零值规则
 
 - 不存在的 `GroupNFT`：读写都应 revert。
-- 已存在但未激活的 chat：`chatInfo` 返回未激活零值。
+- 已存在但未激活的 chat：`chatInfo` / `chatInfos` 返回未激活零值。
 - 未挂载的规则槽返回 `address(0)`。
 - 分页越界或 `limit == 0` 返回空数组。
 - `message(groupId, messageId)` 中 `messageId == 0` 或超过当前消息数时必须 revert。

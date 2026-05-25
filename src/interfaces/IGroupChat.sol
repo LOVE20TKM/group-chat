@@ -164,6 +164,8 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
 
+    function chatInfos(uint256[] calldata groupIds) external view returns (ChatInfo[] memory);
+
     function postingAllowed(uint256 groupId) external view returns (bool);
 
     function scopeSource(uint256 groupId) external view returns (address);

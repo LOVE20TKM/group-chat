@@ -63,6 +63,24 @@ contract GroupMemberScopeTest is GroupChatFixture {
         assertTrue(member.isMemberId(groupId, otherGroupId));
     }
 
+    function testT133B2_ownerAndDelegateCanManageMemberIdsByDefault() public {
+        vm.prank(chatOwner);
+        member.addMemberIds(groupId, _uints(senderId));
+        assertTrue(member.isMemberId(groupId, senderId));
+
+        vm.prank(chatOwner);
+        groupDelegate.setDelegateId(groupId, delegateId);
+
+        vm.prank(delegateIdOwner);
+        member.addMemberIds(groupId, _uints(otherGroupId));
+        assertTrue(member.isMemberId(groupId, otherGroupId));
+
+        vm.prank(delegateIdOwner);
+        member.removeMemberIds(groupId, _uints(senderId));
+        assertTrue(!member.isMemberId(groupId, senderId));
+        assertTrue(member.isMemberId(groupId, otherGroupId));
+    }
+
     function testT133C_memberIdsControlGroupChatPostAndTransferFollowsNft() public {
         _configureAdmin();
         vm.prank(chatOwner);

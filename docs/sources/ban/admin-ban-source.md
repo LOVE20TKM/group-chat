@@ -14,8 +14,8 @@
 
 黑名单写接口在 `GroupBanList`：
 
-- `GroupBanList` 读取 `GroupAdmin.adminIdOf(groupId, msg.sender)`；返回非 `0` 才允许。
-- owner / delegate 若要管理黑名单，也需要把自己的默认身份 NFT 加入该群管理员集合。
+- `GroupBanList` 读取 `GroupAdmin.adminIdOf(groupId, msg.sender)`，或 `GroupAdmin.ownerOrDelegateIdOf(groupId, msg.sender)` 命中的当前 owner / delegate；返回非 `0` 才允许。
+- owner / delegate 默认可管理黑名单，不需要把自己的默认身份 NFT 加入该群管理员集合。
 - NFT 转让、默认身份变化、delegate 变化都会实时影响权限。
 
 ## 3. 判定适配

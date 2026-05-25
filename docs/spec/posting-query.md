@@ -31,12 +31,15 @@ senderId exists
 senderAddress owns senderId
 content / mentionedSenderIds / quote core validation
 currentRound
+owner/delegate bypasses source checks
 scopeSource.canPost
 banSource.isBanned
 beforePostPlugin.beforePost
 write message
 afterPostPlugin.afterPost
 ```
+
+若 `senderAddress` 命中 `GroupDelegate.ownerOrDelegateIdOf(groupId, senderAddress)`，则在完成群存在、激活、发言开关、`senderId` 存在与 `senderAddress owns senderId` 等核心校验后，跳过 `scopeSource` 与 `banSource`。owner / delegate 仍不能冒充不属于自己的 `senderId` 发言。
 
 `canPost(...)` 只做无内容预检查：
 
@@ -45,8 +48,9 @@ afterPostPlugin.afterPost
 - postingAllowed
 - senderId exists
 - sender owner
-- `scopeSource`
-- `banSource`
+- owner / delegate source bypass
+- 非 owner / delegate：`scopeSource`
+- 非 owner / delegate：`banSource`
 
 `canPost(...)` 不检查：
 
@@ -151,6 +155,10 @@ BanSourceFailed.selector          banSource 调用失败
 - `senderIds`
 - `rounds`
 
+批量 chat 配置：
+
+- `chatInfos(groupIds)` 按入参顺序返回 `ChatInfo[]`，单项语义与 `chatInfo(groupId)` 一致。
+
 批量 round 区间：
 
 - `roundInfos(groupId, rounds)` 按入参顺序返回 `RoundSpan[]`。
@@ -168,4 +176,4 @@ BanSourceFailed.selector          banSource 调用失败
 - 前端维护每个 `groupId` 的最新 `messageId`。
 - 若事件中的 `messageId == latestMessageId + 1`，可用 `message(groupId, messageId)` 回查。
 - 若事件中的 `messageId > latestMessageId + 1`，用 `messages(groupId, latestMessageId, messageId - latestMessageId, false)` 补拉缺口。
-- 配置变化以配置事件为信号，并通过 `chatInfo` 与各规则槽 view 重拉当前状态。
+- 配置变化以配置事件为信号，并通过 `chatInfo` / `chatInfos` 与各规则槽 view 重拉当前状态。

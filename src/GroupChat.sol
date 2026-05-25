@@ -285,6 +285,20 @@ contract GroupChat is IGroupChat {
     }
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory) {
+        return _chatInfo(groupId);
+    }
+
+    function chatInfos(uint256[] calldata groupIds_) external view returns (ChatInfo[] memory) {
+        ChatInfo[] memory result = new ChatInfo[](groupIds_.length);
+
+        for (uint256 i = 0; i < groupIds_.length; i++) {
+            result[i] = _chatInfo(groupIds_[i]);
+        }
+
+        return result;
+    }
+
+    function _chatInfo(uint256 groupId) internal view returns (ChatInfo memory) {
         address owner = _ownerOfOrRevert(groupId);
         ChatConfig storage config = _chatConfigs[groupId];
         return ChatInfo({
@@ -652,7 +666,7 @@ contract GroupChat is IGroupChat {
         if (!config.activated) {
             revert ChatNotActivated();
         }
-        if (IGroupDelegate(GROUP_DELEGATE_ADDRESS).ownerOrDelegateIdOf(groupId, msg.sender) == 0) {
+        if (!_isOwnerOrDelegate(groupId, msg.sender)) {
             revert NotChatOwnerOrDelegateIdOwner();
         }
     }
@@ -683,6 +697,9 @@ contract GroupChat is IGroupChat {
         view
         returns (bytes4 reasonCode)
     {
+        if (_isOwnerOrDelegate(groupId, senderAddress)) {
+            return bytes4(0);
+        }
         if (config.scopeSource != address(0)) {
             try IPostScopeSource(config.scopeSource).canPost(groupId, senderId, senderAddress) returns (
                 bool sourceAllowed
@@ -720,6 +737,10 @@ contract GroupChat is IGroupChat {
             revert BanSourceFailed();
         }
         revert();
+    }
+
+    function _isOwnerOrDelegate(uint256 groupId, address account) internal view returns (bool) {
+        return IGroupDelegate(GROUP_DELEGATE_ADDRESS).ownerOrDelegateIdOf(groupId, account) != 0;
     }
 
     function _canPost(uint256 groupId, uint256 senderId, address senderAddress)

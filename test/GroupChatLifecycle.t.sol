@@ -108,6 +108,25 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(allChats[0], groupId);
     }
 
+    function testT011B_chatInfosReturnsBatchInInputOrder() public {
+        _activateEmpty();
+
+        IGroupChat.ChatInfo[] memory infos = chat.chatInfos(_uints(groupId, senderId));
+        assertEq(infos.length, 2);
+
+        assertEq(infos[0].groupId, groupId);
+        assertEq(infos[0].owner, chatOwner);
+        assertTrue(infos[0].activated);
+        assertTrue(infos[0].postingAllowed);
+        assertEq(infos[0].firstActivatedOwner, chatOwner);
+
+        assertEq(infos[1].groupId, senderId);
+        assertEq(infos[1].owner, senderOwner);
+        assertTrue(!infos[1].activated);
+        assertTrue(!infos[1].postingAllowed);
+        assertEq(infos[1].firstActivatedOwner, address(0));
+    }
+
     function testT012_activateCannotRepeat() public {
         vm.prank(chatOwner);
         chat.activateChat(groupId, address(0), address(0), address(0), address(0));
@@ -224,5 +243,11 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(allAfterStop.length, 2);
         assertEq(allAfterStop[0], groupId);
         assertEq(allAfterStop[1], senderId);
+    }
+
+    function _uints(uint256 a, uint256 b) internal pure returns (uint256[] memory values) {
+        values = new uint256[](2);
+        values[0] = a;
+        values[1] = b;
     }
 }
