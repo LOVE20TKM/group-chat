@@ -79,11 +79,9 @@ contract GroupChatLifecycleTest is GroupChatFixture {
     }
 
     function testT010_activateChat_requiresCurrentOwner() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
-
         vm.prank(other);
         vm.expectRevert(IGroupChatErrors.NotChatOwner.selector);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
     }
 
     function testT011_activateChat_setsLiveStateAndFirstActivationSnapshot() public {
@@ -95,7 +93,6 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertTrue(info.activated);
         assertTrue(info.postingAllowed);
         assertTrue(chat.postingAllowed(groupId));
-        assertEq(info.configVersion, 1);
         assertEq(info.scopeSource, address(0));
         assertEq(info.banSource, address(0));
         assertEq(info.beforePostPlugin, address(0));
@@ -112,26 +109,19 @@ contract GroupChatLifecycleTest is GroupChatFixture {
     }
 
     function testT012_activateCannotRepeat() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
-
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupChatErrors.ChatAlreadyActivated.selector);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
         assertEq(chat.groupIdsCount(), 1);
     }
 
     function testT013_postingAllowedStopsAndResumesPostingOnly() public {
-        string[] memory keys1 = new string[](1);
-        bytes[] memory values1 = new bytes[](1);
-        keys1[0] = "k1";
-        values1[0] = bytes("v1");
-
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys1, values1, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
         IGroupChat.ChatInfo memory firstInfo = chat.chatInfo(groupId);
 
@@ -149,8 +139,6 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         _post(groupId, senderId, "stopped");
 
         vm.prank(chatOwner);
-        chat.setMeta(groupId, "k2", bytes("v2"));
-        vm.prank(chatOwner);
         chat.setPostingAllowed(groupId, true);
         assertTrue(chat.postingAllowed(groupId));
 
@@ -158,8 +146,6 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(secondInfo.firstActivatedOwner, firstInfo.firstActivatedOwner);
         assertEq(secondInfo.firstActivatedBlockNumber, firstInfo.firstActivatedBlockNumber);
         assertEq(secondInfo.firstActivatedTimestamp, firstInfo.firstActivatedTimestamp);
-        assertEq(chat.metaValue(groupId, "k1"), bytes("v1"));
-        assertEq(chat.metaValue(groupId, "k2"), bytes("v2"));
         assertEq(chat.messagesCount(groupId), 1);
         IGroupChat.Message[] memory fetched = chat.messages(groupId, 0, 1, false);
         assertEq(fetched.length, 1);
@@ -180,13 +166,11 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         vm.expectRevert(IGroupChatErrors.NotChatOwnerOrDelegateIdOwner.selector);
         chat.setPostingAllowed(groupId, false);
 
-        uint256 versionBeforeNoop = chat.chatInfo(groupId).configVersion;
         vm.recordLogs();
         vm.prank(chatOwner);
         chat.setPostingAllowed(groupId, true);
         Vm.Log[] memory noopLogs = vm.getRecordedLogs();
         assertEq(noopLogs.length, 0);
-        assertEq(chat.chatInfo(groupId).configVersion, versionBeforeNoop);
 
         vm.prank(chatOwner);
         groupDelegate.setDelegateId(groupId, delegateId);
@@ -200,36 +184,26 @@ contract GroupChatLifecycleTest is GroupChatFixture {
         assertEq(logs[0].topics[0], SET_POSTING_ALLOWED_SIG);
         IGroupChat.ChatInfo memory info = chat.chatInfo(groupId);
         assertTrue(!info.postingAllowed);
-        assertEq(info.configVersion, 2);
     }
 
     function testT015_managementWritesRejectNonexistentGroup() public {
         uint256 missingGroupId = 999_999;
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
         chat.setPostingAllowed(missingGroupId, false);
-
-        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
-        chat.setMeta(missingGroupId, "k", bytes("v"));
-
-        vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
-        chat.setMetaBatch(missingGroupId, keys, values);
 
         vm.expectRevert(IGroupChatErrors.GroupNotExist.selector);
         chat.setScopeSource(missingGroupId, address(0));
     }
 
     function testT016_groupDiscoveryIndexesTrackActivatedChats() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
-
         assertEq(chat.groupIdsCount(), 0);
 
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
         vm.prank(senderOwner);
-        chat.activateChat(senderId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(senderId, address(0), address(0), address(0), address(0));
 
         uint256[] memory allChats = chat.groupIds(0, 10, false);
         assertEq(allChats.length, 2);

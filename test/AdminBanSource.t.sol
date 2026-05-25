@@ -38,15 +38,13 @@ contract AdminBanSourceTest is GroupChatFixture {
         vm.prank(chatOwner);
         groupAdmin.addAdmins(groupId, _uints(adminId));
         assertTrue(groupAdmin.isAdminId(groupId, adminId));
-        assertEq(groupAdmin.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupBanList.UnauthorizedGroupBanListManager.selector);
         banList.banBySenderAddresses(groupId, accounts);
 
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(banSource), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(banSource), address(0), address(0));
         vm.prank(chatOwner);
         groupDelegate.setDelegateId(groupId, delegateId);
 
@@ -81,9 +79,8 @@ contract AdminBanSourceTest is GroupChatFixture {
 
     function testT122_banSourceRejectsPostsAndUnbanRestoresPosting() public {
         _configureAdmin();
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(banSource), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(banSource), address(0), address(0));
 
         vm.prank(adminOwner);
         banList.banBySenderIds(groupId, _uints(senderId));
@@ -106,18 +103,15 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertEq(chat.messagesCount(groupId), 1);
     }
 
-    function testT123_listsAreIsolatedPagedAndStateVersionChangesOncePerBatch() public {
+    function testT123_listsAreIsolatedAndPaged() public {
         _configureAdmin();
-        uint256 baseVersion = banList.stateVersion(groupId);
 
         vm.prank(adminOwner);
         banList.banBySenderAddresses(groupId, _addresses(address(0x101), address(0x102), address(0x103)));
         assertEq(banList.addressBanListCount(groupId), 3);
-        assertEq(banList.stateVersion(groupId), baseVersion + 1);
 
         vm.prank(adminOwner);
         banList.banBySenderAddresses(groupId, _addresses(address(0x101)));
-        assertEq(banList.stateVersion(groupId), baseVersion + 1);
 
         (address[] memory page, address[] memory operatorAddresses, uint256[] memory operatorIds) =
             banList.addressBanList(groupId, 1, 2);
@@ -141,7 +135,6 @@ contract AdminBanSourceTest is GroupChatFixture {
         vm.prank(adminOwner);
         banList.unbanBySenderAddresses(groupId, _addresses(address(0x102), address(0x999)));
         assertEq(banList.addressBanListCount(groupId), 2);
-        assertEq(banList.stateVersion(groupId), baseVersion + 2);
         assertTrue(!banList.isAddressBanned(groupId, address(0x102)));
     }
 
@@ -155,7 +148,6 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertEq(isEffective.length, 2);
         assertTrue(isEffective[0]);
         assertTrue(isEffective[1]);
-        assertEq(groupAdmin.stateVersion(groupId), 1);
 
         vm.prank(chatOwner);
         vm.expectRevert(IGroupAdmin.DuplicateAdminId.selector);
@@ -211,7 +203,6 @@ contract AdminBanSourceTest is GroupChatFixture {
 
     function testT125_senderIdBanListsOnlyAffectSenderIds() public {
         _configureAdmin();
-        uint256 baseVersion = banList.stateVersion(groupId);
 
         vm.prank(adminOwner);
         banList.banBySenderIds(groupId, _uints(senderId, otherGroupId));
@@ -222,7 +213,6 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertTrue(banList.isSenderIdBanned(groupId, otherGroupId));
         assertTrue(banList.isBanned(groupId, senderId, senderOwner));
         assertTrue(banList.isBanned(groupId, otherGroupId, other));
-        assertEq(banList.stateVersion(groupId), baseVersion + 1);
 
         vm.prank(adminOwner);
         banList.unbanBySenderIds(groupId, _uints(senderId, otherGroupId));
@@ -233,12 +223,10 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertTrue(!banList.isSenderIdBanned(groupId, otherGroupId));
         assertTrue(!banList.isBanned(groupId, senderId, senderOwner));
         assertTrue(!banList.isBanned(groupId, otherGroupId, other));
-        assertEq(banList.stateVersion(groupId), baseVersion + 2);
     }
 
     function testT126_senderAddressBanListsOnlyAffectAddresses() public {
         _configureAdmin();
-        uint256 baseVersion = banList.stateVersion(groupId);
 
         vm.prank(senderOwner);
         groupDefaults.setDefaultGroupId(senderId);
@@ -249,19 +237,16 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertTrue(!banList.isSenderIdBanned(groupId, senderId));
         assertTrue(banList.isAddressBanned(groupId, stranger));
         assertEq(banList.senderIdBanListCount(groupId), 0);
-        assertEq(banList.stateVersion(groupId), baseVersion + 1);
 
         vm.prank(adminOwner);
         banList.unbanBySenderAddresses(groupId, _addresses(senderOwner, stranger));
         assertTrue(!banList.isAddressBanned(groupId, senderOwner));
         assertTrue(!banList.isSenderIdBanned(groupId, senderId));
         assertTrue(!banList.isAddressBanned(groupId, stranger));
-        assertEq(banList.stateVersion(groupId), baseVersion + 2);
     }
 
     function testT126B_banBySendersAffectsAddressesAndSenderIdsTogether() public {
         _configureAdmin();
-        uint256 baseVersion = banList.stateVersion(groupId);
 
         vm.prank(stranger);
         vm.expectRevert(IGroupBanList.UnauthorizedGroupBanListManager.selector);
@@ -278,7 +263,6 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertTrue(banList.isAddressBanned(groupId, other));
         assertTrue(banList.isSenderIdBanned(groupId, senderId));
         assertTrue(banList.isSenderIdBanned(groupId, otherGroupId));
-        assertEq(banList.stateVersion(groupId), baseVersion + 1);
 
         vm.prank(adminOwner);
         banList.unbanBySenders(groupId, _uints(senderId, otherGroupId), _addresses(senderOwner, other));
@@ -287,7 +271,6 @@ contract AdminBanSourceTest is GroupChatFixture {
         assertTrue(!banList.isAddressBanned(groupId, other));
         assertTrue(!banList.isSenderIdBanned(groupId, senderId));
         assertTrue(!banList.isSenderIdBanned(groupId, otherGroupId));
-        assertEq(banList.stateVersion(groupId), baseVersion + 2);
     }
 
     function testT127_ownerCanManageBanListsOnlyThroughAdminNftList() public {

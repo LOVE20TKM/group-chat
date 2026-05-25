@@ -5,7 +5,6 @@
 ## 文件对应
 
 - `test/GroupChatLifecycle.t.sol`：部署、激活、发言开关、首次激活快照
-- `test/GroupChatMeta.t.sol`：meta、批量写、`configVersion`
 - `test/GroupChatMessages.t.sol`：发言、mentionedSenderIds、mention 通知事件、quote、round、分页、sender 索引
 - `test/GroupChatPlugins.t.sol`：scope、ban、before / after plugin、重入
 - `test/GroupChatDefaultSender.t.sol`：默认发言身份
@@ -26,15 +25,6 @@
 - 重复激活必须 revert。
 - 停止发言只影响发消息，不清空历史配置和消息。
 - 停止发言后仍可更新 live 配置。
-
-Meta：
-
-- 新增、更新、删除。
-- 空 key、重复 key 必须 revert；相同值、删除不存在 key 必须 no-op。
-- live key 总数超过 `MAX_META_KEYS` 必须 revert。
-- 非空 value 超过 `MAX_META_VALUE_LENGTH` 必须 revert。
-- 批量写只递增一次 `configVersion`。
-- 批量写按最终 live key 总数校验 `MAX_META_KEYS`，失败时不得产生部分写入。
 
 发言：
 

@@ -46,9 +46,8 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     }
 
     function testT131_groupJoinParticipationControlsPost() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(scope), address(0), address(0), address(0));
 
         (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);
@@ -73,9 +72,8 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     }
 
     function testT131B_groupMemberScopeMembershipAlsoControlsPost() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(scope), address(0), address(0), address(0));
 
         vm.prank(chatOwner);
         groupAdmin.addAdmins(groupId, _uints(groupId));
@@ -97,10 +95,9 @@ contract GroupJoinScopeSourceTest is GroupChatFixture {
     function testT132_groupJoinScopeCombinesWithAdminBanSource() public {
         GroupBanList banList = new GroupBanList(address(groupAdmin));
         AdminBanSource banSource = new AdminBanSource(address(banList));
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
 
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(banSource), address(0), address(0));
+        chat.activateChat(groupId, address(scope), address(banSource), address(0), address(0));
 
         groupJoin.setTokenAddressCount(groupId, senderOwner, 1);
 

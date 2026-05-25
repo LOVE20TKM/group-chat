@@ -45,11 +45,9 @@ contract GroupMemberScopeTest is GroupChatFixture {
         assertTrue(member.isMemberId(groupId, senderId));
         assertTrue(member.isMemberId(groupId, otherGroupId));
         assertEq(member.memberIdsCount(groupId), 2);
-        assertEq(member.stateVersion(groupId), 1);
 
         vm.prank(adminOwner);
         member.addMemberIds(groupId, _uints(senderId));
-        assertEq(member.stateVersion(groupId), 1);
 
         uint256[] memory page = member.memberIds(groupId, 1, 1);
         assertEq(page.length, 1);
@@ -63,14 +61,12 @@ contract GroupMemberScopeTest is GroupChatFixture {
         member.removeMemberIds(groupId, _uints(senderId));
         assertTrue(!member.isMemberId(groupId, senderId));
         assertTrue(member.isMemberId(groupId, otherGroupId));
-        assertEq(member.stateVersion(groupId), 2);
     }
 
     function testT133C_memberIdsControlGroupChatPostAndTransferFollowsNft() public {
         _configureAdmin();
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(scope), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(scope), address(0), address(0), address(0));
 
         (bool allowed, bytes4 reasonCode) = _canPost(groupId, senderId, senderOwner);
         assertTrue(!allowed);

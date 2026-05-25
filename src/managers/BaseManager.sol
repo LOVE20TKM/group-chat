@@ -81,16 +81,8 @@ abstract contract BaseManager is IBaseManager {
     }
 
     function _activateManagedGroup(uint256 groupId) internal {
-        string[] memory metaKeys = new string[](0);
-        bytes[] memory metaValues = new bytes[](0);
         IGroupChat(GROUP_CHAT_ADDRESS).activateChat(
-            groupId,
-            metaKeys,
-            metaValues,
-            address(this),
-            BAN_SOURCE_ADDRESS,
-            BEFORE_POST_PLUGIN_ADDRESS,
-            AFTER_POST_PLUGIN_ADDRESS
+            groupId, address(this), BAN_SOURCE_ADDRESS, BEFORE_POST_PLUGIN_ADDRESS, AFTER_POST_PLUGIN_ADDRESS
         );
     }
 

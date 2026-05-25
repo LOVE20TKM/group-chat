@@ -14,8 +14,6 @@
 
 - `activateChat` / `setPostingAllowed`
 - `chatInfo`
-- `metaValue` / `metaEntriesCount` / `metaEntries`
-- `setMeta` / `setMetaBatch`
 - `setScopeSource` / `setBanSource`
 - `setBeforePostPlugin` / `setAfterPostPlugin`
 - `canPost`

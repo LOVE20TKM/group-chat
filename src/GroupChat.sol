@@ -15,8 +15,6 @@ import {IPostScopeSource} from "./interfaces/sources/IPostScopeSource.sol";
 contract GroupChat is IGroupChat {
     uint256 public constant MAX_CONTENT_LENGTH = 4096;
     uint256 public constant MAX_MENTIONED_SENDER_IDS = 32;
-    uint256 public constant MAX_META_KEYS = 32;
-    uint256 public constant MAX_META_VALUE_LENGTH = 4096;
 
     address public immutable GROUP_ADMIN_ADDRESS;
     address public immutable GROUP_ADDRESS;
@@ -28,7 +26,6 @@ contract GroupChat is IGroupChat {
     struct ChatConfig {
         bool activated;
         bool postingAllowed;
-        uint256 configVersion;
         address firstActivatedOwner;
         uint256 firstActivatedBlockNumber;
         uint256 firstActivatedTimestamp;
@@ -36,11 +33,6 @@ contract GroupChat is IGroupChat {
         address banSource;
         address beforePostPlugin;
         address afterPostPlugin;
-    }
-
-    struct MetaState {
-        uint256 indexPlusOne;
-        bytes value;
     }
 
     struct RoundState {
@@ -60,8 +52,6 @@ contract GroupChat is IGroupChat {
     }
 
     mapping(uint256 => ChatConfig) internal _chatConfigs;
-    mapping(uint256 => mapping(bytes32 => MetaState)) internal _metaStates;
-    mapping(uint256 => string[]) internal _metaKeys;
     mapping(uint256 => StoredMessage[]) internal _messagesByChat;
     mapping(uint256 => mapping(uint256 => uint256[])) internal _senderMessageIndexes;
     mapping(uint256 => mapping(uint256 => uint256[])) internal _mentionMessageIndexes;
@@ -115,8 +105,6 @@ contract GroupChat is IGroupChat {
 
     function activateChat(
         uint256 groupId,
-        string[] calldata metaKeys_,
-        bytes[] calldata metaValues_,
         address scopeSource_,
         address banSource_,
         address beforePostPlugin_,
@@ -132,8 +120,6 @@ contract GroupChat is IGroupChat {
             revert ChatAlreadyActivated();
         }
 
-        _validateMetaInput(metaKeys_, metaValues_);
-        _validateInitialMetaCapacity(metaValues_);
         _validateSourceAddress(scopeSource_);
         _validateSourceAddress(banSource_);
         _validatePluginAddress(beforePostPlugin_);
@@ -151,22 +137,19 @@ contract GroupChat is IGroupChat {
         config.beforePostPlugin = beforePostPlugin_;
         config.afterPostPlugin = afterPostPlugin_;
 
-        uint256 newVersion = _nextConfigVersion(config);
-
-        _initActivateMeta(groupId, metaKeys_, metaValues_, newVersion);
         if (scopeSource_ != address(0)) {
-            emit SetScopeSource(groupId, scopeSource_, msg.sender, newVersion, address(0));
+            emit SetScopeSource(groupId, scopeSource_, msg.sender, address(0));
         }
         if (banSource_ != address(0)) {
-            emit SetBanSource(groupId, banSource_, msg.sender, newVersion, address(0));
+            emit SetBanSource(groupId, banSource_, msg.sender, address(0));
         }
         if (beforePostPlugin_ != address(0)) {
-            emit SetBeforePostPlugin(groupId, beforePostPlugin_, msg.sender, newVersion, address(0));
+            emit SetBeforePostPlugin(groupId, beforePostPlugin_, msg.sender, address(0));
         }
         if (afterPostPlugin_ != address(0)) {
-            emit SetAfterPostPlugin(groupId, afterPostPlugin_, msg.sender, newVersion, address(0));
+            emit SetAfterPostPlugin(groupId, afterPostPlugin_, msg.sender, address(0));
         }
-        emit Activate(groupId, owner, newVersion);
+        emit Activate(groupId, owner);
     }
 
     function setPostingAllowed(uint256 groupId, bool postingAllowed_) external nonReentrant {
@@ -178,58 +161,7 @@ contract GroupChat is IGroupChat {
         }
 
         config.postingAllowed = postingAllowed_;
-        uint256 newVersion = _nextConfigVersion(config);
-        emit SetPostingAllowed(groupId, msg.sender, newVersion, postingAllowed_);
-    }
-
-    function setMeta(uint256 groupId, string calldata key, bytes calldata value) external nonReentrant {
-        _requireOwnerOrDelegateAndActivated(groupId);
-        _validateMetaKey(key);
-        _validateMetaValue(value);
-
-        bytes32 hash = _metaHash(key);
-        if (!_metaChangeNeeded(groupId, hash, value)) {
-            return;
-        }
-        _validateSingleMetaCapacity(groupId, hash, value);
-
-        ChatConfig storage config = _chatConfigs[groupId];
-        uint256 newVersion = _nextConfigVersion(config);
-        _applyMetaChange(groupId, key, hash, value, newVersion);
-    }
-
-    function setMetaBatch(uint256 groupId, string[] calldata keys, bytes[] calldata values) external nonReentrant {
-        _requireOwnerOrDelegateAndActivated(groupId);
-        if (keys.length != values.length) {
-            revert MetaArrayLengthMismatch();
-        }
-        if (keys.length == 0) {
-            return;
-        }
-
-        bytes32[] memory hashes = _validateMetaInput(keys, values);
-        ChatConfig storage config = _chatConfigs[groupId];
-
-        bool[] memory changed = new bool[](keys.length);
-        bool hasChange;
-        for (uint256 i = 0; i < keys.length; i++) {
-            if (_metaChangeNeeded(groupId, hashes[i], values[i])) {
-                changed[i] = true;
-                hasChange = true;
-            }
-        }
-        if (!hasChange) {
-            return;
-        }
-        _validateMetaBatchCapacity(groupId, hashes, values);
-
-        uint256 newVersion = _nextConfigVersion(config);
-
-        for (uint256 i = 0; i < keys.length; i++) {
-            if (changed[i]) {
-                _applyMetaChange(groupId, keys[i], hashes[i], values[i], newVersion);
-            }
-        }
+        emit SetPostingAllowed(groupId, msg.sender, postingAllowed_);
     }
 
     function setScopeSource(uint256 groupId, address sourceAddress) external nonReentrant {
@@ -360,7 +292,6 @@ contract GroupChat is IGroupChat {
             owner: owner,
             activated: config.activated,
             postingAllowed: config.postingAllowed,
-            configVersion: config.configVersion,
             scopeSource: config.scopeSource,
             banSource: config.banSource,
             beforePostPlugin: config.beforePostPlugin,
@@ -369,35 +300,6 @@ contract GroupChat is IGroupChat {
             firstActivatedBlockNumber: config.firstActivatedBlockNumber,
             firstActivatedTimestamp: config.firstActivatedTimestamp
         });
-    }
-
-    function metaValue(uint256 groupId, string calldata key) external view returns (bytes memory) {
-        _requireExistingGroup(groupId);
-        return _metaStates[groupId][_metaHash(key)].value;
-    }
-
-    function metaEntriesCount(uint256 groupId) external view returns (uint256) {
-        _requireExistingGroup(groupId);
-        return _metaKeys[groupId].length;
-    }
-
-    function metaEntries(uint256 groupId, uint256 offset, uint256 limit, bool reverse)
-        external
-        view
-        returns (string[] memory keys_, bytes[] memory values_)
-    {
-        _requireExistingGroup(groupId);
-        string[] storage keys = _metaKeys[groupId];
-        uint256 count = _pageCount(keys.length, offset, limit);
-        keys_ = new string[](count);
-        values_ = new bytes[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            uint256 idx = _pageIndex(keys.length, offset, i, reverse);
-            string storage key = keys[idx];
-            keys_[i] = key;
-            values_[i] = _metaStates[groupId][_metaHash(key)].value;
-        }
     }
 
     function postingAllowed(uint256 groupId) external view returns (bool) {
@@ -621,21 +523,6 @@ contract GroupChat is IGroupChat {
         return result;
     }
 
-    function _initActivateMeta(
-        uint256 groupId,
-        string[] calldata newKeys,
-        bytes[] calldata newValues,
-        uint256 newVersion
-    ) internal {
-        for (uint256 i = 0; i < newKeys.length; i++) {
-            if (newValues[i].length == 0) {
-                continue;
-            }
-            _addMeta(groupId, newKeys[i], newValues[i]);
-            emit SetMeta(groupId, msg.sender, newVersion, newKeys[i], newValues[i], "");
-        }
-    }
-
     function _setSource(uint256 groupId, address sourceAddress, bool isScope) internal {
         _requireOwnerOrDelegateAndActivated(groupId);
         _validateSourceAddress(sourceAddress);
@@ -652,11 +539,10 @@ contract GroupChat is IGroupChat {
             config.banSource = sourceAddress;
         }
 
-        uint256 newVersion = _nextConfigVersion(config);
         if (isScope) {
-            emit SetScopeSource(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+            emit SetScopeSource(groupId, sourceAddress, msg.sender, prevSourceAddress);
         } else {
-            emit SetBanSource(groupId, sourceAddress, msg.sender, newVersion, prevSourceAddress);
+            emit SetBanSource(groupId, sourceAddress, msg.sender, prevSourceAddress);
         }
     }
 
@@ -676,17 +562,11 @@ contract GroupChat is IGroupChat {
             config.afterPostPlugin = pluginAddress;
         }
 
-        uint256 newVersion = _nextConfigVersion(config);
         if (isBefore) {
-            emit SetBeforePostPlugin(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
+            emit SetBeforePostPlugin(groupId, pluginAddress, msg.sender, prevPluginAddress);
         } else {
-            emit SetAfterPostPlugin(groupId, pluginAddress, msg.sender, newVersion, prevPluginAddress);
+            emit SetAfterPostPlugin(groupId, pluginAddress, msg.sender, prevPluginAddress);
         }
-    }
-
-    function _nextConfigVersion(ChatConfig storage config) internal returns (uint256 newVersion) {
-        newVersion = config.configVersion + 1;
-        config.configVersion = newVersion;
     }
 
     function _recordRound(uint256 groupId, uint256 round, uint256 messageIndex) internal {
@@ -699,103 +579,6 @@ contract GroupChat is IGroupChat {
         }
 
         state.endIndex = messageIndex;
-    }
-
-    function _addMeta(uint256 groupId, string memory key, bytes memory value) internal {
-        bytes32 hash = _metaHash(key);
-        _metaStates[groupId][hash] = MetaState({indexPlusOne: _metaKeys[groupId].length + 1, value: value});
-        _metaKeys[groupId].push(key);
-    }
-
-    function _metaChangeNeeded(uint256 groupId, bytes32 hash, bytes calldata value) internal view returns (bool) {
-        MetaState storage item = _metaStates[groupId][hash];
-        bool exists = item.indexPlusOne != 0;
-        if (value.length == 0) {
-            return exists;
-        }
-        return !exists || !_bytesEqual(item.value, value);
-    }
-
-    function _validateSingleMetaCapacity(uint256 groupId, bytes32 hash, bytes calldata value) internal view {
-        if (value.length == 0 || _metaStates[groupId][hash].indexPlusOne != 0) {
-            return;
-        }
-        uint256 newLength = _metaKeys[groupId].length + 1;
-        if (newLength > MAX_META_KEYS) {
-            revert TooManyMetaKeys(newLength, MAX_META_KEYS);
-        }
-    }
-
-    function _validateInitialMetaCapacity(bytes[] calldata values) internal pure {
-        uint256 liveKeyCount;
-        for (uint256 i = 0; i < values.length; i++) {
-            if (values[i].length == 0) {
-                continue;
-            }
-            liveKeyCount++;
-        }
-        if (liveKeyCount > MAX_META_KEYS) {
-            revert TooManyMetaKeys(liveKeyCount, MAX_META_KEYS);
-        }
-    }
-
-    function _validateMetaBatchCapacity(uint256 groupId, bytes32[] memory hashes, bytes[] calldata values)
-        internal
-        view
-    {
-        uint256 finalLength = _metaKeys[groupId].length;
-        for (uint256 i = 0; i < values.length; i++) {
-            bool exists = _metaStates[groupId][hashes[i]].indexPlusOne != 0;
-            if (values[i].length == 0) {
-                if (exists) {
-                    finalLength--;
-                }
-            } else if (!exists) {
-                finalLength++;
-            }
-        }
-        if (finalLength > MAX_META_KEYS) {
-            revert TooManyMetaKeys(finalLength, MAX_META_KEYS);
-        }
-    }
-
-    function _applyMetaChange(
-        uint256 groupId,
-        string calldata key,
-        bytes32 hash,
-        bytes calldata value,
-        uint256 newVersion
-    ) internal {
-        MetaState storage item = _metaStates[groupId][hash];
-        if (value.length == 0) {
-            bytes memory prevValue = item.value;
-            _removeMeta(groupId, hash);
-            emit SetMeta(groupId, msg.sender, newVersion, key, "", prevValue);
-            return;
-        }
-        if (item.indexPlusOne != 0) {
-            bytes memory prevValue2 = item.value;
-            item.value = value;
-            emit SetMeta(groupId, msg.sender, newVersion, key, value, prevValue2);
-            return;
-        }
-
-        _addMeta(groupId, key, value);
-        emit SetMeta(groupId, msg.sender, newVersion, key, value, "");
-    }
-
-    function _removeMeta(uint256 groupId, bytes32 hash) internal {
-        MetaState storage item = _metaStates[groupId][hash];
-        uint256 index = item.indexPlusOne - 1;
-        string[] storage keys = _metaKeys[groupId];
-
-        for (uint256 i = index; i + 1 < keys.length; i++) {
-            keys[i] = keys[i + 1];
-            _metaStates[groupId][_metaHash(keys[i])].indexPlusOne = i + 1;
-        }
-
-        keys.pop();
-        delete _metaStates[groupId][hash];
     }
 
     function _uint256Page(uint256[] storage source, uint256 offset, uint256 limit, bool reverse)
@@ -1005,34 +788,6 @@ contract GroupChat is IGroupChat {
         }
     }
 
-    function _validateMetaInput(string[] calldata keys, bytes[] calldata values)
-        internal
-        pure
-        returns (bytes32[] memory hashes)
-    {
-        if (keys.length != values.length) {
-            revert MetaArrayLengthMismatch();
-        }
-
-        hashes = new bytes32[](keys.length);
-        for (uint256 i = 0; i < keys.length; i++) {
-            _validateMetaKey(keys[i]);
-            _validateMetaValue(values[i]);
-            hashes[i] = keccak256(bytes(keys[i]));
-            for (uint256 j = 0; j < i; j++) {
-                if (hashes[j] == hashes[i]) {
-                    revert DuplicateMetaKey();
-                }
-            }
-        }
-    }
-
-    function _validateMetaValue(bytes calldata value) internal pure {
-        if (value.length > MAX_META_VALUE_LENGTH) {
-            revert MetaValueTooLong(value.length, MAX_META_VALUE_LENGTH);
-        }
-    }
-
     function _validateMentionedSenderIds(uint256[] calldata mentionedSenderIds) internal view {
         if (mentionedSenderIds.length > MAX_MENTIONED_SENDER_IDS) {
             revert TooManyMentionedSenderIds(mentionedSenderIds.length, MAX_MENTIONED_SENDER_IDS);
@@ -1079,12 +834,6 @@ contract GroupChat is IGroupChat {
         }
         if (mentionAll) {
             _mentionAllMessageIndexes[groupId].push(messageIndex);
-        }
-    }
-
-    function _validateMetaKey(string calldata key) internal pure {
-        if (bytes(key).length == 0) {
-            revert MetaKeyEmpty();
         }
     }
 
@@ -1147,14 +896,6 @@ contract GroupChat is IGroupChat {
         for (uint256 i = 0; i < source.mentionedSenderIds.length; i++) {
             result.mentionedSenderIds[i] = source.mentionedSenderIds[i];
         }
-    }
-
-    function _bytesEqual(bytes memory left, bytes memory right) internal pure returns (bool) {
-        return keccak256(left) == keccak256(right);
-    }
-
-    function _metaHash(string memory key) internal pure returns (bytes32) {
-        return keccak256(bytes(key));
     }
 
     function _validateQuotedMessageId(uint256 groupId, uint256 quotedMessageId) internal view {

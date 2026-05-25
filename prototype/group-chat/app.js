@@ -335,8 +335,6 @@ function activationDraftFor(chat) {
   if (!state.activationDrafts[key]) {
     state.activationDrafts[key] = {
       ...chat.params,
-      metaTitle: chatDisplayName(chat),
-      metaDescription: chat.typeLabel,
       scopeSource: chat.chatInfo.scopeSource,
       banSource: chat.chatInfo.banSource,
       beforePostPlugin: chat.chatInfo.beforePostPlugin,
@@ -351,8 +349,6 @@ function activationFieldLabel(field) {
     groupId: 'groupId',
     token: 'token',
     actionId: 'actionId',
-    metaTitle: 'meta.title',
-    metaDescription: 'meta.description',
     scopeSource: 'scopeSource',
     banSource: 'banSource',
     beforePostPlugin: 'beforePostPlugin',
@@ -409,7 +405,7 @@ function activationIssue(chat, draft) {
 
 function activationPreview(chat, draft) {
   if (chat.model === 'chain-service') {
-    return `activateChat(${draft.groupId}, metaKeys, metaValues, ${draft.scopeSource}, ${draft.banSource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin})`;
+    return `activateChat(${draft.groupId}, ${draft.scopeSource}, ${draft.banSource}, ${draft.beforePostPlugin}, ${draft.afterPostPlugin})`;
   }
   const values = Object.keys(chat.params).map((key) => draft[key]).join(', ');
   return `${chat.manager}.activate(${values})`;
@@ -428,11 +424,11 @@ function canMentionAll(chat) {
 }
 
 function groupAdminState(chat) {
-  return chat?.groupAdmin || { stateVersion: 0, adminIds: [] };
+  return chat?.groupAdmin || { adminIds: [] };
 }
 
 function ensureGroupAdminState(chat) {
-  if (!chat.groupAdmin) chat.groupAdmin = { stateVersion: 0, adminIds: [] };
+  if (!chat.groupAdmin) chat.groupAdmin = { adminIds: [] };
   return chat.groupAdmin;
 }
 
@@ -441,11 +437,11 @@ function groupAdminIds(chat) {
 }
 
 function groupMemberScopeState(chat) {
-  return chat?.groupMemberScope || { stateVersion: 0, memberIds: [] };
+  return chat?.groupMemberScope || { memberIds: [] };
 }
 
 function ensureGroupMemberScopeState(chat) {
-  if (!chat.groupMemberScope) chat.groupMemberScope = { stateVersion: 0, memberIds: [] };
+  if (!chat.groupMemberScope) chat.groupMemberScope = { memberIds: [] };
   return chat.groupMemberScope;
 }
 
@@ -979,11 +975,6 @@ function renderManagerActivationFields(chat, draft) {
 function renderDirectActivationFields(chat, draft) {
   return `
     <section class="activation-section">
-      <h2>metadata</h2>
-      ${renderActivationTextInput('metaTitle', draft.metaTitle)}
-      ${renderActivationTextInput('metaDescription', draft.metaDescription)}
-    </section>
-    <section class="activation-section">
       <h2>规则槽</h2>
       ${renderActivationChoice('scopeSource', draft.scopeSource)}
       ${renderActivationChoice('banSource', draft.banSource)}
@@ -1242,14 +1233,14 @@ function renderAdminBlacklist(chat) {
 }
 
 function renderBlacklistPanel(chat) {
-  const version = chat.blacklistMode === 'gov' ? chat.govBan.stateVersion : chat.adminBan.stateVersion;
+  const headerMeta = chat.blacklistMode === 'gov' ? `v${chat.govBan.stateVersion}` : '';
   const placeholder = state.blacklistQueryType === 'address'
     ? '输入地址 0x...'
     : state.nftInputMode === 'name' ? '请输入NFT名称' : '请输入NFT ID';
   const selfLabel = state.blacklistQueryType === 'address' ? '查自己' : '我的';
   return `
     <section class="workspace-band">
-      ${renderGroupDetailHeader(chat, '黑名单', `v${version}`)}
+      ${renderGroupDetailHeader(chat, '黑名单', headerMeta)}
       ${renderBlacklistPermissionNotice(chat)}
       <div class="filter-tabs blacklist-query-tabs">
         <button class="filter-tab${state.blacklistQueryType === 'address' ? ' active' : ''}" type="button" data-action="set-blacklist-query-type" data-query-type="address">按地址</button>
@@ -1654,7 +1645,7 @@ function renderGroupMembers() {
 
   return `
     <section class="workspace-band">
-      ${renderGroupDetailHeader(chat, '群成员', hasMemberScope ? `v${memberScope.stateVersion}` : '只读')}
+      ${renderGroupDetailHeader(chat, '群成员', hasMemberScope ? '' : '只读')}
       ${permission}
       ${hasMemberScope ? `
         ${renderMemberIdControls(chat)}
@@ -1681,7 +1672,7 @@ function renderGroupAdmins() {
 
   return `
     <section class="workspace-band">
-      ${renderGroupDetailHeader(chat, '管理员', hasGroupAdmin ? `v${groupAdmin.stateVersion}` : '只读')}
+      ${renderGroupDetailHeader(chat, '管理员', hasGroupAdmin ? '' : '只读')}
       ${permission}
       ${hasGroupAdmin ? `
         ${renderAdminIdControls(chat)}
@@ -2034,10 +2025,6 @@ function activateChat(groupId) {
       scopeSource: chat.chatInfo.scopeSource,
       banSource: chat.chatInfo.banSource,
     };
-    chat.meta = {
-      title: draft.metaTitle,
-      description: draft.metaDescription,
-    };
   } else {
     Object.keys(chat.params).forEach((key) => {
       chat.params[key] = draft[key];
@@ -2155,7 +2142,6 @@ function addAdminList(listName, inputId) {
     const groupAdmin = ensureGroupAdminState(chat);
     if (!groupAdmin.adminIds.includes(targetValue)) {
       groupAdmin.adminIds.push(targetValue);
-      groupAdmin.stateVersion += 1;
       state.syncHint = `GroupAdmin.addAdmins([${targetValue}]) 已模拟`;
     }
     state.adminIdQuery = value;
@@ -2167,7 +2153,6 @@ function addAdminList(listName, inputId) {
     const memberScope = ensureGroupMemberScopeState(chat);
     if (!memberScope.memberIds.includes(targetValue)) {
       memberScope.memberIds.push(targetValue);
-      memberScope.stateVersion += 1;
       state.syncHint = `GroupMemberScope.addMemberIds([${targetValue}]) 已模拟`;
     }
     refreshManualMemberScopeAllowed(chat);
@@ -2180,7 +2165,6 @@ function addAdminList(listName, inputId) {
     if (!chat.adminBan.senderIdBanList.includes(targetValue)) {
       chat.adminBan.senderIdBanList.push(targetValue);
       setAdminBanOperator(chat, 'nft', targetValue);
-      chat.adminBan.stateVersion += 1;
       state.syncHint = `banBySenderIds([${targetValue}]) 已模拟`;
     }
     render();
@@ -2190,7 +2174,6 @@ function addAdminList(listName, inputId) {
     if (!chat.adminBan.addressBanList.includes(targetValue)) {
       chat.adminBan.addressBanList.push(targetValue);
       setAdminBanOperator(chat, 'address', targetValue);
-      chat.adminBan.stateVersion += 1;
       state.syncHint = `banBySenderAddresses([${targetValue}]) 已模拟`;
     }
     render();
@@ -2198,7 +2181,6 @@ function addAdminList(listName, inputId) {
   }
   if (!chat.adminBan[listName].includes(targetValue)) {
     chat.adminBan[listName].push(targetValue);
-    chat.adminBan.stateVersion += 1;
     state.syncHint = `${listName} 新增 ${targetValue}`;
   }
   render();
@@ -2298,14 +2280,12 @@ function removeAdminList(listName, value) {
     const groupAdmin = ensureGroupAdminState(chat);
     if (groupAdmin.adminIds.includes(value)) {
       groupAdmin.adminIds = groupAdmin.adminIds.filter((item) => item !== value);
-      groupAdmin.stateVersion += 1;
       state.syncHint = `GroupAdmin.removeAdmins([${value}]) 已模拟`;
     }
   } else if (isMemberList) {
     const memberScope = ensureGroupMemberScopeState(chat);
     if (memberScope.memberIds.includes(value)) {
       memberScope.memberIds = memberScope.memberIds.filter((item) => item !== value);
-      memberScope.stateVersion += 1;
       state.syncHint = `GroupMemberScope.removeMemberIds([${value}]) 已模拟`;
     }
     refreshManualMemberScopeAllowed(chat);
@@ -2313,19 +2293,16 @@ function removeAdminList(listName, value) {
     if (chat.adminBan.senderIdBanList.includes(value)) {
       chat.adminBan.senderIdBanList = chat.adminBan.senderIdBanList.filter((item) => item !== value);
       clearAdminBanOperator(chat, 'nft', value);
-      chat.adminBan.stateVersion += 1;
       state.syncHint = `unbanBySenderIds([${value}]) 已模拟`;
     }
   } else if (listName === 'addressBanList') {
     if (chat.adminBan.addressBanList.includes(value)) {
       chat.adminBan.addressBanList = chat.adminBan.addressBanList.filter((item) => item !== value);
       clearAdminBanOperator(chat, 'address', value);
-      chat.adminBan.stateVersion += 1;
       state.syncHint = `unbanBySenderAddresses([${value}]) 已模拟`;
     }
   } else {
     chat.adminBan[listName] = chat.adminBan[listName].filter((item) => item !== value);
-    chat.adminBan.stateVersion += 1;
     state.syncHint = `${listName} 移除 ${value}`;
   }
   state.activeBlacklistMenuKey = null;
@@ -2442,7 +2419,6 @@ function addSenderBanFromMessage(messageId, groupId = state.activeGroupId) {
   }
 
   if (changes > 0) {
-    chat.adminBan.stateVersion += 1;
     state.syncHint =
       `banBySenders([${targetSenderId}], [${targetAddress}]) 已模拟，消息发送地址=${message.senderAddress}`;
   } else {

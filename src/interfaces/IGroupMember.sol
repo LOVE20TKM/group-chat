@@ -8,15 +8,8 @@ interface IGroupMember {
     error TargetMemberIdZero();
 
     event SetMemberId(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed memberId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
+        uint256 indexed groupId, address indexed operator, uint256 indexed memberId, uint256 operatorId, bool listed
     );
-
-    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_ADMIN_ADDRESS() external view returns (address);
 
@@ -36,6 +29,4 @@ interface IGroupMember {
     function memberIdsCount(uint256 groupId) external view returns (uint256);
 
     function memberIds(uint256 groupId, uint256 offset, uint256 limit) external view returns (uint256[] memory);
-
-    function stateVersion(uint256 groupId) external view returns (uint256);
 }

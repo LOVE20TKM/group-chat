@@ -17,6 +17,5 @@
 - `isMemberIdBatch(uint256 groupId, uint256[] memberIds)`
 - `memberIdsCount(uint256 groupId)`
 - `memberIds(uint256 groupId, uint256 offset, uint256 limit)`
-- `stateVersion(uint256 groupId)`
 
 `GroupMemberScope`、`GroupJoinScopeSource` 等发言规则模块应读取同一个 `GroupMember`，避免每个 scope source 维护一份割裂的成员名单。

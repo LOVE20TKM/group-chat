@@ -11,12 +11,7 @@ interface IGroupAdmin {
     error GroupDelegateGroupMismatch();
 
     event SetAdmin(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 indexed adminId,
-        uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
+        uint256 indexed groupId, address indexed operator, uint256 indexed adminId, uint256 operatorId, bool listed
     );
 
     event SetAdminSnapshot(
@@ -25,11 +20,8 @@ interface IGroupAdmin {
         uint256 indexed adminId,
         uint256 operatorId,
         address groupOwnerSnapshot,
-        address adminOwnerSnapshot,
-        uint256 stateVersion
+        address adminOwnerSnapshot
     );
-
-    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_DEFAULTS_ADDRESS() external view returns (address);
 
@@ -50,6 +42,4 @@ interface IGroupAdmin {
     function isAdminId(uint256 groupId, uint256 adminId) external view returns (bool);
 
     function adminIds(uint256 groupId) external view returns (uint256[] memory ids, bool[] memory isEffective);
-
-    function stateVersion(uint256 groupId) external view returns (uint256);
 }

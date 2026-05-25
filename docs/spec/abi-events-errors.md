@@ -14,20 +14,10 @@
 - `phaseBlocks`
 - `MAX_CONTENT_LENGTH`
 - `MAX_MENTIONED_SENDER_IDS`
-- `MAX_META_KEYS`
-- `MAX_META_VALUE_LENGTH`
 - `activateChat`
 - `setPostingAllowed`
 - `postingAllowed`
 - `chatInfo`
-
-Meta：
-
-- `setMeta`
-- `setMetaBatch`
-- `metaValue`
-- `metaEntriesCount`
-- `metaEntries`
 
 Rule slots：
 
@@ -81,7 +71,6 @@ Query：
 - `owner`
 - `activated`
 - `postingAllowed`
-- `configVersion`
 - `scopeSource`
 - `banSource`
 - `beforePostPlugin`
@@ -111,21 +100,12 @@ Query：
 - `endMessageId`：该 round 最后一条消息的 `messageId`；空 round 返回 `0`
 - `messageCount`
 
-`metaEntries` 返回：
-
-- `keys`
-- `values`
-- 同一索引的 `keys[i]` 与 `values[i]` 对应
-
-`metaEntriesCount(groupId)` 返回当前 live `meta` key 总数。
-
 ## 事件
 
 配置事件：
 
-- `Activate(uint256 indexed groupId, address indexed owner, uint256 configVersion)`
+- `Activate(uint256 indexed groupId, address indexed owner)`
 - `SetPostingAllowed`
-- `SetMeta`
 - `SetScopeSource`
 - `SetBanSource`
 - `SetBeforePostPlugin`
@@ -150,7 +130,6 @@ Manager 事件：
 
 事件规则：
 
-- 同一笔配置写的所有差异事件必须携带同一个新 `configVersion`。
 - `GroupChat.Activate` 在同笔交易内所有配置差异事件之后发出。
 - `PostMessage` 必须先于 `afterPostPlugin` 调用。
 - `MentionSenderId` / `MentionAll` 是链下通知索引信号，必须在 `PostMessage` 之后、`afterPostPlugin` 之前发出。
@@ -170,14 +149,6 @@ Manager 事件：
 - `RoundNotStarted`
 - `Reentrant`
 - `PhaseBlocksZero`
-
-Meta 错误：
-
-- `MetaKeyEmpty`
-- `TooManyMetaKeys`
-- `MetaValueTooLong`
-- `MetaArrayLengthMismatch`
-- `DuplicateMetaKey`
 
 Rule slot 错误：
 

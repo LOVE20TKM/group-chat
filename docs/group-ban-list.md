@@ -25,7 +25,6 @@
 - `senderIdBanDetails(uint256 groupId, uint256[] senderIds)`
 - `addressBanListCount` / `addressBanList`
 - `senderIdBanListCount` / `senderIdBanList`
-- `stateVersion(uint256 groupId)`
 
 详情和分页接口会同时返回当前拉黑操作者地址与操作者 NFT id。操作者字段用于当前状态展示，不是历史审计：
 

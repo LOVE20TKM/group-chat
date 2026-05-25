@@ -13,8 +13,7 @@ interface IGroupBanList {
         address indexed operatorAddress,
         address indexed targetAddress,
         uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
+        bool listed
     );
 
     event SetSenderIdBan(
@@ -22,11 +21,8 @@ interface IGroupBanList {
         address indexed operatorAddress,
         uint256 indexed targetSenderId,
         uint256 operatorId,
-        bool listed,
-        uint256 stateVersion
+        bool listed
     );
-
-    event ChangeStateVersion(uint256 indexed groupId, uint256 stateVersion);
 
     function GROUP_ADMIN_ADDRESS() external view returns (address);
 
@@ -72,6 +68,4 @@ interface IGroupBanList {
         returns (uint256[] memory senderIds, address[] memory operatorAddresses, uint256[] memory operatorIds);
 
     function isBanned(uint256 groupId, uint256 senderId, address senderAddress) external view returns (bool);
-
-    function stateVersion(uint256 groupId) external view returns (uint256);
 }

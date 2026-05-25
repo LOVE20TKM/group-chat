@@ -12,11 +12,6 @@ interface IGroupChatErrors {
     error RoundNotStarted();
     error Reentrant();
     error PhaseBlocksZero();
-    error MetaKeyEmpty();
-    error TooManyMetaKeys(uint256 length, uint256 maxLength);
-    error MetaValueTooLong(uint256 length, uint256 maxLength);
-    error MetaArrayLengthMismatch();
-    error DuplicateMetaKey();
     error SourceAddressHasNoCode();
     error PluginAddressHasNoCode();
     error ContentEmpty();
@@ -39,51 +34,24 @@ interface IGroupChatErrors {
 }
 
 interface IGroupChatEvents {
-    event Activate(uint256 indexed groupId, address indexed owner, uint256 configVersion);
+    event Activate(uint256 indexed groupId, address indexed owner);
 
-    event SetPostingAllowed(
-        uint256 indexed groupId, address indexed operator, uint256 configVersion, bool postingAllowed
-    );
-
-    event SetMeta(
-        uint256 indexed groupId,
-        address indexed operator,
-        uint256 configVersion,
-        string key,
-        bytes value,
-        bytes prevValue
-    );
+    event SetPostingAllowed(uint256 indexed groupId, address indexed operator, bool postingAllowed);
 
     event SetScopeSource(
-        uint256 indexed groupId,
-        address indexed sourceAddress,
-        address indexed operator,
-        uint256 configVersion,
-        address prevSourceAddress
+        uint256 indexed groupId, address indexed sourceAddress, address indexed operator, address prevSourceAddress
     );
 
     event SetBanSource(
-        uint256 indexed groupId,
-        address indexed sourceAddress,
-        address indexed operator,
-        uint256 configVersion,
-        address prevSourceAddress
+        uint256 indexed groupId, address indexed sourceAddress, address indexed operator, address prevSourceAddress
     );
 
     event SetBeforePostPlugin(
-        uint256 indexed groupId,
-        address indexed pluginAddress,
-        address indexed operator,
-        uint256 configVersion,
-        address prevPluginAddress
+        uint256 indexed groupId, address indexed pluginAddress, address indexed operator, address prevPluginAddress
     );
 
     event SetAfterPostPlugin(
-        uint256 indexed groupId,
-        address indexed pluginAddress,
-        address indexed operator,
-        uint256 configVersion,
-        address prevPluginAddress
+        uint256 indexed groupId, address indexed pluginAddress, address indexed operator, address prevPluginAddress
     );
 
     event PostMessage(
@@ -113,7 +81,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
         address owner;
         bool activated;
         bool postingAllowed;
-        uint256 configVersion;
         address scopeSource;
         address banSource;
         address beforePostPlugin;
@@ -160,14 +127,8 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
 
     function MAX_MENTIONED_SENDER_IDS() external view returns (uint256);
 
-    function MAX_META_KEYS() external view returns (uint256);
-
-    function MAX_META_VALUE_LENGTH() external view returns (uint256);
-
     function activateChat(
         uint256 groupId,
-        string[] calldata metaKeys,
-        bytes[] calldata metaValues,
         address scopeSource_,
         address banSource_,
         address beforePostPlugin_,
@@ -175,10 +136,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
     ) external;
 
     function setPostingAllowed(uint256 groupId, bool postingAllowed_) external;
-
-    function setMeta(uint256 groupId, string calldata key, bytes calldata value) external;
-
-    function setMetaBatch(uint256 groupId, string[] calldata keys, bytes[] calldata values) external;
 
     function setScopeSource(uint256 groupId, address sourceAddress) external;
 
@@ -206,15 +163,6 @@ interface IGroupChat is IGroupChatErrors, IGroupChatEvents {
     ) external;
 
     function chatInfo(uint256 groupId) external view returns (ChatInfo memory);
-
-    function metaValue(uint256 groupId, string calldata key) external view returns (bytes memory);
-
-    function metaEntriesCount(uint256 groupId) external view returns (uint256);
-
-    function metaEntries(uint256 groupId, uint256 offset, uint256 limit, bool reverse)
-        external
-        view
-        returns (string[] memory keys, bytes[] memory values);
 
     function postingAllowed(uint256 groupId) external view returns (bool);
 

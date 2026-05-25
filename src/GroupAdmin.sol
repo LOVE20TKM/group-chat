@@ -18,7 +18,6 @@ contract GroupAdmin is IGroupAdmin {
 
     struct AdminState {
         EnumerableSets.UintSet adminIds;
-        uint256 stateVersion;
         mapping(uint256 => address) groupOwnerSnapshots;
         mapping(uint256 => address) adminOwnerSnapshots;
     }
@@ -57,32 +56,25 @@ contract GroupAdmin is IGroupAdmin {
         }
 
         address groupOwnerSnapshot = _ownerOfOrRevert(groupId);
-        uint256 newVersion;
         for (uint256 i = 0; i < adminIdList.length; i++) {
             uint256 adminId = adminIdList[i];
             address adminOwnerSnapshot = _ownerOfOrRevert(adminId);
             bool snapshotChanged;
             if (state.groupOwnerSnapshots[adminId] != groupOwnerSnapshot) {
                 state.groupOwnerSnapshots[adminId] = groupOwnerSnapshot;
-                newVersion = _ensureStateVersion(state, newVersion);
                 snapshotChanged = true;
             }
             if (state.adminOwnerSnapshots[adminId] != adminOwnerSnapshot) {
                 state.adminOwnerSnapshots[adminId] = adminOwnerSnapshot;
-                newVersion = _ensureStateVersion(state, newVersion);
                 snapshotChanged = true;
             }
             if (snapshotChanged) {
-                emit SetAdminSnapshot(
-                    groupId, msg.sender, adminId, operatorId, groupOwnerSnapshot, adminOwnerSnapshot, newVersion
-                );
+                emit SetAdminSnapshot(groupId, msg.sender, adminId, operatorId, groupOwnerSnapshot, adminOwnerSnapshot);
             }
             if (state.adminIds.add(adminId)) {
-                newVersion = _ensureStateVersion(state, newVersion);
-                emit SetAdmin(groupId, msg.sender, adminId, operatorId, true, newVersion);
+                emit SetAdmin(groupId, msg.sender, adminId, operatorId, true);
             }
         }
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function removeAdmins(uint256 groupId, uint256[] calldata adminIdList) external {
@@ -93,7 +85,6 @@ contract GroupAdmin is IGroupAdmin {
         _validateAdminIds(adminIdList);
 
         AdminState storage state = _states[groupId];
-        uint256 newVersion;
         for (uint256 i = 0; i < adminIdList.length; i++) {
             uint256 adminId = adminIdList[i];
             if (!state.adminIds.remove(adminId)) {
@@ -101,10 +92,8 @@ contract GroupAdmin is IGroupAdmin {
             }
             delete state.groupOwnerSnapshots[adminId];
             delete state.adminOwnerSnapshots[adminId];
-            newVersion = _ensureStateVersion(state, newVersion);
-            emit SetAdmin(groupId, msg.sender, adminId, operatorId, false, newVersion);
+            emit SetAdmin(groupId, msg.sender, adminId, operatorId, false);
         }
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function adminIdOf(uint256 groupId, address account) public view returns (uint256 adminId) {
@@ -137,10 +126,6 @@ contract GroupAdmin is IGroupAdmin {
         }
     }
 
-    function stateVersion(uint256 groupId) external view returns (uint256) {
-        return _states[groupId].stateVersion;
-    }
-
     function _validateAdminIds(uint256[] calldata adminIdList) internal view {
         for (uint256 i = 0; i < adminIdList.length; i++) {
             _ownerOfOrRevert(adminIdList[i]);
@@ -161,19 +146,6 @@ contract GroupAdmin is IGroupAdmin {
             if (!state.adminIds.contains(adminIdList[i])) {
                 count++;
             }
-        }
-    }
-
-    function _ensureStateVersion(AdminState storage state, uint256 newVersion) internal returns (uint256) {
-        if (newVersion == 0) {
-            newVersion = ++state.stateVersion;
-        }
-        return newVersion;
-    }
-
-    function _emitChangeStateVersionIfChanged(uint256 groupId, uint256 newVersion) internal {
-        if (newVersion != 0) {
-            emit ChangeStateVersion(groupId, newVersion);
         }
     }
 

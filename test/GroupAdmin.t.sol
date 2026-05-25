@@ -18,10 +18,9 @@ contract GroupAdminTest is GroupChatFixture {
     address internal stranger = address(0x5757);
     uint256 internal adminId;
     uint256 internal secondAdminId;
-    bytes32 internal constant SET_ADMIN_SIG = keccak256("SetAdmin(uint256,address,uint256,uint256,bool,uint256)");
+    bytes32 internal constant SET_ADMIN_SIG = keccak256("SetAdmin(uint256,address,uint256,uint256,bool)");
     bytes32 internal constant SET_ADMIN_SNAPSHOT_SIG =
-        keccak256("SetAdminSnapshot(uint256,address,uint256,uint256,address,address,uint256)");
-    bytes32 internal constant CHANGE_STATE_VERSION_SIG = keccak256("ChangeStateVersion(uint256,uint256)");
+        keccak256("SetAdminSnapshot(uint256,address,uint256,uint256,address,address)");
 
     function setUp() public override {
         super.setUp();
@@ -56,16 +55,13 @@ contract GroupAdminTest is GroupChatFixture {
         vm.prank(chatOwner);
         groupAdmin.addAdmins(groupId, _uints(adminId));
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        _assertSetAdminSnapshotLog(logs[0], groupId, chatOwner, adminId, groupId, chatOwner, adminOwner, 1);
-        _assertSetAdminLog(logs[1], groupId, chatOwner, adminId, groupId, true, 1);
-        _assertChangeStateVersionLog(logs[2], groupId, 1);
-        assertEq(logs.length, 3);
+        _assertSetAdminSnapshotLog(logs[0], groupId, chatOwner, adminId, groupId, chatOwner, adminOwner);
+        _assertSetAdminLog(logs[1], groupId, chatOwner, adminId, groupId, true);
+        assertEq(logs.length, 2);
         assertTrue(groupAdmin.isAdminId(groupId, adminId));
-        assertEq(groupAdmin.stateVersion(groupId), 1);
 
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
         vm.prank(chatOwner);
         groupDelegate.setDelegateId(groupId, delegateId);
 
@@ -74,25 +70,21 @@ contract GroupAdminTest is GroupChatFixture {
         groupAdmin.addAdmins(groupId, _uints(secondAdminId));
         logs = vm.getRecordedLogs();
         _assertSetAdminSnapshotLog(
-            logs[0], groupId, delegateIdOwner, secondAdminId, delegateId, chatOwner, secondAdminOwner, 2
+            logs[0], groupId, delegateIdOwner, secondAdminId, delegateId, chatOwner, secondAdminOwner
         );
-        _assertSetAdminLog(logs[1], groupId, delegateIdOwner, secondAdminId, delegateId, true, 2);
-        _assertChangeStateVersionLog(logs[2], groupId, 2);
-        assertEq(logs.length, 3);
+        _assertSetAdminLog(logs[1], groupId, delegateIdOwner, secondAdminId, delegateId, true);
+        assertEq(logs.length, 2);
         assertTrue(groupAdmin.isAdminId(groupId, adminId));
         assertTrue(groupAdmin.isAdminId(groupId, secondAdminId));
-        assertEq(groupAdmin.stateVersion(groupId), 2);
 
         vm.recordLogs();
         vm.prank(delegateIdOwner);
         groupAdmin.removeAdmins(groupId, _uints(adminId));
         logs = vm.getRecordedLogs();
-        _assertSetAdminLog(logs[0], groupId, delegateIdOwner, adminId, delegateId, false, 3);
-        _assertChangeStateVersionLog(logs[1], groupId, 3);
-        assertEq(logs.length, 2);
+        _assertSetAdminLog(logs[0], groupId, delegateIdOwner, adminId, delegateId, false);
+        assertEq(logs.length, 1);
         assertTrue(!groupAdmin.isAdminId(groupId, adminId));
         assertTrue(groupAdmin.isAdminId(groupId, secondAdminId));
-        assertEq(groupAdmin.stateVersion(groupId), 3);
 
         vm.prank(stranger);
         vm.expectRevert(IGroupAdmin.UnauthorizedGroupAdminManager.selector);
@@ -175,13 +167,12 @@ contract GroupAdminTest is GroupChatFixture {
         assertTrue(groupAdmin.isAdminId(groupId, secondAdminId));
     }
 
-    function testT129F_reapplyingSameAdminIdsUpdatesSnapshotsAndStateVersion() public {
+    function testT129F_reapplyingSameAdminIdsUpdatesSnapshots() public {
         vm.prank(chatOwner);
         groupAdmin.addAdmins(groupId, _uints(adminId));
 
         vm.prank(adminOwner);
         groupDefaults.setDefaultGroupId(adminId);
-        assertEq(groupAdmin.stateVersion(groupId), 1);
 
         groupNft.transferFrom(adminOwner, stranger, adminId);
         assertEq(groupAdmin.adminIdOf(groupId, adminOwner), 0);
@@ -194,11 +185,9 @@ contract GroupAdminTest is GroupChatFixture {
         vm.prank(chatOwner);
         groupAdmin.addAdmins(groupId, _uints(adminId));
         Vm.Log[] memory logs = vm.getRecordedLogs();
-        _assertSetAdminSnapshotLog(logs[0], groupId, chatOwner, adminId, groupId, chatOwner, stranger, 2);
-        _assertChangeStateVersionLog(logs[1], groupId, 2);
-        assertEq(logs.length, 2);
+        _assertSetAdminSnapshotLog(logs[0], groupId, chatOwner, adminId, groupId, chatOwner, stranger);
+        assertEq(logs.length, 1);
 
-        assertEq(groupAdmin.stateVersion(groupId), 2);
         assertEq(groupAdmin.adminIdOf(groupId, stranger), adminId);
     }
 
@@ -260,24 +249,18 @@ contract GroupAdminTest is GroupChatFixture {
         uint256 adminId_,
         uint256 operatorId,
         address groupOwnerSnapshot,
-        address adminOwnerSnapshot,
-        uint256 stateVersion_
+        address adminOwnerSnapshot
     ) internal view {
         assertEq(log.emitter, address(groupAdmin));
         assertEq(log.topics[0], SET_ADMIN_SNAPSHOT_SIG);
         assertEq(log.topics[1], bytes32(groupId_));
         assertEq(log.topics[2], bytes32(uint256(uint160(operator))));
         assertEq(log.topics[3], bytes32(adminId_));
-        (
-            uint256 decodedOperatorId,
-            address decodedGroupOwnerSnapshot,
-            address decodedAdminOwnerSnapshot,
-            uint256 decodedVersion
-        ) = abi.decode(log.data, (uint256, address, address, uint256));
+        (uint256 decodedOperatorId, address decodedGroupOwnerSnapshot, address decodedAdminOwnerSnapshot) =
+            abi.decode(log.data, (uint256, address, address));
         assertEq(decodedOperatorId, operatorId);
         assertEq(decodedGroupOwnerSnapshot, groupOwnerSnapshot);
         assertEq(decodedAdminOwnerSnapshot, adminOwnerSnapshot);
-        assertEq(decodedVersion, stateVersion_);
     }
 
     function _assertSetAdminLog(
@@ -286,26 +269,15 @@ contract GroupAdminTest is GroupChatFixture {
         address operator,
         uint256 adminId_,
         uint256 operatorId,
-        bool listed,
-        uint256 stateVersion_
+        bool listed
     ) internal view {
         assertEq(log.emitter, address(groupAdmin));
         assertEq(log.topics[0], SET_ADMIN_SIG);
         assertEq(log.topics[1], bytes32(groupId_));
         assertEq(log.topics[2], bytes32(uint256(uint160(operator))));
         assertEq(log.topics[3], bytes32(adminId_));
-        (uint256 decodedOperatorId, bool decodedListed, uint256 decodedVersion) =
-            abi.decode(log.data, (uint256, bool, uint256));
+        (uint256 decodedOperatorId, bool decodedListed) = abi.decode(log.data, (uint256, bool));
         assertEq(decodedOperatorId, operatorId);
         assertEq(decodedListed, listed);
-        assertEq(decodedVersion, stateVersion_);
-    }
-
-    function _assertChangeStateVersionLog(Vm.Log memory log, uint256 groupId_, uint256 stateVersion_) internal view {
-        assertEq(log.emitter, address(groupAdmin));
-        assertEq(log.topics[0], CHANGE_STATE_VERSION_SIG);
-        assertEq(log.topics[1], bytes32(groupId_));
-        uint256 decodedVersion = abi.decode(log.data, (uint256));
-        assertEq(decodedVersion, stateVersion_);
     }
 }

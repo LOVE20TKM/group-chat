@@ -18,12 +18,10 @@
 - `ownerOrDelegateIdOf(uint256 groupId, address account)`：owner 返回 `groupId`，delegate 返回 `delegateId`，否则返回 `0`
 - `isAdminId(uint256 groupId, uint256 adminId)`：该管理员 NFT 在当前快照约束下仍有效时返回 `true`
 - `adminIds(uint256 groupId)`：返回配置列表与同位置的当前有效性，不过滤已因转让失效的 NFT
-- `stateVersion(uint256 groupId)`
 
 ## 事件
 
 - `SetAdmin`：管理员 NFT 被加入或移出配置集合时发出。
 - `SetAdminSnapshot`：`addAdmins` 新增或重新确认管理员 NFT，导致该 `adminId` 的群 owner / admin owner 快照变化时发出。
-- `ChangeStateVersion`：集合或快照发生变化时发出，作为缓存重拉信号。
 
 `GroupBanList`、`GroupMember` 等 owner-admin 管理型模块应固定读取同一个 `GroupAdmin`，避免每个模块维护一份割裂的管理员名单。

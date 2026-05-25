@@ -168,4 +168,4 @@ BanSourceFailed.selector          banSource 调用失败
 - 前端维护每个 `groupId` 的最新 `messageId`。
 - 若事件中的 `messageId == latestMessageId + 1`，可用 `message(groupId, messageId)` 回查。
 - 若事件中的 `messageId > latestMessageId + 1`，用 `messages(groupId, latestMessageId, messageId - latestMessageId, false)` 补拉缺口。
-- 配置变化以 `chatInfo.configVersion` 和 `chatInfo` / `metaEntriesCount` / `metaEntries` 重拉为准。
+- 配置变化以配置事件为信号，并通过 `chatInfo` 与各规则槽 view 重拉当前状态。

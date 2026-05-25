@@ -386,15 +386,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       },
       blacklistMode: 'admin',
       groupAdmin: {
-        stateVersion: 3,
         adminIds: ['1308', '1310'],
       },
       groupMemberScope: {
-        stateVersion: 2,
         memberIds: ['1308', '1309'],
       },
       adminBan: {
-        stateVersion: 12,
         addressBanList: ['0x66...d0'],
         senderIdBanList: ['9017'],
         addressBanOperatorStates: {
@@ -435,15 +432,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       },
       blacklistMode: 'admin',
       groupAdmin: {
-        stateVersion: 1,
         adminIds: ['9007'],
       },
       groupMemberScope: {
-        stateVersion: 1,
         memberIds: ['9007', '9050'],
       },
       adminBan: {
-        stateVersion: 4,
         addressBanList: [],
         senderIdBanList: ['9050'],
         addressBanOperatorStates: {},
@@ -482,15 +476,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       },
       blacklistMode: 'admin',
       groupAdmin: {
-        stateVersion: 0,
         adminIds: [],
       },
       groupMemberScope: {
-        stateVersion: 0,
         memberIds: [],
       },
       adminBan: {
-        stateVersion: 0,
         addressBanList: [],
         senderIdBanList: [],
         addressBanOperatorStates: {},
@@ -527,15 +518,12 @@ window.LOVE20_CHAT_PROTOTYPE_DATA = {
       },
       blacklistMode: 'admin',
       groupAdmin: {
-        stateVersion: 2,
         adminIds: ['9007'],
       },
       groupMemberScope: {
-        stateVersion: 3,
         memberIds: ['9007', '1309'],
       },
       adminBan: {
-        stateVersion: 5,
         addressBanList: [],
         senderIdBanList: [],
         addressBanOperatorStates: {},

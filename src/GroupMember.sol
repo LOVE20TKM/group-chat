@@ -14,7 +14,6 @@ contract GroupMember is IGroupMember {
 
     struct MemberState {
         EnumerableSets.UintSet memberIds;
-        uint256 stateVersion;
     }
 
     mapping(uint256 => MemberState) internal _states;
@@ -29,14 +28,12 @@ contract GroupMember is IGroupMember {
 
     function addMemberIds(uint256 groupId, uint256[] calldata memberIdList) external {
         uint256 operatorId = _requireAdmin(groupId);
-        uint256 newVersion = _setMemberIds(groupId, operatorId, memberIdList, true);
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
+        _setMemberIds(groupId, operatorId, memberIdList, true);
     }
 
     function removeMemberIds(uint256 groupId, uint256[] calldata memberIdList) external {
         uint256 operatorId = _requireAdmin(groupId);
-        uint256 newVersion = _setMemberIds(groupId, operatorId, memberIdList, false);
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
+        _setMemberIds(groupId, operatorId, memberIdList, false);
     }
 
     function isMemberId(uint256 groupId, uint256 memberId) external view returns (bool) {
@@ -63,21 +60,15 @@ contract GroupMember is IGroupMember {
         return _states[groupId].memberIds.page(offset, limit);
     }
 
-    function stateVersion(uint256 groupId) external view returns (uint256) {
-        return _states[groupId].stateVersion;
-    }
-
     function _setMemberIds(uint256 groupId, uint256 operatorId, uint256[] calldata memberIdList, bool listed)
         internal
-        returns (uint256 newVersion)
     {
         MemberState storage state = _states[groupId];
         for (uint256 i = 0; i < memberIdList.length; i++) {
             uint256 memberId = memberIdList[i];
             _requireMemberIdTarget(memberId);
             if (_setMemberId(state.memberIds, memberId, listed)) {
-                newVersion = _ensureStateVersion(state, newVersion);
-                emit SetMemberId(groupId, msg.sender, memberId, operatorId, listed, newVersion);
+                emit SetMemberId(groupId, msg.sender, memberId, operatorId, listed);
             }
         }
     }
@@ -98,19 +89,6 @@ contract GroupMember is IGroupMember {
             revert TargetMemberIdZero();
         }
         _ownerOfOrRevert(memberId);
-    }
-
-    function _ensureStateVersion(MemberState storage state, uint256 newVersion) internal returns (uint256) {
-        if (newVersion == 0) {
-            newVersion = ++state.stateVersion;
-        }
-        return newVersion;
-    }
-
-    function _emitChangeStateVersionIfChanged(uint256 groupId, uint256 newVersion) internal {
-        if (newVersion != 0) {
-            emit ChangeStateVersion(groupId, newVersion);
-        }
     }
 
     function _ownerOfOrRevert(uint256 groupId) internal view returns (address owner) {

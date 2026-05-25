@@ -55,10 +55,8 @@ contract GroupChatMessagesTest is GroupChatFixture {
     }
 
     function testT043T044T045T046T047_postInvalidCases() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
-
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
         vm.prank(chatOwner);
         groupDelegate.setDelegateId(groupId, delegateId);
 
@@ -92,7 +90,7 @@ contract GroupChatMessagesTest is GroupChatFixture {
 
         GroupChat futureChat = new GroupChat(address(baseGroupAdmin), block.number + 1000, phaseBlocks);
         vm.prank(chatOwner);
-        futureChat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        futureChat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
         vm.prank(senderOwner);
         vm.expectRevert(IGroupChatErrors.RoundNotStarted.selector);
@@ -154,9 +152,8 @@ contract GroupChatMessagesTest is GroupChatFixture {
     }
 
     function testT049_postRejectsDuplicateMentionedSenderIdsAndRestrictsMentionAll() public {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
         uint256[] memory duplicateMentionedSenderIds = new uint256[](2);
         duplicateMentionedSenderIds[0] = otherGroupId;

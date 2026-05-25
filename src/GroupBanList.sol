@@ -21,7 +21,6 @@ contract GroupBanList is IGroupBanList {
         EnumerableSets.UintSet senderIdBanList;
         mapping(address => BanOperatorState) addressBanOperatorStates;
         mapping(uint256 => BanOperatorState) senderIdBanOperatorStates;
-        uint256 stateVersion;
     }
 
     mapping(uint256 => ChatState) internal _states;
@@ -35,26 +34,22 @@ contract GroupBanList is IGroupBanList {
 
     function banBySenderIds(uint256 groupId, uint256[] calldata senderIds) external {
         uint256 operatorId = _requireAdmin(groupId);
-        uint256 newVersion = _setSenderIdBanTargets(groupId, operatorId, senderIds, true);
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
+        _setSenderIdBanTargets(groupId, operatorId, senderIds, true);
     }
 
     function unbanBySenderIds(uint256 groupId, uint256[] calldata senderIds) external {
         uint256 operatorId = _requireAdmin(groupId);
-        uint256 newVersion = _setSenderIdBanTargets(groupId, operatorId, senderIds, false);
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
+        _setSenderIdBanTargets(groupId, operatorId, senderIds, false);
     }
 
     function banBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external {
         uint256 operatorId = _requireAdmin(groupId);
-        uint256 newVersion = _setSenderAddressBanTargets(groupId, operatorId, senderAddresses, true);
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
+        _setSenderAddressBanTargets(groupId, operatorId, senderAddresses, true);
     }
 
     function unbanBySenderAddresses(uint256 groupId, address[] calldata senderAddresses) external {
         uint256 operatorId = _requireAdmin(groupId);
-        uint256 newVersion = _setSenderAddressBanTargets(groupId, operatorId, senderAddresses, false);
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
+        _setSenderAddressBanTargets(groupId, operatorId, senderAddresses, false);
     }
 
     function banBySenders(uint256 groupId, uint256[] calldata senderIds, address[] calldata senderAddresses) external {
@@ -63,12 +58,9 @@ contract GroupBanList is IGroupBanList {
             revert SenderPairLengthMismatch();
         }
         ChatState storage state = _states[groupId];
-        uint256 newVersion;
         for (uint256 i = 0; i < senderIds.length; i++) {
-            newVersion =
-                _setSenderBanTarget(state, groupId, operatorId, senderIds[i], senderAddresses[i], true, newVersion);
+            _setSenderBanTarget(state, groupId, operatorId, senderIds[i], senderAddresses[i], true);
         }
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function unbanBySenders(uint256 groupId, uint256[] calldata senderIds, address[] calldata senderAddresses)
@@ -79,12 +71,9 @@ contract GroupBanList is IGroupBanList {
             revert SenderPairLengthMismatch();
         }
         ChatState storage state = _states[groupId];
-        uint256 newVersion;
         for (uint256 i = 0; i < senderIds.length; i++) {
-            newVersion =
-                _setSenderBanTarget(state, groupId, operatorId, senderIds[i], senderAddresses[i], false, newVersion);
+            _setSenderBanTarget(state, groupId, operatorId, senderIds[i], senderAddresses[i], false);
         }
-        _emitChangeStateVersionIfChanged(groupId, newVersion);
     }
 
     function isAddressBanned(uint256 groupId, address senderAddress) external view returns (bool) {
@@ -177,13 +166,8 @@ contract GroupBanList is IGroupBanList {
         return state.addressBanList.contains(senderAddress) || state.senderIdBanList.contains(senderId);
     }
 
-    function stateVersion(uint256 groupId) external view returns (uint256) {
-        return _states[groupId].stateVersion;
-    }
-
     function _setSenderIdBanTargets(uint256 groupId, uint256 operatorId, uint256[] calldata senderIds, bool listed)
         internal
-        returns (uint256 newVersion)
     {
         ChatState storage state = _states[groupId];
         for (uint256 i = 0; i < senderIds.length; i++) {
@@ -191,8 +175,7 @@ contract GroupBanList is IGroupBanList {
             _requireSenderIdTarget(senderId);
             if (_setSenderIdList(state.senderIdBanList, senderId, listed)) {
                 _setSenderIdBanOperatorState(state, senderId, operatorId, listed);
-                newVersion = _ensureStateVersion(state, newVersion);
-                _emitSetSenderIdBan(groupId, operatorId, senderId, listed, newVersion);
+                _emitSetSenderIdBan(groupId, operatorId, senderId, listed);
             }
         }
     }
@@ -202,15 +185,14 @@ contract GroupBanList is IGroupBanList {
         uint256 operatorId,
         address[] calldata senderAddresses,
         bool listed
-    ) internal returns (uint256 newVersion) {
+    ) internal {
         ChatState storage state = _states[groupId];
         for (uint256 i = 0; i < senderAddresses.length; i++) {
             address senderAddress = senderAddresses[i];
             _requireAddressTarget(senderAddress);
             if (_setAddressList(state.addressBanList, senderAddress, listed)) {
                 _setAddressBanOperatorState(state, senderAddress, operatorId, listed);
-                newVersion = _ensureStateVersion(state, newVersion);
-                _emitSetAddressBan(groupId, operatorId, senderAddress, listed, newVersion);
+                _emitSetAddressBan(groupId, operatorId, senderAddress, listed);
             }
         }
     }
@@ -221,9 +203,8 @@ contract GroupBanList is IGroupBanList {
         uint256 operatorId,
         uint256 senderId,
         address senderAddress,
-        bool listed,
-        uint256 newVersion
-    ) internal returns (uint256) {
+        bool listed
+    ) internal {
         if (senderAddress == address(0)) {
             revert TargetAddressZero();
         }
@@ -233,15 +214,12 @@ contract GroupBanList is IGroupBanList {
 
         if (_setAddressList(state.addressBanList, senderAddress, listed)) {
             _setAddressBanOperatorState(state, senderAddress, operatorId, listed);
-            newVersion = _ensureStateVersion(state, newVersion);
-            _emitSetAddressBan(groupId, operatorId, senderAddress, listed, newVersion);
+            _emitSetAddressBan(groupId, operatorId, senderAddress, listed);
         }
         if (_setSenderIdList(state.senderIdBanList, senderId, listed)) {
             _setSenderIdBanOperatorState(state, senderId, operatorId, listed);
-            newVersion = _ensureStateVersion(state, newVersion);
-            _emitSetSenderIdBan(groupId, operatorId, senderId, listed, newVersion);
+            _emitSetSenderIdBan(groupId, operatorId, senderId, listed);
         }
-        return newVersion;
     }
 
     function _setAddressBanOperatorState(
@@ -300,32 +278,11 @@ contract GroupBanList is IGroupBanList {
         }
     }
 
-    function _ensureStateVersion(ChatState storage state, uint256 newVersion) internal returns (uint256) {
-        if (newVersion == 0) {
-            newVersion = ++state.stateVersion;
-        }
-        return newVersion;
+    function _emitSetAddressBan(uint256 groupId, uint256 operatorId, address senderAddress, bool listed) internal {
+        emit SetAddressBan(groupId, msg.sender, senderAddress, operatorId, listed);
     }
 
-    function _emitChangeStateVersionIfChanged(uint256 groupId, uint256 newVersion) internal {
-        if (newVersion != 0) {
-            emit ChangeStateVersion(groupId, newVersion);
-        }
-    }
-
-    function _emitSetAddressBan(
-        uint256 groupId,
-        uint256 operatorId,
-        address senderAddress,
-        bool listed,
-        uint256 newVersion
-    ) internal {
-        emit SetAddressBan(groupId, msg.sender, senderAddress, operatorId, listed, newVersion);
-    }
-
-    function _emitSetSenderIdBan(uint256 groupId, uint256 operatorId, uint256 senderId, bool listed, uint256 newVersion)
-        internal
-    {
-        emit SetSenderIdBan(groupId, msg.sender, senderId, operatorId, listed, newVersion);
+    function _emitSetSenderIdBan(uint256 groupId, uint256 operatorId, uint256 senderId, bool listed) internal {
+        emit SetSenderIdBan(groupId, msg.sender, senderId, operatorId, listed);
     }
 }

@@ -7,7 +7,6 @@ interface IGroupChatPluginView {
         address owner;
         bool activated;
         bool postingAllowed;
-        uint256 configVersion;
         address scopeSource;
         address banSource;
         address beforePostPlugin;
@@ -28,7 +27,7 @@ interface IGroupChatPluginView {
         uint256 quotedMessageId
     ) external;
 
-    function setMeta(uint256 groupId, string calldata key, bytes calldata value) external;
+    function setPostingAllowed(uint256 groupId, bool postingAllowed_) external;
 }
 
 interface IGroupDelegatePluginView {
@@ -222,7 +221,7 @@ contract MockAfterPostReenterPlugin {
     }
 }
 
-contract MockAfterPostSetMetaPlugin {
+contract MockAfterPostSetPostingAllowedPlugin {
     IGroupChatPluginView internal immutable _chat;
 
     constructor(address chat_) {
@@ -241,7 +240,7 @@ contract MockAfterPostSetMetaPlugin {
         uint256,
         uint256
     ) external {
-        _chat.setMeta(groupId, "hook-write", bytes("1"));
+        _chat.setPostingAllowed(groupId, false);
     }
 }
 

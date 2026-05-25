@@ -965,7 +965,7 @@ const blacklistPanelHarness = new Function(
 
 const blacklistPanelState = { blacklistQueryType: 'address', nftInputMode: 'id', blacklistQueryResult: '' };
 const blacklistPanelApi = blacklistPanelHarness(blacklistPanelState);
-const blacklistPanel = blacklistPanelApi.renderBlacklistPanel({ groupId: 1301, title: '示例群', blacklistMode: 'admin', adminBan: { stateVersion: 3 } });
+const blacklistPanel = blacklistPanelApi.renderBlacklistPanel({ groupId: 1301, title: '示例群', blacklistMode: 'admin', adminBan: {} });
 if ((blacklistPanel.match(/示例群/g) || []).length !== 1) {
   throw new Error('Blacklist page must not render the group name twice');
 }
@@ -1020,8 +1020,8 @@ const nftLookupApi = nftLookupHarness({
   memberIdQuery: '',
   delegateQueryResult: '',
 });
-const activationMetaInput = nftLookupApi.renderActivationTextInput('metaTitle', '');
-if (activationMetaInput.includes('class="nft-lookup"')) {
+const activationTokenInput = nftLookupApi.renderActivationTextInput('token', '');
+if (activationTokenInput.includes('class="nft-lookup"')) {
   throw new Error('Activation fields must not render the removed delegate NFT lookup');
 }
 if (!nftLookupApi.renderDelegateInput({ groupDelegate: { delegateId: '0' } }, true).includes('data-action="set-delegate-id"')) {

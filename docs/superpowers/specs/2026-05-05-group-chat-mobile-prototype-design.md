@@ -47,7 +47,7 @@
 | UI 能力 | 合约/文档依据 |
 | --- | --- |
 | chat 身份 | `1 NFT = 1 Chat`，`groupId == GroupNFT.tokenId` |
-| 头部状态 | `chatInfo(groupId)`：`activated`、`postingAllowed`、`owner`、`configVersion` |
+| 头部状态 | `chatInfo(groupId)`：`activated`、`postingAllowed`、`owner` |
 | 默认发言身份 | `GroupDefaults.defaultGroupIdOf(account)`，作为 `post` 的 `senderId` |
 | 发送消息 | `post` / `postAsDefaultSender` |
 | 可发言判断 | `canPost(groupId, senderId, senderAddress)` |

@@ -146,8 +146,6 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 ```solidity
 activateChat(
     groupId,
-    metaKeys,
-    metaValues,
     groupJoinScopeSource,
     adminBanSource,
     beforePostPlugin,

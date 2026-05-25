@@ -28,16 +28,14 @@ abstract contract GroupChatFixture is TestBase {
     uint256 internal delegateId;
     uint256 internal originBlocks;
     uint256 internal phaseBlocks = 100;
-    bytes32 internal constant SET_META_SIG = keccak256("SetMeta(uint256,address,uint256,string,bytes,bytes)");
-    bytes32 internal constant SET_SCOPE_SOURCE_SIG =
-        keccak256("SetScopeSource(uint256,address,address,uint256,address)");
-    bytes32 internal constant SET_BAN_SOURCE_SIG = keccak256("SetBanSource(uint256,address,address,uint256,address)");
+    bytes32 internal constant SET_SCOPE_SOURCE_SIG = keccak256("SetScopeSource(uint256,address,address,address)");
+    bytes32 internal constant SET_BAN_SOURCE_SIG = keccak256("SetBanSource(uint256,address,address,address)");
     bytes32 internal constant SET_BEFORE_POST_PLUGIN_SIG =
-        keccak256("SetBeforePostPlugin(uint256,address,address,uint256,address)");
+        keccak256("SetBeforePostPlugin(uint256,address,address,address)");
     bytes32 internal constant SET_AFTER_POST_PLUGIN_SIG =
-        keccak256("SetAfterPostPlugin(uint256,address,address,uint256,address)");
-    bytes32 internal constant ACTIVATE_SIG = keccak256("Activate(uint256,address,uint256)");
-    bytes32 internal constant SET_POSTING_ALLOWED_SIG = keccak256("SetPostingAllowed(uint256,address,uint256,bool)");
+        keccak256("SetAfterPostPlugin(uint256,address,address,address)");
+    bytes32 internal constant ACTIVATE_SIG = keccak256("Activate(uint256,address)");
+    bytes32 internal constant SET_POSTING_ALLOWED_SIG = keccak256("SetPostingAllowed(uint256,address,bool)");
     bytes32 internal constant POST_MESSAGE_SIG = keccak256("PostMessage(uint256,uint256,address,uint256,uint256)");
     bytes32 internal constant MENTION_SENDER_ID_SIG = keccak256("MentionSenderId(uint256,uint256,uint256)");
     bytes32 internal constant MENTION_ALL_SIG = keccak256("MentionAll(uint256,uint256)");
@@ -58,11 +56,6 @@ abstract contract GroupChatFixture is TestBase {
         groupDelegate = new MockGroupDelegate(address(groupNft));
         baseGroupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), 20);
         chat = new GroupChat(address(baseGroupAdmin), originBlocks, phaseBlocks);
-    }
-
-    function _emptyMeta() internal pure returns (string[] memory keys, bytes[] memory values) {
-        keys = new string[](0);
-        values = new bytes[](0);
     }
 
     function _emptyMentionedSenderIds() internal pure returns (uint256[] memory mentionedSenderIds) {
@@ -110,33 +103,12 @@ abstract contract GroupChatFixture is TestBase {
     }
 
     function _activateEmpty() internal {
-        (string[] memory keys, bytes[] memory values) = _emptyMeta();
         vm.prank(chatOwner);
-        chat.activateChat(groupId, keys, values, address(0), address(0), address(0), address(0));
+        chat.activateChat(groupId, address(0), address(0), address(0), address(0));
     }
 
-    function _decodeMetaConfigVersion(bytes memory data) internal pure returns (uint256 version) {
-        (version,,,) = abi.decode(data, (uint256, string, bytes, bytes));
-    }
-
-    function _decodeMetaKey(bytes memory data) internal pure returns (string memory key) {
-        (, key,,) = abi.decode(data, (uint256, string, bytes, bytes));
-    }
-
-    function _decodeMetaValue(bytes memory data) internal pure returns (bytes memory value) {
-        (,, value,) = abi.decode(data, (uint256, string, bytes, bytes));
-    }
-
-    function _decodeMetaPrevValue(bytes memory data) internal pure returns (bytes memory prevValue) {
-        (,,, prevValue) = abi.decode(data, (uint256, string, bytes, bytes));
-    }
-
-    function _decodeVersionAndAddress(bytes memory data) internal pure returns (uint256 version) {
-        (version,) = abi.decode(data, (uint256, address));
-    }
-
-    function _decodeActivateVersion(bytes memory data) internal pure returns (uint256 version) {
-        version = abi.decode(data, (uint256));
+    function _decodeAddress(bytes memory data) internal pure returns (address value) {
+        value = abi.decode(data, (address));
     }
 
     function _decodePostMessage(bytes memory data) internal pure returns (uint256 round, uint256 messageId) {
