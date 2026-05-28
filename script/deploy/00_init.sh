@@ -102,8 +102,20 @@ if [ -f "$network_dir/group.chat.params" ]; then
         export GROUP_CHAT_ACTION_RECENT_ROUNDS=$actionRecentRounds
     fi
 
+    if [ -n "$maxContentLength" ]; then
+        export GROUP_CHAT_MAX_CONTENT_LENGTH=$maxContentLength
+    fi
+
+    if [ -n "$maxMentionedSenderIds" ]; then
+        export GROUP_CHAT_MAX_MENTIONED_SENDER_IDS=$maxMentionedSenderIds
+    fi
+
     if [ -n "$banThresholdRatio" ]; then
         export GROUP_CHAT_BAN_THRESHOLD_RATIO=$banThresholdRatio
+    fi
+
+    if [ -n "$minSupportToOpposeRatio" ]; then
+        export GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO=$minSupportToOpposeRatio
     fi
 
     if [ -n "$maxAdminIds" ]; then
@@ -142,6 +154,18 @@ if [ -f "$network_dir/group.chat.params" ]; then
 
     if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
         export GROUP_CHAT_BAN_THRESHOLD_RATIO=3000000000000000
+    fi
+
+    if [ -z "$GROUP_CHAT_MAX_CONTENT_LENGTH" ]; then
+        export GROUP_CHAT_MAX_CONTENT_LENGTH=4096
+    fi
+
+    if [ -z "$GROUP_CHAT_MAX_MENTIONED_SENDER_IDS" ]; then
+        export GROUP_CHAT_MAX_MENTIONED_SENDER_IDS=32
+    fi
+
+    if [ -z "$GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO" ]; then
+        export GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO=10
     fi
 
     if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
@@ -196,7 +220,10 @@ if [ -f "$network_dir/group.chat.params" ]; then
     export GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
+    export GROUP_CHAT_MAX_CONTENT_LENGTH
+    export GROUP_CHAT_MAX_MENTIONED_SENDER_IDS
     export GROUP_CHAT_BAN_THRESHOLD_RATIO
+    export GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO
     export GROUP_CHAT_MAX_ADMIN_IDS
 
     echo "GroupChat Configuration loaded:"
@@ -217,6 +244,9 @@ if [ -f "$network_dir/group.chat.params" ]; then
     echo "  BeforePostPlugin: $GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS"
     echo "  AfterPostPlugin: $GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS"
     echo "  ActionRecentRounds: $GROUP_CHAT_ACTION_RECENT_ROUNDS"
+    echo "  MaxContentLength: $GROUP_CHAT_MAX_CONTENT_LENGTH"
+    echo "  MaxMentionedSenderIds: $GROUP_CHAT_MAX_MENTIONED_SENDER_IDS"
+    echo "  MinSupportToOpposeRatio: $GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO"
     echo "  BanThresholdRatio: $GROUP_CHAT_BAN_THRESHOLD_RATIO"
     echo "  MaxAdminIds: $GROUP_CHAT_MAX_ADMIN_IDS"
     echo "  RoundSource: ExtensionCenter.joinAddress().originBlocks/phaseBlocks"

@@ -78,7 +78,7 @@ BanSourceFailed.selector          banSource 调用失败
 
 - `content` 类型为 `string`。
 - 空消息必须 revert。
-- 单条消息上限固定为 `4096` bytes。
+- 单条消息上限由 `MAX_CONTENT_LENGTH` 决定，当前部署默认 `4096` bytes。
 - 消息只能新增，不能编辑或删除。
 - `PostMessage` 事件不带完整正文，正文以 view 读取为准。
 
@@ -93,7 +93,7 @@ BanSourceFailed.selector          banSource 调用失败
 ## Mentioned Sender IDs
 
 - `mentionedSenderIds` 是 `uint256[]`。
-- 上限固定为 `32`。
+- 上限由 `MAX_MENTIONED_SENDER_IDS` 决定，当前部署默认 `32`。
 - 每个 `mentionedSenderId` 必须存在。
 - 不允许重复。
 - 允许提及自己。

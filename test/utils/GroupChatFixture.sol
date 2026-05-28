@@ -28,6 +28,8 @@ abstract contract GroupChatFixture is TestBase {
     uint256 internal delegateId;
     uint256 internal originBlocks;
     uint256 internal phaseBlocks = 100;
+    uint256 internal maxContentLength = 4096;
+    uint256 internal maxMentionedSenderIds = 32;
     bytes32 internal constant SET_SCOPE_SOURCE_SIG = keccak256("SetScopeSource(uint256,address,address,address)");
     bytes32 internal constant SET_BAN_SOURCE_SIG = keccak256("SetBanSource(uint256,address,address,address)");
     bytes32 internal constant SET_BEFORE_POST_PLUGIN_SIG =
@@ -55,7 +57,9 @@ abstract contract GroupChatFixture is TestBase {
         groupDefaults = new MockGroupDefaults(address(groupNft));
         groupDelegate = new MockGroupDelegate(address(groupNft));
         baseGroupAdmin = new GroupAdmin(address(groupDefaults), address(groupDelegate), 20);
-        chat = new GroupChat(address(baseGroupAdmin), originBlocks, phaseBlocks);
+        chat = new GroupChat(
+            address(baseGroupAdmin), originBlocks, phaseBlocks, maxContentLength, maxMentionedSenderIds
+        );
     }
 
     function _emptyMentionedSenderIds() internal pure returns (uint256[] memory mentionedSenderIds) {

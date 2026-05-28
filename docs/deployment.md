@@ -43,16 +43,20 @@ source ./one_click_deploy.sh <network>
 ## 可选参数
 
 - `GROUP_ADDRESS`：仅用于部署后校验。
+- `GROUP_CHAT_MAX_CONTENT_LENGTH`：单条消息最大 bytes 长度，默认 `4096`。
+- `GROUP_CHAT_MAX_MENTIONED_SENDER_IDS`：单条消息最多显式提及 senderId 数量，默认 `32`。
+- `GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO`：支持禁言票必须超过反对禁言票的倍数，默认 `10`。
 - `GROUP_CHAT_BAN_THRESHOLD_RATIO`：默认 `3000000000000000`（`3e15`），即 `0.3%`；比例精度为 `1e18 = 100%`。
 - `GROUP_CHAT_MAX_ADMIN_IDS`：`GroupAdmin.addAdmins` 后单组最多管理员 NFT 数，默认 `20`。
 - `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`：Manager 固定 beforePostPlugin。
 - `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`：Manager 固定 afterPostPlugin。
 
 `GroupChat.originBlocks` 与 `GroupChat.phaseBlocks` 部署时直接读取 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约，保证 `currentRound()` 对齐 Join 合约。
+`GroupChat` 构造参数固定写入消息长度上限与显式提及数量上限。
 `GroupChat` 构造时固定写入 `GROUP_DELEGATE_ADDRESS`，并校验 `GroupDelegate.GROUP_ADDRESS()` 与 `GroupDefaults.GROUP_ADDRESS()` 一致。
 
 `DeployGroupChat` 固定部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource` 与 `GovVotedBanSource`。
-`GovVotedBanSource` 构造参数固定写入黑名单生效阈值。
+`GovVotedBanSource` 构造参数固定写入支持/反对倍数与黑名单生效阈值。
 `DeployGroupChat` 固定部署 `GroupMember`、`GroupMemberScope` 与 `GroupJoinScopeSource`。
 四个 typed Manager 的 `BAN_SOURCE_ADDRESS` 固定为本次部署的 `GovVotedBanSource`。
 `GroupAdmin` 是 owner-admin 管理型模块共享的管理员名单。

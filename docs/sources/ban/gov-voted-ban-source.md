@@ -30,11 +30,13 @@ GroupChat.banSource = GovVotedBanSource
 
 - `GROUP_ADDRESS`
 - `PRECISION`
+- `MIN_SUPPORT_TO_OPPOSE_RATIO`
 - `BAN_THRESHOLD_RATIO`
 
 当前部署默认值：
 
 - `PRECISION = 1e18`
+- `MIN_SUPPORT_TO_OPPOSE_RATIO = 10`
 - `BAN_THRESHOLD_RATIO = 3e15`，即支持禁言票数至少占总治理票 `0.3%`
 
 比例单位与 `extension-group` 一致：`1e18 = 100%`。
@@ -56,9 +58,9 @@ GroupChat.banSource = GovVotedBanSource
 - 每次投票、反对、撤票、刷新都立即更新聚合票权。
 - 每次聚合票权变化后，同步更新“已命中黑名单”结果。
 - 命中黑名单结果必须同时满足：
-  - `supportWeight > opposeWeight * 10`
+  - `supportWeight > opposeWeight * MIN_SUPPORT_TO_OPPOSE_RATIO`
   - `supportWeight / totalVoteWeight(groupId) >= BAN_THRESHOLD_RATIO / PRECISION`
-- `BAN_THRESHOLD_RATIO` 只在投票、反对、撤票、刷新等写入/结算路径读取；`isBanned(...)` 仅读取已结算名单。
+- `MIN_SUPPORT_TO_OPPOSE_RATIO` 与 `BAN_THRESHOLD_RATIO` 只在投票、反对、撤票、刷新等写入/结算路径读取；`isBanned(...)` 仅读取已结算名单。
 - 地址黑名单或 `senderId` 黑名单任一命中，`isBanned(...)` 返回 `true`。
 - 票权或总票权变化后的刷新责任交给社区自行决定；合约只提供可由任何人调用的 `refreshVoteBy*`，不内置 keeper 或自动重算。
 
@@ -296,7 +298,7 @@ function stateVersion(
 - `refreshVoteBy*(...)` 只处理已有当前票的 voter；无当前票必须拒绝。
 - `refreshVoteBy*(...)` 读取到当前票权为 `0` 时，必须等价于删除该 voter 当前票。
 - `refreshVoteBy*(...)` 读取到当前票权未变化，但总票权阈值导致黑名单结果变化时，必须更新已结算名单并递增 `stateVersion`。
-- 单目标是否命中由写入/刷新路径根据 `supportWeight > opposeWeight * 10` 与全局阈值同步到已结算名单。
+- 单目标是否命中由写入/刷新路径根据 `supportWeight > opposeWeight * MIN_SUPPORT_TO_OPPOSE_RATIO` 与全局阈值同步到已结算名单。
 - `isAddressBannedBatch(...)`、`isSenderIdBannedBatch(...)` 返回顺序必须与入参数组顺序一致。
 - `voteWeightsBySenderAddressesByVoter(...)`、`voteWeightsBySenderIdsByVoter(...)` 返回的两组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `supportWeight=0, opposeWeight=0`。
 - `voteStatusBySenderAddresses(...)`、`voteStatusBySenderIds(...)` 返回的三组数组长度和顺序必须与入参数组一致；未出现过的目标返回 `banned=false, supportWeight=0, opposeWeight=0`。
@@ -360,6 +362,7 @@ event ChangeStateVersion(
 
 - `address immutable GROUP_ADDRESS`
 - `uint256 constant PRECISION`
+- `uint256 immutable MIN_SUPPORT_TO_OPPOSE_RATIO`
 - `uint256 immutable BAN_THRESHOLD_RATIO`
 
 每个 `groupId` 至少维护：

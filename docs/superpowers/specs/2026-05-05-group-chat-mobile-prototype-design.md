@@ -53,7 +53,7 @@
 | 可发言判断 | `canPost(groupId, senderId, senderAddress)` |
 | 错误原因 | `ChatNotActivated`、`PostingNotAllowed`、`SenderAddressNotSenderIdOwner`、`ScopeRejected`、`BanRejected` 等产品错误名 / reasonCode |
 | 引用 | `quotedMessageId`，`0` 表示无引用；`quotedMessageId > 0` 指向当前 chat 内 1-based `messageId` |
-| 提及 | `mentionedSenderIds uint256[]`，最大 `32`，去重 |
+| 提及 | `mentionedSenderIds uint256[]`，最大值读取 `MAX_MENTIONED_SENDER_IDS`，去重 |
 | 全体提及 | `mentionAll`，仅 owner、delegate 或 GroupAdmin 管理员 NFT 可发 |
 | 消息同步 | `PostMessage` 只做发现信号，正文用 `message/messages` 回查 |
 | 消息分页 | `messages`、`messagesByRound`、`messagesBySender`、`messagesByMention`、`messagesByMentionAll` |
@@ -142,7 +142,7 @@
 
 - 协议覆盖：
   - `canPost` reasonCode 能在 UI 中解释。
-  - `mentionedSenderIds` 去重有前端提示；超过 `32` 时阻止发送并提示 `TooManyMentionedSenderIds`。
+  - `mentionedSenderIds` 去重有前端提示；超过 `MAX_MENTIONED_SENDER_IDS` 时阻止发送并提示 `TooManyMentionedSenderIds`。
   - `quotedMessageId` 为 `0` 与非 `0` 两种状态可见。
   - `PostMessage` 事件不是正文真源的同步策略在 UI 中有提示。
 

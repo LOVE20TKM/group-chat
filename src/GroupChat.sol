@@ -13,8 +13,8 @@ import {IPostBanSource} from "./interfaces/sources/IPostBanSource.sol";
 import {IPostScopeSource} from "./interfaces/sources/IPostScopeSource.sol";
 
 contract GroupChat is IGroupChat {
-    uint256 public constant MAX_CONTENT_LENGTH = 4096;
-    uint256 public constant MAX_MENTIONED_SENDER_IDS = 32;
+    uint256 public immutable MAX_CONTENT_LENGTH;
+    uint256 public immutable MAX_MENTIONED_SENDER_IDS;
 
     address public immutable GROUP_ADMIN_ADDRESS;
     address public immutable GROUP_ADDRESS;
@@ -63,12 +63,21 @@ contract GroupChat is IGroupChat {
 
     uint256 internal _entered;
 
-    constructor(address groupAdmin_, uint256 originBlocks_, uint256 phaseBlocks_) {
+    constructor(
+        address groupAdmin_,
+        uint256 originBlocks_,
+        uint256 phaseBlocks_,
+        uint256 maxContentLength_,
+        uint256 maxMentionedSenderIds_
+    ) {
         if (groupAdmin_.code.length == 0) {
             revert GroupAdminHasNoCode();
         }
         if (phaseBlocks_ == 0) {
             revert PhaseBlocksZero();
+        }
+        if (maxContentLength_ == 0) {
+            revert MaxContentLengthZero();
         }
 
         address groupDefaults = IGroupAdmin(groupAdmin_).GROUP_DEFAULTS_ADDRESS();
@@ -92,6 +101,8 @@ contract GroupChat is IGroupChat {
         GROUP_ADDRESS = groupAddress;
         originBlocks = originBlocks_;
         phaseBlocks = phaseBlocks_;
+        MAX_CONTENT_LENGTH = maxContentLength_;
+        MAX_MENTIONED_SENDER_IDS = maxMentionedSenderIds_;
     }
 
     modifier nonReentrant() {

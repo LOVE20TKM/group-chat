@@ -20,6 +20,9 @@ import {ScriptBase} from "./ScriptBase.sol";
 
 contract DeployGroupChat is ScriptBase {
     uint256 internal constant DEFAULT_MAX_ADMIN_IDS = 20;
+    uint256 internal constant DEFAULT_MIN_SUPPORT_TO_OPPOSE_RATIO = 10;
+    uint256 internal constant DEFAULT_MAX_CONTENT_LENGTH = 4096;
+    uint256 internal constant DEFAULT_MAX_MENTIONED_SENDER_IDS = 32;
 
     struct DeployConfig {
         address groupDefaults;
@@ -30,8 +33,11 @@ contract DeployGroupChat is ScriptBase {
         address afterPostPlugin;
         uint256 originBlocks;
         uint256 phaseBlocks;
+        uint256 maxContentLength;
+        uint256 maxMentionedSenderIds;
         uint256 actionRecentRounds;
         uint256 maxAdminIds;
+        uint256 minSupportToOpposeRatio;
         uint256 banThresholdRatio;
     }
 
@@ -59,8 +65,11 @@ contract DeployGroupChat is ScriptBase {
             groupJoin,
             vm.envOr("GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS", address(0)),
             vm.envOr("GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS", address(0)),
+            vm.envOr("GROUP_CHAT_MAX_CONTENT_LENGTH", DEFAULT_MAX_CONTENT_LENGTH),
+            vm.envOr("GROUP_CHAT_MAX_MENTIONED_SENDER_IDS", DEFAULT_MAX_MENTIONED_SENDER_IDS),
             vm.envUint("GROUP_CHAT_ACTION_RECENT_ROUNDS"),
             vm.envOr("GROUP_CHAT_MAX_ADMIN_IDS", DEFAULT_MAX_ADMIN_IDS),
+            vm.envOr("GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO", DEFAULT_MIN_SUPPORT_TO_OPPOSE_RATIO),
             vm.envOr("GROUP_CHAT_BAN_THRESHOLD_RATIO", uint256(3e15))
         );
 
@@ -81,8 +90,11 @@ contract DeployGroupChat is ScriptBase {
         address groupJoin,
         address beforePostPlugin,
         address afterPostPlugin,
+        uint256 maxContentLength,
+        uint256 maxMentionedSenderIds,
         uint256 actionRecentRounds,
         uint256 maxAdminIds,
+        uint256 minSupportToOpposeRatio,
         uint256 banThresholdRatio
     ) internal view returns (DeployConfig memory) {
         address coreJoin = IExtensionCenter(extensionCenter).joinAddress();
@@ -95,19 +107,32 @@ contract DeployGroupChat is ScriptBase {
             afterPostPlugin: afterPostPlugin,
             originBlocks: ILOVE20Join(coreJoin).originBlocks(),
             phaseBlocks: ILOVE20Join(coreJoin).phaseBlocks(),
+            maxContentLength: maxContentLength,
+            maxMentionedSenderIds: maxMentionedSenderIds,
             actionRecentRounds: actionRecentRounds,
             maxAdminIds: maxAdminIds,
+            minSupportToOpposeRatio: minSupportToOpposeRatio,
             banThresholdRatio: banThresholdRatio
         });
     }
 
     function _deploy(DeployConfig memory config) internal returns (DeployedAddresses memory deployed) {
         deployed.groupAdmin = address(new GroupAdmin(config.groupDefaults, config.groupDelegate, config.maxAdminIds));
-        GroupChat groupChat = new GroupChat(deployed.groupAdmin, config.originBlocks, config.phaseBlocks);
+        GroupChat groupChat = new GroupChat(
+            deployed.groupAdmin,
+            config.originBlocks,
+            config.phaseBlocks,
+            config.maxContentLength,
+            config.maxMentionedSenderIds
+        );
         deployed.groupChat = address(groupChat);
         deployed.groupBanList = address(new GroupBanList(deployed.groupAdmin));
         deployed.adminBanSource = address(new AdminBanSource(deployed.groupBanList));
-        deployed.govVotedBanSource = address(new GovVotedBanSource(groupChat.GROUP_ADDRESS(), config.banThresholdRatio));
+        deployed.govVotedBanSource = address(
+            new GovVotedBanSource(
+                groupChat.GROUP_ADDRESS(), config.minSupportToOpposeRatio, config.banThresholdRatio
+            )
+        );
         deployed.groupMember = address(new GroupMember(deployed.groupAdmin));
         deployed.groupMemberScope = address(new GroupMemberScope(deployed.groupMember));
         deployed.groupJoinScopeSource = address(new GroupJoinScopeSource(deployed.groupMember, config.groupJoin));

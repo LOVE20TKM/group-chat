@@ -13,7 +13,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
 
     address public immutable GROUP_ADDRESS;
     uint256 public constant PRECISION = 1e18;
-    uint256 public constant MIN_SUPPORT_TO_OPPOSE_RATIO = 10;
+    uint256 public immutable MIN_SUPPORT_TO_OPPOSE_RATIO;
     uint256 public immutable BAN_THRESHOLD_RATIO;
 
     struct VoteState {
@@ -54,14 +54,18 @@ contract GovVotedBanSource is IGovVotedBanSource {
 
     mapping(uint256 => ChatState) internal _states;
 
-    constructor(address groupAddress_, uint256 banThresholdRatio_) {
+    constructor(address groupAddress_, uint256 minSupportToOpposeRatio_, uint256 banThresholdRatio_) {
         if (groupAddress_.code.length == 0) {
             revert GovVotedBanSourceAddressHasNoCode();
+        }
+        if (minSupportToOpposeRatio_ == 0) {
+            revert MinSupportToOpposeRatioZero();
         }
         if (banThresholdRatio_ > PRECISION) {
             revert BanThresholdTooHigh();
         }
         GROUP_ADDRESS = groupAddress_;
+        MIN_SUPPORT_TO_OPPOSE_RATIO = minSupportToOpposeRatio_;
         BAN_THRESHOLD_RATIO = banThresholdRatio_;
     }
 

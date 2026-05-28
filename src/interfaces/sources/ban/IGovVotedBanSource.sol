@@ -12,6 +12,7 @@ interface IGovVotedBanSource is IPostBanSource {
     error VoteUnchanged();
     error VoteNotFound();
     error BanThresholdTooHigh();
+    error MinSupportToOpposeRatioZero();
 
     event SetAddressBanVote(
         uint256 indexed groupId,
@@ -44,6 +45,8 @@ interface IGovVotedBanSource is IPostBanSource {
     function GROUP_ADDRESS() external view returns (address);
 
     function PRECISION() external view returns (uint256);
+
+    function MIN_SUPPORT_TO_OPPOSE_RATIO() external view returns (uint256);
 
     function BAN_THRESHOLD_RATIO() external view returns (uint256);
 

@@ -112,9 +112,24 @@ if [ -n "$actionRecentRounds" ]; then
     export GROUP_CHAT_ACTION_RECENT_ROUNDS
 fi
 
+if [ -n "$maxContentLength" ]; then
+    GROUP_CHAT_MAX_CONTENT_LENGTH=$maxContentLength
+    export GROUP_CHAT_MAX_CONTENT_LENGTH
+fi
+
+if [ -n "$maxMentionedSenderIds" ]; then
+    GROUP_CHAT_MAX_MENTIONED_SENDER_IDS=$maxMentionedSenderIds
+    export GROUP_CHAT_MAX_MENTIONED_SENDER_IDS
+fi
+
 if [ -n "$banThresholdRatio" ]; then
     GROUP_CHAT_BAN_THRESHOLD_RATIO=$banThresholdRatio
     export GROUP_CHAT_BAN_THRESHOLD_RATIO
+fi
+
+if [ -n "$minSupportToOpposeRatio" ]; then
+    GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO=$minSupportToOpposeRatio
+    export GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO
 fi
 
 if [ -n "$maxAdminIds" ]; then
@@ -137,6 +152,21 @@ fi
 if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
     GROUP_CHAT_BAN_THRESHOLD_RATIO=3000000000000000
     export GROUP_CHAT_BAN_THRESHOLD_RATIO
+fi
+
+if [ -z "$GROUP_CHAT_MAX_CONTENT_LENGTH" ]; then
+    GROUP_CHAT_MAX_CONTENT_LENGTH=4096
+    export GROUP_CHAT_MAX_CONTENT_LENGTH
+fi
+
+if [ -z "$GROUP_CHAT_MAX_MENTIONED_SENDER_IDS" ]; then
+    GROUP_CHAT_MAX_MENTIONED_SENDER_IDS=32
+    export GROUP_CHAT_MAX_MENTIONED_SENDER_IDS
+fi
+
+if [ -z "$GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO" ]; then
+    GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO=10
+    export GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO
 fi
 
 if [ -z "$GROUP_CHAT_MAX_ADMIN_IDS" ]; then
@@ -177,8 +207,18 @@ if [ -n "$GROUP_CHAT_ACTION_RECENT_ROUNDS" ] && [ "$GROUP_CHAT_ACTION_RECENT_ROU
     ((missing_params++))
 fi
 
+if [ "$GROUP_CHAT_MAX_CONTENT_LENGTH" = "0" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_MAX_CONTENT_LENGTH must be greater than zero"
+    ((missing_params++))
+fi
+
 if [ "$GROUP_CHAT_MAX_ADMIN_IDS" = "0" ]; then
     echo -e "\033[31m✗\033[0m GROUP_CHAT_MAX_ADMIN_IDS must be greater than zero"
+    ((missing_params++))
+fi
+
+if [ "$GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO" = "0" ]; then
+    echo -e "\033[31m✗\033[0m GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO must be greater than zero"
     ((missing_params++))
 fi
 
@@ -272,6 +312,9 @@ echo -e "GroupMemberScope Address: $GROUP_MEMBER_SCOPE_ADDRESS"
 echo -e "GroupJoinScopeSource Address: $GROUP_JOIN_SCOPE_SOURCE_ADDRESS"
 echo -e "GroupJoin Address: $GROUP_JOIN_ADDRESS\n"
 echo -e "Ban Threshold Ratio: $GROUP_CHAT_BAN_THRESHOLD_RATIO\n"
+echo -e "Min Support To Oppose Ratio: $GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO\n"
+echo -e "Max Content Length: $GROUP_CHAT_MAX_CONTENT_LENGTH\n"
+echo -e "Max Mentioned Sender Ids: $GROUP_CHAT_MAX_MENTIONED_SENDER_IDS\n"
 echo -e "Max Admin Ids: $GROUP_CHAT_MAX_ADMIN_IDS\n"
 echo -e "TokenMainManager Address: $tokenMainManagerAddress"
 echo -e "TokenGovManager Address: $tokenGovManagerAddress"
@@ -349,9 +392,10 @@ check_equal "GroupChat: phaseBlocks matches core Join" "$core_join_phase_blocks"
 [ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
-actual_max_content=$(cast_call $groupChatAddress "MAX_CONTENT_LENGTH()(uint256)")
-echo -e "\033[32m✓\033[0m GroupChat: MAX_CONTENT_LENGTH"
-echo -e "  Actual: $actual_max_content"
+check_equal "GroupChat: MAX_CONTENT_LENGTH" "$GROUP_CHAT_MAX_CONTENT_LENGTH" "$(cast_call "$groupChatAddress" "MAX_CONTENT_LENGTH()(uint256)")"
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GroupChat: MAX_MENTIONED_SENDER_IDS" "$GROUP_CHAT_MAX_MENTIONED_SENDER_IDS" "$(cast_call "$groupChatAddress" "MAX_MENTIONED_SENDER_IDS()(uint256)")"
+[ $? -ne 0 ] && ((failed_checks++))
 echo ""
 
 actual_round=$(cast_call $groupChatAddress "currentRound()(uint256)" 2>/dev/null)
@@ -394,6 +438,8 @@ echo "Verifying GovVotedBanSource configuration..."
 check_equal "GovVotedBanSource: GROUP_ADDRESS" "$GROUP_ADDRESS" "$(cast_call "$govVotedBanSourceAddress" "GROUP_ADDRESS()(address)")"
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "GovVotedBanSource: PRECISION" "1000000000000000000" "$(cast_call "$govVotedBanSourceAddress" "PRECISION()(uint256)")"
+[ $? -ne 0 ] && ((failed_checks++))
+check_equal "GovVotedBanSource: MIN_SUPPORT_TO_OPPOSE_RATIO" "$GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO" "$(cast_call "$govVotedBanSourceAddress" "MIN_SUPPORT_TO_OPPOSE_RATIO()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))
 check_equal "GovVotedBanSource: BAN_THRESHOLD_RATIO" "$GROUP_CHAT_BAN_THRESHOLD_RATIO" "$(cast_call "$govVotedBanSourceAddress" "BAN_THRESHOLD_RATIO()(uint256)")"
 [ $? -ne 0 ] && ((failed_checks++))

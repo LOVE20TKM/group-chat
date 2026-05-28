@@ -24,6 +24,7 @@ contract MissingTotalBanVoteWeightSource {
 
 contract GovVotedBanSourceTest is GroupChatFixture {
     uint256 internal constant BAN_THRESHOLD_RATIO = 3e15;
+    uint256 internal constant MIN_SUPPORT_TO_OPPOSE_RATIO = 10;
 
     MockLOVE20Protocols internal protocol;
     GovVotedBanSource internal banSource;
@@ -37,12 +38,17 @@ contract GovVotedBanSourceTest is GroupChatFixture {
         super.setUp();
         protocol = new MockLOVE20Protocols();
         token = address(protocol);
-        banSource = new GovVotedBanSource(address(groupNft), BAN_THRESHOLD_RATIO);
+        banSource = new GovVotedBanSource(address(groupNft), MIN_SUPPORT_TO_OPPOSE_RATIO, BAN_THRESHOLD_RATIO);
         tokenGovManager =
             new TokenGovManager(address(chat), address(banSource), address(0), address(0), address(protocol));
         actionGovManager =
             new TokenActionGovManager(address(chat), address(banSource), address(0), address(0), address(protocol), 3);
         voter2GroupId = groupNft.mint(voter2);
+    }
+
+    function testT129_constructorRejectsInvalidMinSupportToOpposeRatio() public {
+        vm.expectRevert(IGovVotedBanSource.MinSupportToOpposeRatioZero.selector);
+        new GovVotedBanSource(address(groupNft), 0, BAN_THRESHOLD_RATIO);
     }
 
     function testT130_tokenGovVoteAndOpposeAffectIsBannedAndGroupChat() public {

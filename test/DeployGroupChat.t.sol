@@ -36,8 +36,11 @@ contract DeployGroupChatHarness is DeployGroupChat {
         address groupJoin,
         address beforePostPlugin,
         address afterPostPlugin,
+        uint256 maxContentLength,
+        uint256 maxMentionedSenderIds,
         uint256 actionRecentRounds,
         uint256 maxAdminIds,
+        uint256 minSupportToOpposeRatio,
         uint256 banThresholdRatio
     ) external view returns (DeployConfig memory) {
         return _configFromCoreJoin(
@@ -47,8 +50,11 @@ contract DeployGroupChatHarness is DeployGroupChat {
             groupJoin,
             beforePostPlugin,
             afterPostPlugin,
+            maxContentLength,
+            maxMentionedSenderIds,
             actionRecentRounds,
             maxAdminIds,
+            minSupportToOpposeRatio,
             banThresholdRatio
         );
     }
@@ -68,6 +74,9 @@ contract DeployGroupChatHarness is DeployGroupChat {
 
 contract DeployGroupChatTest is TestBase {
     uint256 internal constant BAN_THRESHOLD_RATIO = 3e15;
+    uint256 internal constant MIN_SUPPORT_TO_OPPOSE_RATIO = 10;
+    uint256 internal constant MAX_CONTENT_LENGTH = 4096;
+    uint256 internal constant MAX_MENTIONED_SENDER_IDS = 32;
     uint256 internal constant MAX_ADMIN_IDS = 20;
 
     MockLOVE20Group internal groupNft;
@@ -96,8 +105,11 @@ contract DeployGroupChatTest is TestBase {
             afterPostPlugin: address(0),
             originBlocks: 100,
             phaseBlocks: 25,
+            maxContentLength: MAX_CONTENT_LENGTH,
+            maxMentionedSenderIds: MAX_MENTIONED_SENDER_IDS,
             actionRecentRounds: 3,
             maxAdminIds: MAX_ADMIN_IDS,
+            minSupportToOpposeRatio: MIN_SUPPORT_TO_OPPOSE_RATIO,
             banThresholdRatio: BAN_THRESHOLD_RATIO
         });
 
@@ -122,6 +134,8 @@ contract DeployGroupChatTest is TestBase {
         assertEq(IGroupChat(deployed.groupChat).GROUP_ADDRESS(), address(groupNft));
         assertEq(IGroupChat(deployed.groupChat).originBlocks(), 100);
         assertEq(IGroupChat(deployed.groupChat).phaseBlocks(), 25);
+        assertEq(IGroupChat(deployed.groupChat).MAX_CONTENT_LENGTH(), MAX_CONTENT_LENGTH);
+        assertEq(IGroupChat(deployed.groupChat).MAX_MENTIONED_SENDER_IDS(), MAX_MENTIONED_SENDER_IDS);
 
         assertEq(GroupAdmin(deployed.groupAdmin).GROUP_DEFAULTS_ADDRESS(), address(groupDefaults));
         assertEq(GroupAdmin(deployed.groupAdmin).GROUP_DELEGATE_ADDRESS(), address(groupDelegate));
@@ -131,6 +145,10 @@ contract DeployGroupChatTest is TestBase {
         assertEq(AdminBanSource(deployed.adminBanSource).GROUP_BAN_LIST_ADDRESS(), deployed.groupBanList);
         assertEq(GovVotedBanSource(deployed.govVotedBanSource).GROUP_ADDRESS(), address(groupNft));
         assertEq(GovVotedBanSource(deployed.govVotedBanSource).PRECISION(), 1e18);
+        assertEq(
+            GovVotedBanSource(deployed.govVotedBanSource).MIN_SUPPORT_TO_OPPOSE_RATIO(),
+            MIN_SUPPORT_TO_OPPOSE_RATIO
+        );
         assertEq(GovVotedBanSource(deployed.govVotedBanSource).BAN_THRESHOLD_RATIO(), BAN_THRESHOLD_RATIO);
         assertEq(GroupMember(deployed.groupMember).GROUP_ADMIN_ADDRESS(), deployed.groupAdmin);
         assertEq(GroupMember(deployed.groupMember).GROUP_ADDRESS(), address(groupNft));
@@ -171,8 +189,11 @@ contract DeployGroupChatTest is TestBase {
             address(groupJoin),
             address(0xBEEF),
             address(0xCAFE),
+            MAX_CONTENT_LENGTH,
+            MAX_MENTIONED_SENDER_IDS,
             7,
             MAX_ADMIN_IDS,
+            MIN_SUPPORT_TO_OPPOSE_RATIO,
             BAN_THRESHOLD_RATIO
         );
 
@@ -184,8 +205,11 @@ contract DeployGroupChatTest is TestBase {
         assertEq(config.afterPostPlugin, address(0xCAFE));
         assertEq(config.originBlocks, 321);
         assertEq(config.phaseBlocks, 44);
+        assertEq(config.maxContentLength, MAX_CONTENT_LENGTH);
+        assertEq(config.maxMentionedSenderIds, MAX_MENTIONED_SENDER_IDS);
         assertEq(config.actionRecentRounds, 7);
         assertEq(config.maxAdminIds, MAX_ADMIN_IDS);
+        assertEq(config.minSupportToOpposeRatio, MIN_SUPPORT_TO_OPPOSE_RATIO);
         assertEq(config.banThresholdRatio, BAN_THRESHOLD_RATIO);
     }
 
@@ -199,8 +223,11 @@ contract DeployGroupChatTest is TestBase {
             afterPostPlugin: address(0xCAFE),
             originBlocks: 123,
             phaseBlocks: 456,
+            maxContentLength: MAX_CONTENT_LENGTH,
+            maxMentionedSenderIds: MAX_MENTIONED_SENDER_IDS,
             actionRecentRounds: 7,
             maxAdminIds: MAX_ADMIN_IDS,
+            minSupportToOpposeRatio: MIN_SUPPORT_TO_OPPOSE_RATIO,
             banThresholdRatio: BAN_THRESHOLD_RATIO
         });
         DeployGroupChat.DeployedAddresses memory deployed = DeployGroupChat.DeployedAddresses({

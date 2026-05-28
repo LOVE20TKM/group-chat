@@ -110,10 +110,20 @@ group_chat_origin_blocks=${group_chat_origin_blocks%% *}
 group_chat_phase_blocks=$(cast call "$groupChatAddress" "phaseBlocks()(uint256)" --rpc-url "$RPC_URL")
 group_chat_phase_blocks=${group_chat_phase_blocks%% *}
 
-constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
+if [ -z "$GROUP_CHAT_MAX_CONTENT_LENGTH" ]; then
+    GROUP_CHAT_MAX_CONTENT_LENGTH=4096
+fi
+
+if [ -z "$GROUP_CHAT_MAX_MENTIONED_SENDER_IDS" ]; then
+    GROUP_CHAT_MAX_MENTIONED_SENDER_IDS=32
+fi
+
+constructor_args=$(cast abi-encode "constructor(address,uint256,uint256,uint256,uint256)" \
     "$groupAdminAddress" \
     "$group_chat_origin_blocks" \
-    "$group_chat_phase_blocks")
+    "$group_chat_phase_blocks" \
+    "$GROUP_CHAT_MAX_CONTENT_LENGTH" \
+    "$GROUP_CHAT_MAX_MENTIONED_SENDER_IDS")
 
 failed_verifications=0
 
@@ -157,8 +167,13 @@ if [ -z "$GROUP_CHAT_BAN_THRESHOLD_RATIO" ]; then
     GROUP_CHAT_BAN_THRESHOLD_RATIO=3000000000000000
 fi
 
-gov_ban_source_constructor_args=$(cast abi-encode "constructor(address,uint256)" \
+if [ -z "$GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO" ]; then
+    GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO=10
+fi
+
+gov_ban_source_constructor_args=$(cast abi-encode "constructor(address,uint256,uint256)" \
     "$GROUP_ADDRESS" \
+    "$GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO" \
     "$GROUP_CHAT_BAN_THRESHOLD_RATIO")
 verify_contract \
     "$govVotedBanSourceAddress" \

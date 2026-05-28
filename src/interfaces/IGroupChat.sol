@@ -12,6 +12,7 @@ interface IGroupChatErrors {
     error RoundNotStarted();
     error Reentrant();
     error PhaseBlocksZero();
+    error MaxContentLengthZero();
     error SourceAddressHasNoCode();
     error PluginAddressHasNoCode();
     error ContentEmpty();

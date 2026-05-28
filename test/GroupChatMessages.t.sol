@@ -88,7 +88,13 @@ contract GroupChatMessagesTest is GroupChatFixture {
         );
         _post(groupId, senderId, tooLong);
 
-        GroupChat futureChat = new GroupChat(address(baseGroupAdmin), block.number + 1000, phaseBlocks);
+        GroupChat futureChat = new GroupChat(
+            address(baseGroupAdmin),
+            block.number + 1000,
+            phaseBlocks,
+            maxContentLength,
+            maxMentionedSenderIds
+        );
         vm.prank(chatOwner);
         futureChat.activateChat(groupId, address(0), address(0), address(0), address(0));
 
