@@ -1065,7 +1065,7 @@ const govPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({
 if (govPermissionText.includes('有权限：') || govPermissionText.includes('无权限：')) {
   throw new Error('Blacklist permission notice must not prefix texts with access labels');
 }
-if (!govPermissionText.includes('黑名单实时计票') || !govPermissionText.includes('赞成票大于反对票') || !govPermissionText.includes('0.3%')) {
+if (!govPermissionText.includes('黑名单实时计票') || !govPermissionText.includes('赞成票严格超过反对票 10 倍') || !govPermissionText.includes('0.3%')) {
   throw new Error('Gov blacklist permission notice must explain how votes make a blacklist effective');
 }
 const adminPermissionText = blacklistTextApi.renderBlacklistPermissionNotice({ blacklistMode: 'admin', canEditAdminBan: true });

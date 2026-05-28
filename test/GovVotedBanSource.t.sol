@@ -68,10 +68,10 @@ contract GovVotedBanSourceTest is GroupChatFixture {
         banSource.voteBySenderAddress(groupId, senderOwner, false);
 
         (banned, supportWeight, opposeWeight) = banSource.voteStatusBySenderAddress(groupId, senderOwner);
-        assertTrue(banned);
+        assertTrue(!banned);
         assertEq(supportWeight, 7);
         assertEq(opposeWeight, 5);
-        assertTrue(banSource.isBanned(groupId, senderId, senderOwner));
+        assertTrue(!banSource.isBanned(groupId, senderId, senderOwner));
 
         protocol.setGovVotes(token, voter2, 8);
         vm.prank(voter2);
@@ -82,6 +82,33 @@ contract GovVotedBanSourceTest is GroupChatFixture {
         assertEq(supportWeight, 7);
         assertEq(opposeWeight, 8);
         assertTrue(!banSource.isBanned(groupId, senderId, senderOwner));
+    }
+
+    function testT130B_supportMustExceedTenTimesOppose() public {
+        _activateTokenGovManager();
+        protocol.setGovVotes(token, senderOwner, 100);
+        protocol.setGovVotes(token, voter2, 10);
+
+        vm.prank(senderOwner);
+        banSource.voteBySenderAddress(groupId, senderOwner, true);
+        vm.prank(voter2);
+        banSource.voteBySenderAddress(groupId, senderOwner, false);
+
+        (bool banned, uint256 supportWeight, uint256 opposeWeight) =
+            banSource.voteStatusBySenderAddress(groupId, senderOwner);
+        assertTrue(!banned);
+        assertEq(supportWeight, 100);
+        assertEq(opposeWeight, 10);
+        assertTrue(!banSource.isBanned(groupId, senderId, senderOwner));
+
+        protocol.setGovVotes(token, senderOwner, 101);
+        banSource.refreshVoteBySenderAddress(groupId, senderOwner, senderOwner);
+
+        (banned, supportWeight, opposeWeight) = banSource.voteStatusBySenderAddress(groupId, senderOwner);
+        assertTrue(banned);
+        assertEq(supportWeight, 101);
+        assertEq(opposeWeight, 10);
+        assertTrue(banSource.isBanned(groupId, senderId, senderOwner));
     }
 
     function testT131_clearAndRefreshUpdateVoterWeightsAndRemoveVoteAtZero() public {

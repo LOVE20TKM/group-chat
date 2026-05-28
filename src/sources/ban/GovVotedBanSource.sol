@@ -13,6 +13,7 @@ contract GovVotedBanSource is IGovVotedBanSource {
 
     address public immutable GROUP_ADDRESS;
     uint256 public constant PRECISION = 1e18;
+    uint256 public constant MIN_SUPPORT_TO_OPPOSE_RATIO = 10;
     uint256 public immutable BAN_THRESHOLD_RATIO;
 
     struct VoteState {
@@ -663,15 +664,22 @@ contract GovVotedBanSource is IGovVotedBanSource {
         }
     }
 
-    function _supportOutweighsOppose(TargetState storage target) internal view returns (bool) {
-        return target.supportWeight > target.opposeWeight;
+    function _supportExceedsOpposeRatio(TargetState storage target) internal view returns (bool) {
+        if (target.opposeWeight == 0) {
+            return target.supportWeight > 0;
+        }
+        uint256 quotient = target.supportWeight / target.opposeWeight;
+        if (quotient > MIN_SUPPORT_TO_OPPOSE_RATIO) {
+            return true;
+        }
+        return quotient == MIN_SUPPORT_TO_OPPOSE_RATIO && target.supportWeight % target.opposeWeight != 0;
     }
 
     function _isTargetBanned(TargetState storage target, uint256 totalWeight) internal view returns (bool) {
         if (totalWeight == 0) {
             return false;
         }
-        if (!_supportOutweighsOppose(target)) {
+        if (!_supportExceedsOpposeRatio(target)) {
             return false;
         }
         return target.supportWeight * PRECISION >= totalWeight * BAN_THRESHOLD_RATIO;

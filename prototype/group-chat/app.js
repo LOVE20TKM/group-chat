@@ -463,6 +463,7 @@ function canEditMemberScope(chat) {
 }
 
 const BAN_THRESHOLD_PRECISION = 1000000000000000000n;
+const GOV_BAN_MIN_SUPPORT_TO_OPPOSE_RATIO = 10n;
 
 function uintLike(value) {
   const raw = String(value ?? 0).trim();
@@ -472,7 +473,8 @@ function uintLike(value) {
 function targetBanned(chat, target) {
   const support = uintLike(target.support);
   const oppose = uintLike(target.oppose);
-  if (support <= oppose) return false;
+  if (oppose > 0n && support <= oppose * GOV_BAN_MIN_SUPPORT_TO_OPPOSE_RATIO) return false;
+  if (oppose === 0n && support === 0n) return false;
   const totalWeight = uintLike(chat?.govBan?.totalWeight);
   const thresholdRatio = uintLike(chat?.govBan?.banThresholdRatio);
   if (totalWeight === 0n || thresholdRatio === 0n) return true;
@@ -1280,11 +1282,11 @@ function govBlacklistMechanismText(chat) {
   const totalWeight = uintLike(chat?.govBan?.totalWeight);
   const thresholdRatio = uintLike(chat?.govBan?.banThresholdRatio);
   if (totalWeight === 0n || thresholdRatio === 0n) {
-    return '黑名单实时计票：赞成票大于反对票时生效；地址或 NFT 任一命中都会拒绝发言。';
+    return '黑名单实时计票：赞成票严格超过反对票 10 倍时生效；地址或 NFT 任一命中都会拒绝发言。';
   }
   const thresholdWeight = (totalWeight * thresholdRatio + BAN_THRESHOLD_PRECISION - 1n) / BAN_THRESHOLD_PRECISION;
   const ratioText = govBlacklistRatioText(thresholdRatio);
-  return `黑名单实时计票：赞成票大于反对票，且赞成票达到全 token 治理票的 ${ratioText}（当前至少 ${thresholdWeight} 票）时生效；地址或 NFT 任一命中都会拒绝发言。`;
+  return `黑名单实时计票：赞成票严格超过反对票 10 倍，且赞成票达到全 token 治理票的 ${ratioText}（当前至少 ${thresholdWeight} 票）时生效；地址或 NFT 任一命中都会拒绝发言。`;
 }
 
 function govBlacklistRatioText(ratio) {
