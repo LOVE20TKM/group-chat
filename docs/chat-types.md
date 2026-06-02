@@ -133,8 +133,8 @@ GroupJoin.gTokenAddressesByGroupIdByAccountCount(groupId, senderAddress) > 0
 
 权限模型：
 
-- owner / delegate 通过 `GroupAdmin` 配置管理员。
-- admin 管理黑名单；owner / delegate 要管理黑名单，需将自己的默认身份 NFT 加入管理员集合。
+- owner / delegate 默认可管理黑名单，不需要把自己的默认身份 NFT 加入管理员集合。
+- owner / delegate 可通过 `GroupAdmin` 配置 admin；admin 需要当前默认身份命中已配置且仍有效的 admin NFT。
 - 黑名单支持地址维度与 `senderId` 维度。
 
 链群服务者管理型群聊不使用治理投票黑名单。
