@@ -353,8 +353,8 @@ event ChangeStateVersion(
 );
 ```
 
-投票聚合状态发生变化时，统一发对应的 `*BanVoteSet` 明细事件。
-已结算黑名单结果发生变化时，必须发对应的 `*BanSet` 明细事件。
+投票聚合状态发生变化时，统一发对应的 `SetAddressBanVote` / `SetSenderIdBanVote` 明细事件。
+已结算黑名单结果发生变化时，必须发对应的 `SetAddressBan` / `SetSenderIdBan` 明细事件。
 
 ## 状态要求
 
