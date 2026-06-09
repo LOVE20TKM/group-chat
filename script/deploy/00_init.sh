@@ -256,7 +256,15 @@ else
     return 1
 fi
 
-if [ -z "$KEYSTORE_PASSWORD" ]; then
+if [ "$network" = "anvil" ]; then
+    if [ -z "$PRIVATE_KEY" ]; then
+        echo -e "\033[31mError:\033[0m PRIVATE_KEY is required for anvil deployment."
+        return 1
+    fi
+    export KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-}"
+    export KEYSTORE_PASSWORD_ACCOUNT="$KEYSTORE_ACCOUNT"
+    echo "Using PRIVATE_KEY from anvil .account"
+elif [ -z "$KEYSTORE_PASSWORD" ]; then
     echo -e "\nPlease enter keystore password (for $KEYSTORE_ACCOUNT):"
     read -s KEYSTORE_PASSWORD
     export KEYSTORE_PASSWORD
@@ -318,19 +326,35 @@ normalize_cast_value() {
 forge_script() {
   local verify_args=()
 
-  if [[ "$network" != thinkium* ]]; then
+  if [[ "$network" != "anvil" && "$network" != thinkium* ]]; then
     verify_args=(--verify --etherscan-api-key "$ETHERSCAN_API_KEY")
   fi
 
-  forge script "$@" \
-    --rpc-url "$RPC_URL" \
-    --account "$KEYSTORE_ACCOUNT" \
-    --sender "$ACCOUNT_ADDRESS" \
-    --password "$KEYSTORE_PASSWORD" \
-    --gas-price 5000000000 \
-    --gas-limit 50000000 \
-    --broadcast \
-    --legacy \
-    "${verify_args[@]}"
+  if [ "$network" = "anvil" ]; then
+    local anvil_build_args=()
+    [ -n "$ANVIL_FOUNDRY_OUT" ] && anvil_build_args+=(--out "$ANVIL_FOUNDRY_OUT")
+    [ -n "$ANVIL_FOUNDRY_CACHE" ] && anvil_build_args+=(--cache-path "$ANVIL_FOUNDRY_CACHE")
+
+    forge script "$@" \
+      --rpc-url "$RPC_URL" \
+      --private-key "$PRIVATE_KEY" \
+      --sender "$ACCOUNT_ADDRESS" \
+      --gas-price 5000000000 \
+      --gas-limit 50000000 \
+      --broadcast \
+      --legacy \
+      "${anvil_build_args[@]}"
+  else
+    forge script "$@" \
+      --rpc-url "$RPC_URL" \
+      --account "$KEYSTORE_ACCOUNT" \
+      --sender "$ACCOUNT_ADDRESS" \
+      --password "$KEYSTORE_PASSWORD" \
+      --gas-price 5000000000 \
+      --gas-limit 50000000 \
+      --broadcast \
+      --legacy \
+      "${verify_args[@]}"
+  fi
 }
 echo "forge_script() loaded"
