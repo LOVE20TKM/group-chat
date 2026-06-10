@@ -1,6 +1,6 @@
 # GroupChat Mobile Prototype Implementation Plan（历史归档）
 
-> 归档说明：本文件记录 2026-05-05 早期原型实施计划，仅保留历史上下文，不作为当前实现或验收依据。当前交互以 `docs/superpowers/specs/2026-05-05-group-chat-mobile-prototype-design.md`、`prototype/group-chat/` 和 `prototype/group-chat/smoke-test.mjs` 为准；旧计划里的 `+` 面板、通用 status sheet、桌面三栏和索引切换均已废弃。
+> 归档说明：本文件记录 2026-05-05 早期原型实施计划，仅保留历史上下文，不作为当前产品实现或验收依据。相关原型文件也只作历史参考，当前实现可能已经不再遵循该原型。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -1,48 +1,59 @@
-# group-chat
+# LOVE20 Group Chat
 
-LOVE20 `GroupNFT` 群聊协议仓库。
+每个 `GroupNFT` 都可以对应一个公开的链上群聊。
 
-目标：`1 NFT = 1 Chat`，公开链上，支持去中心化与 owner-admin 管理型群聊，可扩展。
+`group-chat` 是 LOVE20 生态里的群聊协议层。它把 `GroupNFT` 从链上身份 / 组织凭证，扩展成一个可以发言、管理、治理和继续扩展的公共讨论空间。
 
-## 文档
+## 设计背景
+
+今天的信息互联网，主要仍是平台代理式的信息发布与接收：个人把内容、身份、关系和触达能力交给平台托管，再由平台决定分发、排序、限制和保存方式。
+
+基于公链的 Web3 改变的是这层权力结构。它让个人可以直接持有身份、资产和可验证记录，并在不依赖单一平台许可的情况下发布与接收信息。BTC 等加密数字货币可以被看作这一方向的首类应用：当个体的信息权力不可被剥夺时，资产表达、转移和结算首先变成了可独立运行的公共协议。
+
+但 Web3 不会停留在加密货币阶段。资产之后，还会继续扩展到身份、组织、行动、治理和公共表达。Group Chat 关注的就是其中的“公共表达”部分：让群聊不再只是某个平台里的临时频道，而是可以和链上身份、群组、行动、治理共享同一套可验证规则的协议层。
+
+## 它解决什么问题
+
+链上组织常常已经有身份、资产、行动、投票和贡献记录，但讨论本身仍然分散在链下平台里。这样会带来几个问题：
+
+- 谁有资格发言，需要靠链下管理员判断。
+- 群聊历史和链上身份、行动、治理记录割裂。
+- 组织换 owner、换成员、换规则时，聊天空间缺少可验证的连续性。
+- 不同类型的群聊很难共享同一套协议接口。
+
+Group Chat 的目标是把“谁能说话、谁被限制、消息属于哪个群、消息由哪个身份发出”这些基础事实放到链上，让群聊成为 LOVE20 组织协作的一部分。
+
+## 核心想法
+
+- `1 NFT = 1 Chat`：`GroupNFT.tokenId` 直接对应一个群聊。
+- 发言身份是 `senderId`，也就是一个 NFT 身份；地址只是当前签名者。
+- 消息公开上链，只新增，不编辑，不删除。
+- 群 owner 可以管理群聊，也可以委托 delegate 管理部分设置。
+- 发言资格、黑名单和发言前后扩展都通过外部规则模块接入。
+- 同一套协议可以支持去中心化治理型群聊，也可以支持 owner-admin 管理型群聊。
+
+## 它不是什么
+
+Group Chat 不是私密聊天协议，也不是中心化 IM 系统。它不处理私聊、阅后即焚、端到端加密、链下消息同步或复杂前端社交体验。
+
+它更接近 LOVE20 里的“链上公共讨论记录层”：让群聊和身份、群组、行动、治理之间可以被同一套链上规则连接起来。
+
+## 当前状态
+
+- 主接口与主合约已落地。
+- 去中心化群聊的 typed manager 已落地。
+- owner-admin 管理型模块已落地。
+- Foundry 测试已按主题拆分。
+- 本仓库尚未部署，无需考虑历史兼容。
+
+## 从哪里继续看
 
 - [文档入口](./docs/requirements.md)
 - [核心协议](./docs/spec/core-protocol.md)
 - [发言与查询](./docs/spec/posting-query.md)
-- [ABI / 事件 / 错误](./docs/spec/abi-events-errors.md)
 - [群聊类型](./docs/chat-types.md)
-- [GroupAdmin](./docs/group-admin.md)
-- [GroupBanList](./docs/group-ban-list.md)
-- [GroupMember](./docs/group-member.md)
-- [Manager 总览](./docs/managers/README.md)
-- [ScopeSource 总览](./docs/sources/scope/README.md)
-- [BanSource 总览](./docs/sources/ban/README.md)
-- [实现说明](./docs/implementation-notes.md)
 - [部署说明](./docs/deployment.md)
 - [测试矩阵](./docs/tests.md)
-
-## 当前状态
-
-- 主接口与主合约已落地
-- Typed Manager 已落地
-- Foundry 测试已拆分为多文件主题结构
-
-## 目录
-
-- `src/`
-  - `interfaces/IGroupChat.sol`
-  - `interfaces/`：本仓库协议接口与扩展点
-  - `interfaces/external/`：上游合约或通用标准的最小适配接口
-  - `interfaces/plugins/`：发帖前后插件接口
-  - `interfaces/sources/`：ScopeSource / BanSource 接口
-  - `GroupChat.sol`
-  - `managers/`
-  - `sources/`：ScopeSource / BanSource 实现
-- `test/`
-  - 详见 [测试矩阵](./docs/tests.md)
-- `script/`
-  - `DeployGroupChat.s.sol`
-  - `ScriptBase.sol`
 
 ## 本地开发
 
@@ -52,86 +63,4 @@ LOVE20 `GroupNFT` 群聊协议仓库。
 forge test
 ```
 
-交互原型：
-
-- [GroupChat 手机优先原型](./prototype/group-chat/index.html)
-- 交互仿微信聊天布局，样式参考 `interface-test`
-- 模拟 `canPost`、`chatInfo` 配置字段、引用、mentionedSenderIds、mentionAll、1-based `messageId`、`PostMessage` 同步提示和通知标记
-
-原型 smoke test：
-
-```bash
-node prototype/group-chat/smoke-test.mjs
-```
-
-本地预览：
-
-```bash
-cd prototype/group-chat
-python3 -m http.server 8012
-```
-
-## 部署
-
-最小部署脚本：
-
-- [DeployGroupChat.s.sol](./script/DeployGroupChat.s.sol)
-- 一键 shell：
-  - [00_init.sh](./script/deploy/00_init.sh)
-  - [01_deploy_group_chat.sh](./script/deploy/01_deploy_group_chat.sh)
-  - [02_verify.sh](./script/deploy/02_verify.sh)
-  - [99_check.sh](./script/deploy/99_check.sh)
-  - [one_click_deploy.sh](./script/deploy/one_click_deploy.sh)
-
-依赖环境变量：
-
-- `GROUP_DEFAULTS_ADDRESS`
-- `GROUP_DELEGATE_ADDRESS`
-- `EXTENSION_CENTER_ADDRESS`
-- `GROUP_JOIN_ADDRESS`
-- `GROUP_CHAT_ACTION_RECENT_ROUNDS`（当前配置为 `3`）
-- `network`
-- `KEYSTORE_ACCOUNT`：写在 `script/network/<network>/.account`
-- `ACCOUNT_ADDRESS`：写在 `script/network/<network>/.account`
-
-可选环境变量：
-
-- `GROUP_ADDRESS`
-- `GROUP_CHAT_MAX_CONTENT_LENGTH`：默认 `4096`
-- `GROUP_CHAT_MAX_MENTIONED_SENDER_IDS`：默认 `32`
-- `GROUP_CHAT_MIN_SUPPORT_TO_OPPOSE_RATIO`：默认 `10`
-- `GROUP_CHAT_BAN_THRESHOLD_RATIO`：默认 `3000000000000000`（`0.3%`）
-- `GROUP_CHAT_MAX_ADMIN_IDS`
-- `GROUP_CHAT_BEFORE_POST_PLUGIN_ADDRESS`
-- `GROUP_CHAT_AFTER_POST_PLUGIN_ADDRESS`
-
-直接 `forge script` 时也先从网络配置加载参数；round 参数由 `EXTENSION_CENTER_ADDRESS.joinAddress()` 指向的 core Join 合约读取：
-
-```bash
-cd script/deploy
-source ./00_init.sh thinkium70001_public_test
-forge_script ../DeployGroupChat.s.sol:DeployGroupChat --sig "run()"
-```
-
-shell 一键部署：
-
-- 上游 `GroupDefaults` 地址使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.defaults.params`
-- 上游 `GroupDelegate` 地址使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.delegate.params`
-- 上游 `LOVE20Group` 地址可使用从 `group` 仓库复制过来的 `script/network/<network>/address.group.params` 做校验
-- 当前仓库自身参数从 `script/network/<network>/group.chat.params` 读取
-- `DeployGroupChat` 固定同时部署 `GroupAdmin`、`GroupBanList`、`AdminBanSource` 与 `GovVotedBanSource`
-- `DeployGroupChat` 固定同时部署 `GroupMember`、`GroupMemberScope` 与 `GroupJoinScopeSource`
-- 四个 typed Manager 固定挂本次部署的 `GovVotedBanSource`
-- 部署会同时产出 `GroupChat` 与四个 typed Manager
-
-```bash
-cd script/deploy
-source ./one_click_deploy.sh thinkium70001_public_test
-```
-
-部署结果字段以 [部署说明](./docs/deployment.md) 为准。
-
-当前已补模板网络：
-
-- `thinkium70001_public`
-- `thinkium70001_public_test`
+部署、参数文件、校验脚本和 verify 细节见 [部署说明](./docs/deployment.md)。
