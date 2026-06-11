@@ -150,6 +150,7 @@ Manager 事件：
 - `RoundNotStarted`
 - `Reentrant`
 - `PhaseBlocksZero`
+- `MaxContentLengthZero`
 
 Rule slot 错误：
 

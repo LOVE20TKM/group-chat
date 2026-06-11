@@ -406,10 +406,15 @@ if [ -n "$actual_round" ]; then
     if [ -n "$join_round" ]; then
         check_equal "GroupChat: currentRound matches core Join" "$join_round" "$actual_round"
         [ $? -ne 0 ] && ((failed_checks++))
+    else
+        echo -e "\033[31m✗\033[0m Core Join: currentRound"
+        echo -e "  currentRound() reverted; deployment cannot prove round alignment"
+        ((failed_checks++))
     fi
 else
-    echo -e "\033[33m!\033[0m GroupChat: currentRound"
-    echo -e "  Current block is before originBlocks, skip round value check"
+    echo -e "\033[31m✗\033[0m GroupChat: currentRound"
+    echo -e "  currentRound() reverted; current block may be before originBlocks"
+    ((failed_checks++))
 fi
 echo ""
 
