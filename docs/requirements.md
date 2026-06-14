@@ -1,7 +1,7 @@
 # Group Chat 文档入口
 
 - 模块：LOVE20 `GroupNFT` 群聊协议
-- 状态：开发中
+- 状态：public 网络已部署，部署地址见 `script/network/thinkium70001_public/address.group.chat.params`
 - 目标：`1 NFT = 1 Chat`，公开链上、可扩展、无协议级特权
 
 ## 阅读顺序

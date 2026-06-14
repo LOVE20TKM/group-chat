@@ -29,7 +29,7 @@ Group Chat 的目标是把“谁能说话、谁被限制、消息属于哪个群
 - 发言身份是 `senderId`，也就是一个 NFT 身份；地址只是当前签名者。
 - 消息公开上链，只新增，不编辑，不删除。
 - 群 owner 可以管理群聊，也可以委托 delegate 管理部分设置。
-- 发言资格、黑名单和发言前后扩展都通过外部规则模块接入。
+- 发言资格、禁言名单和发言前后扩展都通过外部规则模块接入。
 - 同一套协议可以支持去中心化治理型群聊，也可以支持 owner-admin 管理型群聊。
 
 ## 它不是什么
@@ -38,14 +38,6 @@ Group Chat 不是私密聊天协议，也不是中心化 IM 系统。它不处�
 
 它更接近 LOVE20 里的“链上公共讨论记录层”：让群聊和身份、群组、行动、治理之间可以被同一套链上规则连接起来。
 
-## 当前状态
-
-- 主接口与主合约已落地。
-- 去中心化群聊的 typed manager 已落地。
-- owner-admin 管理型模块已落地。
-- Foundry 测试已按主题拆分。
-- 本仓库尚未部署，无需考虑历史兼容。
-
 ## 从哪里继续看
 
 - [文档入口](./docs/requirements.md)
@@ -53,7 +45,10 @@ Group Chat 不是私密聊天协议，也不是中心化 IM 系统。它不处�
 - [发言与查询](./docs/spec/posting-query.md)
 - [群聊类型](./docs/chat-types.md)
 - [部署说明](./docs/deployment.md)
-- [测试矩阵](./docs/tests.md)
+
+## 部署状态
+
+public 网络已部署，部署地址见 `script/network/thinkium70001_public/address.group.chat.params`。
 
 ## 本地开发
 
